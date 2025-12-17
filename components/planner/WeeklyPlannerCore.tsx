@@ -166,6 +166,13 @@ function generateMonthMatrix(monthBase: Date): MonthCell[][] {
   return rows
 }
 
+function clampInt(n: unknown, fallback: number, min: number, max: number) {
+  const x = Number(n)
+  if (!Number.isFinite(x)) return fallback
+  const i = Math.floor(x)
+  return Math.max(min, Math.min(max, i))
+}
+
 // =======================================================
 // COMPONENTE PRINCIPAL
 // =======================================================
@@ -188,18 +195,43 @@ export default function WeeklyPlannerCore() {
   const [showAllAppointments, setShowAllAppointments] = useState(false)
 
   const isGentleTone = euSignal.tone === 'gentil'
+  const listLimit = useMemo(() => clampInt(euSignal.listLimit, 5, 1, 12), [euSignal.listLimit])
 
-  // Labels dos atalhos (tom)
-  const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
-  const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
-  const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
-  const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
+  // Labels / microcopy adaptativos (P12)
+  const copy = useMemo(() => {
+    const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
+    const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
+    const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
+    const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
 
-  // CTA “mostrar mais/menos” (tom)
-  const ctaShowMore = isGentleTone ? 'Mostrar o restante quando fizer sentido' : 'Ver mais itens'
-  const ctaShowLess = isGentleTone ? 'Voltar para a versão leve' : 'Ver menos itens'
+    const remindersSubtitle = isGentleTone
+      ? 'Ações possíveis do seu dia — do jeito que der, sem peso.'
+      : 'Ações práticas do seu dia — organizadas para sua rotina.'
 
-  // Microcopy extra (ritmo)
+    const remindersEmpty = isGentleTone
+      ? 'Hoje ainda está em branco por aqui. Se quiser, escolha só um atalho — o mínimo já ajuda.'
+      : 'Ainda não há lembretes para hoje. Use os atalhos abaixo ou registre algo que faça sentido para a sua rotina.'
+
+    const showMore = isGentleTone ? 'Mostrar mais (se fizer sentido)' : 'Mostrar o restante'
+    const showLess = isGentleTone ? 'Voltar para a versão leve' : 'Mostrar menos'
+
+    const footerLine = isGentleTone
+      ? 'Esses lembretes podem vir das trilhas do Maternar ou ser criados por você — no seu ritmo.'
+      : 'Esses lembretes podem vir das trilhas do Maternar ou ser criados por você.'
+
+    return {
+      shortcutLabelTop3,
+      shortcutLabelAgenda,
+      shortcutLabelSelfcare,
+      shortcutLabelFamily,
+      remindersSubtitle,
+      remindersEmpty,
+      showMore,
+      showLess,
+      footerLine,
+    }
+  }, [isGentleTone])
+
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
   // Atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
@@ -213,10 +245,7 @@ export default function WeeklyPlannerCore() {
     }
 
     const onStorage = (e: StorageEvent) => {
-      // P12: filtra por key para evitar refresh desnecessário do Meu Dia
-      try {
-        if (e && e.key && e.key !== 'eu360_persona_v1') return
-      } catch {}
+      if (!e) return
       refresh()
     }
 
@@ -518,12 +547,8 @@ export default function WeeklyPlannerCore() {
                     <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
                       Hoje
                     </p>
-                    <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">
-                      Lembretes do dia
-                    </h3>
-                    <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
-                      Ações práticas do seu dia — organizadas a partir da sua rotina real.
-                    </p>
+                    <h3 className="text-lg md:text-xl font-semibold text-[var(--color-text-main)]">Lembretes do dia</h3>
+                    <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">{copy.remindersSubtitle}</p>
 
                     {euSignal.showLessLine && (
                       <p className="text-[11px] text-[var(--color-text-muted)] mt-2">{lessLine}</p>
@@ -542,16 +567,11 @@ export default function WeeklyPlannerCore() {
 
                 <div className="space-y-2">
                   {plannerData.tasks.length === 0 ? (
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      {isGentleTone
-                        ? 'Ainda não há lembretes para hoje. Se fizer sentido, use um atalho abaixo.'
-                        : 'Ainda não há lembretes para hoje. Use os atalhos abaixo para começar.'}
-                    </p>
+                    <p className="text-xs text-[var(--color-text-muted)]">{copy.remindersEmpty}</p>
                   ) : (
                     (() => {
-                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
                       const all = plannerData.tasks
-                      const visible = showAllReminders ? all : all.slice(0, limit)
+                      const visible = showAllReminders ? all : all.slice(0, listLimit)
                       const hasMore = all.length > visible.length
 
                       return (
@@ -583,20 +603,44 @@ export default function WeeklyPlannerCore() {
                           {hasMore && !showAllReminders && (
                             <button
                               type="button"
-                              onClick={() => setShowAllReminders(true)}
+                              onClick={() => {
+                                setShowAllReminders(true)
+                                try {
+                                  track('p12.rhythm.list_expand', {
+                                    tab: 'meu-dia',
+                                    list: 'reminders',
+                                    dateKey: selectedDateKey,
+                                    limit: listLimit,
+                                    total: all.length,
+                                    tone: euSignal.tone ?? null,
+                                  })
+                                } catch {}
+                              }}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              {ctaShowMore}
+                              {copy.showMore}
                             </button>
                           )}
 
-                          {showAllReminders && all.length > limit && (
+                          {showAllReminders && all.length > listLimit && (
                             <button
                               type="button"
-                              onClick={() => setShowAllReminders(false)}
+                              onClick={() => {
+                                setShowAllReminders(false)
+                                try {
+                                  track('p12.rhythm.list_collapse', {
+                                    tab: 'meu-dia',
+                                    list: 'reminders',
+                                    dateKey: selectedDateKey,
+                                    limit: listLimit,
+                                    total: all.length,
+                                    tone: euSignal.tone ?? null,
+                                  })
+                                } catch {}
+                              }}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              {ctaShowLess}
+                              {copy.showLess}
                             </button>
                           )}
                         </>
@@ -608,10 +652,10 @@ export default function WeeklyPlannerCore() {
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => addTask(shortcutLabelTop3, 'top3')}
+                    onClick={() => addTask('O que realmente importa hoje', 'top3')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    {shortcutLabelTop3}
+                    {copy.shortcutLabelTop3}
                   </button>
 
                   <button
@@ -619,29 +663,27 @@ export default function WeeklyPlannerCore() {
                     onClick={() => openCreateAppointmentModal(selectedDateKey)}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    {shortcutLabelAgenda}
+                    {copy.shortcutLabelAgenda}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => addTask(shortcutLabelSelfcare, 'selfcare')}
+                    onClick={() => addTask('Pequenos gestos de autocuidado', 'selfcare')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    {shortcutLabelSelfcare}
+                    {copy.shortcutLabelSelfcare}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => addTask(shortcutLabelFamily, 'family')}
+                    onClick={() => addTask('Momentos e cuidados importantes', 'family')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    {shortcutLabelFamily}
+                    {copy.shortcutLabelFamily}
                   </button>
                 </div>
 
-                <p className="text-[11px] text-[var(--color-text-muted)]">
-                  Esses lembretes podem vir das trilhas do Maternar ou ser criados por você.
-                </p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">{copy.footerLine}</p>
               </SoftCard>
 
               {/* AGENDA & COMPROMISSOS */}
@@ -669,14 +711,11 @@ export default function WeeklyPlannerCore() {
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {sortedAppointments.length === 0 ? (
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      {isGentleTone ? 'Se quiser, registre um combinado simples.' : 'Você ainda não marcou nenhum compromisso.'}
-                    </p>
+                    <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
                   ) : (
                     (() => {
-                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
                       const all = sortedAppointments
-                      const visible = showAllAppointments ? all : all.slice(0, limit)
+                      const visible = showAllAppointments ? all : all.slice(0, listLimit)
                       const hasMore = all.length > visible.length
 
                       return (
@@ -710,20 +749,44 @@ export default function WeeklyPlannerCore() {
                           {hasMore && !showAllAppointments && (
                             <button
                               type="button"
-                              onClick={() => setShowAllAppointments(true)}
+                              onClick={() => {
+                                setShowAllAppointments(true)
+                                try {
+                                  track('p12.rhythm.list_expand', {
+                                    tab: 'meu-dia',
+                                    list: 'appointments',
+                                    dateKey: selectedDateKey,
+                                    limit: listLimit,
+                                    total: all.length,
+                                    tone: euSignal.tone ?? null,
+                                  })
+                                } catch {}
+                              }}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              {ctaShowMore}
+                              {copy.showMore}
                             </button>
                           )}
 
-                          {showAllAppointments && all.length > limit && (
+                          {showAllAppointments && all.length > listLimit && (
                             <button
                               type="button"
-                              onClick={() => setShowAllAppointments(false)}
+                              onClick={() => {
+                                setShowAllAppointments(false)
+                                try {
+                                  track('p12.rhythm.list_collapse', {
+                                    tab: 'meu-dia',
+                                    list: 'appointments',
+                                    dateKey: selectedDateKey,
+                                    limit: listLimit,
+                                    total: all.length,
+                                    tone: euSignal.tone ?? null,
+                                  })
+                                } catch {}
+                              }}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              {ctaShowLess}
+                              {copy.showLess}
                             </button>
                           )}
                         </>
