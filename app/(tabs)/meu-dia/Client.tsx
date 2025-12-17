@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
@@ -13,6 +13,7 @@ import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { MyDayGroups } from '@/components/my-day/MyDayGroups'
+import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -21,6 +22,9 @@ export default function MeuDiaClient() {
   const { name } = useProfile()
   const [greeting, setGreeting] = useState('')
   const [dailyMessage, setDailyMessage] = useState('…')
+
+  // P11 — contexto leve (persona Eu360 + sinais básicos locais)
+  const aiContext = useMemo(() => buildAiContext(), [])
 
   /* tracking */
   useEffect(() => {
@@ -94,18 +98,20 @@ export default function MeuDiaClient() {
           </div>
         </header>
 
-        {/* P8 — BLOCOS ORGANIZADOS */}
-        <MyDayGroups />
+        {/* P8/P11 — BLOCOS ORGANIZADOS (com contexto leve do Eu360) */}
+        <MyDayGroups aiContext={aiContext} />
 
         {/* 🔹 P10 — MICRO BLOCO MATERNA360+ (MONETIZAÇÃO NATURAL) */}
         <section className="mt-6">
-          <div className="
-            rounded-3xl
-            border border-[#f5d7e5]
-            bg-[#fff7fb]
-            px-5 py-4
-            shadow-[0_8px_22px_rgba(0,0,0,0.06)]
-          ">
+          <div
+            className="
+              rounded-3xl
+              border border-[#f5d7e5]
+              bg-[#fff7fb]
+              px-5 py-4
+              shadow-[0_8px_22px_rgba(0,0,0,0.06)]
+            "
+          >
             <p className="text-[13px] font-semibold text-[#2f3a56]">
               Com o Materna360+, o seu dia se ajusta automaticamente
             </p>
