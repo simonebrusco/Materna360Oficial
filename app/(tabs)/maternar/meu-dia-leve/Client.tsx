@@ -563,7 +563,7 @@ export default function MeuDiaLeveClient() {
                             onClick={() => {
                               setPickedIdea(idx)
                               try {
-                                track('meu_dia_leve.idea.pick', { idx, title: i.title })
+                                track('meu_dia_leve.idea.pick', { idx })
                               } catch {}
                             }}
                           />
@@ -638,7 +638,7 @@ export default function MeuDiaLeveClient() {
                               onClick={() => {
                                 setPickedRecipe(idx)
                                 try {
-                                  track('meu_dia_leve.recipe.pick', { idx, title: r.title })
+                                  track('meu_dia_leve.recipe.pick', { idx })
                                 } catch {}
                               }}
                               className={[
@@ -730,7 +730,7 @@ export default function MeuDiaLeveClient() {
                             onClick={() => {
                               setPickedPasso(idx)
                               try {
-                                track('meu_dia_leve.passo.pick', { idx, title: p.title })
+                                track('meu_dia_leve.passo.pick', { idx })
                               } catch {}
                             }}
                           />
