@@ -252,7 +252,7 @@ export function MyDayGroups() {
         }}
         className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] font-semibold shadow-lg transition"
       >
-        Ver onde caiu
+        Ir para tarefa
       </button>
 
       <button
