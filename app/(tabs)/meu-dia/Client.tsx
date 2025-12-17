@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
@@ -16,8 +16,15 @@ import { MyDayGroups } from '@/components/my-day/MyDayGroups'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
+// P13 — continuidade (micro-frase 1x/dia)
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getEu360Signal } from '@/app/lib/eu360Signals.client'
+import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+
+type ContinuityLine = { text: string; phraseId: string }
 
 export default function MeuDiaClient() {
   const { name } = useProfile()
@@ -25,8 +32,13 @@ export default function MeuDiaClient() {
   const [dailyMessage, setDailyMessage] = useState('…')
 
   // P11/P12 — contexto leve (persona Eu360 + sinais básicos locais)
-  // ✅ Agora reativo a mudanças do Eu360 (sem reload)
+  // ✅ Reativo a mudanças do Eu360 (sem reload)
   const [aiContext, setAiContext] = useState<AiLightContext>(() => buildAiContext())
+
+  // P13 — micro-frase de continuidade (no máximo 1 por dia)
+  const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
+
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
   /* tracking */
   useEffect(() => {
@@ -60,22 +72,41 @@ export default function MeuDiaClient() {
     return () => window.clearTimeout(t)
   }, [])
 
-  // ✅ P12 — re-hidrata aiContext quando a persona mudar
-  useEffect(() => {
-    const refresh = () => {
-      try {
-        setAiContext(buildAiContext())
-      } catch {
-        // nunca quebra o fluxo
-      }
+  function refreshAiContextAndContinuity() {
+    // P12 — re-hidrata aiContext
+    try {
+      setAiContext(buildAiContext())
+    } catch {
+      // nunca quebra o fluxo
     }
 
+    // P13 — recalcula micro-frase (helper já controla 1x/dia / primeiro uso / repetição)
+    try {
+      const signal = getEu360Signal()
+      const tone = (signal?.tone ?? 'gentil') as 'gentil' | 'direto'
+
+      const line = getMyDayContinuityLine({
+        dateKey: getBrazilDateKey(new Date()),
+        tone,
+      })
+
+      setContinuityLine(line ? { text: line.text, phraseId: line.phraseId } : null)
+    } catch {
+      // silencioso
+      setContinuityLine(null)
+    }
+  }
+
+  // ✅ P12/P13 — re-hidrata aiContext e continuidade quando a persona mudar
+  useEffect(() => {
+    refreshAiContextAndContinuity()
+
     const onStorage = (_e: StorageEvent) => {
-      refresh()
+      refreshAiContextAndContinuity()
     }
 
     const onCustom = () => {
-      refresh()
+      refreshAiContextAndContinuity()
     }
 
     try {
@@ -89,6 +120,7 @@ export default function MeuDiaClient() {
         window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
       } catch {}
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -128,6 +160,13 @@ export default function MeuDiaClient() {
             <p className="text-sm md:text-base text-white/95 max-w-xl">
               “{dailyMessage}”
             </p>
+
+            {/* P13 — micro-frase de continuidade (1x/dia, discreta) */}
+            {continuityLine?.text ? (
+              <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
+                {continuityLine.text}
+              </p>
+            ) : null}
           </div>
         </header>
 
