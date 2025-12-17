@@ -181,9 +181,18 @@ export default function WeeklyPlannerCore() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  // P12 — Inteligência de Ritmo (visibilidade leve)
+  // P12 — Inteligência de Ritmo (visibilidade + tom)
   const euSignal = useMemo(() => getEu360Signal(), [])
   const [showAllReminders, setShowAllReminders] = useState(false)
+
+  const isGentleTone = euSignal.tone === 'gentil'
+
+  const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
+  const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
+  const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
+  const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
+
+  const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
   // Reset do "mostrar tudo" quando troca o dia (ritmo não empurra excesso)
   useEffect(() => {
@@ -352,8 +361,6 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const openMonthSheet = useCallback(() => {
-    // Evita depender de selectedDate (que é derivado e declarado depois).
-    // Usa o selectedDateKey atual para manter o mesmo comportamento.
     const base =
       selectedDateKey && /^\d{4}-\d{2}-\d{2}$/.test(selectedDateKey)
         ? new Date(selectedDateKey + 'T00:00:00')
@@ -401,7 +408,6 @@ export default function WeeklyPlannerCore() {
     <>
       <Reveal>
         <div className="space-y-6 md:space-y-8">
-          {/* Top bar (mantém layout do print) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-3">
               <button
@@ -423,7 +429,6 @@ export default function WeeklyPlannerCore() {
                 </div>
               </button>
 
-              {/* Toggle (AJUSTE: remove outline azul, mantém premium) */}
               <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
                 <button
                   type="button"
@@ -451,13 +456,10 @@ export default function WeeklyPlannerCore() {
             </div>
           </SoftCard>
 
-          {/* WEEK VIEW (somente weekData) */}
           {viewMode === 'week' && <WeekView weekData={weekData} />}
 
-          {/* DAY VIEW */}
           {viewMode === 'day' && (
             <div className="space-y-6">
-              {/* LEMBRETES */}
               <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -470,6 +472,12 @@ export default function WeeklyPlannerCore() {
                     <p className="text-xs md:text-sm text-[var(--color-text-muted)] mt-1">
                       Ações práticas do seu dia — organizadas a partir da sua rotina real.
                     </p>
+
+                    {euSignal.showLessLine && (
+                      <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
+                        {lessLine}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -551,7 +559,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => addTask('O que realmente importa hoje', 'top3')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    O que realmente importa hoje
+                    {shortcutLabelTop3}
                   </button>
 
                   <button
@@ -559,7 +567,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => openCreateAppointmentModal(selectedDateKey)}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    Compromissos e combinados
+                    {shortcutLabelAgenda}
                   </button>
 
                   <button
@@ -567,7 +575,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => addTask('Pequenos gestos de autocuidado', 'selfcare')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    Pequenos gestos de autocuidado
+                    {shortcutLabelSelfcare}
                   </button>
 
                   <button
@@ -575,7 +583,7 @@ export default function WeeklyPlannerCore() {
                     onClick={() => addTask('Momentos e cuidados importantes', 'family')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
-                    Momentos e cuidados importantes
+                    {shortcutLabelFamily}
                   </button>
                 </div>
 
@@ -584,7 +592,6 @@ export default function WeeklyPlannerCore() {
                 </p>
               </SoftCard>
 
-              {/* AGENDA & COMPROMISSOS */}
               <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="space-y-1">
@@ -642,7 +649,6 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* Navegação rápida de data */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -677,9 +683,6 @@ export default function WeeklyPlannerCore() {
         </div>
       </Reveal>
 
-      {/* ===================================================== */}
-      {/* SHEET PREMIUM — CALENDÁRIO DO MÊS                      */}
-      {/* ===================================================== */}
       {monthSheetOpen && (
         <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Calendário do mês">
           <button
@@ -804,9 +807,6 @@ export default function WeeklyPlannerCore() {
         </div>
       )}
 
-      {/* ===================================================== */}
-      {/* MODAL PREMIUM — CREATE / EDIT                           */}
-      {/* ===================================================== */}
       <AppointmentModal
         open={appointmentModalOpen}
         mode={appointmentModalMode}
@@ -825,7 +825,6 @@ export default function WeeklyPlannerCore() {
               time: data.time,
             })
 
-            // salva lembrete "agenda" no dia correto (persistência por dateKey)
             const label = data.time ? `${data.time} · ${data.title}` : data.title
             try {
               const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
@@ -835,7 +834,6 @@ export default function WeeklyPlannerCore() {
                 save(`planner/tasks/${data.dateKey}`, [...existing, t])
               }
             } catch {
-              // fallback não quebra fluxo
               setPlannerData((prev) => {
                 const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
                 if (exists) return prev
