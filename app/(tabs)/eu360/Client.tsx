@@ -153,6 +153,15 @@ function readPersonaFromLS(): PersonaResult | null {
 
 function writePersonaToLS(result: PersonaResult) {
   safeSetLS(LS_KEYS.eu360Persona, JSON.stringify(result))
+
+  // ✅ P12: avisa o app (Meu Dia / outros hubs) que a persona mudou — sem reload
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('eu360:persona-updated'))
+    }
+  } catch {
+    // nunca quebra o fluxo
+  }
 }
 
 function StepDot({ active }: { active?: boolean }) {
