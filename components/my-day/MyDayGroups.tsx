@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { track } from '@/app/lib/telemetry'
+import { getEu360DaySignal, type Eu360DaySignal } from '@/app/lib/eu360Signal.client'
 import {
   groupTasks,
   listMyDayTasks,
@@ -27,6 +28,9 @@ const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   'rotina-casa': 'Nem tudo precisa ser feito hoje.',
   outros: 'Talvez isso possa esperar.',
 }
+
+// P9.3 — Ajuste de densidade leve (apenas UI) quando o momento for pesado
+const COLLAPSE_ON_HEAVY: GroupId[] = ['rotina-casa', 'outros']
 
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
@@ -68,9 +72,9 @@ function cx(...classes: Array<string | false | null | undefined>) {
 export function MyDayGroups() {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [eu360Signal, setEu360Signal] = useState<Eu360DaySignal>('ok')
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
-
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const totalCount = useMemo(() => tasks.length, [tasks])
 
@@ -78,9 +82,36 @@ export function MyDayGroups() {
     setTasks(listMyDayTasks())
   }
 
-  // carregar tarefas + telemetria de render
+  function readSignalAndApplyDefaults() {
+    try {
+      const signal = getEu360DaySignal()
+      setEu360Signal(signal)
+
+      // se momento pesado, iniciar alguns grupos colapsados (somente default; usuário pode expandir)
+      if (signal === 'heavy') {
+        setExpanded((prev) => {
+          const next = { ...prev }
+          for (const gid of COLLAPSE_ON_HEAVY) {
+            if (typeof next[gid] === 'undefined') next[gid] = false
+          }
+          return next
+        })
+      }
+    } catch {}
+  }
+
+  // carregar tarefas + telemetria + ler sinal Eu360
   useEffect(() => {
     refresh()
+    readSignalAndApplyDefaults()
+
+    // reler sinal ao voltar para a aba (quando navega Eu360 -> Meu Dia sem hard reload)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') {
+        readSignalAndApplyDefaults()
+      }
+    }
+    document.addEventListener('visibilitychange', onVis)
 
     // telemetria mínima: render do agrupamento (sem conteúdo sensível)
     try {
@@ -89,6 +120,10 @@ export function MyDayGroups() {
       const groupsCount = GROUP_ORDER.filter((id) => (g[id]?.items?.length ?? 0) > 0).length
       track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length })
     } catch {}
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVis)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -155,6 +190,13 @@ export function MyDayGroups() {
           <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">
             O Materna360 organiza para você. Você só escolhe o próximo passo.
           </p>
+
+          {/* P9.3 — frase contextual (apenas quando "heavy") */}
+          {eu360Signal === 'heavy' ? (
+            <p className="mt-2 text-[12px] md:text-[13px] text-white/90 max-w-2xl">
+              Hoje pode ser menos. O essencial já está aqui.
+            </p>
+          ) : null}
         </div>
 
         <div className="hidden md:block text-[12px] text-white/85">
@@ -189,7 +231,12 @@ export function MyDayGroups() {
             const count = sorted.length
             if (count === 0) return null
 
-            const isExpanded = !!expanded[groupId]
+            const defaultExpanded =
+              eu360Signal === 'heavy' ? !COLLAPSE_ON_HEAVY.includes(groupId) : false
+
+            // se expanded[groupId] não foi setado, usa defaultExpanded
+            const isExpanded = typeof expanded[groupId] === 'boolean' ? !!expanded[groupId] : defaultExpanded
+
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
