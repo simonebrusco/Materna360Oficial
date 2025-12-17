@@ -1,9 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { track } from '@/app/lib/telemetry'
-import { getEu360DaySignal, type Eu360DaySignal } from '@/app/lib/eu360Signal.client'
 import {
   groupTasks,
   listMyDayTasks,
@@ -29,8 +28,13 @@ const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   outros: 'Talvez isso possa esperar.',
 }
 
-// P9.3 — Ajuste de densidade leve (apenas UI)
-const COLLAPSE_ON_HEAVY: GroupId[] = ['rotina-casa', 'outros']
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+
+type RecentSavePayload = {
+  ts: number
+  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
+  source?: string
+}
 
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
@@ -69,13 +73,45 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function groupFromOrigin(origin: RecentSavePayload['origin']): GroupId {
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  if (origin === 'today') return 'para-hoje'
+  return 'outros'
+}
+
 export function MyDayGroups() {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [eu360Signal, setEu360Signal] = useState<Eu360DaySignal>('ok')
+  const [recentSave, setRecentSave] = useState<RecentSavePayload | null>(null)
 
-  // P9.4 — feedback leve de continuidade (sem meta/sem score)
-  const [nudged, setNudged] = useState<string | null>(null)
+  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
@@ -85,38 +121,10 @@ export function MyDayGroups() {
     setTasks(listMyDayTasks())
   }
 
-  function readSignalAndApplyDefaults() {
-    try {
-      const signal = getEu360DaySignal()
-      setEu360Signal(signal)
-
-      // se momento pesado, iniciar alguns grupos colapsados (somente default)
-      if (signal === 'heavy') {
-        setExpanded((prev) => {
-          const next = { ...prev }
-          for (const gid of COLLAPSE_ON_HEAVY) {
-            if (typeof next[gid] === 'undefined') next[gid] = false
-          }
-          return next
-        })
-      }
-    } catch {}
-  }
-
-  // carregar tarefas + telemetria + ler sinal Eu360
+  // carregar tarefas + telemetria de render
   useEffect(() => {
     refresh()
-    readSignalAndApplyDefaults()
 
-    // reler sinal ao voltar para a aba (Eu360 -> Meu Dia)
-    const onVis = () => {
-      if (document.visibilityState === 'visible') {
-        readSignalAndApplyDefaults()
-      }
-    }
-    document.addEventListener('visibilitychange', onVis)
-
-    // telemetria mínima: render do agrupamento (sem conteúdo sensível)
     try {
       const current = listMyDayTasks()
       const g = groupTasks(current)
@@ -124,18 +132,25 @@ export function MyDayGroups() {
       track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length })
     } catch {}
 
-    return () => {
-      document.removeEventListener('visibilitychange', onVis)
+    // ler "salvei agora" (até 10 min)
+    const payload = safeParseJSON<RecentSavePayload>(safeGetLS(LS_RECENT_SAVE))
+    if (payload && typeof payload.ts === 'number' && Date.now() - payload.ts <= 10 * 60 * 1000) {
+      setRecentSave(payload)
+
+      const targetGroup = groupFromOrigin(payload.origin)
+      setExpanded((prev) => ({ ...prev, [targetGroup]: true }))
+
+      // scroll leve depois do render
+      window.setTimeout(() => {
+        const el = groupRefs.current[targetGroup]
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 350)
+    } else {
+      safeRemoveLS(LS_RECENT_SAVE)
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // P9.4 — auto-hide do feedback leve
-  useEffect(() => {
-    if (!nudged) return
-    const t = window.setTimeout(() => setNudged(null), 2500)
-    return () => window.clearTimeout(t)
-  }, [nudged])
 
   function toggleGroup(id: GroupId) {
     setExpanded((prev) => {
@@ -153,10 +168,6 @@ export function MyDayGroups() {
       try {
         track('my_day.task.done.toggle', { dateKey, groupId })
       } catch {}
-
-      // P9.4 — mensagem leve de continuidade (sem cobrança)
-      setNudged(eu360Signal === 'heavy' ? 'Ok. Só isso já é bastante hoje.' : 'Ok. Uma coisa a menos na cabeça.')
-
       refresh()
     }
   }
@@ -193,14 +204,6 @@ export function MyDayGroups() {
 
   const hasAny = totalCount > 0
 
-  // P9.4 — “próximo passo” (1ª tarefa active do grupo Para hoje)
-  const nextStep = useMemo(() => {
-    const items = grouped['para-hoje']?.items ?? []
-    const sorted = sortForGroup(items)
-    const firstActive = sorted.find((t) => statusOf(t) === 'active')
-    return firstActive ?? null
-  }, [grouped])
-
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       <div className="flex items-end justify-between gap-3">
@@ -211,13 +214,6 @@ export function MyDayGroups() {
           <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">
             O Materna360 organiza para você. Você só escolhe o próximo passo.
           </p>
-
-          {/* P9.3 — frase contextual (apenas quando "heavy") */}
-          {eu360Signal === 'heavy' ? (
-            <p className="mt-2 text-[12px] md:text-[13px] text-white/90 max-w-2xl">
-              Hoje pode ser menos. O essencial já está aqui.
-            </p>
-          ) : null}
         </div>
 
         <div className="hidden md:block text-[12px] text-white/85">
@@ -229,58 +225,52 @@ export function MyDayGroups() {
         </div>
       </div>
 
-      {/* P9.4 — feedback leve */}
-      {nudged ? (
-        <div className="rounded-2xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-3 text-white/95 text-[12px] shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
-          {nudged}
-        </div>
-      ) : null}
-
-      {/* P9.4 — Seu próximo passo (apenas se existir tarefa active em Para hoje) */}
-      {hasAny && nextStep ? (
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-            border border-[var(--color-border-soft)]
-          "
-        >
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-text-muted)]">
-            Seu próximo passo
+      {/* P9 — vínculo (frase pós-questionário / pós-salvar) */}
+      {recentSave ? (
+        <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 text-white shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+          <p className="text-[13px] md:text-[14px] font-semibold">Salvei pra você.</p>
+          <p className="mt-1 text-[12px] md:text-[13px] text-white/90">
+            Hoje pode ser menos. O essencial já está aqui.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const gid = groupFromOrigin(recentSave.origin)
+                setExpanded((prev) => ({ ...prev, [gid]: true }))
+                window.setTimeout(() => {
+                  const el = groupRefs.current[gid]
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 50)
 
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[14px] text-[var(--color-text-main)] leading-snug break-words">
-                {nextStep.title}
-              </p>
-              <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-                {eu360Signal === 'heavy' ? 'Se hoje der só para isso, já vale.' : 'Só uma coisa por vez.'}
-              </p>
-            </div>
+                try {
+                  track('my_day.recent_save.focus', { dateKey, groupId: gid, origin: recentSave.origin })
+                } catch {}
+              }}
+              className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] font-semibold shadow-lg transition"
+            >
+              Ver onde caiu
+            </button>
 
             <button
-              onClick={() => onDone(nextStep.id, 'para-hoje')}
-              className="shrink-0 rounded-full bg-[#fd2597] text-white shadow-lg px-4 py-2 text-[12px] font-semibold"
+              type="button"
+              onClick={() => {
+                setRecentSave(null)
+                safeRemoveLS(LS_RECENT_SAVE)
+                try {
+                  track('my_day.recent_save.dismiss', { dateKey })
+                } catch {}
+              }}
+              className="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 transition"
             >
-              Fazer agora
+              Ok
             </button>
           </div>
         </div>
       ) : null}
 
       {!hasAny ? (
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-            border border-[var(--color-border-soft)]
-          "
-        >
+        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
           <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
             Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
@@ -294,24 +284,17 @@ export function MyDayGroups() {
             const count = sorted.length
             if (count === 0) return null
 
-            const defaultExpanded =
-              eu360Signal === 'heavy' ? !COLLAPSE_ON_HEAVY.includes(groupId) : false
-
-            const isExpanded = typeof expanded[groupId] === 'boolean' ? !!expanded[groupId] : defaultExpanded
-
+            const isExpanded = !!expanded[groupId]
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
             return (
               <div
                 key={groupId}
-                className="
-                  bg-white
-                  rounded-3xl
-                  p-6
-                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                  border border-[var(--color-border-soft)]
-                "
+                ref={(el) => {
+                  groupRefs.current[groupId] = el
+                }}
+                className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -330,19 +313,7 @@ export function MyDayGroups() {
                     </p>
                   </div>
 
-                  <span
-                    className="
-                      inline-flex items-center justify-center
-                      min-w-[44px]
-                      rounded-full
-                      border border-[var(--color-border-soft)]
-                      px-3 py-1
-                      text-[12px]
-                      font-semibold
-                      text-[var(--color-text-main)]
-                      bg-white
-                    "
-                  >
+                  <span className="inline-flex items-center justify-center min-w-[44px] rounded-full border border-[var(--color-border-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--color-text-main)] bg-white">
                     {count}
                   </span>
                 </div>
@@ -385,7 +356,6 @@ export function MyDayGroups() {
                         </div>
 
                         <div className="shrink-0 flex flex-col items-end gap-2">
-                          {/* CTA principal */}
                           {s !== 'done' ? (
                             <button
                               onClick={() => onDone(t.id, groupId)}
@@ -402,7 +372,6 @@ export function MyDayGroups() {
                             </button>
                           )}
 
-                          {/* Ações leves */}
                           <div className="flex items-center gap-2">
                             {s === 'snoozed' ? (
                               <button
