@@ -13,6 +13,8 @@ import { Reveal } from '@/components/ui/Reveal'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
 import LegalFooter from '@/components/common/LegalFooter'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getEu360FortnightLine } from '@/app/lib/continuity.client'
 
 type WeeklyInsight = {
   title: string
@@ -287,6 +289,9 @@ export default function Eu360Client() {
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
 
+  // P13 — continuidade quinzenal (sem números, sem insistência)
+  const [fortnightLine, setFortnightLine] = useState<string>('')
+
   useEffect(() => {
     const saved = readPersonaFromLS()
     if (saved) {
@@ -312,6 +317,23 @@ export default function Eu360Client() {
     }
     return { id: personaPreview.persona, label: personaPreview.label, microCopy: personaPreview.microCopy }
   }, [personaResult, personaPreview])
+
+  // P13 — linha quinzenal (dependente de tone)
+  useEffect(() => {
+    const dateKey = getBrazilDateKey(new Date())
+
+    // Mapeamento de persona -> tone (coerente com P12/P13, sem exigir novo schema)
+    // - sobrevivência/organização/conexão: gentil
+    // - equilíbrio/expansão: direto (mais objetivo, sem cobrança)
+    const tone = (personaForAi?.id === 'equilibrio' || personaForAi?.id === 'expansao') ? 'direto' : 'gentil'
+
+    try {
+      const res = getEu360FortnightLine({ dateKey, tone })
+      setFortnightLine(res?.text ?? '')
+    } catch {
+      setFortnightLine('')
+    }
+  }, [personaForAi])
 
   useEffect(() => {
     let isMounted = true
@@ -715,6 +737,14 @@ export default function Eu360Client() {
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
                           {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
+
+                        {/* P13 — Continuidade quinzenal (discreta, sem números) */}
+                        {!!fortnightLine && (
+                          <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
+                            {fortnightLine}
+                          </p>
+                        )}
+
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
                           {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com mais gentileza — não para te cobrar.
                         </p>

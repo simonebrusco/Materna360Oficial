@@ -8,6 +8,7 @@ import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
 import type { TaskItem, TaskOrigin } from '@/app/lib/myDayTasks.client'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
+import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { SoftCard } from '@/components/ui/card'
@@ -187,6 +188,9 @@ export default function WeeklyPlannerCore() {
   const [showAllReminders, setShowAllReminders] = useState(false)
   const [showAllAppointments, setShowAllAppointments] = useState(false)
 
+  // P13 — Continuidade (1x/dia, só hoje, sem cobrança)
+  const [continuityLine, setContinuityLine] = useState<string>('')
+
   const isGentleTone = euSignal.tone === 'gentil'
 
   const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
@@ -294,6 +298,31 @@ export default function WeeklyPlannerCore() {
     if (!isHydrated || !selectedDateKey) return
     save(`planner/notes/${selectedDateKey}`, plannerData.notes)
   }, [plannerData.notes, selectedDateKey, isHydrated])
+
+  // ======================================================
+  // P13 — Continuidade (só para HOJE)
+  // ======================================================
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
+  useEffect(() => {
+    if (!isHydrated) return
+
+    // Só mostra continuidade no dia atual (centro operacional do "agora")
+    if (!selectedDateKey || selectedDateKey !== todayKey) {
+      setContinuityLine('')
+      return
+    }
+
+    try {
+      const res = getMyDayContinuityLine({
+        dateKey: todayKey,
+        tone: euSignal.tone ?? 'gentil',
+      })
+      setContinuityLine(res?.text ?? '')
+    } catch {
+      setContinuityLine('')
+    }
+  }, [isHydrated, selectedDateKey, todayKey, euSignal.tone])
 
   // ======================================================
   // ACTIONS
@@ -435,8 +464,6 @@ export default function WeeklyPlannerCore() {
 
   const monthMatrix = useMemo(() => generateMonthMatrix(monthCursor), [monthCursor])
 
-  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
-
   if (!isHydrated) return null
 
   // ======================================================
@@ -515,6 +542,13 @@ export default function WeeklyPlannerCore() {
                     {euSignal.showLessLine && (
                       <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
                         {lessLine}
+                      </p>
+                    )}
+
+                    {/* P13 — continuidade (discreta, 1x/dia, só hoje) */}
+                    {!!continuityLine && (
+                      <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
+                        {continuityLine}
                       </p>
                     )}
                   </div>
@@ -931,7 +965,12 @@ export default function WeeklyPlannerCore() {
                 setPlannerData((prev) => {
                   const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
                   if (exists) return prev
-                  const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
+                  const t: TaskItem = {
+                    id: safeId(),
+                    title: (label ?? '').trim() || 'Tarefa',
+                    done: false,
+                    origin: 'agenda',
+                  }
                   return { ...prev, tasks: [...prev.tasks, t] }
                 })
               }

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
+
 import { track } from '@/app/lib/telemetry'
 import {
   groupTasks,
@@ -14,23 +15,19 @@ import {
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
+import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
 
 type GroupId = keyof GroupedTasks
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
-const LIMIT = 5
+const DEFAULT_LIMIT = 5
 
 // P9 — sinal de “acabou de salvar” (vem do Maternar/Meu Dia Leve)
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
-
-function safeDateKey(d = new Date()) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 function safeGetLS(key: string): string | null {
   try {
@@ -201,16 +198,61 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [recentBanner, setRecentBanner] = useState(false)
   const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
 
-  const dateKey = useMemo(() => safeDateKey(new Date()), [])
+  // P12 — sinal reativo (tone + listLimit)
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+
+  // P13 — linha de continuidade (no máximo 1x/dia)
+  const [continuityLine, setContinuityLine] = useState<string | null>(null)
+
+  // ✅ padroniza com “Brasil” igual o resto do app
+  const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const totalCount = useMemo(() => tasks.length, [tasks])
 
   const personaId = useMemo(() => getPersonaId(aiContext), [aiContext])
   const copy = useMemo(() => microcopyForPersona(personaId), [personaId])
 
+  const listLimit = useMemo(() => {
+    const n = Number(euSignal?.listLimit)
+    const resolved = Number.isFinite(n) ? n : DEFAULT_LIMIT
+    return Math.max(1, resolved || DEFAULT_LIMIT)
+  }, [euSignal])
+
   function refresh() {
     setTasks(listMyDayTasks())
   }
+
+  // P12 — atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
+  useEffect(() => {
+    const refreshSignal = () => {
+      try {
+        setEuSignal(getEu360Signal())
+      } catch {
+        // nunca quebra render
+      }
+    }
+
+    const onStorage = (_e: StorageEvent) => {
+      refreshSignal()
+    }
+
+    const onCustom = () => {
+      refreshSignal()
+    }
+
+    try {
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+      } catch {}
+    }
+  }, [])
 
   // carregar tarefas + telemetria de render
   useEffect(() => {
@@ -224,6 +266,17 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // P13 — calcular a frase de continuidade (1x/dia, nunca no primeiro uso)
+  useEffect(() => {
+    try {
+      const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
+      const line = getMyDayContinuityLine({ dateKey, tone })
+      setContinuityLine(line?.text ?? null)
+    } catch {
+      setContinuityLine(null)
+    }
+  }, [dateKey, euSignal?.tone])
 
   // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
   useEffect(() => {
@@ -311,6 +364,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         <div>
           <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">{copy.headerTitle}</h3>
           <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">{copy.headerSubtitle}</p>
+
+          {/* P13 — Micro-frase de continuidade (1 por dia, no máximo) */}
+          {continuityLine ? (
+            <p className="mt-2 text-[12px] md:text-[13px] text-white/80 max-w-2xl">{continuityLine}</p>
+          ) : null}
         </div>
 
         <div className="hidden md:block text-[12px] text-white/85">
@@ -322,7 +380,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         </div>
       </div>
 
-      {/* Banner pós-salvar (agora adaptativo por persona) */}
+      {/* Banner pós-salvar (adaptativo por persona) */}
       {recentBanner ? (
         <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
           <p className="text-[13px] md:text-[14px] font-semibold text-white">{copy.bannerTitle}</p>
@@ -346,8 +404,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
             if (count === 0) return null
 
             const isExpanded = !!expanded[groupId]
-            const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
-            const hasMore = count > LIMIT
+            const visible = isExpanded ? sorted : sorted.slice(0, listLimit)
+            const hasMore = count > listLimit
             const isHighlighted = highlightGroup === groupId
 
             return (
