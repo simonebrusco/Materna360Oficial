@@ -189,11 +189,17 @@ export default function WeeklyPlannerCore() {
 
   const isGentleTone = euSignal.tone === 'gentil'
 
+  // Labels dos atalhos (tom)
   const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
   const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
   const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
   const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
 
+  // CTA “mostrar mais/menos” (tom)
+  const ctaShowMore = isGentleTone ? 'Mostrar o restante quando fizer sentido' : 'Ver mais itens'
+  const ctaShowLess = isGentleTone ? 'Voltar para a versão leve' : 'Ver menos itens'
+
+  // Microcopy extra (ritmo)
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
   // Atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
@@ -207,8 +213,10 @@ export default function WeeklyPlannerCore() {
     }
 
     const onStorage = (e: StorageEvent) => {
-      // Se eu360Signals trocar a key, aqui ainda é seguro: refresh geral sem custo.
-      if (!e) return
+      // P12: filtra por key para evitar refresh desnecessário do Meu Dia
+      try {
+        if (e && e.key && e.key !== 'eu360_persona_v1') return
+      } catch {}
       refresh()
     }
 
@@ -518,9 +526,7 @@ export default function WeeklyPlannerCore() {
                     </p>
 
                     {euSignal.showLessLine && (
-                      <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
-                        {lessLine}
-                      </p>
+                      <p className="text-[11px] text-[var(--color-text-muted)] mt-2">{lessLine}</p>
                     )}
                   </div>
 
@@ -537,7 +543,9 @@ export default function WeeklyPlannerCore() {
                 <div className="space-y-2">
                   {plannerData.tasks.length === 0 ? (
                     <p className="text-xs text-[var(--color-text-muted)]">
-                      Ainda não há lembretes para hoje. Use os atalhos abaixo ou registre algo que faça sentido para a sua rotina.
+                      {isGentleTone
+                        ? 'Ainda não há lembretes para hoje. Se fizer sentido, use um atalho abaixo.'
+                        : 'Ainda não há lembretes para hoje. Use os atalhos abaixo para começar.'}
                     </p>
                   ) : (
                     (() => {
@@ -578,7 +586,7 @@ export default function WeeklyPlannerCore() {
                               onClick={() => setShowAllReminders(true)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              Mostrar o restante quando fizer sentido
+                              {ctaShowMore}
                             </button>
                           )}
 
@@ -588,7 +596,7 @@ export default function WeeklyPlannerCore() {
                               onClick={() => setShowAllReminders(false)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              Voltar para a versão leve
+                              {ctaShowLess}
                             </button>
                           )}
                         </>
@@ -600,7 +608,7 @@ export default function WeeklyPlannerCore() {
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => addTask('O que realmente importa hoje', 'top3')}
+                    onClick={() => addTask(shortcutLabelTop3, 'top3')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelTop3}
@@ -616,7 +624,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() => addTask('Pequenos gestos de autocuidado', 'selfcare')}
+                    onClick={() => addTask(shortcutLabelSelfcare, 'selfcare')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelSelfcare}
@@ -624,7 +632,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() => addTask('Momentos e cuidados importantes', 'family')}
+                    onClick={() => addTask(shortcutLabelFamily, 'family')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelFamily}
@@ -661,7 +669,9 @@ export default function WeeklyPlannerCore() {
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {sortedAppointments.length === 0 ? (
-                    <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {isGentleTone ? 'Se quiser, registre um combinado simples.' : 'Você ainda não marcou nenhum compromisso.'}
+                    </p>
                   ) : (
                     (() => {
                       const limit = Math.max(1, Number(euSignal.listLimit) || 5)
@@ -703,7 +713,7 @@ export default function WeeklyPlannerCore() {
                               onClick={() => setShowAllAppointments(true)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              Mostrar o restante quando fizer sentido
+                              {ctaShowMore}
                             </button>
                           )}
 
@@ -713,7 +723,7 @@ export default function WeeklyPlannerCore() {
                               onClick={() => setShowAllAppointments(false)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
-                              Voltar para a versão leve
+                              {ctaShowLess}
                             </button>
                           )}
                         </>
@@ -740,7 +750,9 @@ export default function WeeklyPlannerCore() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold text-[var(--color-text-main)]">{selectedDate.toLocaleDateString('pt-BR')}</div>
+              <div className="text-sm font-semibold text-[var(--color-text-main)]">
+                {selectedDate.toLocaleDateString('pt-BR')}
+              </div>
 
               <button
                 type="button"
@@ -772,7 +784,9 @@ export default function WeeklyPlannerCore() {
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Calendário</p>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                    Calendário
+                  </p>
                   <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
                     {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h3>
@@ -906,14 +920,24 @@ export default function WeeklyPlannerCore() {
               const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
               const exists = existing.some((t) => t.origin === 'agenda' && t.title === label)
               if (!exists) {
-                const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
+                const t: TaskItem = {
+                  id: safeId(),
+                  title: (label ?? '').trim() || 'Tarefa',
+                  done: false,
+                  origin: 'agenda',
+                }
                 save(`planner/tasks/${data.dateKey}`, [...existing, t])
               }
             } catch {
               setPlannerData((prev) => {
                 const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
                 if (exists) return prev
-                const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
+                const t: TaskItem = {
+                  id: safeId(),
+                  title: (label ?? '').trim() || 'Tarefa',
+                  done: false,
+                  origin: 'agenda',
+                }
                 return { ...prev, tasks: [...prev.tasks, t] }
               })
             }
