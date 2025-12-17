@@ -78,10 +78,8 @@ export function MyDayGroups() {
   const totalCount = useMemo(() => tasks.length, [tasks])
 
   const yesterdayTasks = useMemo(() => {
-    // Nota: listMyDayTasks já auto-normaliza (id/createdAt/status) e auto-unsnooze quando necessário
     const all = listMyDayTasks(yesterday)
     const remaining = all.filter((t) => statusOf(t) !== 'done')
-    // ordem previsível
     return sortForGroup(remaining)
   }, [yesterday])
 
@@ -91,11 +89,9 @@ export function MyDayGroups() {
     setTasks(listMyDayTasks())
   }
 
-  // carregar tarefas + telemetria de render
   useEffect(() => {
     refresh()
 
-    // telemetria mínima: render do agrupamento (sem conteúdo sensível)
     try {
       const current = listMyDayTasks()
       const g = groupTasks(current)
@@ -155,7 +151,6 @@ export function MyDayGroups() {
     }
   }
 
-  // P9.1 — trazer tarefa de ontem para hoje (sem mover o passado)
   function bringToToday(t: MyDayTaskItem) {
     const res = addTaskToMyDay({
       title: t.title,
@@ -165,7 +160,6 @@ export function MyDayGroups() {
     })
 
     if (res.ok) {
-      // marca localmente para feedback visual imediato
       setContinuityAdded((prev) => ({ ...prev, [t.id]: true }))
       refresh()
     }
@@ -290,9 +284,7 @@ export function MyDayGroups() {
           </div>
 
           {yesterdayTasks.length > CONTINUITY_LIMIT ? (
-            <p className="mt-4 text-[12px] text-[var(--color-text-muted)]">
-              Mostrando só o essencial agora.
-            </p>
+            <p className="mt-4 text-[12px] text-[var(--color-text-muted)]">Mostrando só o essencial agora.</p>
           ) : null}
         </div>
       ) : null}
@@ -401,7 +393,6 @@ export function MyDayGroups() {
                         </div>
 
                         <div className="shrink-0 flex flex-col items-end gap-2">
-                          {/* CTA principal */}
                           {s !== 'done' ? (
                             <button
                               onClick={() => onDone(t.id, groupId)}
@@ -418,7 +409,6 @@ export function MyDayGroups() {
                             </button>
                           )}
 
-                          {/* Ações leves */}
                           <div className="flex items-center gap-2">
                             {s === 'snoozed' ? (
                               <button
