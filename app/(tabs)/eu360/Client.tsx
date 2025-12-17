@@ -13,7 +13,9 @@ import { Reveal } from '@/components/ui/Reveal'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
 import LegalFooter from '@/components/common/LegalFooter'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
+
+// ✅ P14
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getEu360FortnightLine } from '@/app/lib/continuity.client'
 
 type WeeklyInsight = {
@@ -83,6 +85,14 @@ function safeParseJSON<T>(raw: string | null): T | null {
   } catch {
     return null
   }
+}
+
+// ✅ P14 (dateKey simples, client-only)
+function safeDateKey(d = new Date()) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function computePersona(answers: QuestionnaireAnswers): PersonaId {
@@ -220,7 +230,7 @@ async function fetchWeeklyInsight(context: WeeklyInsightContext): Promise<Weekly
       body: JSON.stringify({
         feature: 'weekly_overview',
         origin: 'eu360',
-        context, // ✅ aqui já vai com persona também
+        context,
       }),
     })
 
@@ -289,8 +299,10 @@ export default function Eu360Client() {
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
 
-  // P13 — continuidade quinzenal (sem números, sem insistência)
-  const [fortnightLine, setFortnightLine] = useState<string>('')
+  // ✅ P14 — signal + linha quinzenal
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+  const [fortnightLine, setFortnightLine] = useState<string | null>(null)
+  const dateKey = useMemo(() => safeDateKey(new Date()), [])
 
   useEffect(() => {
     const saved = readPersonaFromLS()
@@ -318,22 +330,42 @@ export default function Eu360Client() {
     return { id: personaPreview.persona, label: personaPreview.label, microCopy: personaPreview.microCopy }
   }, [personaResult, personaPreview])
 
-  // P13 — linha quinzenal (dependente de tone)
+  // ✅ P14 — re-hidrata signal quando persona mudar (storage + custom event)
   useEffect(() => {
-    const dateKey = getBrazilDateKey(new Date())
+    const refresh = () => {
+      try {
+        setEuSignal(getEu360Signal())
+      } catch {
+        // nunca quebra
+      }
+    }
 
-    // Mapeamento de persona -> tone (coerente com P12/P13, sem exigir novo schema)
-    // - sobrevivência/organização/conexão: gentil
-    // - equilíbrio/expansão: direto (mais objetivo, sem cobrança)
-    const tone = (personaForAi?.id === 'equilibrio' || personaForAi?.id === 'expansao') ? 'direto' : 'gentil'
+    const onStorage = (_e: StorageEvent) => refresh()
+    const onCustom = () => refresh()
 
     try {
-      const res = getEu360FortnightLine({ dateKey, tone })
-      setFortnightLine(res?.text ?? '')
-    } catch {
-      setFortnightLine('')
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+      } catch {}
     }
-  }, [personaForAi])
+  }, [])
+
+  // ✅ P14 — calcula linha quinzenal (1x/14 dias, respeita regras internas)
+  useEffect(() => {
+    try {
+      const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
+      const line = getEu360FortnightLine({ dateKey, tone })
+      setFortnightLine(line?.text ?? null)
+    } catch {
+      setFortnightLine(null)
+    }
+  }, [dateKey, euSignal])
 
   useEffect(() => {
     let isMounted = true
@@ -344,7 +376,7 @@ export default function Eu360Client() {
         const result = await fetchWeeklyInsight({
           firstName,
           stats,
-          persona: personaForAi, // ✅ aqui entra a persona no contexto
+          persona: personaForAi,
         })
         if (isMounted) setWeeklyInsight(result)
       } finally {
@@ -458,6 +490,13 @@ export default function Eu360Client() {
                     <p className="text-[12px] text-white/85 leading-relaxed">
                       {personaResult ? personaResult.microCopy : personaPreview.microCopy}
                     </p>
+
+                    {/* ✅ P14 — continuidade quinzenal (leve, 1x/14 dias) */}
+                    {fortnightLine ? (
+                      <p className="mt-2 text-[12px] text-white/80 leading-relaxed">
+                        {fortnightLine}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -737,14 +776,6 @@ export default function Eu360Client() {
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
                           {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
-
-                        {/* P13 — Continuidade quinzenal (discreta, sem números) */}
-                        {!!fortnightLine && (
-                          <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
-                            {fortnightLine}
-                          </p>
-                        )}
-
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
                           {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com mais gentileza — não para te cobrar.
                         </p>
