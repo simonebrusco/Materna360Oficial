@@ -1,5 +1,7 @@
 'use client'
 
+import { safeGetLS, safeParseJSON } from '@/app/lib/storageSafe'
+
 export type AiPersonaContext = {
   persona?: string
   personaLabel?: string
@@ -15,32 +17,20 @@ export type AiContext = {
   persona?: AiPersonaContext
 }
 
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
 export function buildAiContext(source: AiContext['source']): AiContext {
   const personaRaw = safeGetLS('eu360_persona_v1')
   const mood = safeGetLS('eu360_mood')
   const daySlot = safeGetLS('eu360_day_slot')
   const focusToday = safeGetLS('eu360_focus_today')
 
-  let persona: AiPersonaContext | undefined
+  const parsed = safeParseJSON<{
+    persona?: string
+    label?: string
+    updatedAtISO?: string
+  }>(personaRaw)
 
-  try {
-    if (personaRaw) {
-      const parsed = JSON.parse(personaRaw) as {
-        persona?: string
-        label?: string
-        updatedAtISO?: string
-      }
-
-      persona = {
+  const persona: AiPersonaContext | undefined = parsed
+    ? {
         persona: parsed.persona,
         personaLabel: parsed.label,
         lastUpdated: parsed.updatedAtISO,
@@ -48,10 +38,7 @@ export function buildAiContext(source: AiContext['source']): AiContext {
         daySlot: daySlot ?? undefined,
         focusToday: focusToday ?? undefined,
       }
-    }
-  } catch {
-    persona = undefined
-  }
+    : undefined
 
   return {
     source,
