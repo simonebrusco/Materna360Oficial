@@ -13,50 +13,17 @@ import {
   type GroupedTasks,
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
+import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
 type GroupId = keyof GroupedTasks
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const LIMIT = 5
 
-// P9 — micro orientação por bloco
-const GROUP_HINTS: Partial<Record<GroupId, string>> = {
-  'para-hoje': 'Se der, escolha só uma coisa.',
-  familia: 'Um pequeno gesto já conta.',
-  autocuidado: 'Cuidar de você pode ser simples.',
-  'rotina-casa': 'Nem tudo precisa ser feito hoje.',
-  outros: 'Talvez isso possa esperar.',
-}
-
 // P9 — sinal de “acabou de salvar” (vem do Maternar/Meu Dia Leve)
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
-
-type RecentSavePayload = {
-  ts: number
-  origin: TaskOrigin
-  source: string
-}
-
-/**
- * P11 — Contexto leve para personalização progressiva
- * (o buildAiContext retorna isso)
- */
-export type AiPersonaContext = {
-  persona?: string
-  label?: string
-  microCopy?: string
-  updatedAtISO?: string
-}
-
-export type AiLightContext = {
-  persona?: AiPersonaContext
-  mood?: string | null
-  energy?: string | null
-  focusToday?: string | null
-  slot?: string | null
-}
+type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
 
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
@@ -128,6 +95,104 @@ function groupIdFromOrigin(origin: TaskOrigin): GroupId {
   return 'outros'
 }
 
+/**
+ * Normaliza persona de um AiLightContext sem “quebrar” tipagem caso o shape evolua.
+ * Aceita tanto `persona` como string quanto objeto (ex.: { persona: '...', label: '...' }).
+ */
+function getPersonaId(aiContext?: AiLightContext): string | undefined {
+  const p: any = (aiContext as any)?.persona
+  if (!p) return undefined
+  if (typeof p === 'string') return p
+  if (typeof p === 'object' && typeof p.persona === 'string') return p.persona
+  return undefined
+}
+
+function microcopyForPersona(persona?: string) {
+  // Defaults (neutro)
+  const base = {
+    headerTitle: 'Seu dia, em blocos mais leves',
+    headerSubtitle: 'O Materna360 organiza para você. Você só escolhe o próximo passo.',
+    bannerTitle: 'Hoje pode ser menos. O essencial já está aqui.',
+    bannerBody: 'Eu coloquei no bloco certo para você não precisar procurar.',
+    groupHints: {
+      'para-hoje': 'Se der, escolha só uma coisa.',
+      familia: 'Um pequeno gesto já conta.',
+      autocuidado: 'Cuidar de você pode ser simples.',
+      'rotina-casa': 'Nem tudo precisa ser feito hoje.',
+      outros: 'Talvez isso possa esperar.',
+    } as Partial<Record<GroupId, string>>,
+  }
+
+  // Ajustes sutis por fase (sem “cara de IA”)
+  if (persona === 'sobrevivencia') {
+    return {
+      ...base,
+      headerSubtitle: 'Hoje é sobre passar pelo dia com menos peso. Um passo já ajuda.',
+      bannerTitle: 'Sem pressa. Um passo de cada vez.',
+      bannerBody: 'Eu deixei isso no lugar certo. Você não precisa resolver tudo agora.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Só uma coisa. O resto pode esperar.',
+        autocuidado: 'O mínimo já é cuidado.',
+        'rotina-casa': 'Hoje, o suficiente já é muito.',
+      },
+    }
+  }
+
+  if (persona === 'organizacao') {
+    return {
+      ...base,
+      headerSubtitle: 'Vamos tirar ruído: olhar o essencial primeiro já organiza a cabeça.',
+      bannerBody: 'Eu já organizei por blocos para você decidir com mais clareza.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Comece pelo que destrava o dia.',
+        'rotina-casa': 'Um ponto da casa por vez.',
+      },
+    }
+  }
+
+  if (persona === 'conexao') {
+    return {
+      ...base,
+      headerSubtitle: 'Leveza com presença: pequenas escolhas mudam o clima da rotina.',
+      groupHints: {
+        ...base.groupHints,
+        familia: 'Pequeno e intencional vale muito.',
+        autocuidado: 'Um respiro curto já muda o tom.',
+      },
+    }
+  }
+
+  if (persona === 'equilibrio') {
+    return {
+      ...base,
+      headerSubtitle: 'Você está encontrando ritmo. Vamos manter constância gentil.',
+      bannerTitle: 'Bom. Agora é seguir no seu ritmo.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Prioridade clara, execução leve.',
+      },
+    }
+  }
+
+  if (persona === 'expansao') {
+    return {
+      ...base,
+      headerSubtitle: 'Você tem energia para avançar. Vamos canalizar isso com clareza.',
+      bannerTitle: 'Boa. Vamos usar essa energia com foco.',
+      bannerBody: 'Eu coloquei no bloco certo para você agir sem dispersar.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Acerte uma coisa importante agora.',
+        outros: 'Se for relevante, traga para hoje.',
+      },
+    }
+  }
+
+  return base
+}
+
 export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -140,9 +205,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const totalCount = useMemo(() => tasks.length, [tasks])
 
-  // P11 (opcional): se você quiser usar depois
-  const personaId = aiContext?.persona?.persona
-  void personaId
+  const personaId = useMemo(() => getPersonaId(aiContext), [aiContext])
+  const copy = useMemo(() => microcopyForPersona(personaId), [personaId])
 
   function refresh() {
     setTasks(listMyDayTasks())
@@ -156,7 +220,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
       const current = listMyDayTasks()
       const g = groupTasks(current)
       const groupsCount = GROUP_ORDER.filter((id) => (g[id]?.items?.length ?? 0) > 0).length
-      track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length })
+      track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length, persona: personaId ?? null })
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -167,7 +231,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const payload = safeParseJSON<RecentSavePayload>(raw)
     if (!payload?.ts || !payload.origin) return
 
-    // validade curta (evita reaparecer horas depois)
     const ageMs = Date.now() - payload.ts
     if (ageMs > 2 * 60_000) {
       safeRemoveLS(LS_RECENT_SAVE)
@@ -176,15 +239,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
     const gid = groupIdFromOrigin(payload.origin)
 
-    // mostra banner + abre grupo + destaca
     setRecentBanner(true)
     setHighlightGroup(gid)
     setExpanded((prev) => ({ ...prev, [gid]: true }))
 
-    // limpa sinal para não repetir
     safeRemoveLS(LS_RECENT_SAVE)
 
-    // apaga destaque depois de alguns segundos
     const t1 = window.setTimeout(() => setRecentBanner(false), 6500)
     const t2 = window.setTimeout(() => setHighlightGroup(null), 6500)
     return () => {
@@ -197,7 +257,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setExpanded((prev) => {
       const next = { ...prev, [id]: !prev[id] }
       try {
-        track('my_day.group.expand', { dateKey, groupId: id })
+        track('my_day.group.expand', { dateKey, groupId: id, persona: personaId ?? null })
       } catch {}
       return next
     })
@@ -207,7 +267,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const res = toggleDone(taskId)
     if (res.ok) {
       try {
-        track('my_day.task.done.toggle', { dateKey, groupId })
+        track('my_day.task.done.toggle', { dateKey, groupId, persona: personaId ?? null })
       } catch {}
       refresh()
     }
@@ -217,7 +277,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const res = snoozeTask(taskId, 1)
     if (res.ok) {
       try {
-        track('my_day.task.snooze', { dateKey, groupId, days: 1 })
+        track('my_day.task.snooze', { dateKey, groupId, days: 1, persona: personaId ?? null })
       } catch {}
       refresh()
     }
@@ -227,7 +287,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const res = unsnoozeTask(taskId)
     if (res.ok) {
       try {
-        track('my_day.task.snooze', { dateKey, groupId, days: 0 })
+        track('my_day.task.snooze', { dateKey, groupId, days: 0, persona: personaId ?? null })
       } catch {}
       refresh()
     }
@@ -237,7 +297,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const res = removeTask(taskId)
     if (res.ok) {
       try {
-        track('my_day.task.remove', { dateKey, groupId })
+        track('my_day.task.remove', { dateKey, groupId, persona: personaId ?? null })
       } catch {}
       refresh()
     }
@@ -249,12 +309,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">
-            Seu dia, em blocos mais leves
-          </h3>
-          <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">
-            O Materna360 organiza para você. Você só escolhe o próximo passo.
-          </p>
+          <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">{copy.headerTitle}</h3>
+          <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">{copy.headerSubtitle}</p>
         </div>
 
         <div className="hidden md:block text-[12px] text-white/85">
@@ -266,28 +322,16 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         </div>
       </div>
 
-      {/* P9 — banner de acolhimento pós-salvar */}
+      {/* Banner pós-salvar (agora adaptativo por persona) */}
       {recentBanner ? (
         <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
-          <p className="text-[13px] md:text-[14px] font-semibold text-white">
-            Hoje pode ser menos. O essencial já está aqui.
-          </p>
-          <p className="mt-1 text-[12px] text-white/85">
-            Eu coloquei no bloco certo para você não precisar procurar.
-          </p>
+          <p className="text-[13px] md:text-[14px] font-semibold text-white">{copy.bannerTitle}</p>
+          <p className="mt-1 text-[12px] text-white/85">{copy.bannerBody}</p>
         </div>
       ) : null}
 
       {!hasAny ? (
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-            border border-[var(--color-border-soft)]
-          "
-        >
+        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
           <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
             Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
@@ -304,7 +348,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
             const isExpanded = !!expanded[groupId]
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
-
             const isHighlighted = highlightGroup === groupId
 
             return (
@@ -329,8 +372,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                       {group.title}
                     </h4>
 
-                    {GROUP_HINTS[groupId] ? (
-                      <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{GROUP_HINTS[groupId]}</p>
+                    {copy.groupHints[groupId] ? (
+                      <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{copy.groupHints[groupId]}</p>
                     ) : null}
 
                     <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
