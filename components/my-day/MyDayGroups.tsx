@@ -4,12 +4,14 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { track } from '@/app/lib/telemetry'
 import {
+  addTaskToMyDay,
   groupTasks,
   listMyDayTasks,
   removeTask,
   snoozeTask,
   toggleDone,
   unsnoozeTask,
+  MY_DAY_SOURCES,
   type GroupedTasks,
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
@@ -18,6 +20,7 @@ type GroupId = keyof GroupedTasks
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const LIMIT = 5
+const CONTINUITY_LIMIT = 3
 
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
@@ -56,15 +59,33 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
+function yesterdayDate() {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return d
+}
+
 export function MyDayGroups() {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [continuityAdded, setContinuityAdded] = useState<Record<string, boolean>>({})
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
+  const yesterday = useMemo(() => yesterdayDate(), [])
+  const yesterdayKey = useMemo(() => safeDateKey(yesterday), [yesterday])
 
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
-
   const totalCount = useMemo(() => tasks.length, [tasks])
+
+  const yesterdayTasks = useMemo(() => {
+    // Nota: listMyDayTasks já auto-normaliza (id/createdAt/status) e auto-unsnooze quando necessário
+    const all = listMyDayTasks(yesterday)
+    const remaining = all.filter((t) => statusOf(t) !== 'done')
+    // ordem previsível
+    return sortForGroup(remaining)
+  }, [yesterday])
+
+  const continuity = useMemo(() => yesterdayTasks.slice(0, CONTINUITY_LIMIT), [yesterdayTasks])
 
   function refresh() {
     setTasks(listMyDayTasks())
@@ -134,7 +155,24 @@ export function MyDayGroups() {
     }
   }
 
+  // P9.1 — trazer tarefa de ontem para hoje (sem mover o passado)
+  function bringToToday(t: MyDayTaskItem) {
+    const res = addTaskToMyDay({
+      title: t.title,
+      origin: t.origin ?? 'other',
+      source: t.source ?? MY_DAY_SOURCES.UNKNOWN,
+      date: new Date(),
+    })
+
+    if (res.ok) {
+      // marca localmente para feedback visual imediato
+      setContinuityAdded((prev) => ({ ...prev, [t.id]: true }))
+      refresh()
+    }
+  }
+
   const hasAny = totalCount > 0
+  const hasContinuity = continuity.length > 0
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
@@ -156,6 +194,108 @@ export function MyDayGroups() {
           ) : null}
         </div>
       </div>
+
+      {/* P9.1 — CONTINUIDADE LEVE */}
+      {hasContinuity ? (
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            p-6
+            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+            border border-[var(--color-border-soft)]
+          "
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
+                Continua daqui
+              </h4>
+              <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
+                Ontem ({yesterdayKey}) ficou algo aberto. Se fizer sentido, traga só uma coisa para hoje.
+              </p>
+            </div>
+
+            <span
+              className="
+                inline-flex items-center justify-center
+                min-w-[44px]
+                rounded-full
+                border border-[var(--color-border-soft)]
+                px-3 py-1
+                text-[12px]
+                font-semibold
+                text-[var(--color-text-main)]
+                bg-white
+              "
+            >
+              {yesterdayTasks.length}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {continuity.map((t) => {
+              const s = statusOf(t)
+              const wasAdded = !!continuityAdded[t.id]
+
+              return (
+                <div
+                  key={t.id}
+                  className={cx(
+                    'flex items-start justify-between gap-3 rounded-2xl border px-4 py-3',
+                    'border-[var(--color-border-soft)]',
+                    s === 'done' && 'opacity-70'
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="text-[14px] text-[var(--color-text-main)] leading-snug break-words">
+                      {t.title}
+                    </p>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-[12px] text-[var(--color-text-muted)]">de ontem</span>
+
+                      {s === 'snoozed' ? (
+                        <span className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[#ffe1f1] px-3 py-1 text-[12px] text-[var(--color-text-main)]">
+                          não é pra hoje
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 flex flex-col items-end gap-2">
+                    <button
+                      onClick={() => bringToToday(t)}
+                      disabled={wasAdded}
+                      className={cx(
+                        'rounded-full px-4 py-2 text-[12px] font-semibold',
+                        wasAdded
+                          ? 'border border-[var(--color-border-soft)] text-[var(--color-text-main)] bg-white'
+                          : 'bg-[#fd2597] text-white shadow-lg'
+                      )}
+                    >
+                      {wasAdded ? 'Já está no seu dia' : 'Trazer para hoje'}
+                    </button>
+
+                    <button
+                      onClick={() => removeTask(t.id, yesterday)}
+                      className="text-[12px] font-semibold text-[var(--color-text-muted)]"
+                    >
+                      Remover de ontem
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {yesterdayTasks.length > CONTINUITY_LIMIT ? (
+            <p className="mt-4 text-[12px] text-[var(--color-text-muted)]">
+              Mostrando só o essencial agora.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {!hasAny ? (
         <div
