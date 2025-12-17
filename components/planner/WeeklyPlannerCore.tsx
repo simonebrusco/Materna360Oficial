@@ -189,16 +189,10 @@ export default function WeeklyPlannerCore() {
 
   const isGentleTone = euSignal.tone === 'gentil'
 
-  // Labels (UI) — o que aparece nos botões
   const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
   const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
   const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
   const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
-
-  // Titles (persistência) — o que fica salvo na tarefa
-  const shortcutTaskTitleTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
-  const shortcutTaskTitleSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
-  const shortcutTaskTitleFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
@@ -223,9 +217,7 @@ export default function WeeklyPlannerCore() {
     try {
       window.addEventListener('storage', onStorage)
       window.addEventListener('eu360:persona-updated', onCustom as EventListener)
-    } catch {
-      // ambiente sem window
-    }
+    } catch {}
 
     return () => {
       try {
@@ -259,7 +251,6 @@ export default function WeeklyPlannerCore() {
     setMonthCursor(toFirstOfMonth(new Date()))
     setIsHydrated(true)
 
-    // garante signal atualizado após hydration
     try {
       setEuSignal(getEu360Signal())
     } catch {}
@@ -579,12 +570,7 @@ export default function WeeklyPlannerCore() {
                           {hasMore && !showAllReminders && (
                             <button
                               type="button"
-                              onClick={() => {
-                                setShowAllReminders(true)
-                                try {
-                                  track('p12.ritmo.expand', { area: 'reminders', dateKey: selectedDateKey })
-                                } catch {}
-                              }}
+                              onClick={() => setShowAllReminders(true)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
                               Mostrar o restante quando fizer sentido
@@ -594,12 +580,7 @@ export default function WeeklyPlannerCore() {
                           {showAllReminders && all.length > limit && (
                             <button
                               type="button"
-                              onClick={() => {
-                                setShowAllReminders(false)
-                                try {
-                                  track('p12.ritmo.collapse', { area: 'reminders', dateKey: selectedDateKey })
-                                } catch {}
-                              }}
+                              onClick={() => setShowAllReminders(false)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
                               Voltar para a versão leve
@@ -614,7 +595,7 @@ export default function WeeklyPlannerCore() {
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => addTask(shortcutTaskTitleTop3, 'top3')}
+                    onClick={() => addTask('O que realmente importa hoje', 'top3')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelTop3}
@@ -630,7 +611,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() => addTask(shortcutTaskTitleSelfcare, 'selfcare')}
+                    onClick={() => addTask('Pequenos gestos de autocuidado', 'selfcare')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelSelfcare}
@@ -638,7 +619,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() => addTask(shortcutTaskTitleFamily, 'family')}
+                    onClick={() => addTask('Momentos e cuidados importantes', 'family')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelFamily}
@@ -714,12 +695,7 @@ export default function WeeklyPlannerCore() {
                           {hasMore && !showAllAppointments && (
                             <button
                               type="button"
-                              onClick={() => {
-                                setShowAllAppointments(true)
-                                try {
-                                  track('p12.ritmo.expand', { area: 'appointments', dateKey: selectedDateKey })
-                                } catch {}
-                              }}
+                              onClick={() => setShowAllAppointments(true)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
                               Mostrar o restante quando fizer sentido
@@ -729,12 +705,7 @@ export default function WeeklyPlannerCore() {
                           {showAllAppointments && all.length > limit && (
                             <button
                               type="button"
-                              onClick={() => {
-                                setShowAllAppointments(false)
-                                try {
-                                  track('p12.ritmo.collapse', { area: 'appointments', dateKey: selectedDateKey })
-                                } catch {}
-                              }}
+                              onClick={() => setShowAllAppointments(false)}
                               className="w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white/70 px-3 py-2 text-xs font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/50"
                             >
                               Voltar para a versão leve
@@ -764,9 +735,7 @@ export default function WeeklyPlannerCore() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold text-[var(--color-text-main)]">
-                {selectedDate.toLocaleDateString('pt-BR')}
-              </div>
+              <div className="text-sm font-semibold text-[var(--color-text-main)]">{selectedDate.toLocaleDateString('pt-BR')}</div>
 
               <button
                 type="button"
@@ -798,9 +767,7 @@ export default function WeeklyPlannerCore() {
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                    Calendário
-                  </p>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Calendário</p>
                   <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
                     {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h3>
@@ -864,9 +831,7 @@ export default function WeeklyPlannerCore() {
                           }`}
                           aria-label={`Selecionar dia ${cell.date.toLocaleDateString('pt-BR')}`}
                         >
-                          <span className="inline-flex items-center justify-center w-full">
-                            {cell.date.getDate()}
-                          </span>
+                          <span className="inline-flex items-center justify-center w-full">{cell.date.getDate()}</span>
 
                           {isToday && !isSelected && (
                             <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
@@ -931,10 +896,16 @@ export default function WeeklyPlannerCore() {
               time: data.time,
             })
 
+            // ======================================================
+            // P12 — agenda -> também entra como tarefa do dia
+            // (storage + sync determinístico no state se for o dia selecionado)
+            // ======================================================
             const label = data.time ? `${data.time} · ${data.title}` : data.title
+
             try {
               const existing = load<TaskItem[]>(`planner/tasks/${data.dateKey}`, []) ?? []
               const exists = existing.some((t) => t.origin === 'agenda' && t.title === label)
+
               if (!exists) {
                 const t: TaskItem = {
                   id: safeId(),
@@ -942,20 +913,28 @@ export default function WeeklyPlannerCore() {
                   done: false,
                   origin: 'agenda',
                 }
-                save(`planner/tasks/${data.dateKey}`, [...existing, t])
+                const next = [...existing, t]
+                save(`planner/tasks/${data.dateKey}`, next)
+
+                // ✅ Sync imediato no state quando o usuário está no mesmo dia
+                if (data.dateKey === selectedDateKey) {
+                  setPlannerData((prev) => {
+                    const already = prev.tasks.some((x) => x.origin === 'agenda' && x.title === t.title)
+                    if (already) return prev
+                    return { ...prev, tasks: [...prev.tasks, t] }
+                  })
+                }
               }
             } catch {
-              setPlannerData((prev) => {
-                const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
-                if (exists) return prev
-                const t: TaskItem = {
-                  id: safeId(),
-                  title: (label ?? '').trim() || 'Tarefa',
-                  done: false,
-                  origin: 'agenda',
-                }
-                return { ...prev, tasks: [...prev.tasks, t] }
-              })
+              // fallback: mantém UX funcionando mesmo se persist falhar
+              if (data.dateKey === selectedDateKey) {
+                setPlannerData((prev) => {
+                  const exists = prev.tasks.some((t) => t.origin === 'agenda' && t.title === label)
+                  if (exists) return prev
+                  const t: TaskItem = { id: safeId(), title: (label ?? '').trim() || 'Tarefa', done: false, origin: 'agenda' }
+                  return { ...prev, tasks: [...prev.tasks, t] }
+                })
+              }
             }
           } else if (editingAppointment) {
             const updated: Appointment = {
