@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
@@ -15,72 +17,12 @@ import { MyDayGroups } from '@/components/my-day/MyDayGroups'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
-type GroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
-
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-
-type RecentSavePayload = {
-  ts: number
-  origin: TaskOrigin
-  source: string
-}
-
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeRemoveLS(key: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(key)
-  } catch {}
-}
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  try {
-    if (!raw) return null
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
-
-function groupIdFromOrigin(origin: TaskOrigin): GroupId {
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  if (origin === 'today') return 'para-hoje'
-  return 'outros'
-}
-
-function groupDomId(groupId: GroupId) {
-  return `myday-group-${groupId}`
-}
-
 export default function MeuDiaClient() {
   const { name } = useProfile()
   const [greeting, setGreeting] = useState('')
   const [dailyMessage, setDailyMessage] = useState('…')
 
-  // P9.3 — banner "salvei pra você" + scroll
-  const [recentSave, setRecentSave] = useState<RecentSavePayload | null>(null)
-  const [highlightGroupId, setHighlightGroupId] = useState<GroupId | undefined>(undefined)
-
-  const dateKey = useMemo(() => {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }, [])
-
-  // tracking
+  /* tracking */
   useEffect(() => {
     track('nav.click', {
       tab: 'meu-dia',
@@ -88,7 +30,7 @@ export default function MeuDiaClient() {
     })
   }, [])
 
-  // saudação
+  /* saudação */
   useEffect(() => {
     const firstName = name ? name.split(' ')[0] : ''
     const updateGreeting = () => setGreeting(getTimeGreeting(firstName))
@@ -97,13 +39,13 @@ export default function MeuDiaClient() {
     return () => window.clearInterval(interval)
   }, [name])
 
-  // mensagem do dia
+  /* mensagem do dia */
   useEffect(() => {
     const index = getDailyIndex(new Date(), DAILY_MESSAGES.length)
     setDailyMessage(DAILY_MESSAGES[index] ?? '…')
   }, [])
 
-  // reload meia-noite
+  /* reload à meia-noite */
   useEffect(() => {
     const now = new Date()
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
@@ -112,71 +54,16 @@ export default function MeuDiaClient() {
     return () => window.clearTimeout(t)
   }, [])
 
-  // P9.3 — ler “sinal” de save vindo do Maternar/Meu Dia Leve
-  useEffect(() => {
-    const raw = safeGetLS(LS_RECENT_SAVE)
-    const payload = safeParseJSON<RecentSavePayload>(raw)
-
-    // só mostra se for recente (ex: até 20 minutos)
-    if (!payload?.ts) return
-    const ageMs = Date.now() - payload.ts
-    const maxAge = 20 * 60 * 1000
-    if (ageMs < 0 || ageMs > maxAge) {
-      safeRemoveLS(LS_RECENT_SAVE)
-      return
-    }
-
-    setRecentSave(payload)
-
-    try {
-      track('my_day.recent_save.banner_show', {
-        dateKey,
-        origin: payload.origin,
-        source: payload.source,
-      })
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  function closeRecentSave() {
-    setRecentSave(null)
-    setHighlightGroupId(undefined)
-    safeRemoveLS(LS_RECENT_SAVE)
-
-    try {
-      track('my_day.recent_save.banner_close', { dateKey })
-    } catch {}
-  }
-
-  function goToRecentSave() {
-    if (!recentSave?.origin) return
-
-    const gid = groupIdFromOrigin(recentSave.origin)
-    setHighlightGroupId(gid)
-
-    // scroll suave para o bloco
-    const el = document.getElementById(groupDomId(gid))
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-
-    try {
-      track('my_day.recent_save.banner_go', { dateKey, groupId: gid, origin: recentSave.origin })
-    } catch {}
-
-    // remove highlight após alguns segundos (sem “piscar”)
-    window.setTimeout(() => {
-      setHighlightGroupId(undefined)
-    }, 4500)
-  }
-
   return (
     <main
       data-layout="page-template-v1"
       data-tab="meu-dia"
       className="
         eu360-hub-bg
-        relative min-h-[100dvh] pb-24 flex flex-col overflow-hidden
+        relative min-h-[100dvh]
+        pb-24
+        flex flex-col
+        overflow-hidden
       "
     >
       <div className="relative z-10 flex-1 mx-auto max-w-3xl px-4 md:px-6">
@@ -196,79 +83,62 @@ export default function MeuDiaClient() {
 
           <div className="pt-4 space-y-1">
             <ClientOnly>
-              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
+              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">
+                {greeting || 'Bom dia'}
+              </h2>
             </ClientOnly>
 
-            <p className="text-sm md:text-base text-white/95 max-w-xl">“{dailyMessage}”</p>
+            <p className="text-sm md:text-base text-white/95 max-w-xl">
+              “{dailyMessage}”
+            </p>
           </div>
         </header>
 
-        {/* P9.3 — BANNER (legível, com CTA claro) */}
-        {recentSave ? (
-          <section
-            className="
-              mb-5
-              rounded-3xl
-              border border-white/40
-              bg-white/14
-              backdrop-blur-xl
-              shadow-[0_18px_45px_rgba(0,0,0,0.18)]
-              p-5
-            "
-          >
-            <div className="flex flex-col gap-3">
-              <div>
-                <h3 className="text-[18px] font-semibold text-white leading-tight">Salvei pra você.</h3>
-                <p className="mt-1 text-[14px] text-white/90">
-                  Hoje pode ser menos. O essencial já está aqui.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={goToRecentSave}
-                  className="
-                    rounded-full
-                    bg-white
-                    text-[#2f3a56]
-                    px-4 py-2
-                    text-[14px]
-                    font-semibold
-                    shadow-lg
-                    hover:bg-white/95
-                    transition
-                  "
-                >
-                  Ver no bloco
-                </button>
-
-                <button
-                  type="button"
-                  onClick={closeRecentSave}
-                  className="
-                    rounded-full
-                    border border-white/55
-                    bg-white/12
-                    text-white
-                    px-4 py-2
-                    text-[14px]
-                    font-semibold
-                    hover:bg-white/18
-                    transition
-                  "
-                >
-                  Ok
-                </button>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
         {/* P8 — BLOCOS ORGANIZADOS */}
-        <MyDayGroups highlightGroupId={highlightGroupId} />
+        <MyDayGroups />
 
-        {/* PLANNER (legado protegido) */}
+        {/* 🔹 P10 — MICRO BLOCO MATERNA360+ (MONETIZAÇÃO NATURAL) */}
+        <section className="mt-6">
+          <div className="
+            rounded-3xl
+            border border-[#f5d7e5]
+            bg-[#fff7fb]
+            px-5 py-4
+            shadow-[0_8px_22px_rgba(0,0,0,0.06)]
+          ">
+            <p className="text-[13px] font-semibold text-[#2f3a56]">
+              Com o Materna360+, o seu dia se ajusta automaticamente
+            </p>
+
+            <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
+              O app aprende com o seu ritmo, reduz tarefas em dias difíceis e sugere
+              o que faz mais sentido para você — sem precisar recomeçar ou explicar
+              tudo de novo.
+            </p>
+
+            <div className="mt-3">
+              <Link
+                href="/planos"
+                className="
+                  inline-flex items-center
+                  rounded-full
+                  bg-[#fd2597]
+                  px-4 py-2
+                  text-[12px]
+                  font-semibold
+                  text-white
+                  shadow
+                  hover:opacity-95
+                  transition
+                "
+              >
+                Entender o Materna360+
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* PLANNER (LEGADO — NÃO TOCAR) */}
         <section
           className="
             mt-6 md:mt-8

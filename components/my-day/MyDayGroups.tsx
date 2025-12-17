@@ -19,7 +19,7 @@ type GroupId = keyof GroupedTasks
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const LIMIT = 5
 
-// P9.2 — Trilhas leves (micro-orientação sem cobrança)
+// P9 — micro orientação por bloco
 const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   'para-hoje': 'Se der, escolha só uma coisa.',
   familia: 'Um pequeno gesto já conta.',
@@ -28,11 +28,47 @@ const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   outros: 'Talvez isso possa esperar.',
 }
 
+// P9 — sinal de “acabou de salvar” (vem do Maternar/Meu Dia Leve)
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+
+type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+
+type RecentSavePayload = {
+  ts: number
+  origin: TaskOrigin
+  source: string
+}
+
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
 }
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
@@ -65,13 +101,21 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
-function groupDomId(groupId: GroupId) {
-  return `myday-group-${groupId}`
+function groupIdFromOrigin(origin: TaskOrigin): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
-export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }) {
+export function MyDayGroups() {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  // P9 UI state
+  const [recentBanner, setRecentBanner] = useState(false)
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
 
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
@@ -92,6 +136,38 @@ export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }
       track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length })
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
+  useEffect(() => {
+    const raw = safeGetLS(LS_RECENT_SAVE)
+    const payload = safeParseJSON<RecentSavePayload>(raw)
+    if (!payload?.ts || !payload.origin) return
+
+    // validade curta (evita reaparecer horas depois)
+    const ageMs = Date.now() - payload.ts
+    if (ageMs > 2 * 60_000) {
+      safeRemoveLS(LS_RECENT_SAVE)
+      return
+    }
+
+    const gid = groupIdFromOrigin(payload.origin)
+
+    // mostra banner + abre grupo + destaca
+    setRecentBanner(true)
+    setHighlightGroup(gid)
+    setExpanded((prev) => ({ ...prev, [gid]: true }))
+
+    // limpa sinal para não repetir
+    safeRemoveLS(LS_RECENT_SAVE)
+
+    // apaga destaque depois de alguns segundos
+    const t1 = window.setTimeout(() => setRecentBanner(false), 6500)
+    const t2 = window.setTimeout(() => setHighlightGroup(null), 6500)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
   }, [])
 
   function toggleGroup(id: GroupId) {
@@ -167,6 +243,18 @@ export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }
         </div>
       </div>
 
+      {/* P9 — banner de acolhimento pós-salvar */}
+      {recentBanner ? (
+        <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+          <p className="text-[13px] md:text-[14px] font-semibold text-white">
+            Hoje pode ser menos. O essencial já está aqui.
+          </p>
+          <p className="mt-1 text-[12px] text-white/85">
+            Eu coloquei no bloco certo para você não precisar procurar.
+          </p>
+        </div>
+      ) : null}
+
       {!hasAny ? (
         <div
           className="
@@ -194,24 +282,22 @@ export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
             const hasMore = count > LIMIT
 
-            const isHighlighted = highlightGroupId === groupId
+            const isHighlighted = highlightGroup === groupId
 
             return (
               <div
                 key={groupId}
-                id={groupDomId(groupId)}
                 className={cx(
                   `
                     bg-white
                     rounded-3xl
                     p-6
                     shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-                    border border-[var(--color-border-soft)]
-                    scroll-mt-24
+                    border
+                    border-[var(--color-border-soft)]
                     transition
                   `,
-                  isHighlighted &&
-                    'ring-2 ring-[#fd2597]/55 shadow-[0_18px_55px_rgba(253,37,151,0.18)]'
+                  isHighlighted && 'ring-2 ring-[#fd2597] shadow-[0_16px_40px_rgba(253,37,151,0.18)]'
                 )}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -220,7 +306,6 @@ export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }
                       {group.title}
                     </h4>
 
-                    {/* P9.2 — trilha leve */}
                     {GROUP_HINTS[groupId] ? (
                       <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{GROUP_HINTS[groupId]}</p>
                     ) : null}
@@ -286,7 +371,6 @@ export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }
                         </div>
 
                         <div className="shrink-0 flex flex-col items-end gap-2">
-                          {/* CTA principal */}
                           {s !== 'done' ? (
                             <button
                               onClick={() => onDone(t.id, groupId)}
@@ -303,7 +387,6 @@ export function MyDayGroups({ highlightGroupId }: { highlightGroupId?: GroupId }
                             </button>
                           )}
 
-                          {/* Ações leves */}
                           <div className="flex items-center gap-2">
                             {s === 'snoozed' ? (
                               <button
