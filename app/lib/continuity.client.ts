@@ -97,6 +97,11 @@ function subtractDays(dateKey: string, days: number): string | null {
   return `${yy}-${mm}-${dd}`
 }
 
+function toDate(dk: string) {
+  const [y, m, d] = dk.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 function phrasesByTone(tone: Tone): ContinuityPhrase[] {
   // P13 — neutras, humanas, sem avaliação, sem cobrança, sem “progresso”
   // Observação: mantemos um conjunto curto, mas com variação suficiente para evitar repetição.
@@ -215,9 +220,9 @@ export function getMyDayContinuityLine(input: {
 
 /**
  * P13 — Eu360 (quinzenal)
- * Deixei pronto para a próxima etapa, sem acoplar UI agora.
  * Regras:
  * - no máximo 1x/14 dias
+ * - nunca no primeiro uso
  * - texto curto, sem números, sem gráficos, sem insistência
  */
 export function getEu360FortnightLine(input: {
@@ -231,6 +236,7 @@ export function getEu360FortnightLine(input: {
   const KEY = 'continuity/eu360/meta'
   const meta = (load<ContinuityMeta>(KEY, {}) ?? {}) as ContinuityMeta
 
+  // Nunca no primeiro uso: registra e não mostra
   if (!meta.firstSeenDateKey) {
     try {
       save(KEY, { ...meta, firstSeenDateKey: dateKey })
@@ -238,12 +244,13 @@ export function getEu360FortnightLine(input: {
     return null
   }
 
-  // 14 dias (comparação simples via Date)
-  const toDate = (dk: string) => {
-    const [y, m, d] = dk.split('-').map(Number)
-    return new Date(y, m - 1, d)
-  }
+  // Se ainda é o mesmo dia do firstSeen, continua sem mostrar
+  if (meta.firstSeenDateKey === dateKey) return null
 
+  // Frequência: no máximo 1x/dia (mesmo que o quinzenal “deixe”)
+  if (meta.lastShownDateKey === dateKey) return null
+
+  // 14 dias (comparação simples via Date)
   const lastShown = meta.lastShownDateKey ? toDate(meta.lastShownDateKey) : null
   const now = toDate(dateKey)
 
