@@ -7,7 +7,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
 import type { TaskItem, TaskOrigin } from '@/app/lib/myDayTasks.client'
-import { getEu360Signal } from '@/app/lib/eu360Signals.client'
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { SoftCard } from '@/components/ui/card'
@@ -181,8 +181,9 @@ export default function WeeklyPlannerCore() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  // P12 — Inteligência de Ritmo (visibilidade + tom)
-  const euSignal = useMemo(() => getEu360Signal(), [])
+  // P12 — Inteligência de Ritmo (reativa)
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+
   const [showAllReminders, setShowAllReminders] = useState(false)
   const [showAllAppointments, setShowAllAppointments] = useState(false)
 
@@ -194,6 +195,41 @@ export default function WeeklyPlannerCore() {
   const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
+
+  // Atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        setEuSignal(getEu360Signal())
+      } catch {
+        // nunca quebra render
+      }
+    }
+
+    const onStorage = (e: StorageEvent) => {
+      // Se eu360Signals trocar a key, aqui ainda é seguro: refresh geral sem custo.
+      if (!e) return
+      refresh()
+    }
+
+    const onCustom = () => {
+      refresh()
+    }
+
+    try {
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+    } catch {
+      // ambiente sem window
+    }
+
+    return () => {
+      try {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+      } catch {}
+    }
+  }, [])
 
   // Reset do "mostrar tudo" quando troca o dia (ritmo não empurra excesso)
   useEffect(() => {
@@ -218,6 +254,11 @@ export default function WeeklyPlannerCore() {
     setSelectedDateKey(dateKey)
     setMonthCursor(toFirstOfMonth(new Date()))
     setIsHydrated(true)
+
+    // garante signal atualizado após hydration
+    try {
+      setEuSignal(getEu360Signal())
+    } catch {}
 
     try {
       track('planner.opened', { tab: 'meu-dia', dateKey })
@@ -623,8 +664,6 @@ export default function WeeklyPlannerCore() {
                     <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
                   ) : (
                     (() => {
-                      // P12 — Ritmo também nos compromissos:
-                      // usa listLimit como base (mesma lógica emocional), mas sempre seguro.
                       const limit = Math.max(1, Number(euSignal.listLimit) || 5)
                       const all = sortedAppointments
                       const visible = showAllAppointments ? all : all.slice(0, limit)
