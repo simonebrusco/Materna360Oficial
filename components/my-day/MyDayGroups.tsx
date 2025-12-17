@@ -227,47 +227,50 @@ export function MyDayGroups() {
 
       {/* P9 — vínculo (frase pós-questionário / pós-salvar) */}
       {recentSave ? (
-        <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 text-white shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
-          <p className="text-[13px] md:text-[14px] font-semibold">Salvei pra você.</p>
-          <p className="mt-1 text-[12px] md:text-[13px] text-white/90">
-            Hoje pode ser menos. O essencial já está aqui.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const gid = groupFromOrigin(recentSave.origin)
-                setExpanded((prev) => ({ ...prev, [gid]: true }))
-                window.setTimeout(() => {
-                  const el = groupRefs.current[gid]
-                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }, 50)
+  <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.16)]">
+    <p className="text-[13px] md:text-[14px] font-semibold text-white">
+      Salvei pra você.
+    </p>
+    <p className="mt-1 text-[12px] md:text-[13px] text-white/90">
+      Hoje pode ser menos. O essencial já está aqui.
+    </p>
 
-                try {
-                  track('my_day.recent_save.focus', { dateKey, groupId: gid, origin: recentSave.origin })
-                } catch {}
-              }}
-              className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] font-semibold shadow-lg transition"
-            >
-              Ver onde caiu
-            </button>
+    <div className="mt-3 flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => {
+          const gid = groupFromOrigin(recentSave.origin)
+          setExpanded((prev) => ({ ...prev, [gid]: true }))
+          window.setTimeout(() => {
+            const el = groupRefs.current[gid]
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 50)
 
-            <button
-              type="button"
-              onClick={() => {
-                setRecentSave(null)
-                safeRemoveLS(LS_RECENT_SAVE)
-                try {
-                  track('my_day.recent_save.dismiss', { dateKey })
-                } catch {}
-              }}
-              className="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 transition"
-            >
-              Ok
-            </button>
-          </div>
-        </div>
-      ) : null}
+          try {
+            track('my_day.recent_save.focus', { dateKey, groupId: gid, origin: recentSave.origin })
+          } catch {}
+        }}
+        className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] font-semibold shadow-lg transition"
+      >
+        Ver onde caiu
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setRecentSave(null)
+          safeRemoveLS(LS_RECENT_SAVE)
+          try {
+            track('my_day.recent_save.dismiss', { dateKey })
+          } catch {}
+        }}
+        className="rounded-full border border-white/35 bg-white/10 px-4 py-2 text-[12px] font-semibold text-white/90 hover:bg-white/15 transition"
+      >
+        Ok
+      </button>
+    </div>
+  </div>
+) : null}
 
       {!hasAny ? (
         <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
