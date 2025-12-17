@@ -29,7 +29,7 @@ const GROUP_HINTS: Partial<Record<GroupId, string>> = {
   outros: 'Talvez isso possa esperar.',
 }
 
-// P9.3 — Ajuste de densidade leve (apenas UI) quando o momento for pesado
+// P9.3 — Ajuste de densidade leve (apenas UI)
 const COLLAPSE_ON_HEAVY: GroupId[] = ['rotina-casa', 'outros']
 
 function safeDateKey(d = new Date()) {
@@ -74,6 +74,9 @@ export function MyDayGroups() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [eu360Signal, setEu360Signal] = useState<Eu360DaySignal>('ok')
 
+  // P9.4 — feedback leve de continuidade (sem meta/sem score)
+  const [nudged, setNudged] = useState<string | null>(null)
+
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const totalCount = useMemo(() => tasks.length, [tasks])
@@ -87,7 +90,7 @@ export function MyDayGroups() {
       const signal = getEu360DaySignal()
       setEu360Signal(signal)
 
-      // se momento pesado, iniciar alguns grupos colapsados (somente default; usuário pode expandir)
+      // se momento pesado, iniciar alguns grupos colapsados (somente default)
       if (signal === 'heavy') {
         setExpanded((prev) => {
           const next = { ...prev }
@@ -105,7 +108,7 @@ export function MyDayGroups() {
     refresh()
     readSignalAndApplyDefaults()
 
-    // reler sinal ao voltar para a aba (quando navega Eu360 -> Meu Dia sem hard reload)
+    // reler sinal ao voltar para a aba (Eu360 -> Meu Dia)
     const onVis = () => {
       if (document.visibilityState === 'visible') {
         readSignalAndApplyDefaults()
@@ -127,6 +130,13 @@ export function MyDayGroups() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // P9.4 — auto-hide do feedback leve
+  useEffect(() => {
+    if (!nudged) return
+    const t = window.setTimeout(() => setNudged(null), 2500)
+    return () => window.clearTimeout(t)
+  }, [nudged])
+
   function toggleGroup(id: GroupId) {
     setExpanded((prev) => {
       const next = { ...prev, [id]: !prev[id] }
@@ -143,6 +153,10 @@ export function MyDayGroups() {
       try {
         track('my_day.task.done.toggle', { dateKey, groupId })
       } catch {}
+
+      // P9.4 — mensagem leve de continuidade (sem cobrança)
+      setNudged(eu360Signal === 'heavy' ? 'Ok. Só isso já é bastante hoje.' : 'Ok. Uma coisa a menos na cabeça.')
+
       refresh()
     }
   }
@@ -161,7 +175,6 @@ export function MyDayGroups() {
     const res = unsnoozeTask(taskId)
     if (res.ok) {
       try {
-        // mantemos evento mínimo (sem criar evento novo)
         track('my_day.task.snooze', { dateKey, groupId, days: 0 })
       } catch {}
       refresh()
@@ -179,6 +192,14 @@ export function MyDayGroups() {
   }
 
   const hasAny = totalCount > 0
+
+  // P9.4 — “próximo passo” (1ª tarefa active do grupo Para hoje)
+  const nextStep = useMemo(() => {
+    const items = grouped['para-hoje']?.items ?? []
+    const sorted = sortForGroup(items)
+    const firstActive = sorted.find((t) => statusOf(t) === 'active')
+    return firstActive ?? null
+  }, [grouped])
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
@@ -208,6 +229,48 @@ export function MyDayGroups() {
         </div>
       </div>
 
+      {/* P9.4 — feedback leve */}
+      {nudged ? (
+        <div className="rounded-2xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-3 text-white/95 text-[12px] shadow-[0_12px_28px_rgba(0,0,0,0.18)]">
+          {nudged}
+        </div>
+      ) : null}
+
+      {/* P9.4 — Seu próximo passo (apenas se existir tarefa active em Para hoje) */}
+      {hasAny && nextStep ? (
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            p-6
+            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+            border border-[var(--color-border-soft)]
+          "
+        >
+          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-text-muted)]">
+            Seu próximo passo
+          </p>
+
+          <div className="mt-2 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[14px] text-[var(--color-text-main)] leading-snug break-words">
+                {nextStep.title}
+              </p>
+              <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
+                {eu360Signal === 'heavy' ? 'Se hoje der só para isso, já vale.' : 'Só uma coisa por vez.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => onDone(nextStep.id, 'para-hoje')}
+              className="shrink-0 rounded-full bg-[#fd2597] text-white shadow-lg px-4 py-2 text-[12px] font-semibold"
+            >
+              Fazer agora
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {!hasAny ? (
         <div
           className="
@@ -234,7 +297,6 @@ export function MyDayGroups() {
             const defaultExpanded =
               eu360Signal === 'heavy' ? !COLLAPSE_ON_HEAVY.includes(groupId) : false
 
-            // se expanded[groupId] não foi setado, usa defaultExpanded
             const isExpanded = typeof expanded[groupId] === 'boolean' ? !!expanded[groupId] : defaultExpanded
 
             const visible = isExpanded ? sorted : sorted.slice(0, LIMIT)
