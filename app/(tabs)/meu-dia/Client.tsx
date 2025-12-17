@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
@@ -14,6 +14,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { MyDayGroups } from '@/components/my-day/MyDayGroups'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
+import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -23,8 +24,9 @@ export default function MeuDiaClient() {
   const [greeting, setGreeting] = useState('')
   const [dailyMessage, setDailyMessage] = useState('…')
 
-  // P11 — contexto leve (persona Eu360 + sinais básicos locais)
-  const aiContext = useMemo(() => buildAiContext(), [])
+  // P11/P12 — contexto leve (persona Eu360 + sinais básicos locais)
+  // ✅ Agora reativo a mudanças do Eu360 (sem reload)
+  const [aiContext, setAiContext] = useState<AiLightContext>(() => buildAiContext())
 
   /* tracking */
   useEffect(() => {
@@ -56,6 +58,37 @@ export default function MeuDiaClient() {
     const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0)
     const t = window.setTimeout(() => window.location.reload(), delay)
     return () => window.clearTimeout(t)
+  }, [])
+
+  // ✅ P12 — re-hidrata aiContext quando a persona mudar
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        setAiContext(buildAiContext())
+      } catch {
+        // nunca quebra o fluxo
+      }
+    }
+
+    const onStorage = (_e: StorageEvent) => {
+      refresh()
+    }
+
+    const onCustom = () => {
+      refresh()
+    }
+
+    try {
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+      } catch {}
+    }
   }, [])
 
   return (
@@ -98,7 +131,7 @@ export default function MeuDiaClient() {
           </div>
         </header>
 
-        {/* P8/P11 — BLOCOS ORGANIZADOS (com contexto leve do Eu360) */}
+        {/* P8/P11/P12/P13 — BLOCOS ORGANIZADOS (com contexto leve do Eu360) */}
         <MyDayGroups aiContext={aiContext} />
 
         {/* 🔹 P10 — MICRO BLOCO MATERNA360+ (MONETIZAÇÃO NATURAL) */}
