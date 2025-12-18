@@ -27,6 +27,11 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
+// ✅ P9 — sinal pós-salvar vindo do Meu Dia Leve
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+type RecentSaveOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+type RecentSavePayload = { ts: number; origin: RecentSaveOrigin; source: string }
+
 /* =========================
    Helpers base
 ========================= */
@@ -41,6 +46,39 @@ function timeOf(t: MyDayTaskItem): number {
   const iso = (t as any).createdAt
   const n = iso ? Date.parse(iso) : NaN
   return Number.isFinite(n) ? n : 0
+}
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function groupIdFromRecentOrigin(origin: RecentSaveOrigin): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
 /* =========================
@@ -60,13 +98,11 @@ function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   }
   if (
     typeof p === 'object' &&
-    (
-      p.persona === 'sobrevivencia' ||
+    (p.persona === 'sobrevivencia' ||
       p.persona === 'organizacao' ||
       p.persona === 'conexao' ||
       p.persona === 'equilibrio' ||
-      p.persona === 'expansao'
-    )
+      p.persona === 'expansao')
   ) {
     return p.persona
   }
@@ -164,22 +200,20 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
   const [premium, setPremium] = useState(false)
 
+  // ✅ P9 — pós-salvar (sem criar UI nova)
+  const [recentSaveActive, setRecentSaveActive] = useState(false)
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
+
   const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const personaId = getPersonaId(aiContext)
 
-  /* =========================
-     ✅ P19.2 — Micro-memória
-  ========================= */
+  const totalCount = tasks.length
 
   const recentSignal = useMemo(() => {
     if (!premium) return null
     return getRecentMyDaySignal(dateKey)
   }, [premium, dateKey])
-
-  /* =========================
-     Densidade final (ajustada)
-  ========================= */
 
   const effectiveLimit = useMemo(() => {
     const raw = Number(euSignal?.listLimit)
@@ -189,7 +223,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
     const { min, max } = getAdaptivePremiumLimit(personaId)
 
-    // ajuste sutil baseado em micro-histórico
     if (recentSignal?.pendingPressure === 'high') {
       return Math.max(min, Math.min(max, resolved - 1))
     }
@@ -197,8 +230,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     return Math.max(min, Math.min(max, resolved))
   }, [euSignal, premium, personaId, recentSignal])
 
-  useEffect(() => {
+  function refresh() {
     setTasks(listMyDayTasks())
+  }
+
+  useEffect(() => {
+    refresh()
   }, [])
 
   useEffect(() => {
@@ -220,25 +257,92 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   useEffect(() => {
     try {
+      if (!premium) {
+        setRecentSaveActive(false)
+        setHighlightGroup(null)
+        return
+      }
+
+      const raw = safeGetLS(LS_RECENT_SAVE)
+      if (!raw) return
+
+      const payload = safeParseJSON<RecentSavePayload>(raw)
+      safeRemoveLS(LS_RECENT_SAVE)
+
+      if (!payload || typeof payload.ts !== 'number' || !payload.origin) return
+
+      const ageMs = Date.now() - payload.ts
+      if (ageMs < 0 || ageMs > 12_000) return
+
+      const gid = groupIdFromRecentOrigin(payload.origin)
+      setHighlightGroup(gid)
+      setExpanded((prev) => ({ ...prev, [gid]: true }))
+
+      setRecentSaveActive(true)
+      const t = window.setTimeout(() => setRecentSaveActive(false), 2600)
+
+      try {
+        track('my_day.recent_save.consumed', {
+          origin: payload.origin,
+          source: payload.source ?? null,
+          ageMs,
+        })
+      } catch {}
+
+      return () => window.clearTimeout(t)
+    } catch {
+      // silencioso
+    }
+  }, [premium])
+
+  useEffect(() => {
+    try {
       const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
+
       const base = getMyDayContinuityLine({ dateKey, tone })
       if (!base?.text) {
         setContinuityLine(null)
         return
       }
-      setContinuityLine(premium ? refineContinuityForPremium(dateKey, personaId) : base.text)
+
+      if (!premium) {
+        setContinuityLine(base.text)
+        return
+      }
+
+      if (recentSaveActive) {
+        setContinuityLine(null)
+        return
+      }
+
+      if (totalCount === 0) {
+        setContinuityLine(null)
+        return
+      }
+
+      if (recentSignal?.pendingPressure === 'low' && recentSignal?.hadCompletionRecently === false) {
+        setContinuityLine(null)
+        return
+      }
+
+      setContinuityLine(refineContinuityForPremium(dateKey, personaId))
     } catch {
       setContinuityLine(null)
     }
-  }, [dateKey, euSignal?.tone, premium, personaId])
-
-  /* =========================
-     RENDER — ORIGINAL
-  ========================= */
+  }, [
+    dateKey,
+    euSignal?.tone,
+    premium,
+    personaId,
+    totalCount,
+    recentSignal?.pendingPressure,
+    recentSignal?.hadCompletionRecently,
+    recentSaveActive,
+  ])
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* JSX ORIGINAL — permanece exatamente igual */}
+      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
     </section>
   )
 }
