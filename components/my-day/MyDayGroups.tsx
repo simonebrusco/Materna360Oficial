@@ -19,16 +19,38 @@ import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { isPremium } from '@/app/lib/plan'
+import { getRecentMyDaySignal } from '@/app/lib/myDayMemory.client' // ✅ P19.2
 
 type GroupId = keyof GroupedTasks
+type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
-// P9 — sinal de “acabou de salvar” (vem do Maternar/Meu Dia Leve)
+// P9 — sinal pós-salvar vindo do Maternar/Meu Dia Leve
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
-type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
+type RecentSaveOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+type RecentSavePayload = { ts: number; origin: RecentSaveOrigin; source: string }
+
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(' ')
+}
+
+/* =========================
+   Helpers base
+========================= */
+
+function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
+  if ((t as any).status) return (t as any).status
+  if ((t as any).done === true) return 'done'
+  return 'active'
+}
+
+function timeOf(t: MyDayTaskItem): number {
+  const iso = (t as any).createdAt
+  const n = iso ? Date.parse(iso) : NaN
+  return Number.isFinite(n) ? n : 0
+}
 
 function safeGetLS(key: string): string | null {
   try {
@@ -55,23 +77,7 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
-function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  if ((t as any).status) return (t as any).status
-  if ((t as any).done === true) return 'done'
-  return 'active'
-}
-
-function timeOf(t: MyDayTaskItem): number {
-  const iso = (t as any).createdAt
-  const n = iso ? Date.parse(iso) : NaN
-  return Number.isFinite(n) ? n : 0
-}
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ')
-}
-
-function groupIdFromOrigin(origin: TaskOrigin): GroupId {
+function groupIdFromRecentOrigin(origin: RecentSaveOrigin): GroupId {
   if (origin === 'today') return 'para-hoje'
   if (origin === 'family') return 'familia'
   if (origin === 'selfcare') return 'autocuidado'
@@ -79,235 +85,221 @@ function groupIdFromOrigin(origin: TaskOrigin): GroupId {
   return 'outros'
 }
 
-/**
- * Normaliza persona de um AiLightContext sem “quebrar” tipagem caso o shape evolua.
- * Aceita tanto `persona` como string quanto objeto (ex.: { persona: '...', label: '...' }).
- */
-function getPersonaId(aiContext?: AiLightContext): string | undefined {
+/* =========================
+   Persona segura
+========================= */
+
+function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   const p: any = (aiContext as any)?.persona
-  if (!p) return undefined
-  if (typeof p === 'string') return p
-  if (typeof p === 'object' && typeof p.persona === 'string') return p.persona
+  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao')
+    return p
+  if (
+    typeof p === 'object' &&
+    (p.persona === 'sobrevivencia' ||
+      p.persona === 'organizacao' ||
+      p.persona === 'conexao' ||
+      p.persona === 'equilibrio' ||
+      p.persona === 'expansao')
+  )
+    return p.persona
   return undefined
 }
 
-function microcopyForPersona(persona?: string) {
-  // Defaults (neutro)
-  const base = {
-    headerTitle: 'Seu dia, em blocos mais leves',
-    headerSubtitle: 'O Materna360 organiza para você. Você só escolhe o próximo passo.',
-    bannerTitle: 'Hoje pode ser menos. O essencial já está aqui.',
-    bannerBody: 'Eu coloquei no bloco certo para você não precisar procurar.',
-    groupHints: {
-      'para-hoje': 'Se der, escolha só uma coisa.',
-      familia: 'Um pequeno gesto já conta.',
-      autocuidado: 'Cuidar de você pode ser simples.',
-      'rotina-casa': 'Nem tudo precisa ser feito hoje.',
-      outros: 'Talvez isso possa esperar.',
-    } as Partial<Record<GroupId, string>>,
-  }
+/* =========================
+   P18 — Densidade adaptativa
+========================= */
 
-  // Ajustes sutis por fase (sem “cara de IA”)
-  if (persona === 'sobrevivencia') {
-    return {
-      ...base,
-      headerSubtitle: 'Hoje é sobre passar pelo dia com menos peso. Um passo já ajuda.',
-      bannerTitle: 'Sem pressa. Um passo de cada vez.',
-      bannerBody: 'Eu deixei isso no lugar certo. Você não precisa resolver tudo agora.',
-      groupHints: {
-        ...base.groupHints,
-        'para-hoje': 'Só uma coisa. O resto pode esperar.',
-        autocuidado: 'O mínimo já é cuidado.',
-        'rotina-casa': 'Hoje, o suficiente já é muito.',
-      },
-    }
+function getAdaptivePremiumLimit(persona?: PersonaId) {
+  switch (persona) {
+    case 'sobrevivencia':
+      return { min: 2, max: 3 }
+    case 'organizacao':
+      return { min: 3, max: 3 }
+    case 'conexao':
+    case 'equilibrio':
+      return { min: 3, max: 4 }
+    case 'expansao':
+      return { min: 4, max: 4 }
+    default:
+      return { min: 3, max: 4 }
   }
-
-  if (persona === 'organizacao') {
-    return {
-      ...base,
-      headerSubtitle: 'Vamos tirar ruído: olhar o essencial primeiro já organiza a cabeça.',
-      bannerBody: 'Eu já organizei por blocos para você decidir com mais clareza.',
-      groupHints: {
-        ...base.groupHints,
-        'para-hoje': 'Comece pelo que destrava o dia.',
-        'rotina-casa': 'Um ponto da casa por vez.',
-      },
-    }
-  }
-
-  if (persona === 'conexao') {
-    return {
-      ...base,
-      headerSubtitle: 'Leveza com presença: pequenas escolhas mudam o clima da rotina.',
-      groupHints: {
-        ...base.groupHints,
-        familia: 'Pequeno e intencional vale muito.',
-        autocuidado: 'Um respiro curto já muda o tom.',
-      },
-    }
-  }
-
-  if (persona === 'equilibrio') {
-    return {
-      ...base,
-      headerSubtitle: 'Você está encontrando ritmo. Vamos manter constância gentil.',
-      bannerTitle: 'Bom. Agora é seguir no seu ritmo.',
-      groupHints: {
-        ...base.groupHints,
-        'para-hoje': 'Prioridade clara, execução leve.',
-      },
-    }
-  }
-
-  if (persona === 'expansao') {
-    return {
-      ...base,
-      headerSubtitle: 'Você tem energia para avançar. Vamos canalizar isso com clareza.',
-      bannerTitle: 'Boa. Vamos usar essa energia com foco.',
-      bannerBody: 'Eu coloquei no bloco certo para você agir sem dispersar.',
-      groupHints: {
-        ...base.groupHints,
-        'para-hoje': 'Acerte uma coisa importante agora.',
-        outros: 'Se for relevante, traga para hoje.',
-      },
-    }
-  }
-
-  return base
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n))
-}
+/* =========================
+   P18 — Ordenação contextual
+========================= */
 
-/**
- * P17.2 — Micropriorização premium (determinística, sem “algoritmo”)
- * - prazo hoje (se existir algum campo de prazo)
- * - “já iniciada” (se existir startedAt / progress / inProgress)
- * - “mexida ontem” (se existir updatedAt / lastTouchedAt)
- * - depois: status (active > snoozed > done)
- * - e por fim: tempo (premium: mais recente levemente sobe)
- */
-function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; dateKey: string }) {
-  const { premium, dateKey } = opts
+function sortForGroup(
+  items: MyDayTaskItem[],
+  opts: { premium: boolean; dateKey: string; persona?: PersonaId },
+) {
+  const { premium, persona } = opts
 
   const statusRank = (t: MyDayTaskItem) => {
     const s = statusOf(t)
     return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
   }
 
-  const dueToday = (t: MyDayTaskItem) => {
-    const anyT: any = t as any
-    const dk = (anyT.dueKey || anyT.dueDateKey || anyT.dateKey || anyT.dueDate) as string | undefined
-    if (!dk) return false
-    // aceita tanto "YYYY-MM-DD" quanto ISO; se for ISO, tenta extrair "YYYY-MM-DD"
-    const normalized = dk.includes('T') ? dk.slice(0, 10) : dk
-    return normalized === dateKey
-  }
-
   const started = (t: MyDayTaskItem) => {
     const anyT: any = t as any
-    if (anyT.startedAt) return true
-    if (anyT.inProgress === true) return true
-    if (typeof anyT.progress === 'number' && anyT.progress > 0) return true
-    return false
-  }
-
-  const touchedYesterday = (t: MyDayTaskItem) => {
-    const anyT: any = t as any
-    const iso = (anyT.updatedAt || anyT.lastTouchedAt || anyT.lastEditedAt) as string | undefined
-    if (!iso) return false
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return false
-    // compara por chave Brasil (padrão do app)
-    const touchedKey = getBrazilDateKey(d)
-    // "ontem" em Brasil
-    const now = new Date()
-    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
-    const yesterdayKey = getBrazilDateKey(yesterday)
-    return touchedKey === yesterdayKey
-  }
-
-  const premiumRank = (t: MyDayTaskItem) => {
-    // menor = mais prioritário
-    if (dueToday(t)) return 0
-    if (started(t)) return 1
-    if (touchedYesterday(t)) return 2
-    return 3
+    return !!(
+      anyT.startedAt ||
+      anyT.inProgress === true ||
+      (typeof anyT.progress === 'number' && anyT.progress > 0)
+    )
   }
 
   return [...items].sort((a, b) => {
-    if (premium) {
-      const pa = premiumRank(a)
-      const pb = premiumRank(b)
-      if (pa !== pb) return pa - pb
+    // premium + persona: puxa o que já começou pro topo (menos atrito)
+    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
+      const sa = started(a)
+      const sb = started(b)
+      if (sa !== sb) return sa ? -1 : 1
     }
 
     const ra = statusRank(a)
     const rb = statusRank(b)
     if (ra !== rb) return ra - rb
 
-    // base: mais antigo primeiro (previsível)
-    // premium: mais recente sobe um pouco (sensação de “hoje”)
+    // free: mais antigo primeiro | premium: mais recente primeiro (essencial agora)
     return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
   })
 }
 
-function refineContinuityForPremium(dateKey: string) {
-  // curto, não explicativo, 1x/dia (a regra 1x/dia já é controlada pelo helper base)
-  const variants = [
-    'Hoje vale escolher menos — e sustentar melhor.',
-    'Um passo bem escolhido já muda o tom do dia.',
-    'Menos coisas, mais presença. Só o essencial agora.',
-    'Escolher uma prioridade já é um cuidado com você.',
-  ]
-  // determinístico por dia
+/* =========================
+   P18/P20 — Continuidade adaptada
+========================= */
+
+function refineContinuityForPremium(dateKey: string, persona?: PersonaId) {
+  const variants: Record<PersonaId, string[]> = {
+    sobrevivencia: ['Hoje, menos já é suficiente.', 'Um passo já é muito.'],
+    organizacao: ['Escolher o essencial clareia o dia.'],
+    conexao: ['Pequenas presenças mudam o clima.'],
+    equilibrio: ['Seguir no seu ritmo já é constância.'],
+    expansao: ['Use essa energia com foco.', 'Avançar com clareza sustenta mais.'],
+  }
+
+  const list = (persona && variants[persona]) || variants.equilibrio
   let acc = 0
-  for (let i = 0; i < dateKey.length; i++) acc = (acc + dateKey.charCodeAt(i) * (i + 1)) % 10_000
-  return variants[acc % variants.length]
+  for (let i = 0; i < dateKey.length; i++) {
+    acc = (acc + dateKey.charCodeAt(i) * (i + 1)) % 10_000
+  }
+  return list[acc % list.length]
 }
+
+/* =========================
+   COMPONENTE
+========================= */
 
 export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-
-  // P9 UI state
-  const [recentBanner, setRecentBanner] = useState(false)
-  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
-
-  // P12 — sinal reativo (tone + listLimit)
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
-
-  // P13/P17.3 — linha de continuidade (no máximo 1x/dia)
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
-
-  // P16 — premium reativo (SSR-safe)
   const [premium, setPremium] = useState(false)
 
-  // ✅ padroniza com “Brasil” igual o resto do app
+  // P21 — pós-salvar sutil (sem UI nova): highlight temporário + auto-expand
+  const [recentSaveActive, setRecentSaveActive] = useState(false)
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
+
   const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
-
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
-  const totalCount = useMemo(() => tasks.length, [tasks])
+  const personaId = getPersonaId(aiContext)
 
-  const personaId = useMemo(() => getPersonaId(aiContext), [aiContext])
-  const copy = useMemo(() => microcopyForPersona(personaId), [personaId])
+  const totalCount = tasks.length
+  const hasAny = totalCount > 0
 
-  // P17.1 — densidade: free 5–6 | premium 3–4 (sem inventar)
+  const recentSignal = useMemo(() => {
+    if (!premium) return null
+    return getRecentMyDaySignal(dateKey)
+  }, [premium, dateKey])
+
   const effectiveLimit = useMemo(() => {
     const raw = Number(euSignal?.listLimit)
     const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
 
-    if (premium) return clamp(resolved, 3, 4)
-    return clamp(resolved, 5, 6)
-  }, [euSignal, premium])
+    if (!premium) return Math.max(5, Math.min(6, resolved))
+
+    const { min, max } = getAdaptivePremiumLimit(personaId)
+
+    if (recentSignal?.pendingPressure === 'high') {
+      return Math.max(min, Math.min(max, resolved - 1))
+    }
+
+    return Math.max(min, Math.min(max, resolved))
+  }, [euSignal, premium, personaId, recentSignal])
+
+  const copy = useMemo(() => {
+    const persona = personaId
+    const headerTitle = persona === 'sobrevivencia' ? 'Só o essencial de hoje' : 'Seu dia, do seu jeito'
+    const headerSubtitle =
+      persona === 'organizacao'
+        ? 'Organizado, simples e claro.'
+        : 'Aqui você vê o que faz sentido agora — sem precisar procurar.'
+
+    const groupHints: Partial<Record<GroupId, string>> = {
+      'para-hoje': 'O que realmente importa agora.',
+      familia: 'Cuidado e presença com quem você ama.',
+      autocuidado: 'Pequenos gestos que te sustentam.',
+      'rotina-casa': 'O básico que mantém a casa rodando.',
+      outros: 'O resto sem culpa.',
+    }
+
+    return { headerTitle, headerSubtitle, groupHints }
+  }, [personaId])
 
   function refresh() {
     setTasks(listMyDayTasks())
   }
 
-  // P16 — lê premium após mount + reage a upgrade (mesma aba) via event custom
+  function toggleGroup(groupId: GroupId) {
+    setExpanded((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
+  }
+
+  async function onDone(taskId: string, groupId: GroupId) {
+    try {
+      toggleDone(taskId)
+      refresh()
+      track('my_day.task_toggled', { taskId, groupId, dateKey, premium })
+    } catch {
+      // silencioso
+    }
+  }
+
+  async function onSnooze(taskId: string, groupId: GroupId) {
+    try {
+      snoozeTask(taskId)
+      refresh()
+      track('my_day.task_snoozed', { taskId, groupId, dateKey, premium })
+    } catch {
+      // silencioso
+    }
+  }
+
+  async function onUnsnooze(taskId: string, groupId: GroupId) {
+    try {
+      unsnoozeTask(taskId)
+      refresh()
+      track('my_day.task_unsnoozed', { taskId, groupId, dateKey, premium })
+    } catch {
+      // silencioso
+    }
+  }
+
+  async function onRemove(taskId: string, groupId: GroupId) {
+    try {
+      removeTask(taskId)
+      refresh()
+      track('my_day.task_removed', { taskId, groupId, dateKey, premium })
+    } catch {
+      // silencioso
+    }
+  }
+
+  useEffect(() => {
+    refresh()
+  }, [])
+
   useEffect(() => {
     const sync = () => {
       try {
@@ -316,232 +308,114 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         setPremium(false)
       }
     }
-
     sync()
-
-    const onPlanUpdated = () => sync()
-
-    try {
-      window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
-    } catch {}
-
-    return () => {
-      try {
-        window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
-      } catch {}
-    }
+    window.addEventListener('m360:plan-updated', sync as EventListener)
+    return () => window.removeEventListener('m360:plan-updated', sync as EventListener)
   }, [])
 
-  // P12 — atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
   useEffect(() => {
-    const refreshSignal = () => {
-      try {
-        setEuSignal(getEu360Signal())
-      } catch {
-        // nunca quebra render
+    setEuSignal(getEu360Signal())
+  }, [])
+
+  // P21 — consome sinal pós-salvar e aplica highlight sutil + auto-expand (TTL curto)
+  useEffect(() => {
+    let t: number | undefined
+
+    try {
+      if (!premium) {
+        setRecentSaveActive(false)
+        setHighlightGroup(null)
+        return
       }
-    }
 
-    const onStorage = (_e: StorageEvent) => {
-      refreshSignal()
-    }
+      const raw = safeGetLS(LS_RECENT_SAVE)
+      if (!raw) return
 
-    const onCustom = () => {
-      refreshSignal()
-    }
+      const payload = safeParseJSON<RecentSavePayload>(raw)
+      safeRemoveLS(LS_RECENT_SAVE)
 
-    try {
-      window.addEventListener('storage', onStorage)
-      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
-    } catch {}
+      if (!payload || typeof payload.ts !== 'number' || !payload.origin) return
+
+      // TTL do “retorno” (janela curta, para não ressuscitar highlight antigo)
+      const ageMs = Date.now() - payload.ts
+      if (ageMs < 0 || ageMs > 12_000) return
+
+      const gid = groupIdFromRecentOrigin(payload.origin)
+
+      // abre o grupo e aplica destaque sutil (sem texto/CTA/alerta)
+      setHighlightGroup(gid)
+      setExpanded((prev) => ({ ...prev, [gid]: true }))
+
+      setRecentSaveActive(true)
+      t = window.setTimeout(() => {
+        setRecentSaveActive(false)
+        setHighlightGroup(null)
+      }, 2600)
+
+      try {
+        track('my_day.recent_save.consumed', {
+          origin: payload.origin,
+          source: payload.source ?? null,
+          ageMs,
+        })
+      } catch {}
+    } catch {
+      // silencioso
+    }
 
     return () => {
-      try {
-        window.removeEventListener('storage', onStorage)
-        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
-      } catch {}
+      if (t) window.clearTimeout(t)
     }
-  }, [])
+  }, [premium])
 
-  // carregar tarefas + telemetria de render
-  useEffect(() => {
-    refresh()
-
-    try {
-      const current = listMyDayTasks()
-      const g = groupTasks(current)
-      const groupsCount = GROUP_ORDER.filter((id) => (g[id]?.items?.length ?? 0) > 0).length
-      track('my_day.group.render', {
-        dateKey,
-        groupsCount,
-        tasksCount: current.length,
-        persona: personaId ?? null,
-      })
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // P17.4 — telemetria: ajuste premium aplicado (1x/dia)
-  const premiumAppliedRef = React.useRef<{ dateKey?: string; density?: boolean; priority?: boolean }>({})
-  useEffect(() => {
-    if (!premium) return
-
-    // reset diário
-    if (premiumAppliedRef.current.dateKey !== dateKey) {
-      premiumAppliedRef.current = { dateKey, density: false, priority: false }
-    }
-
-    // density aplicado quando premium + existe limite efetivo premium
-    if (!premiumAppliedRef.current.density) {
-      premiumAppliedRef.current.density = true
-      try {
-        track('premium_adjustment_applied', {
-          tab: 'meu-dia',
-          type: 'density',
-          timestamp: new Date().toISOString(),
-        })
-      } catch {}
-    }
-
-    // priority aplicado quando premium (a ordenação premium está ativa)
-    if (!premiumAppliedRef.current.priority) {
-      premiumAppliedRef.current.priority = true
-      try {
-        track('premium_adjustment_applied', {
-          tab: 'meu-dia',
-          type: 'priority',
-          timestamp: new Date().toISOString(),
-        })
-      } catch {}
-    }
-  }, [premium, dateKey])
-
-  // P17.4 — 1ª interação premium (1x/dia)
-  const premiumInteractionTrackedRef = React.useRef(false)
-  useEffect(() => {
-    premiumInteractionTrackedRef.current = false
-  }, [dateKey])
-
-  function trackPremiumFirstInteraction() {
-    if (!premium) return
-    if (premiumInteractionTrackedRef.current) return
-
-    premiumInteractionTrackedRef.current = true
-    try {
-      track('premium_day_interaction', {
-        tab: 'meu-dia',
-        timestamp: new Date().toISOString(),
-      })
-    } catch {}
-  }
-
-  // P13/P17.3 — calcular a frase de continuidade (1x/dia, nunca no primeiro uso)
+  // P20 — continuidade: timing/coerência (não competir com o pós-salvar)
   useEffect(() => {
     try {
       const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
-      const line = getMyDayContinuityLine({ dateKey, tone })
 
-      if (!line?.text) {
+      const base = getMyDayContinuityLine({ dateKey, tone })
+      if (!base?.text) {
         setContinuityLine(null)
         return
       }
 
-      // Free mantém base; Premium usa variação um pouco mais contextual (curta, discreta)
-      setContinuityLine(premium ? refineContinuityForPremium(dateKey) : line.text)
+      if (!premium) {
+        setContinuityLine(base.text)
+        return
+      }
+
+      // durante pós-salvar: some (não disputa atenção)
+      if (recentSaveActive) {
+        setContinuityLine(null)
+        return
+      }
+
+      // premium: sem inventar / sem frase se vazio
+      if (totalCount === 0) {
+        setContinuityLine(null)
+        return
+      }
+
+      // coerência emocional (ex.: dia leve + sem conclusão recente)
+      if (recentSignal?.pendingPressure === 'low' && recentSignal?.hadCompletionRecently === false) {
+        setContinuityLine(null)
+        return
+      }
+
+      setContinuityLine(refineContinuityForPremium(dateKey, personaId))
     } catch {
       setContinuityLine(null)
     }
-  }, [dateKey, euSignal?.tone, premium])
-
-  // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
-  useEffect(() => {
-    const raw = safeGetLS(LS_RECENT_SAVE)
-    const payload = safeParseJSON<RecentSavePayload>(raw)
-    if (!payload?.ts || !payload.origin) return
-
-    const ageMs = Date.now() - payload.ts
-    if (ageMs > 2 * 60_000) {
-      safeRemoveLS(LS_RECENT_SAVE)
-      return
-    }
-
-    const gid = groupIdFromOrigin(payload.origin)
-
-    setRecentBanner(true)
-    setHighlightGroup(gid)
-    setExpanded((prev) => ({ ...prev, [gid]: true }))
-
-    safeRemoveLS(LS_RECENT_SAVE)
-
-    const t1 = window.setTimeout(() => setRecentBanner(false), 6500)
-    const t2 = window.setTimeout(() => setHighlightGroup(null), 6500)
-    return () => {
-      window.clearTimeout(t1)
-      window.clearTimeout(t2)
-    }
-  }, [])
-
-  function toggleGroup(id: GroupId) {
-    trackPremiumFirstInteraction()
-
-    setExpanded((prev) => {
-      const next = { ...prev, [id]: !prev[id] }
-      try {
-        track('my_day.group.expand', { dateKey, groupId: id, persona: personaId ?? null })
-      } catch {}
-      return next
-    })
-  }
-
-  async function onDone(taskId: string, groupId: GroupId) {
-    trackPremiumFirstInteraction()
-
-    const res = toggleDone(taskId)
-    if (res.ok) {
-      try {
-        track('my_day.task.done.toggle', { dateKey, groupId, persona: personaId ?? null })
-      } catch {}
-      refresh()
-    }
-  }
-
-  async function onSnooze(taskId: string, groupId: GroupId) {
-    trackPremiumFirstInteraction()
-
-    const res = snoozeTask(taskId, 1)
-    if (res.ok) {
-      try {
-        track('my_day.task.snooze', { dateKey, groupId, days: 1, persona: personaId ?? null })
-      } catch {}
-      refresh()
-    }
-  }
-
-  async function onUnsnooze(taskId: string, groupId: GroupId) {
-    trackPremiumFirstInteraction()
-
-    const res = unsnoozeTask(taskId)
-    if (res.ok) {
-      try {
-        track('my_day.task.snooze', { dateKey, groupId, days: 0, persona: personaId ?? null })
-      } catch {}
-      refresh()
-    }
-  }
-
-  async function onRemove(taskId: string, groupId: GroupId) {
-    trackPremiumFirstInteraction()
-
-    const res = removeTask(taskId)
-    if (res.ok) {
-      try {
-        track('my_day.task.remove', { dateKey, groupId, persona: personaId ?? null })
-      } catch {}
-      refresh()
-    }
-  }
-
-  const hasAny = totalCount > 0
+  }, [
+    dateKey,
+    euSignal?.tone,
+    premium,
+    personaId,
+    totalCount,
+    recentSignal?.pendingPressure,
+    recentSignal?.hadCompletionRecently,
+    recentSaveActive,
+  ])
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
@@ -565,14 +439,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         </div>
       </div>
 
-      {/* Banner pós-salvar (adaptativo por persona) */}
-      {recentBanner ? (
-        <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
-          <p className="text-[13px] md:text-[14px] font-semibold text-white">{copy.bannerTitle}</p>
-          <p className="mt-1 text-[12px] text-white/85">{copy.bannerBody}</p>
-        </div>
-      ) : null}
-
       {!hasAny ? (
         <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
           <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
@@ -584,14 +450,18 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         <div className="space-y-4 md:space-y-5">
           {GROUP_ORDER.map((groupId) => {
             const group = grouped[groupId]
-            const sorted = sortForGroup(group.items, { premium, dateKey })
+            if (!group) return null
+
+            const sorted = sortForGroup(group.items, { premium, dateKey, persona: personaId })
             const count = sorted.length
             if (count === 0) return null
 
             const isExpanded = !!expanded[groupId]
             const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
             const hasMore = count > effectiveLimit
-            const isHighlighted = highlightGroup === groupId
+
+            // P21 — destaque sutil pós-salvar (sem texto/CTA/alerta)
+            const shouldHighlight = premium && recentSaveActive && highlightGroup === groupId
 
             return (
               <div
@@ -604,9 +474,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                     shadow-[0_6px_22px_rgba(0,0,0,0.06)]
                     border
                     border-[var(--color-border-soft)]
-                    transition
+                    transition-[box-shadow,background-color]
+                    duration-700
+                    ease-out
                   `,
-                  isHighlighted && 'ring-2 ring-[#fd2597] shadow-[0_16px_40px_rgba(253,37,151,0.18)]',
+                  shouldHighlight ? 'bg-[#fff7fb] shadow-[0_14px_44px_rgba(253,37,151,0.10)]' : null,
                 )}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -738,7 +610,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                       onClick={() => toggleGroup(groupId)}
                       className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)]"
                     >
-                      {isExpanded ? 'Ver menos' : 'Ver mais'}
+                      {isExpanded ? 'Recolher' : 'Ver tudo'}
                     </button>
                   </div>
                 ) : null}
