@@ -259,24 +259,32 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   /* =========================
      ✅ P9 — Consumir sinal pós-salvar
+     - só no Premium (evita comportamento colateral no Free)
      - abre o grupo certo
      - marca "ativo" por poucos segundos
      - remove a key para não repetir
+     - reavalia por dateKey (troca de dia)
   ========================= */
 
   useEffect(() => {
     try {
+      if (!premium) {
+        setRecentSaveActive(false)
+        setHighlightGroup(null)
+        return
+      }
+
       const raw = safeGetLS(LS_RECENT_SAVE)
       if (!raw) return
 
       const payload = safeParseJSON<RecentSavePayload>(raw)
-      safeRemoveLS(LS_RECENT_SAVE) // importante: consumir sempre, mesmo se inválido
+      safeRemoveLS(LS_RECENT_SAVE) // consumir sempre, mesmo se inválido
 
       if (!payload || typeof payload.ts !== 'number' || !payload.origin) return
 
       // janela curta para evitar efeito atrasado (UX)
       const ageMs = Date.now() - payload.ts
-      if (ageMs < 0 || ageMs > 10 * 60 * 1000) return
+      if (ageMs < 0 || ageMs > 12_000) return
 
       const gid = groupIdFromRecentOrigin(payload.origin)
       setHighlightGroup(gid)
@@ -286,7 +294,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
       // marca ativo por um curto período para P20 não empilhar micro-frase
       setRecentSaveActive(true)
-      window.setTimeout(() => setRecentSaveActive(false), 2600)
+      const t = window.setTimeout(() => setRecentSaveActive(false), 12_000)
 
       try {
         track('my_day.recent_save.consumed', {
@@ -295,11 +303,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           ageMs,
         })
       } catch {}
+
+      return () => window.clearTimeout(t)
     } catch {
       // silencioso
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [premium, dateKey])
 
   /* =========================
      ✅ P20 — Silêncio inteligente (timing)
