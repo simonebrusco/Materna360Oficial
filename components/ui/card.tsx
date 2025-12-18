@@ -21,8 +21,8 @@ export function Card({ as: Tag = 'div', className, ...props }: BaseCardProps) {
       className={clsx(
         'rounded-2xl bg-white border border-[#e7e7ea]',
         'shadow-[0_2px_8px_rgba(0,0,0,0.03)]',
-        'transition-all duration-150',
-        className
+        'transition-shadow duration-150',
+        className,
       )}
       {...props}
     />
@@ -32,12 +32,9 @@ export function Card({ as: Tag = 'div', className, ...props }: BaseCardProps) {
 /**
  * SoftCard — padrão PREMIUM do Materna360.
  *
- * Este é o card que usamos nos hubs, planner e páginas principais.
- * Ele tem:
- * - cantos mais orgânicos
- * - sombra suave
- * - borda em tom próximo ao rosa da marca
- * - comportamento consistente em todo o app
+ * P15 (4.4): reduzir ruído visual.
+ * - Mantém premium, porém remove “efeito botão” (lift) por padrão.
+ * - Hover existe, mas é sutil e não muda layout (sem translate).
  */
 export function SoftCard({ as: Tag = 'div', className, ...props }: BaseCardProps) {
   return (
@@ -48,17 +45,14 @@ export function SoftCard({ as: Tag = 'div', className, ...props }: BaseCardProps
         'border border-[#ffd8e6]',
         'shadow-[0_4px_14px_rgba(0,0,0,0.04)]',
 
-        // Comportamento
-        'transition-all duration-150',
+        // Comportamento (calmo)
+        'transition-shadow duration-150',
         'will-change-transform, box-shadow',
 
-        // Hover bem sutil (não vira “botão”)
-        'hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[1px]',
+        // Hover sutil (não vira “botão”, não “salta”)
+        'hover:shadow-[0_6px_20px_rgba(0,0,0,0.05)]',
 
-        // Em telas menores mantemos o comportamento calmo
-        'md:hover:-translate-y-[2px]',
-
-        className
+        className,
       )}
       {...props}
     />
@@ -70,14 +64,6 @@ export function SoftCard({ as: Tag = 'div', className, ...props }: BaseCardProps
  * Não é obrigatório, mas ajuda a manter consistência onde for usado.
  * Se o seu projeto não usar, não tem problema — não quebra nada.
  */
-export function CardGrid({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={clsx('grid grid-cols-1 gap-4 md:gap-6', className)}
-      {...props}
-    />
-  )
+export function CardGrid({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={clsx('grid grid-cols-1 gap-4 md:gap-6', className)} {...props} />
 }
