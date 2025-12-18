@@ -21,6 +21,9 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
+// P16 — plano premium (free/premium)
+import { isPremium } from '@/app/lib/plan'
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -37,6 +40,10 @@ export default function MeuDiaClient() {
 
   // P13 — micro-frase de continuidade (no máximo 1 por dia)
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
+
+  // P16 — premium state (SSR-safe: define após mount)
+  const [premium, setPremium] = useState(false)
+  const [premiumSeenToday, setPremiumSeenToday] = useState(false)
 
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
@@ -97,27 +104,66 @@ export default function MeuDiaClient() {
     }
   }
 
+  // P16 — revalida premium state (e telemetria 1x/dia)
+  function refreshPremiumState() {
+    try {
+      const next = isPremium()
+      setPremium(next)
+
+      if (next) {
+        const key = `m360.premium_seen.${getBrazilDateKey(new Date())}`
+        const already = typeof window !== 'undefined' ? localStorage.getItem(key) : '1'
+
+        if (!already) {
+          try {
+            localStorage.setItem(key, '1')
+          } catch {}
+
+          track('premium_state_visible', {
+            tab: 'meu-dia',
+            dateKey: getBrazilDateKey(new Date()),
+            timestamp: new Date().toISOString(),
+          })
+
+          setPremiumSeenToday(true)
+        }
+      }
+    } catch {
+      // não quebra o fluxo
+      setPremium(false)
+    }
+  }
+
   // ✅ P12/P13 — re-hidrata aiContext e continuidade quando a persona mudar
   useEffect(() => {
     refreshAiContextAndContinuity()
+    refreshPremiumState()
 
     const onStorage = (_e: StorageEvent) => {
       refreshAiContextAndContinuity()
+      refreshPremiumState()
     }
 
-    const onCustom = () => {
+    const onCustomPersona = () => {
       refreshAiContextAndContinuity()
+    }
+
+    // P16 — evento custom de plano (mesma aba)
+    const onPlanUpdated = () => {
+      refreshPremiumState()
     }
 
     try {
       window.addEventListener('storage', onStorage)
-      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+      window.addEventListener('eu360:persona-updated', onCustomPersona as EventListener)
+      window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
     } catch {}
 
     return () => {
       try {
         window.removeEventListener('storage', onStorage)
-        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+        window.removeEventListener('eu360:persona-updated', onCustomPersona as EventListener)
+        window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
       } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,48 +219,151 @@ export default function MeuDiaClient() {
         {/* P8/P11/P12/P13 — BLOCOS ORGANIZADOS (com contexto leve do Eu360) */}
         <MyDayGroups aiContext={aiContext} />
 
-        {/* 🔹 P10 — MICRO BLOCO MATERNA360+ (MONETIZAÇÃO NATURAL) */}
-        <section className="mt-6">
-          <div
-            className="
-              rounded-3xl
-              border border-[#f5d7e5]
-              bg-[#fff7fb]
-              px-5 py-4
-              shadow-[0_8px_22px_rgba(0,0,0,0.06)]
-            "
-          >
-            <p className="text-[13px] font-semibold text-[#2f3a56]">
-              Com o Materna360+, o seu dia se ajusta automaticamente
-            </p>
+        {/* P16 — BLOCO FREE vs PREMIUM */}
+        {!premium ? (
+          // 🔹 Free — monetização natural (mantém o seu bloco atual)
+          <section className="mt-6">
+            <div
+              className="
+                rounded-3xl
+                border border-[#f5d7e5]
+                bg-[#fff7fb]
+                px-5 py-4
+                shadow-[0_8px_22px_rgba(0,0,0,0.06)]
+              "
+            >
+              <p className="text-[13px] font-semibold text-[#2f3a56]">
+                Com o Materna360+, o seu dia se ajusta automaticamente
+              </p>
 
-            <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-              O app aprende com o seu ritmo, reduz tarefas em dias difíceis e sugere
-              o que faz mais sentido para você — sem precisar recomeçar ou explicar
-              tudo de novo.
-            </p>
+              <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
+                O app aprende com o seu ritmo, reduz tarefas em dias difíceis e sugere
+                o que faz mais sentido para você — sem precisar recomeçar ou explicar
+                tudo de novo.
+              </p>
 
-            <div className="mt-3">
-              <Link
-                href="/planos"
-                className="
-                  inline-flex items-center
-                  rounded-full
-                  bg-[#fd2597]
-                  px-4 py-2
-                  text-[12px]
-                  font-semibold
-                  text-white
-                  shadow
-                  hover:opacity-95
-                  transition
-                "
-              >
-                Entender o Materna360+
-              </Link>
+              <div className="mt-3">
+                <Link
+                  href="/planos"
+                  className="
+                    inline-flex items-center
+                    rounded-full
+                    bg-[#fd2597]
+                    px-4 py-2
+                    text-[12px]
+                    font-semibold
+                    text-white
+                    shadow
+                    hover:opacity-95
+                    transition
+                  "
+                >
+                  Entender o Materna360+
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        ) : (
+          // ✅ Premium — benefício percebido (sem venda)
+          <section className="mt-6">
+            <div
+              className="
+                rounded-3xl
+                border border-white/35
+                bg-white/12
+                backdrop-blur-xl
+                px-5 py-4
+                shadow-[0_18px_45px_rgba(0,0,0,0.18)]
+              "
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[13px] font-semibold text-white">
+                    Seu dia já está ajustado hoje
+                  </p>
+                  <p className="mt-1 text-[12px] text-white/90 leading-relaxed">
+                    Você não precisa recomeçar. O Materna360 considera o seu contexto e te ajuda a priorizar com leveza.
+                  </p>
+                </div>
+
+                {/* sutil “marcador” premium, sem virar banner */}
+                <span className="shrink-0 inline-flex items-center rounded-full border border-white/30 bg-white/10 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-white/95 uppercase">
+                  Premium
+                </span>
+              </div>
+
+              <ul className="mt-3 space-y-2 text-[12px] text-white/90">
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white/80" />
+                  Sugestões mais consistentes com o seu ritmo do dia
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white/80" />
+                  Mais contexto para decidir o que vale manter e o que vale simplificar
+                </li>
+              </ul>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="
+                    inline-flex items-center justify-center
+                    rounded-full
+                    border border-white/35
+                    bg-white/10
+                    px-4 py-2
+                    text-[12px]
+                    font-semibold
+                    text-white
+                    hover:bg-white/15
+                    transition
+                  "
+                  onClick={() => {
+                    track('premium_cta_click', {
+                      tab: 'meu-dia',
+                      action: 'view_adjustments',
+                      timestamp: new Date().toISOString(),
+                    })
+
+                    // Por enquanto, CTA neutro e seguro:
+                    // - pode virar âncora / modal / página quando o recurso existir.
+                    // Mantém sem regressão.
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  aria-label="Ver ajustes de hoje"
+                >
+                  Ver ajustes de hoje
+                </button>
+
+                <Link
+                  href="/planos"
+                  className="
+                    inline-flex items-center justify-center
+                    rounded-full
+                    border border-white/20
+                    bg-white/0
+                    px-4 py-2
+                    text-[12px]
+                    font-semibold
+                    text-white/90
+                    hover:text-white
+                    hover:bg-white/10
+                    transition
+                  "
+                >
+                  Entender seus benefícios
+                </Link>
+              </div>
+
+              {/* opcional: micro feedback 1x/dia (não invasivo) */}
+              {premiumSeenToday ? (
+                <p className="mt-3 text-[11px] text-white/75 leading-relaxed">
+                  Ajuste aplicado com calma — um passo por vez.
+                </p>
+              ) : null}
+            </div>
+          </section>
+        )}
 
         {/* PLANNER (LEGADO — NÃO TOCAR) */}
         <section
