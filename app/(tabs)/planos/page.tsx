@@ -84,8 +84,14 @@ const PLANS = [
       { label: 'Biblioteca Materna avançada e aulas especiais' },
       { label: 'Conquistas premium (níveis 3 a 5), missões semanais e medalhas' },
       { label: 'Painel por mês e por ano (visão da jornada, sem nota)' },
-      { label: 'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais' },
-      { label: 'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros' },
+      {
+        label:
+          'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais',
+      },
+      {
+        label:
+          'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros',
+      },
     ],
     buttonText: 'Quero o Materna+ 360',
     buttonVariant: 'primary' as const,
@@ -95,6 +101,7 @@ const PLANS = [
 ] as const
 
 type PlanId = (typeof PLANS)[number]['id']
+type SheetPlanId = 'materna-plus' | 'materna-360'
 
 export default function PlanosPage() {
   const [open, setOpen] = React.useState(false)
@@ -120,6 +127,9 @@ export default function PlanosPage() {
     setSelectedPlanId(planId)
     setOpen(true)
   }
+
+  const sheetPlanId: SheetPlanId =
+    selectedPlanId === 'materna-360' ? 'materna-360' : 'materna-plus'
 
   return (
     <main
@@ -194,7 +204,11 @@ export default function PlanosPage() {
                           : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
                       }`}
                     >
-                      <AppIcon name={planConfig.badgeIcon} size={12} decorative />
+                      <AppIcon
+                        name={planConfig.badgeIcon}
+                        size={12}
+                        decorative
+                      />
                       {planConfig.badge}
                     </div>
                   </div>
@@ -310,16 +324,66 @@ export default function PlanosPage() {
                 </div>
 
                 {[
-                  { feature: 'Planner diário', essencial: 'Básico', plus: 'Avançado', full: 'Avançado + visão por semanas' },
-                  { feature: 'Humor e energia', essencial: 'Registro simples', plus: 'Visão ampliada', full: 'Com resumos e histórico' },
-                  { feature: 'Orientações personalizadas', essencial: 'Até 5 por dia', plus: 'Até 40 por dia', full: 'Ilimitadas' },
-                  { feature: 'Biblioteca Materna', essencial: 'Limitada', plus: 'Completa', full: 'Completa + conteúdos avançados' },
-                  { feature: 'Trilhas educativas', essencial: 'Introdutória', plus: 'Completas', full: 'Personalizadas' },
-                  { feature: 'Exportar PDF', essencial: 'Não incluído', plus: 'Disponível', full: 'Disponível' },
-                  { feature: 'Produtos digitais', essencial: 'Não incluídos', plus: 'Incluídos', full: 'Incluídos' },
-                  { feature: 'Conquistas', essencial: 'Não disponível', plus: 'Níveis 1 e 2', full: 'Níveis 3 a 5 e painel avançado' },
-                  { feature: 'Mentorias com parceiros', essencial: 'Valor integral', plus: 'Valor integral', full: 'Descontos de 10% a 15%' },
-                  { feature: 'MaternaBox', essencial: 'Sem benefícios adicionais', plus: 'Condições especiais', full: 'Condições especiais' },
+                  {
+                    feature: 'Planner diário',
+                    essencial: 'Básico',
+                    plus: 'Avançado',
+                    full: 'Avançado + visão por semanas',
+                  },
+                  {
+                    feature: 'Humor e energia',
+                    essencial: 'Registro simples',
+                    plus: 'Visão ampliada',
+                    full: 'Com resumos e histórico',
+                  },
+                  {
+                    feature: 'Orientações personalizadas',
+                    essencial: 'Até 5 por dia',
+                    plus: 'Até 40 por dia',
+                    full: 'Ilimitadas',
+                  },
+                  {
+                    feature: 'Biblioteca Materna',
+                    essencial: 'Limitada',
+                    plus: 'Completa',
+                    full: 'Completa + conteúdos avançados',
+                  },
+                  {
+                    feature: 'Trilhas educativas',
+                    essencial: 'Introdutória',
+                    plus: 'Completas',
+                    full: 'Personalizadas',
+                  },
+                  {
+                    feature: 'Exportar PDF',
+                    essencial: 'Não incluído',
+                    plus: 'Disponível',
+                    full: 'Disponível',
+                  },
+                  {
+                    feature: 'Produtos digitais',
+                    essencial: 'Não incluídos',
+                    plus: 'Incluídos',
+                    full: 'Incluídos',
+                  },
+                  {
+                    feature: 'Conquistas',
+                    essencial: 'Não disponível',
+                    plus: 'Níveis 1 e 2',
+                    full: 'Níveis 3 a 5 e painel avançado',
+                  },
+                  {
+                    feature: 'Mentorias com parceiros',
+                    essencial: 'Valor integral',
+                    plus: 'Valor integral',
+                    full: 'Descontos de 10% a 15%',
+                  },
+                  {
+                    feature: 'MaternaBox',
+                    essencial: 'Sem benefícios adicionais',
+                    plus: 'Condições especiais',
+                    full: 'Condições especiais',
+                  },
                 ].map((row) => (
                   <div
                     key={row.feature}
@@ -352,8 +416,14 @@ export default function PlanosPage() {
               Se você já faz parte da nossa jornada:
             </p>
             <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-muted)] mb-2">
-              <li>Assinantes Materna+ recebem 5% de desconto no investimento da MaternaBox.</li>
-              <li>Assinantes Materna+ 360 recebem 10% de desconto no valor final da MaternaBox.</li>
+              <li>
+                Assinantes Materna+ recebem 5% de desconto no investimento da
+                MaternaBox.
+              </li>
+              <li>
+                Assinantes Materna+ 360 recebem 10% de desconto no valor final
+                da MaternaBox.
+              </li>
             </ul>
             <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
               O ajuste é aplicado automaticamente no checkout. É a nossa forma
@@ -453,9 +523,14 @@ export default function PlanosPage() {
 
         {/* Sheet de upgrade
             P15: re-mount quando mudar selectedPlanId (sem alterar API do componente).
-            CRÍTICO: não passar planId se o componente não suporta.
+            ✅ Agora o UpgradeSheet suporta planId (já corrigido por você).
          */}
-        <UpgradeSheet key={selectedPlanId} open={open} onOpenChange={setOpen} />
+        <UpgradeSheet
+          key={selectedPlanId}
+          open={open}
+          onOpenChange={setOpen}
+          planId={sheetPlanId}
+        />
       </div>
 
       <LegalFooter />
