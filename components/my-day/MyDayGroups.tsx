@@ -255,6 +255,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
+  // ✅ P21 — Consome o “recent save” e cria highlight sutil com TTL curto
   useEffect(() => {
     try {
       if (!premium) {
@@ -360,8 +361,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           <div
             key={groupId}
             className={[
+              // base: mantém neutro e discreto
+              'rounded-3xl',
               'transition-[box-shadow,background-color] duration-700 ease-out',
-              shouldHighlight ? 'bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.28)]' : '',
+              // highlight: “respiração” soft luxury (sem chamar atenção demais)
+              shouldHighlight ? 'bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.24)]' : '',
             ].join(' ')}
           >
             {visible.map((t) => (
