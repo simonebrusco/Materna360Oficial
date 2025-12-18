@@ -279,7 +279,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
       setExpanded((prev) => ({ ...prev, [gid]: true }))
 
       setRecentSaveActive(true)
-      const t = window.setTimeout(() => setRecentSaveActive(false), 2600)
+      const t = window.setTimeout(() => {
+  setRecentSaveActive(false)
+  setHighlightGroup(null)
+}, 2600)
 
       try {
         track('my_day.recent_save.consumed', {
