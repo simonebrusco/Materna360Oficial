@@ -45,18 +45,20 @@ export const isMaterna360 = () => getPlan() === 'materna-360'
  */
 export function setPlan(plan: PlanName): void {
   if (typeof window === 'undefined') return
+  const previousPlan = getPlan()
+  localStorage.setItem('m360.plan', plan)
 
-  const next = normalizePlan(plan)
-  const previous = getPlan()
-
-  localStorage.setItem(STORAGE_KEY, next)
-
-  if (next !== previous) {
-    track('plan_change', {
-      from: previous,
-      to: next,
+  if (plan !== previousPlan) {
+    track('plan_upgrade_attempt', {
+      from: previousPlan,
+      to: plan,
       timestamp: new Date().toISOString(),
     })
+
+    // P16 — avisa a mesma aba (sem refresh)
+    try {
+      window.dispatchEvent(new Event('m360:plan-updated'))
+    } catch {}
   }
 }
 
