@@ -13,6 +13,8 @@ type BaseAttributes = Omit<HTMLAttributes<HTMLElement>, 'title'>
 
 type SectionElementTag = 'section' | 'div' | 'article' | 'main' | 'aside'
 
+type SectionDensity = 'default' | 'compact'
+
 interface SectionWrapperProps extends BaseAttributes {
   as?: SectionElementTag
   eyebrow?: ReactNode
@@ -21,6 +23,7 @@ interface SectionWrapperProps extends BaseAttributes {
   header?: ReactNode
   headerClassName?: string
   contentClassName?: string
+  density?: SectionDensity
   children: ReactNode
 }
 
@@ -33,13 +36,16 @@ export function SectionWrapper({
   className = '',
   headerClassName = '',
   contentClassName,
+  density = 'default',
   children,
   ...rest
 }: SectionWrapperProps) {
   const ElementTag = as
+
   const mergedClassName = [
     'SectionWrapper',
-    className
+    density === 'compact' ? 'SectionWrapper--compact' : '',
+    className,
   ]
     .filter(Boolean)
     .join(' ')
@@ -53,9 +59,7 @@ export function SectionWrapper({
       <div className={['SectionWrapper-header', headerClassName].filter(Boolean).join(' ')}>
         {eyebrow ? <span className="SectionWrapper-eyebrow">{eyebrow}</span> : null}
         {renderedTitle ? <h2 className="SectionWrapper-title">{renderedTitle}</h2> : null}
-        {renderedDescription ? (
-          <p className="SectionWrapper-description">{renderedDescription}</p>
-        ) : null}
+        {renderedDescription ? <p className="SectionWrapper-description">{renderedDescription}</p> : null}
       </div>
     ) : null)
 
