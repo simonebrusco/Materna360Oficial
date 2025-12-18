@@ -27,7 +27,7 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
-// ✅ P9 — sinal pós-salvar vindo do Meu Dia Leve
+// P9 — sinal pós-salvar vindo do Maternar/Meu Dia Leve
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 type RecentSaveOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 type RecentSavePayload = { ts: number; origin: RecentSaveOrigin; source: string }
@@ -198,7 +198,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
   const [premium, setPremium] = useState(false)
 
-  // ✅ P21 — pós-salvar sutil (sem UI nova)
+  // P21 — pós-salvar sutil (sem UI nova): highlight temporário + auto-expand
   const [recentSaveActive, setRecentSaveActive] = useState(false)
   const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
 
@@ -317,7 +317,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
-  // ✅ P21 — consume sinal pós-salvar e aplica highlight sutil + auto-expand (TTL)
+  // P21 — consome sinal pós-salvar e aplica highlight sutil + auto-expand (TTL curto)
   useEffect(() => {
     try {
       if (!premium) {
@@ -417,12 +417,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">
-            {copy.headerTitle}
-          </h3>
-          <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">
-            {copy.headerSubtitle}
-          </p>
+          <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">{copy.headerTitle}</h3>
+          <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">{copy.headerSubtitle}</p>
 
           {/* P13/P17.3 — Micro-frase de continuidade (1 por dia, no máximo) */}
           {continuityLine ? (
@@ -460,7 +456,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
             const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
             const hasMore = count > effectiveLimit
 
-            // ✅ P21 — destaque sutil pós-salvar (sem texto/CTA/alerta)
+            // P21 — destaque sutil pós-salvar (sem texto/CTA/alerta)
             const shouldHighlight = premium && recentSaveActive && highlightGroup === groupId
 
             return (
