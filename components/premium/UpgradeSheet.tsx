@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { Button } from '@/components/ui/Button'
-import { upgradeToPlan } from '@/app/lib/plan'
+import { upgradeToPremium } from '@/app/lib/plan'
 
 type PlanId = 'materna-plus' | 'materna-360'
 
@@ -77,7 +77,9 @@ export default function UpgradeSheet({ open, onOpenChange, planId = 'materna-plu
             variant="primary"
             size="md"
             onClick={() => {
-              upgradeToPlan(planId, 'upgrade_sheet')
+              // No momento, o app só tem "premium" (boolean).
+              // Mantemos compatível: qualquer upgrade vira premium.
+              upgradeToPremium()
               onOpenChange(false)
             }}
           >
