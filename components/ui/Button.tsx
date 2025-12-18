@@ -1,10 +1,13 @@
+'use client'
+
+import * as React from 'react'
 import type { ReactNode } from 'react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'
-
 type ButtonSize = 'sm' | 'md' | 'lg'
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   children: ReactNode
@@ -15,6 +18,8 @@ export function Button({
   size = 'md',
   children,
   className = '',
+  disabled,
+  type,
   ...props
 }: ButtonProps) {
   const variantStyles: Record<ButtonVariant, string> = {
@@ -45,13 +50,40 @@ export function Button({
     lg: 'px-7 py-3 text-lg',
   }
 
+  const isDisabled = Boolean(disabled)
+
   return (
     <button
-      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full font-semibold transition-all duration-[150ms] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0 disabled:scale-100 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none ui-press ui-ring ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      type={type ?? 'button'}
+      disabled={isDisabled}
+      className={[
+        'group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full font-semibold',
+        'transition-all duration-[150ms] ease-out',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60',
+        // Interações (somente quando NÃO estiver disabled)
+        !isDisabled
+          ? 'hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0'
+          : '',
+        // Disabled
+        'disabled:scale-100 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none',
+        // Legacy (se já existir no projeto)
+        'ui-press ui-ring',
+        variantStyles[variant],
+        sizeStyles[size],
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       {...props}
     >
-      <span className="absolute inset-0 -z-10 rounded-full bg-white/0 transition-opacity duration-150 group-hover:bg-white/15" />
-      <span className="absolute inset-x-4 top-1.5 -z-0 h-[10px] rounded-full bg-white/40 opacity-0 blur-md transition-opacity duration-150 group-hover:opacity-100" />
+      {/* Brilhos/overlays só fazem sentido quando habilitado */}
+      {!isDisabled ? (
+        <>
+          <span className="absolute inset-0 -z-10 rounded-full bg-white/0 transition-opacity duration-150 group-hover:bg-white/15" />
+          <span className="absolute inset-x-4 top-1.5 -z-0 h-[10px] rounded-full bg-white/40 opacity-0 blur-md transition-opacity duration-150 group-hover:opacity-100" />
+        </>
+      ) : null}
+
       <span className="relative z-10 flex items-center gap-2">{children}</span>
     </button>
   )

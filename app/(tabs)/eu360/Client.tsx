@@ -187,15 +187,7 @@ function StepDot({ active }: { active?: boolean }) {
   )
 }
 
-function OptionButton({
-  active,
-  label,
-  onClick,
-}: {
-  active?: boolean
-  label: string
-  onClick: () => void
-}) {
+function OptionButton({ active, label, onClick }: { active?: boolean; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -391,10 +383,7 @@ export default function Eu360Client() {
     }
   }, [firstName, stats, personaForAi])
 
-  function setAnswer<K extends keyof QuestionnaireAnswers>(
-    key: K,
-    value: NonNullable<QuestionnaireAnswers[K]>,
-  ) {
+  function setAnswer<K extends keyof QuestionnaireAnswers>(key: K, value: NonNullable<QuestionnaireAnswers[K]>) {
     setAnswers((prev) => ({ ...prev, [key]: value }))
   }
 
@@ -449,15 +438,13 @@ export default function Eu360Client() {
   }
 
   const heroTitle = 'Seu mundo em perspectiva'
-  const heroSubtitle =
-    'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+  const heroSubtitle = 'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+
+  // (Mantemos como referência futura; não muda fluxo agora)
+  void buildAiContext
 
   const content = (
-    <main
-      data-layout="page-template-v1"
-      data-tab="eu360"
-      className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden"
-    >
+    <main data-layout="page-template-v1" data-tab="eu360" className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden">
       <div className="relative z-10 mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
@@ -477,26 +464,18 @@ export default function Eu360Client() {
           <div className="mt-4 rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-4 md:px-5 md:py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
-                  Seu ajuste da semana
-                </p>
+                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">Seu ajuste da semana</p>
 
                 <div className="mt-2 flex items-start gap-2">
                   <AppIcon name="sparkles" size={18} className="text-white" decorative />
                   <div>
-                    <p className="text-sm font-semibold text-white">
-                      {personaResult ? personaResult.label : personaPreview.label}
-                    </p>
+                    <p className="text-sm font-semibold text-white">{personaResult ? personaResult.label : personaPreview.label}</p>
                     <p className="text-[12px] text-white/85 leading-relaxed">
                       {personaResult ? personaResult.microCopy : personaPreview.microCopy}
                     </p>
 
-                    {/* ✅ P14 — continuidade quinzenal (leve, 1x/14 dias) */}
-                    {fortnightLine ? (
-                      <p className="mt-2 text-[12px] text-white/80 leading-relaxed">
-                        {fortnightLine}
-                      </p>
-                    ) : null}
+                    {/* ✅ P15 — continuidade quinzenal (leve, 1x/14 dias) */}
+                    {fortnightLine ? <p className="mt-2 text-[12px] text-white/80 leading-relaxed">{fortnightLine}</p> : null}
                   </div>
                 </div>
               </div>
@@ -547,7 +526,8 @@ export default function Eu360Client() {
           {/* 2 — QUESTIONÁRIO */}
           <div ref={questionnaireRef} />
 
-          <SectionWrapper>
+          {/* ✅ P15 — menos ruído vertical */}
+          <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
@@ -572,9 +552,7 @@ export default function Eu360Client() {
 
                 {!personaResult ? (
                   <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 px-4 py-3">
-                    <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#6a6a6a]">
-                      Prévia do ajuste
-                    </p>
+                    <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#6a6a6a]">Prévia do ajuste</p>
                     <div className="mt-1 flex items-start gap-2">
                       <AppIcon name="sparkles" size={18} className="text-[#fd2597]" decorative />
                       <div>
@@ -607,15 +585,25 @@ export default function Eu360Client() {
                   <>
                     {qStep === 1 ? (
                       <div className="space-y-2">
-                        <p className="text-[12px] font-semibold text-[#2f3a56]">
-                          1) Como você tem se sentido na maior parte dos dias?
-                        </p>
+                        <p className="text-[12px] font-semibold text-[#2f3a56]">1) Como você tem se sentido na maior parte dos dias?</p>
                         <div className="grid gap-2">
                           <OptionButton active={answers.q1 === 'exausta'} label="Exausta" onClick={() => setAnswer('q1', 'exausta')} />
-                          <OptionButton active={answers.q1 === 'cansada'} label="Cansada, mas dando conta" onClick={() => setAnswer('q1', 'cansada')} />
+                          <OptionButton
+                            active={answers.q1 === 'cansada'}
+                            label="Cansada, mas dando conta"
+                            onClick={() => setAnswer('q1', 'cansada')}
+                          />
                           <OptionButton active={answers.q1 === 'oscilando'} label="Oscilando" onClick={() => setAnswer('q1', 'oscilando')} />
-                          <OptionButton active={answers.q1 === 'equilibrada'} label="Mais equilibrada" onClick={() => setAnswer('q1', 'equilibrada')} />
-                          <OptionButton active={answers.q1 === 'energia'} label="Com energia para mais" onClick={() => setAnswer('q1', 'energia')} />
+                          <OptionButton
+                            active={answers.q1 === 'equilibrada'}
+                            label="Mais equilibrada"
+                            onClick={() => setAnswer('q1', 'equilibrada')}
+                          />
+                          <OptionButton
+                            active={answers.q1 === 'energia'}
+                            label="Com energia para mais"
+                            onClick={() => setAnswer('q1', 'energia')}
+                          />
                         </div>
                       </div>
                     ) : null}
@@ -636,14 +624,20 @@ export default function Eu360Client() {
 
                     {qStep === 3 ? (
                       <div className="space-y-2">
-                        <p className="text-[12px] font-semibold text-[#2f3a56]">
-                          3) Hoje, o que mais pesa na sua rotina?
-                        </p>
+                        <p className="text-[12px] font-semibold text-[#2f3a56]">3) Hoje, o que mais pesa na sua rotina?</p>
                         <div className="grid gap-2">
                           <OptionButton active={answers.q3 === 'tempo'} label="Falta de tempo" onClick={() => setAnswer('q3', 'tempo')} />
-                          <OptionButton active={answers.q3 === 'emocional'} label="Cansaço emocional" onClick={() => setAnswer('q3', 'emocional')} />
+                          <OptionButton
+                            active={answers.q3 === 'emocional'}
+                            label="Cansaço emocional"
+                            onClick={() => setAnswer('q3', 'emocional')}
+                          />
                           <OptionButton active={answers.q3 === 'organizacao'} label="Organização" onClick={() => setAnswer('q3', 'organizacao')} />
-                          <OptionButton active={answers.q3 === 'conexao'} label="Conexão com meu filho" onClick={() => setAnswer('q3', 'conexao')} />
+                          <OptionButton
+                            active={answers.q3 === 'conexao'}
+                            label="Conexão com meu filho"
+                            onClick={() => setAnswer('q3', 'conexao')}
+                          />
                           <OptionButton active={answers.q3 === 'tudo'} label="Tudo um pouco" onClick={() => setAnswer('q3', 'tudo')} />
                         </div>
                       </div>
@@ -655,10 +649,22 @@ export default function Eu360Client() {
                           4) Quando pensa na sua rotina como mãe, o que mais descreve?
                         </p>
                         <div className="grid gap-2">
-                          <OptionButton active={answers.q4 === 'sobrevivencia'} label="Sobrevivência" onClick={() => setAnswer('q4', 'sobrevivencia')} />
-                          <OptionButton active={answers.q4 === 'organizar'} label="Tentando organizar" onClick={() => setAnswer('q4', 'organizar')} />
+                          <OptionButton
+                            active={answers.q4 === 'sobrevivencia'}
+                            label="Sobrevivência"
+                            onClick={() => setAnswer('q4', 'sobrevivencia')}
+                          />
+                          <OptionButton
+                            active={answers.q4 === 'organizar'}
+                            label="Tentando organizar"
+                            onClick={() => setAnswer('q4', 'organizar')}
+                          />
                           <OptionButton active={answers.q4 === 'conexao'} label="Buscando conexão" onClick={() => setAnswer('q4', 'conexao')} />
-                          <OptionButton active={answers.q4 === 'equilibrio'} label="Encontrando equilíbrio" onClick={() => setAnswer('q4', 'equilibrio')} />
+                          <OptionButton
+                            active={answers.q4 === 'equilibrio'}
+                            label="Encontrando equilíbrio"
+                            onClick={() => setAnswer('q4', 'equilibrio')}
+                          />
                           <OptionButton active={answers.q4 === 'alem'} label="Querendo ir além" onClick={() => setAnswer('q4', 'alem')} />
                         </div>
                       </div>
@@ -666,12 +672,18 @@ export default function Eu360Client() {
 
                     {qStep === 5 ? (
                       <div className="space-y-2">
-                        <p className="text-[12px] font-semibold text-[#2f3a56]">
-                          5) Como você prefere receber ajuda aqui?
-                        </p>
+                        <p className="text-[12px] font-semibold text-[#2f3a56]">5) Como você prefere receber ajuda aqui?</p>
                         <div className="grid gap-2">
-                          <OptionButton active={answers.q5 === 'diretas'} label="Poucas sugestões, bem diretas" onClick={() => setAnswer('q5', 'diretas')} />
-                          <OptionButton active={answers.q5 === 'guiadas'} label="Algumas opções, mas guiadas" onClick={() => setAnswer('q5', 'guiadas')} />
+                          <OptionButton
+                            active={answers.q5 === 'diretas'}
+                            label="Poucas sugestões, bem diretas"
+                            onClick={() => setAnswer('q5', 'diretas')}
+                          />
+                          <OptionButton
+                            active={answers.q5 === 'guiadas'}
+                            label="Algumas opções, mas guiadas"
+                            onClick={() => setAnswer('q5', 'guiadas')}
+                          />
                           <OptionButton active={answers.q5 === 'explorar'} label="Gosto de explorar com calma" onClick={() => setAnswer('q5', 'explorar')} />
                         </div>
                       </div>
@@ -679,14 +691,24 @@ export default function Eu360Client() {
 
                     {qStep === 6 ? (
                       <div className="space-y-2">
-                        <p className="text-[12px] font-semibold text-[#2f3a56]">
-                          6) Se hoje fosse um bom dia, o que já seria suficiente?
-                        </p>
+                        <p className="text-[12px] font-semibold text-[#2f3a56]">6) Se hoje fosse um bom dia, o que já seria suficiente?</p>
                         <div className="grid gap-2">
                           <OptionButton active={answers.q6 === 'passar'} label="Conseguir passar pelo dia" onClick={() => setAnswer('q6', 'passar')} />
-                          <OptionButton active={answers.q6 === 'basico'} label="Cumprir o básico sem culpa" onClick={() => setAnswer('q6', 'basico')} />
-                          <OptionButton active={answers.q6 === 'momento'} label="Ter um momento bom com meu filho" onClick={() => setAnswer('q6', 'momento')} />
-                          <OptionButton active={answers.q6 === 'organizada'} label="Me sentir mais organizada" onClick={() => setAnswer('q6', 'organizada')} />
+                          <OptionButton
+                            active={answers.q6 === 'basico'}
+                            label="Cumprir o básico sem culpa"
+                            onClick={() => setAnswer('q6', 'basico')}
+                          />
+                          <OptionButton
+                            active={answers.q6 === 'momento'}
+                            label="Ter um momento bom com meu filho"
+                            onClick={() => setAnswer('q6', 'momento')}
+                          />
+                          <OptionButton
+                            active={answers.q6 === 'organizada'}
+                            label="Me sentir mais organizada"
+                            onClick={() => setAnswer('q6', 'organizada')}
+                          />
                           <OptionButton active={answers.q6 === 'avancar'} label="Avançar um pouco mais" onClick={() => setAnswer('q6', 'avancar')} />
                         </div>
                       </div>
@@ -733,14 +755,13 @@ export default function Eu360Client() {
           </SectionWrapper>
 
           {/* 3 — PAINEL DA JORNADA */}
-          <SectionWrapper>
+          {/* ✅ P15 — menos ruído vertical */}
+          <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">
-                      Painel da sua jornada
-                    </p>
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">Painel da sua jornada</p>
                     <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
                       Um olhar rápido sobre como você vem cuidando de vocês
                     </h2>
@@ -820,21 +841,18 @@ export default function Eu360Client() {
           </SectionWrapper>
 
           {/* 4 — BANNER DE PLANOS */}
-          <SectionWrapper>
+          {/* ✅ P15 — menos ruído vertical */}
+          <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#fd2597_0,#b8236b_45%,#fdbed7_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
                 <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                   <div className="space-y-2 max-w-xl">
-                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
-                      Materna360+
-                    </p>
-                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">
-                      Leve o Materna360 para o próximo nível
-                    </h2>
+                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">Materna360+</p>
+                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">Leve o Materna360 para o próximo nível</h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                      Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas avançadas para cuidar de você,
-                      da sua rotina e da sua família.
+                      Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas avançadas para cuidar de você, da sua rotina e da
+                      sua família.
                     </p>
                   </div>
 

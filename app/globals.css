@@ -2,13 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Force readable text in iframe (Builder embed mode) ===== */
-html,
-body {
-  color-scheme: light;
-  color: #111;
-}
-
 /* ===== NEW MATERNA360 COLOR SYSTEM (Official) ===== */
 :root {
   /* Page & Background Colors */
@@ -161,6 +154,8 @@ main[data-layout="page-template-v2"] {
   html,
   body {
     height: 100%;
+    color-scheme: light;
+    color: #111; /* Force readable text in iframe / embed mode */
     color: rgb(var(--support-1));
   }
 
@@ -301,21 +296,29 @@ main[data-layout="page-template-v2"] {
     margin-top: 1rem;
   }
 
-  .GridRhythm {
-    column-gap: var(--rhythm-grid-col-m);
-    row-gap: var(--rhythm-grid-row-m);
+  /* ============================================================
+     ✅ P15 — SectionWrapper (modo compacto)
+     - Menos verticalidade, menos ruído
+     - Ativa via classe: .SectionWrapper--compact
+     - OU via atributo global: main[data-density="compact"] .SectionWrapper
+     ============================================================ */
+  .SectionWrapper--compact {
+    margin-top: calc(var(--rhythm-section-m) * 0.65);
+    margin-bottom: calc(var(--rhythm-section-m) * 0.65);
   }
 
-  .GridRhythm > * {
-    padding: var(--rhythm-card-pad-m);
+  /* Compact global (sem refactor): ativa por página/hub via data-density */
+  main[data-density="compact"] .SectionWrapper {
+    margin-top: calc(var(--rhythm-section-m) * 0.65);
+    margin-bottom: calc(var(--rhythm-section-m) * 0.65);
   }
 
-  .GridRhythm-descriptionClamp {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  main[data-density="compact"] .SectionWrapper-header {
+    gap: 0.55rem;
+  }
+
+  main[data-density="compact"] .SectionWrapper-header + * {
+    margin-top: 0.75rem;
   }
 
   @media (min-width: 768px) {
@@ -324,13 +327,14 @@ main[data-layout="page-template-v2"] {
       margin-bottom: var(--rhythm-section-t);
     }
 
-    .GridRhythm {
-      column-gap: var(--rhythm-grid-col-t);
-      row-gap: var(--rhythm-grid-row-t);
+    .SectionWrapper--compact {
+      margin-top: calc(var(--rhythm-section-t) * 0.65);
+      margin-bottom: calc(var(--rhythm-section-t) * 0.65);
     }
 
-    .GridRhythm > * {
-      padding: var(--rhythm-card-pad-t);
+    main[data-density="compact"] .SectionWrapper {
+      margin-top: calc(var(--rhythm-section-t) * 0.65);
+      margin-bottom: calc(var(--rhythm-section-t) * 0.65);
     }
   }
 
@@ -352,6 +356,50 @@ main[data-layout="page-template-v2"] {
       margin-top: 1.25rem;
     }
 
+    .SectionWrapper--compact {
+      margin-top: calc(var(--rhythm-section-d) * 0.65);
+      margin-bottom: calc(var(--rhythm-section-d) * 0.65);
+    }
+
+    main[data-density="compact"] .SectionWrapper {
+      margin-top: calc(var(--rhythm-section-d) * 0.65);
+      margin-bottom: calc(var(--rhythm-section-d) * 0.65);
+    }
+
+    main[data-density="compact"] .SectionWrapper-header + * {
+      margin-top: 1rem;
+    }
+  }
+
+  .GridRhythm {
+    column-gap: var(--rhythm-grid-col-m);
+    row-gap: var(--rhythm-grid-row-m);
+  }
+
+  .GridRhythm > * {
+    padding: var(--rhythm-card-pad-m);
+  }
+
+  .GridRhythm-descriptionClamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (min-width: 768px) {
+    .GridRhythm {
+      column-gap: var(--rhythm-grid-col-t);
+      row-gap: var(--rhythm-grid-row-t);
+    }
+
+    .GridRhythm > * {
+      padding: var(--rhythm-card-pad-t);
+    }
+  }
+
+  @media (min-width: 1024px) {
     .GridRhythm {
       column-gap: var(--rhythm-grid-col-d);
       row-gap: var(--rhythm-grid-row-d);
