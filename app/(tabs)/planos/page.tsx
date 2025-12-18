@@ -23,10 +23,10 @@ const PLANS = [
       { label: 'Planner diário (versão básica)' },
       { label: 'Registro de humor e energia' },
       { label: 'Anotações rápidas' },
-      { label: 'Atividades do dia (não personalizadas)' },
-      { label: '1 insight emocional por dia' },
+      { label: 'Atividades do dia (sem personalização)' },
+      { label: '1 insight do dia (leve e curto)' },
       { label: 'Acesso parcial ao Eu360' },
-      { label: 'Histórico emocional dos últimos 7 dias' },
+      { label: 'Histórico dos últimos 7 dias' },
       { label: 'Biblioteca Materna limitada (1 guia por categoria)' },
       { label: '1 trilha educativa introdutória' },
       { label: 'Até 5 orientações personalizadas por dia' },
@@ -42,33 +42,25 @@ const PLANS = [
     badge: 'Recomendado',
     price: 'R$29,90',
     pricePeriod: '/mês',
-    priceNote:
-      'Para mães que desejam organização gentil, clareza emocional e apoio diário.',
-    subtitle:
-      'Recursos avançados para uma rotina organizada, leve e acolhida.',
+    priceNote: 'Para mães que desejam organização gentil, clareza e apoio diário.',
+    subtitle: 'Mais personalização, mais contexto e mais recursos — sem pressão.',
     features: [
       { label: 'Tudo do Essencial' },
       { label: 'Exportar PDF (Planner, Rotina Leve, Como Estou Hoje)' },
-      { label: 'Insights emocionais e organizacionais avançados' },
+      { label: 'Mais insights por dia (mais precisos e no seu tom)' },
       { label: 'Modo offline' },
-      { label: 'Histórico emocional completo' },
-      { label: 'Rotinas inteligentes do dia, personalizadas para você' },
+      { label: 'Histórico ampliado (para você olhar com calma)' },
+      { label: 'Rotinas do dia personalizadas para você' },
       { label: 'Atividades guiadas por idade' },
-      {
-        label:
-          'Trilhas educativas completas e trilhas de desenvolvimento infantil',
-      },
+      { label: 'Trilhas educativas completas (desenvolvimento infantil)' },
       { label: 'Biblioteca Materna completa' },
       { label: 'Wallpapers exclusivos' },
-      { label: 'Gamificação: primeiros níveis de conquistas (níveis 1 e 2)' },
+      { label: 'Pequenas conquistas (níveis 1 e 2)' },
       {
         label:
           'Conteúdos premium incluídos: Manual de Sobrevivência para Pais, Minicurso Parentalidade Inteligente, Áudios de Acalmamento, Caderno de Exercícios e guias complementares',
       },
-      {
-        label:
-          'Até 40 orientações personalizadas por dia, de acordo com seu perfil no Eu360',
-      },
+      { label: 'Até 40 orientações por dia, de acordo com seu perfil no Eu360' },
     ],
     buttonText: 'Quero o Materna+',
     buttonVariant: 'primary' as const,
@@ -81,35 +73,19 @@ const PLANS = [
     badge: 'Completo',
     price: 'R$49,90',
     pricePeriod: '/mês',
-    priceNote:
-      'Para acompanhar sua jornada emocional e familiar de forma completa e personalizada.',
+    priceNote: 'Para acompanhar sua jornada com mais profundidade e consistência.',
     subtitle: 'A experiência completa de cuidado, presença e personalização.',
     features: [
       { label: 'Tudo do Materna+' },
-      { label: 'Orientações ilimitadas com leitura emocional detalhada' },
-      { label: 'Relatórios emocionais semanais e mensais' },
+      { label: 'Orientações ilimitadas (sempre no seu tom, sem cobrança)' },
+      { label: 'Resumos por semana e por mês (para você se situar)' },
       { label: 'Trilhas educativas personalizadas para sua família' },
-      {
-        label:
-          'Rotina Inteligente 360, com ajustes automáticos ao longo da semana',
-      },
-      {
-        label:
-          'Conteúdos avançados da Biblioteca Materna, trilhas terapêuticas e aulas especiais',
-      },
-      {
-        label:
-          'Gamificação premium: níveis 3 a 5, missões semanais personalizadas e medalhas exclusivas',
-      },
-      { label: 'Painel mensal e anual de evolução da sua jornada' },
-      {
-        label:
-          'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais',
-      },
-      {
-        label:
-          'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros',
-      },
+      { label: 'Rotina 360, com ajustes ao longo da semana' },
+      { label: 'Biblioteca Materna avançada e aulas especiais' },
+      { label: 'Conquistas premium (níveis 3 a 5), missões semanais e medalhas' },
+      { label: 'Painel por mês e por ano (visão da jornada, sem nota)' },
+      { label: 'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais' },
+      { label: 'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros' },
     ],
     buttonText: 'Quero o Materna+ 360',
     buttonVariant: 'primary' as const,
@@ -126,7 +102,7 @@ export default function PlanosPage() {
   // Ajuste SSR/hidratação: lê plano só após mount
   const [currentPlanId, setCurrentPlanId] = React.useState<PlanId>('essencial')
 
-  // Opcional: qual plano foi clicado (para o sheet abrir “contextualizado”)
+  // Qual plano foi clicado (para o sheet abrir “contextualizado” por re-mount)
   const [selectedPlanId, setSelectedPlanId] = React.useState<PlanId>('materna-plus')
 
   React.useEffect(() => {
@@ -140,7 +116,6 @@ export default function PlanosPage() {
   }
 
   const handleUpgradeClick = (planId: PlanId) => {
-    // Telemetria mais fiel ao clique do usuário
     track('paywall_click', { plan: planId, source: 'planos_page' })
     setSelectedPlanId(planId)
     setOpen(true)
@@ -149,7 +124,7 @@ export default function PlanosPage() {
   return (
     <main
       data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-16 bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]"
+      className="min-h-[100dvh] pb-16 bg-transparent"
     >
       <div className="mx-auto max-w-5xl px-4 md:px-6 pt-10">
         {/* HERO da página de planos */}
@@ -171,7 +146,7 @@ export default function PlanosPage() {
           <div className="mt-4 space-y-1">
             <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
               Você já está no plano{' '}
-              {PLANS.find(p => p.id === currentPlanId)?.name}
+              {PLANS.find((p) => p.id === currentPlanId)?.name}
             </p>
             <p className="text-xs sm:text-sm text-white/90">
               Se fizer sentido para você, pode mudar de plano com calma, sem
@@ -185,7 +160,7 @@ export default function PlanosPage() {
         <div className="rounded-[32px] border border-white/80 bg-white/96 backdrop-blur-2xl shadow-[0_14px_36px_rgba(0,0,0,0.16)] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 mb-10">
           {/* Grid de planos */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-10">
-            {PLANS.map(planConfig => {
+            {PLANS.map((planConfig) => {
               const isCurrentPlan = currentPlanId === planConfig.id
               const isHighlighted = planConfig.highlighted
 
@@ -213,11 +188,7 @@ export default function PlanosPage() {
                           : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
                       }`}
                     >
-                      <AppIcon
-                        name={planConfig.badgeIcon}
-                        size={12}
-                        decorative
-                      />
+                      <AppIcon name={planConfig.badgeIcon} size={12} decorative />
                       {planConfig.badge}
                     </div>
                   </div>
@@ -233,9 +204,7 @@ export default function PlanosPage() {
                     >
                       {planConfig.name}
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)]">
-                      {planConfig.subtitle}
-                    </p>
+                    <p className="text-sm text-[var(--color-text-muted)]">{planConfig.subtitle}</p>
                   </div>
 
                   {/* Preço */}
@@ -254,9 +223,7 @@ export default function PlanosPage() {
                         {planConfig.pricePeriod}
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                      {planConfig.priceNote}
-                    </p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">{planConfig.priceNote}</p>
                   </div>
 
                   {/* Lista de benefícios
@@ -291,7 +258,6 @@ export default function PlanosPage() {
                         return
                       }
 
-                      // Abre o sheet, mas agora registrando qual plano a pessoa escolheu
                       handleUpgradeClick(planConfig.id)
                     }}
                     disabled={isCurrentPlan && planConfig.id === 'essencial'}
@@ -340,13 +306,13 @@ export default function PlanosPage() {
                     feature: 'Planner diário',
                     essencial: 'Básico',
                     plus: 'Avançado',
-                    full: 'Avançado + leitura de padrões',
+                    full: 'Avançado + visão por semanas',
                   },
                   {
                     feature: 'Humor e energia',
                     essencial: 'Registro simples',
-                    plus: 'Visão completa',
-                    full: 'Com relatórios e evolução',
+                    plus: 'Visão ampliada',
+                    full: 'Com resumos e histórico',
                   },
                   {
                     feature: 'Orientações personalizadas',
@@ -379,7 +345,7 @@ export default function PlanosPage() {
                     full: 'Incluídos',
                   },
                   {
-                    feature: 'Gamificação',
+                    feature: 'Conquistas',
                     essencial: 'Não disponível',
                     plus: 'Níveis 1 e 2',
                     full: 'Níveis 3 a 5 e painel avançado',
@@ -396,7 +362,7 @@ export default function PlanosPage() {
                     plus: 'Condições especiais',
                     full: 'Condições especiais',
                   },
-                ].map(row => (
+                ].map((row) => (
                   <div
                     key={row.feature}
                     className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white even:bg-[#fff5fb]/80"
@@ -455,7 +421,6 @@ export default function PlanosPage() {
               momento.
             </p>
 
-            {/* CTA opcional (pequeno): abrir o sheet já no plano recomendado */}
             <div className="mt-4 flex justify-center">
               <Button
                 variant="primary"
@@ -535,13 +500,11 @@ export default function PlanosPage() {
         </div>
 
         {/* Sheet de upgrade
-            Observação: eu mantive o componente como está (sem alterar API).
-            Se o UpgradeSheet aceitar props adicionais (ex: selectedPlan), você pode plugar aqui.
+            Ajuste P15: re-mount quando mudar selectedPlanId (sem alterar API do componente).
          */}
-        <UpgradeSheet open={open} onOpenChange={setOpen} />
+        <UpgradeSheet key={selectedPlanId} open={open} onOpenChange={setOpen} />
       </div>
 
-      {/* Rodapé legal global */}
       <LegalFooter />
     </main>
   )
