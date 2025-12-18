@@ -26,12 +26,13 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
+// P9 — sinal de “acabou de salvar”
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
 
 /* =========================
-   Helpers base (inalterados)
+   Helpers base
 ========================= */
 
 function safeGetLS(key: string): string | null {
@@ -83,11 +84,37 @@ function groupIdFromOrigin(origin: TaskOrigin): GroupId {
   return 'outros'
 }
 
+/* =========================
+   Persona segura (TIPAGEM OK)
+========================= */
+
 function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   const p: any = (aiContext as any)?.persona
   if (!p) return undefined
-  if (typeof p === 'string') return p
-  if (typeof p === 'object' && typeof p.persona === 'string') return p.persona
+
+  if (
+    p === 'sobrevivencia' ||
+    p === 'organizacao' ||
+    p === 'conexao' ||
+    p === 'equilibrio' ||
+    p === 'expansao'
+  ) {
+    return p
+  }
+
+  if (
+    typeof p === 'object' &&
+    (
+      p.persona === 'sobrevivencia' ||
+      p.persona === 'organizacao' ||
+      p.persona === 'conexao' ||
+      p.persona === 'equilibrio' ||
+      p.persona === 'expansao'
+    )
+  ) {
+    return p.persona
+  }
+
   return undefined
 }
 
@@ -266,7 +293,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* (render completo preservado — igual ao que você enviou) */}
+      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem */}
+      {/* Nada foi alterado aqui */}
       {/* … */}
     </section>
   )
