@@ -27,6 +27,11 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
+// ✅ P9 — sinal pós-salvar vindo do Meu Dia Leve
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+type RecentSaveOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+type RecentSavePayload = { ts: number; origin: RecentSaveOrigin; source: string }
+
 /* =========================
    Helpers base
 ========================= */
@@ -41,6 +46,39 @@ function timeOf(t: MyDayTaskItem): number {
   const iso = (t as any).createdAt
   const n = iso ? Date.parse(iso) : NaN
   return Number.isFinite(n) ? n : 0
+}
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function groupIdFromRecentOrigin(origin: RecentSaveOrigin): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
 /* =========================
@@ -60,13 +98,11 @@ function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   }
   if (
     typeof p === 'object' &&
-    (
-      p.persona === 'sobrevivencia' ||
+    (p.persona === 'sobrevivencia' ||
       p.persona === 'organizacao' ||
       p.persona === 'conexao' ||
       p.persona === 'equilibrio' ||
-      p.persona === 'expansao'
-    )
+      p.persona === 'expansao')
   ) {
     return p.persona
   }
@@ -97,10 +133,7 @@ function getAdaptivePremiumLimit(persona?: PersonaId) {
    P18 — Ordenação contextual
 ========================= */
 
-function sortForGroup(
-  items: MyDayTaskItem[],
-  opts: { premium: boolean; dateKey: string; persona?: PersonaId },
-) {
+function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; dateKey: string; persona?: PersonaId }) {
   const { premium, persona } = opts
 
   const statusRank = (t: MyDayTaskItem) => {
@@ -110,11 +143,7 @@ function sortForGroup(
 
   const started = (t: MyDayTaskItem) => {
     const anyT: any = t as any
-    return !!(
-      anyT.startedAt ||
-      anyT.inProgress === true ||
-      (typeof anyT.progress === 'number' && anyT.progress > 0)
-    )
+    return !!(anyT.startedAt || anyT.inProgress === true || (typeof anyT.progress === 'number' && anyT.progress > 0))
   }
 
   return [...items].sort((a, b) => {
@@ -164,6 +193,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
   const [premium, setPremium] = useState(false)
 
+  // ✅ P9 — pós-salvar (sem criar UI nova)
+  const [recentSaveActive, setRecentSaveActive] = useState(false)
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
+
   const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const personaId = getPersonaId(aiContext)
@@ -199,8 +232,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     return Math.max(min, Math.min(max, resolved))
   }, [euSignal, premium, personaId, recentSignal])
 
-  useEffect(() => {
+  function refresh() {
     setTasks(listMyDayTasks())
+  }
+
+  useEffect(() => {
+    refresh()
   }, [])
 
   useEffect(() => {
@@ -221,10 +258,54 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }, [])
 
   /* =========================
+     ✅ P9 — Consumir sinal pós-salvar
+     - abre o grupo certo
+     - marca "ativo" por poucos segundos
+     - remove a key para não repetir
+  ========================= */
+
+  useEffect(() => {
+    try {
+      const raw = safeGetLS(LS_RECENT_SAVE)
+      if (!raw) return
+
+      const payload = safeParseJSON<RecentSavePayload>(raw)
+      safeRemoveLS(LS_RECENT_SAVE) // importante: consumir sempre, mesmo se inválido
+
+      if (!payload || typeof payload.ts !== 'number' || !payload.origin) return
+
+      // janela curta para evitar efeito atrasado (UX)
+      const ageMs = Date.now() - payload.ts
+      if (ageMs < 0 || ageMs > 10 * 60 * 1000) return
+
+      const gid = groupIdFromRecentOrigin(payload.origin)
+      setHighlightGroup(gid)
+
+      // abre o bloco automaticamente (sem texto, sem CTA)
+      setExpanded((prev) => ({ ...prev, [gid]: true }))
+
+      // marca ativo por um curto período para P20 não empilhar micro-frase
+      setRecentSaveActive(true)
+      window.setTimeout(() => setRecentSaveActive(false), 2600)
+
+      try {
+        track('my_day.recent_save.consumed', {
+          origin: payload.origin,
+          source: payload.source ?? null,
+          ageMs,
+        })
+      } catch {}
+    } catch {
+      // silencioso
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /* =========================
      ✅ P20 — Silêncio inteligente (timing)
      - Free: intacto (mantém base)
      - Premium: só mostra quando faz sentido humano
-       (não há pressão e não há ação => silêncio)
+       + não empilha com pós-salvar
   ========================= */
 
   useEffect(() => {
@@ -247,19 +328,20 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         return
       }
 
-      // Premium: "não fazer nada também é produto"
-      // 1) Se o dia está vazio, silêncio (evita frase solta).
+      // ✅ P20: se acabou de salvar, não empilha micro-frase
+      if (recentSaveActive) {
+        setContinuityLine(null)
+        return
+      }
+
+      // 1) Se o dia está vazio, silêncio.
       if (totalCount === 0) {
         setContinuityLine(null)
         return
       }
 
       // 2) Se não há pressão e não houve ação recente, silêncio.
-      //    (pendingPressure low + sem conclusão recente)
-      if (
-        recentSignal?.pendingPressure === 'low' &&
-        recentSignal?.hadCompletionRecently === false
-      ) {
+      if (recentSignal?.pendingPressure === 'low' && recentSignal?.hadCompletionRecently === false) {
         setContinuityLine(null)
         return
       }
@@ -277,15 +359,24 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     totalCount,
     recentSignal?.pendingPressure,
     recentSignal?.hadCompletionRecently,
+    recentSaveActive,
   ])
 
   /* =========================
      RENDER — ORIGINAL
+     (Você mantém seu JSX real aqui. Eu não invento markup.)
   ========================= */
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* JSX ORIGINAL — permanece exatamente igual */}
+      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
+      {/* Importante: onde você renderiza grupos, você já tem acesso a:
+          - grouped
+          - expanded / setExpanded
+          - effectiveLimit
+          - continuityLine
+          - highlightGroup (se quiser usar só para um "ring" sutil existente; não é obrigatório)
+      */}
     </section>
   )
 }
