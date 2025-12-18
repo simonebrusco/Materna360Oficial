@@ -259,21 +259,30 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   /* =========================
      ✅ P9 — Consumir sinal pós-salvar
+<<<<<<< Updated upstream
      - só no Premium (evita comportamento colateral no Free)
      - abre o grupo certo
      - marca "ativo" por poucos segundos
      - remove a key para não repetir
      - reavalia por dateKey (troca de dia)
+=======
+     - abre o grupo certo
+     - marca "ativo" por poucos segundos
+     - remove a key para não repetir
+>>>>>>> Stashed changes
   ========================= */
 
   useEffect(() => {
     try {
+<<<<<<< Updated upstream
       if (!premium) {
         setRecentSaveActive(false)
         setHighlightGroup(null)
         return
       }
 
+=======
+>>>>>>> Stashed changes
       const raw = safeGetLS(LS_RECENT_SAVE)
       if (!raw) return
 
@@ -284,7 +293,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
       // janela curta para evitar efeito atrasado (UX)
       const ageMs = Date.now() - payload.ts
+<<<<<<< Updated upstream
       if (ageMs < 0 || ageMs > 12_000) return
+=======
+      if (ageMs < 0 || ageMs > 10 * 60 * 1000) return
+>>>>>>> Stashed changes
 
       const gid = groupIdFromRecentOrigin(payload.origin)
       setHighlightGroup(gid)
@@ -292,9 +305,15 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
       // abre o bloco automaticamente (sem texto, sem CTA)
       setExpanded((prev) => ({ ...prev, [gid]: true }))
 
+<<<<<<< Updated upstream
       // marca ativo por um curto período para P20 não empilhar micro-frase
       setRecentSaveActive(true)
       const t = window.setTimeout(() => setRecentSaveActive(false), 12_000)
+=======
+      // marca ativo por curto período para P20 não empilhar micro-frase
+      setRecentSaveActive(true)
+      window.setTimeout(() => setRecentSaveActive(false), 2600)
+>>>>>>> Stashed changes
 
       try {
         track('my_day.recent_save.consumed', {
@@ -303,12 +322,20 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           ageMs,
         })
       } catch {}
+<<<<<<< Updated upstream
 
       return () => window.clearTimeout(t)
     } catch {
       // silencioso
     }
   }, [premium, dateKey])
+=======
+    } catch {
+      // silencioso
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+>>>>>>> Stashed changes
 
   /* =========================
      ✅ P20 — Silêncio inteligente (timing)
@@ -321,17 +348,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     try {
       const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
 
-      // Base (P13) já protege:
-      // - 1x/dia
-      // - nunca no primeiro uso
-      // - só com histórico
       const base = getMyDayContinuityLine({ dateKey, tone })
       if (!base?.text) {
         setContinuityLine(null)
         return
       }
 
-      // Free permanece idêntico: usa exatamente a frase base.
       if (!premium) {
         setContinuityLine(base.text)
         return
@@ -343,19 +365,24 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         return
       }
 
+<<<<<<< Updated upstream
       // 1) Se o dia está vazio, silêncio.
+=======
+>>>>>>> Stashed changes
       if (totalCount === 0) {
         setContinuityLine(null)
         return
       }
 
+<<<<<<< Updated upstream
       // 2) Se não há pressão e não houve ação recente, silêncio.
+=======
+>>>>>>> Stashed changes
       if (recentSignal?.pendingPressure === 'low' && recentSignal?.hadCompletionRecently === false) {
         setContinuityLine(null)
         return
       }
 
-      // 3) Caso contrário, premium usa variação curta por persona (P18.3).
       setContinuityLine(refineContinuityForPremium(dateKey, personaId))
     } catch {
       setContinuityLine(null)
@@ -371,6 +398,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     recentSaveActive,
   ])
 
+<<<<<<< Updated upstream
   /* =========================
      RENDER — ORIGINAL
      (Você mantém seu JSX real aqui. Eu não invento markup.)
@@ -380,11 +408,21 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
       {/* Importante: onde você renderiza grupos, você já tem acesso a:
+=======
+  return (
+    <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
+      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
+      {/* Você já tem acesso a:
+>>>>>>> Stashed changes
           - grouped
           - expanded / setExpanded
           - effectiveLimit
           - continuityLine
+<<<<<<< Updated upstream
           - highlightGroup (se quiser usar só para um "ring" sutil existente; não é obrigatório)
+=======
+          - highlightGroup (se quiser aplicar só um destaque sutil já existente; opcional)
+>>>>>>> Stashed changes
       */}
     </section>
   )
