@@ -20,280 +20,733 @@ import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { isPremium } from '@/app/lib/plan'
 
-/* ---------------------------------- */
-/* Tipos e constantes                 */
-/* ---------------------------------- */
-
 type GroupId = keyof GroupedTasks
 
-const GROUP_ORDER: GroupId[] = [
-  'para-hoje',
-  'familia',
-  'autocuidado',
-  'rotina-casa',
-  'outros',
-]
+const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
+const DEFAULT_LIMIT = 5
 
-const FREE_LIMIT = 5
-const PREMIUM_LIMIT = 3
+// P9 — sinal de “acabou de salvar” (vem do Maternar/Meu Dia Leve)
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
 
-/* ---------------------------------- */
-/* Utils locais                       */
-/* ---------------------------------- */
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  if (t.status) return t.status
-  if (t.done === true) return 'done'
+  if ((t as any).status) return (t as any).status
+  if ((t as any).done === true) return 'done'
   return 'active'
 }
 
 function timeOf(t: MyDayTaskItem): number {
-  const n = t.createdAt ? Date.parse(t.createdAt) : NaN
+  const iso = (t as any).createdAt
+  const n = iso ? Date.parse(iso) : NaN
   return Number.isFinite(n) ? n : 0
 }
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
+
+function groupIdFromOrigin(origin: TaskOrigin): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
+}
+
 /**
- * P17 — Micropriorização premium
- * Regra simples e previsível:
- * active > snoozed > done
- * premium prioriza levemente itens mais recentes
+ * Normaliza persona de um AiLightContext sem “quebrar” tipagem caso o shape evolua.
+ * Aceita tanto `persona` como string quanto objeto (ex.: { persona: '...', label: '...' }).
  */
-function sortForGroup(items: MyDayTaskItem[], premium: boolean) {
-  const rank = (t: MyDayTaskItem) => {
+function getPersonaId(aiContext?: AiLightContext): string | undefined {
+  const p: any = (aiContext as any)?.persona
+  if (!p) return undefined
+  if (typeof p === 'string') return p
+  if (typeof p === 'object' && typeof p.persona === 'string') return p.persona
+  return undefined
+}
+
+function microcopyForPersona(persona?: string) {
+  // Defaults (neutro)
+  const base = {
+    headerTitle: 'Seu dia, em blocos mais leves',
+    headerSubtitle: 'O Materna360 organiza para você. Você só escolhe o próximo passo.',
+    bannerTitle: 'Hoje pode ser menos. O essencial já está aqui.',
+    bannerBody: 'Eu coloquei no bloco certo para você não precisar procurar.',
+    groupHints: {
+      'para-hoje': 'Se der, escolha só uma coisa.',
+      familia: 'Um pequeno gesto já conta.',
+      autocuidado: 'Cuidar de você pode ser simples.',
+      'rotina-casa': 'Nem tudo precisa ser feito hoje.',
+      outros: 'Talvez isso possa esperar.',
+    } as Partial<Record<GroupId, string>>,
+  }
+
+  // Ajustes sutis por fase (sem “cara de IA”)
+  if (persona === 'sobrevivencia') {
+    return {
+      ...base,
+      headerSubtitle: 'Hoje é sobre passar pelo dia com menos peso. Um passo já ajuda.',
+      bannerTitle: 'Sem pressa. Um passo de cada vez.',
+      bannerBody: 'Eu deixei isso no lugar certo. Você não precisa resolver tudo agora.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Só uma coisa. O resto pode esperar.',
+        autocuidado: 'O mínimo já é cuidado.',
+        'rotina-casa': 'Hoje, o suficiente já é muito.',
+      },
+    }
+  }
+
+  if (persona === 'organizacao') {
+    return {
+      ...base,
+      headerSubtitle: 'Vamos tirar ruído: olhar o essencial primeiro já organiza a cabeça.',
+      bannerBody: 'Eu já organizei por blocos para você decidir com mais clareza.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Comece pelo que destrava o dia.',
+        'rotina-casa': 'Um ponto da casa por vez.',
+      },
+    }
+  }
+
+  if (persona === 'conexao') {
+    return {
+      ...base,
+      headerSubtitle: 'Leveza com presença: pequenas escolhas mudam o clima da rotina.',
+      groupHints: {
+        ...base.groupHints,
+        familia: 'Pequeno e intencional vale muito.',
+        autocuidado: 'Um respiro curto já muda o tom.',
+      },
+    }
+  }
+
+  if (persona === 'equilibrio') {
+    return {
+      ...base,
+      headerSubtitle: 'Você está encontrando ritmo. Vamos manter constância gentil.',
+      bannerTitle: 'Bom. Agora é seguir no seu ritmo.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Prioridade clara, execução leve.',
+      },
+    }
+  }
+
+  if (persona === 'expansao') {
+    return {
+      ...base,
+      headerSubtitle: 'Você tem energia para avançar. Vamos canalizar isso com clareza.',
+      bannerTitle: 'Boa. Vamos usar essa energia com foco.',
+      bannerBody: 'Eu coloquei no bloco certo para você agir sem dispersar.',
+      groupHints: {
+        ...base.groupHints,
+        'para-hoje': 'Acerte uma coisa importante agora.',
+        outros: 'Se for relevante, traga para hoje.',
+      },
+    }
+  }
+
+  return base
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n))
+}
+
+/**
+ * P17.2 — Micropriorização premium (determinística, sem “algoritmo”)
+ * - prazo hoje (se existir algum campo de prazo)
+ * - “já iniciada” (se existir startedAt / progress / inProgress)
+ * - “mexida ontem” (se existir updatedAt / lastTouchedAt)
+ * - depois: status (active > snoozed > done)
+ * - e por fim: tempo (premium: mais recente levemente sobe)
+ */
+function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; dateKey: string }) {
+  const { premium, dateKey } = opts
+
+  const statusRank = (t: MyDayTaskItem) => {
     const s = statusOf(t)
-    if (s === 'active') return 0
-    if (s === 'snoozed') return 1
-    return 2
+    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
+  }
+
+  const dueToday = (t: MyDayTaskItem) => {
+    const anyT: any = t as any
+    const dk = (anyT.dueKey || anyT.dueDateKey || anyT.dateKey || anyT.dueDate) as string | undefined
+    if (!dk) return false
+    // aceita tanto "YYYY-MM-DD" quanto ISO; se for ISO, tenta extrair "YYYY-MM-DD"
+    const normalized = dk.includes('T') ? dk.slice(0, 10) : dk
+    return normalized === dateKey
+  }
+
+  const started = (t: MyDayTaskItem) => {
+    const anyT: any = t as any
+    if (anyT.startedAt) return true
+    if (anyT.inProgress === true) return true
+    if (typeof anyT.progress === 'number' && anyT.progress > 0) return true
+    return false
+  }
+
+  const touchedYesterday = (t: MyDayTaskItem) => {
+    const anyT: any = t as any
+    const iso = (anyT.updatedAt || anyT.lastTouchedAt || anyT.lastEditedAt) as string | undefined
+    if (!iso) return false
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return false
+    // compara por chave Brasil (padrão do app)
+    const touchedKey = getBrazilDateKey(d)
+    // "ontem" em Brasil
+    const now = new Date()
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    const yesterdayKey = getBrazilDateKey(yesterday)
+    return touchedKey === yesterdayKey
+  }
+
+  const premiumRank = (t: MyDayTaskItem) => {
+    // menor = mais prioritário
+    if (dueToday(t)) return 0
+    if (started(t)) return 1
+    if (touchedYesterday(t)) return 2
+    return 3
   }
 
   return [...items].sort((a, b) => {
-    const ra = rank(a)
-    const rb = rank(b)
+    if (premium) {
+      const pa = premiumRank(a)
+      const pb = premiumRank(b)
+      if (pa !== pb) return pa - pb
+    }
+
+    const ra = statusRank(a)
+    const rb = statusRank(b)
     if (ra !== rb) return ra - rb
 
-    return premium
-      ? timeOf(b) - timeOf(a) // premium: mais recente sobe levemente
-      : timeOf(a) - timeOf(b) // free: mais antigo primeiro
+    // base: mais antigo primeiro (previsível)
+    // premium: mais recente sobe um pouco (sensação de “hoje”)
+    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
   })
 }
 
-/**
- * P17 — Densidade percebida
- * Nunca inventa tarefas
- */
-function resolveVisibleLimit(count: number, premium: boolean) {
-  if (!premium) return FREE_LIMIT
-  return Math.min(PREMIUM_LIMIT, count)
+function refineContinuityForPremium(dateKey: string) {
+  // curto, não explicativo, 1x/dia (a regra 1x/dia já é controlada pelo helper base)
+  const variants = [
+    'Hoje vale escolher menos — e sustentar melhor.',
+    'Um passo bem escolhido já muda o tom do dia.',
+    'Menos coisas, mais presença. Só o essencial agora.',
+    'Escolher uma prioridade já é um cuidado com você.',
+  ]
+  // determinístico por dia
+  let acc = 0
+  for (let i = 0; i < dateKey.length; i++) acc = (acc + dateKey.charCodeAt(i) * (i + 1)) % 10_000
+  return variants[acc % variants.length]
 }
-
-/* ---------------------------------- */
-/* Componente                         */
-/* ---------------------------------- */
 
 export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  // P9 UI state
+  const [recentBanner, setRecentBanner] = useState(false)
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
+
+  // P12 — sinal reativo (tone + listLimit)
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+
+  // P13/P17.3 — linha de continuidade (no máximo 1x/dia)
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
 
-  const premium = useMemo(() => isPremium(), [])
-  const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
-  const premiumAdjustmentTrackedRef = React.useRef<string | null>(null)
+  // P16 — premium reativo (SSR-safe)
+  const [premium, setPremium] = useState(false)
 
-  /* ---------------------------------- */
-  /* Dados derivados                    */
-  /* ---------------------------------- */
+  // ✅ padroniza com “Brasil” igual o resto do app
+  const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
-  const totalCount = tasks.length
+  const totalCount = useMemo(() => tasks.length, [tasks])
 
-  /* ---------------------------------- */
-  /* Carga inicial                      */
-  /* ---------------------------------- */
+  const personaId = useMemo(() => getPersonaId(aiContext), [aiContext])
+  const copy = useMemo(() => microcopyForPersona(personaId), [personaId])
 
-  useEffect(() => {
-    setTasks(listMyDayTasks())
+  // P17.1 — densidade: free 5–6 | premium 3–4 (sem inventar)
+  const effectiveLimit = useMemo(() => {
+    const raw = Number(euSignal?.listLimit)
+    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
 
-    try {
-      track('my_day.group.render', {
-        dateKey,
-        tasksCount: tasks.length,
-      })
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  /* ---------------------------------- */
-  /* Continuidade (P13/P17)             */
-  /* ---------------------------------- */
-
-  useEffect(() => {
-    try {
-      const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
-      const line = getMyDayContinuityLine({
-        dateKey,
-        tone,
-        premium, // agora influencia discretamente
-      })
-      setContinuityLine(line?.text ?? null)
-    } catch {
-      setContinuityLine(null)
-    }
-  }, [dateKey, euSignal?.tone, premium])
-
-  /* ---------------------------------- */
-  /* P17 — Telemetria segura (1x/dia)   */
-  /* ---------------------------------- */
-
-  const premiumAdjustmentApplied = useMemo(() => {
-    if (!premium) return false
-    if (!tasks.length) return false
-
-    return GROUP_ORDER.some((groupId) => {
-      const items = grouped[groupId]?.items ?? []
-      if (!items.length) return false
-
-      const limit = resolveVisibleLimit(items.length, true)
-      return !expanded[groupId] && limit < items.length
-    })
-  }, [premium, tasks, grouped, expanded])
-
-  useEffect(() => {
-    if (!premiumAdjustmentApplied) return
-    if (premiumAdjustmentTrackedRef.current === dateKey) return
-
-    premiumAdjustmentTrackedRef.current = dateKey
-
-    try {
-      track('premium_adjustment_applied', {
-        tab: 'meu-dia',
-        type: 'density',
-        timestamp: new Date().toISOString(),
-      })
-    } catch {}
-  }, [premiumAdjustmentApplied, dateKey])
-
-  /* ---------------------------------- */
-  /* Ações                              */
-  /* ---------------------------------- */
+    if (premium) return clamp(resolved, 3, 4)
+    return clamp(resolved, 5, 6)
+  }, [euSignal, premium])
 
   function refresh() {
     setTasks(listMyDayTasks())
   }
 
+  // P16 — lê premium após mount + reage a upgrade (mesma aba) via event custom
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setPremium(isPremium())
+      } catch {
+        setPremium(false)
+      }
+    }
+
+    sync()
+
+    const onPlanUpdated = () => sync()
+
+    try {
+      window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
+      } catch {}
+    }
+  }, [])
+
+  // P12 — atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
+  useEffect(() => {
+    const refreshSignal = () => {
+      try {
+        setEuSignal(getEu360Signal())
+      } catch {
+        // nunca quebra render
+      }
+    }
+
+    const onStorage = (_e: StorageEvent) => {
+      refreshSignal()
+    }
+
+    const onCustom = () => {
+      refreshSignal()
+    }
+
+    try {
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+      } catch {}
+    }
+  }, [])
+
+  // carregar tarefas + telemetria de render
+  useEffect(() => {
+    refresh()
+
+    try {
+      const current = listMyDayTasks()
+      const g = groupTasks(current)
+      const groupsCount = GROUP_ORDER.filter((id) => (g[id]?.items?.length ?? 0) > 0).length
+      track('my_day.group.render', {
+        dateKey,
+        groupsCount,
+        tasksCount: current.length,
+        persona: personaId ?? null,
+      })
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // P17.4 — telemetria: ajuste premium aplicado (1x/dia)
+  const premiumAppliedRef = React.useRef<{ dateKey?: string; density?: boolean; priority?: boolean }>({})
+  useEffect(() => {
+    if (!premium) return
+
+    // reset diário
+    if (premiumAppliedRef.current.dateKey !== dateKey) {
+      premiumAppliedRef.current = { dateKey, density: false, priority: false }
+    }
+
+    // density aplicado quando premium + existe limite efetivo premium
+    if (!premiumAppliedRef.current.density) {
+      premiumAppliedRef.current.density = true
+      try {
+        track('premium_adjustment_applied', {
+          tab: 'meu-dia',
+          type: 'density',
+          timestamp: new Date().toISOString(),
+        })
+      } catch {}
+    }
+
+    // priority aplicado quando premium (a ordenação premium está ativa)
+    if (!premiumAppliedRef.current.priority) {
+      premiumAppliedRef.current.priority = true
+      try {
+        track('premium_adjustment_applied', {
+          tab: 'meu-dia',
+          type: 'priority',
+          timestamp: new Date().toISOString(),
+        })
+      } catch {}
+    }
+  }, [premium, dateKey])
+
+  // P17.4 — 1ª interação premium (1x/dia)
+  const premiumInteractionTrackedRef = React.useRef(false)
+  useEffect(() => {
+    premiumInteractionTrackedRef.current = false
+  }, [dateKey])
+
+  function trackPremiumFirstInteraction() {
+    if (!premium) return
+    if (premiumInteractionTrackedRef.current) return
+
+    premiumInteractionTrackedRef.current = true
+    try {
+      track('premium_day_interaction', {
+        tab: 'meu-dia',
+        timestamp: new Date().toISOString(),
+      })
+    } catch {}
+  }
+
+  // P13/P17.3 — calcular a frase de continuidade (1x/dia, nunca no primeiro uso)
+  useEffect(() => {
+    try {
+      const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
+      const line = getMyDayContinuityLine({ dateKey, tone })
+
+      if (!line?.text) {
+        setContinuityLine(null)
+        return
+      }
+
+      // Free mantém base; Premium usa variação um pouco mais contextual (curta, discreta)
+      setContinuityLine(premium ? refineContinuityForPremium(dateKey) : line.text)
+    } catch {
+      setContinuityLine(null)
+    }
+  }, [dateKey, euSignal?.tone, premium])
+
+  // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
+  useEffect(() => {
+    const raw = safeGetLS(LS_RECENT_SAVE)
+    const payload = safeParseJSON<RecentSavePayload>(raw)
+    if (!payload?.ts || !payload.origin) return
+
+    const ageMs = Date.now() - payload.ts
+    if (ageMs > 2 * 60_000) {
+      safeRemoveLS(LS_RECENT_SAVE)
+      return
+    }
+
+    const gid = groupIdFromOrigin(payload.origin)
+
+    setRecentBanner(true)
+    setHighlightGroup(gid)
+    setExpanded((prev) => ({ ...prev, [gid]: true }))
+
+    safeRemoveLS(LS_RECENT_SAVE)
+
+    const t1 = window.setTimeout(() => setRecentBanner(false), 6500)
+    const t2 = window.setTimeout(() => setHighlightGroup(null), 6500)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [])
+
   function toggleGroup(id: GroupId) {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
+    trackPremiumFirstInteraction()
+
+    setExpanded((prev) => {
+      const next = { ...prev, [id]: !prev[id] }
+      try {
+        track('my_day.group.expand', { dateKey, groupId: id, persona: personaId ?? null })
+      } catch {}
+      return next
+    })
   }
 
-  async function onDone(taskId: string) {
+  async function onDone(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = toggleDone(taskId)
-    if (res.ok) refresh()
+    if (res.ok) {
+      try {
+        track('my_day.task.done.toggle', { dateKey, groupId, persona: personaId ?? null })
+      } catch {}
+      refresh()
+    }
   }
 
-  async function onSnooze(taskId: string) {
+  async function onSnooze(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = snoozeTask(taskId, 1)
-    if (res.ok) refresh()
+    if (res.ok) {
+      try {
+        track('my_day.task.snooze', { dateKey, groupId, days: 1, persona: personaId ?? null })
+      } catch {}
+      refresh()
+    }
   }
 
-  async function onUnsnooze(taskId: string) {
+  async function onUnsnooze(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = unsnoozeTask(taskId)
-    if (res.ok) refresh()
+    if (res.ok) {
+      try {
+        track('my_day.task.snooze', { dateKey, groupId, days: 0, persona: personaId ?? null })
+      } catch {}
+      refresh()
+    }
   }
 
-  async function onRemove(taskId: string) {
+  async function onRemove(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = removeTask(taskId)
-    if (res.ok) refresh()
+    if (res.ok) {
+      try {
+        track('my_day.task.remove', { dateKey, groupId, persona: personaId ?? null })
+      } catch {}
+      refresh()
+    }
   }
 
-  /* ---------------------------------- */
-  /* Render                             */
-  /* ---------------------------------- */
-
-  if (!totalCount) {
-    return (
-      <section className="mt-6 bg-white rounded-3xl p-6 shadow border">
-        <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">
-          Tudo certo por aqui.
-        </h4>
-        <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-          Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
-        </p>
-      </section>
-    )
-  }
+  const hasAny = totalCount > 0
 
   return (
-    <section className="mt-6 space-y-5">
-      {continuityLine ? (
-        <p className="text-[13px] text-white/85 max-w-2xl">{continuityLine}</p>
+    <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">{copy.headerTitle}</h3>
+          <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">{copy.headerSubtitle}</p>
+
+          {/* P13/P17.3 — Micro-frase de continuidade (1 por dia, no máximo) */}
+          {continuityLine ? (
+            <p className="mt-2 text-[12px] md:text-[13px] text-white/80 max-w-2xl">{continuityLine}</p>
+          ) : null}
+        </div>
+
+        <div className="hidden md:block text-[12px] text-white/85">
+          {totalCount > 0 ? (
+            <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 backdrop-blur-md">
+              {totalCount} {totalCount === 1 ? 'item' : 'itens'}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Banner pós-salvar (adaptativo por persona) */}
+      {recentBanner ? (
+        <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+          <p className="text-[13px] md:text-[14px] font-semibold text-white">{copy.bannerTitle}</p>
+          <p className="mt-1 text-[12px] text-white/85">{copy.bannerBody}</p>
+        </div>
       ) : null}
 
-      {GROUP_ORDER.map((groupId) => {
-        const group = grouped[groupId]
-        if (!group?.items?.length) return null
+      {!hasAny ? (
+        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
+            Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4 md:space-y-5">
+          {GROUP_ORDER.map((groupId) => {
+            const group = grouped[groupId]
+            const sorted = sortForGroup(group.items, { premium, dateKey })
+            const count = sorted.length
+            if (count === 0) return null
 
-        const sorted = sortForGroup(group.items, premium)
-        const limit = resolveVisibleLimit(sorted.length, premium)
-        const isExpanded = !!expanded[groupId]
-        const visible = isExpanded ? sorted : sorted.slice(0, limit)
-        const hasMore = sorted.length > limit
+            const isExpanded = !!expanded[groupId]
+            const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
+            const hasMore = count > effectiveLimit
+            const isHighlighted = highlightGroup === groupId
 
-        return (
-          <div
-            key={groupId}
-            className="bg-white rounded-3xl p-6 shadow border"
-          >
-            <div className="flex justify-between items-center">
-              <h4 className="text-[16px] font-semibold">
-                {group.title}
-              </h4>
-              <span className="text-[12px]">{sorted.length}</span>
-            </div>
+            return (
+              <div
+                key={groupId}
+                className={cx(
+                  `
+                    bg-white
+                    rounded-3xl
+                    p-6
+                    shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                    border
+                    border-[var(--color-border-soft)]
+                    transition
+                  `,
+                  isHighlighted && 'ring-2 ring-[#fd2597] shadow-[0_16px_40px_rgba(253,37,151,0.18)]',
+                )}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
+                      {group.title}
+                    </h4>
 
-            <div className="mt-4 space-y-2">
-              {visible.map((t) => {
-                const s = statusOf(t)
+                    {copy.groupHints[groupId] ? (
+                      <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{copy.groupHints[groupId]}</p>
+                    ) : null}
 
-                return (
-                  <div
-                    key={t.id}
-                    className={`flex justify-between gap-3 rounded-2xl border px-4 py-3 ${
-                      s === 'done' ? 'opacity-70' : ''
-                    }`}
+                    <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
+                      {count} {count === 1 ? 'tarefa' : 'tarefas'}
+                      {hasMore && !isExpanded ? ' • talvez você não precise olhar tudo agora.' : ''}
+                    </p>
+                  </div>
+
+                  <span
+                    className="
+                      inline-flex items-center justify-center
+                      min-w-[44px]
+                      rounded-full
+                      border border-[var(--color-border-soft)]
+                      px-3 py-1
+                      text-[12px]
+                      font-semibold
+                      text-[var(--color-text-main)]
+                      bg-white
+                    "
                   >
-                    <p
-                      className={`text-[14px] ${
-                        s === 'done' ? 'line-through' : ''
-                      }`}
-                    >
-                      {t.title}
+                    {count}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {visible.map((t) => {
+                    const s = statusOf(t)
+
+                    return (
+                      <div
+                        key={t.id}
+                        className={cx(
+                          'flex items-start justify-between gap-3 rounded-2xl border px-4 py-3',
+                          'border-[var(--color-border-soft)]',
+                          s === 'done' && 'opacity-70',
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p
+                            className={cx(
+                              'text-[14px] text-[var(--color-text-main)] leading-snug break-words',
+                              s === 'done' && 'line-through',
+                            )}
+                          >
+                            {t.title}
+                          </p>
+
+                          {s === 'snoozed' ? (
+                            <div className="mt-2 inline-flex items-center gap-2">
+                              <span className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[#ffe1f1] px-3 py-1 text-[12px] text-[var(--color-text-main)]">
+                                não é pra hoje
+                              </span>
+                              {(t as any).snoozeUntil ? (
+                                <span className="text-[12px] text-[var(--color-text-muted)]">
+                                  volta em: {(t as any).snoozeUntil}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="shrink-0 flex flex-col items-end gap-2">
+                          {s !== 'done' ? (
+                            <button
+                              onClick={() => onDone(t.id, groupId)}
+                              className="rounded-full bg-[#fd2597] text-white shadow-lg px-4 py-2 text-[12px] font-semibold"
+                            >
+                              Fazer agora
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onDone(t.id, groupId)}
+                              className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)]"
+                            >
+                              Desfazer
+                            </button>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            {s === 'snoozed' ? (
+                              <button
+                                onClick={() => onUnsnooze(t.id, groupId)}
+                                className="text-[12px] font-semibold text-[#b8236b]"
+                              >
+                                Voltar para hoje
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => onSnooze(t.id, groupId)}
+                                className="text-[12px] font-semibold text-[var(--color-text-muted)]"
+                              >
+                                Não é pra hoje
+                              </button>
+                            )}
+
+                            <span className="text-[12px] text-[var(--color-text-muted)]">•</span>
+
+                            <button
+                              onClick={() => onRemove(t.id, groupId)}
+                              className="text-[12px] font-semibold text-[var(--color-text-muted)]"
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {hasMore ? (
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <p className="text-[12px] text-[var(--color-text-muted)]">
+                      {isExpanded ? 'Você está vendo tudo deste bloco.' : 'Mostrando só o essencial agora.'}
                     </p>
 
-                    <div className="flex gap-2 text-[12px]">
-                      <button onClick={() => onDone(t.id)}>
-                        {s === 'done' ? 'Desfazer' : 'Fazer agora'}
-                      </button>
-                      <button onClick={() => onSnooze(t.id)}>Não é pra hoje</button>
-                      <button onClick={() => onRemove(t.id)}>Remover</button>
-                    </div>
+                    <button
+                      onClick={() => toggleGroup(groupId)}
+                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)]"
+                    >
+                      {isExpanded ? 'Ver menos' : 'Ver mais'}
+                    </button>
                   </div>
-                )
-              })}
-            </div>
-
-            {hasMore ? (
-              <div className="mt-4 text-right">
-                <button
-                  onClick={() => toggleGroup(groupId)}
-                  className="text-[12px] font-semibold"
-                >
-                  {isExpanded ? 'Ver menos' : 'Ver mais'}
-                </button>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        )
-      })}
+            )
+          })}
+        </div>
+      )}
     </section>
   )
 }
