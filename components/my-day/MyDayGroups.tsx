@@ -168,6 +168,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const personaId = getPersonaId(aiContext)
 
+  const totalCount = tasks.length
+
   /* =========================
      ✅ P19.2 — Micro-memória
   ========================= */
@@ -218,19 +220,64 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
+  /* =========================
+     ✅ P20 — Silêncio inteligente (timing)
+     - Free: intacto (mantém base)
+     - Premium: só mostra quando faz sentido humano
+       (não há pressão e não há ação => silêncio)
+  ========================= */
+
   useEffect(() => {
     try {
       const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
+
+      // Base (P13) já protege:
+      // - 1x/dia
+      // - nunca no primeiro uso
+      // - só com histórico
       const base = getMyDayContinuityLine({ dateKey, tone })
       if (!base?.text) {
         setContinuityLine(null)
         return
       }
-      setContinuityLine(premium ? refineContinuityForPremium(dateKey, personaId) : base.text)
+
+      // Free permanece idêntico: usa exatamente a frase base.
+      if (!premium) {
+        setContinuityLine(base.text)
+        return
+      }
+
+      // Premium: "não fazer nada também é produto"
+      // 1) Se o dia está vazio, silêncio (evita frase solta).
+      if (totalCount === 0) {
+        setContinuityLine(null)
+        return
+      }
+
+      // 2) Se não há pressão e não houve ação recente, silêncio.
+      //    (pendingPressure low + sem conclusão recente)
+      if (
+        recentSignal?.pendingPressure === 'low' &&
+        recentSignal?.hadCompletionRecently === false
+      ) {
+        setContinuityLine(null)
+        return
+      }
+
+      // 3) Caso contrário, premium usa variação curta por persona (P18.3).
+      setContinuityLine(refineContinuityForPremium(dateKey, personaId))
     } catch {
       setContinuityLine(null)
     }
-  }, [dateKey, euSignal?.tone, premium, personaId])
+  }, [
+    dateKey,
+    euSignal?.tone,
+    premium,
+    personaId,
+    totalCount,
+    recentSignal?.pendingPressure,
+    recentSignal?.hadCompletionRecently,
+  ])
 
   /* =========================
      RENDER — ORIGINAL
