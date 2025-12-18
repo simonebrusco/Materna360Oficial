@@ -112,6 +112,19 @@ body {
     #ffe1f1 88%,
     #ffffff 100%
   );
+
+  /* ============================================================
+     ✅ P15 — Redução de ruído por hub (overlay leve)
+     - Não muda o fundo global; apenas suaviza hubs que “reaplicam” fundo
+     ============================================================ */
+  --m360-hub-overlay-soft: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.00) 0%,
+    rgba(255, 255, 255, 0.08) 18%,
+    rgba(255, 255, 255, 0.16) 48%,
+    rgba(255, 255, 255, 0.26) 72%,
+    rgba(255, 255, 255, 0.34) 100%
+  );
 }
 
 /* Soft page background utility - now pure white */
@@ -146,14 +159,26 @@ main[data-layout="page-template-v2"] {
   background: transparent !important;
 }
 
-/* Se algum hub ainda aplicar classe antiga, força tudo ficar igual */
+/* ============================================================
+   ✅ Hubs / classes antigas
+   - Mantemos o fundo único como verdade
+   - P15: Eu360 não deve “duplicar” o gradiente, só suavizar com overlay
+   ============================================================ */
 .materna360-premium-bg,
-.maternar-hub-bg,
-.eu360-hub-bg {
+.maternar-hub-bg {
   background-color: transparent !important;
   background-image: var(--m360-app-bg) !important;
   background-repeat: no-repeat !important;
   background-attachment: fixed !important;
+  background-size: cover !important;
+}
+
+/* ✅ P15 — Eu360: overlay suave (menos competição visual, mais respiro) */
+.eu360-hub-bg {
+  background-color: transparent !important;
+  background-image: var(--m360-hub-overlay-soft) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: scroll !important;
   background-size: cover !important;
 }
 
