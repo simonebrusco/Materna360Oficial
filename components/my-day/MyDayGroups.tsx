@@ -280,9 +280,9 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
       setRecentSaveActive(true)
       const t = window.setTimeout(() => {
-  setRecentSaveActive(false)
-  setHighlightGroup(null)
-}, 2600)
+        setRecentSaveActive(false)
+        setHighlightGroup(null)
+      }, 2600)
 
       try {
         track('my_day.recent_save.consumed', {
@@ -345,7 +345,31 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
+      {GROUP_ORDER.map((groupId) => {
+        const group = grouped[groupId]
+        if (!group || group.items.length === 0) return null
+
+        const sorted = sortForGroup(group.items, { premium, dateKey, persona: personaId })
+        const isExpanded = !!expanded[groupId]
+        const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
+
+        // ✅ P21 — destaque sutil pós-salvar (sem texto, sem CTA, sem “alerta”)
+        const shouldHighlight = premium && recentSaveActive && highlightGroup === groupId
+
+        return (
+          <div
+            key={groupId}
+            className={[
+              'transition-[box-shadow,background-color] duration-700 ease-out',
+              shouldHighlight ? 'bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.28)]' : '',
+            ].join(' ')}
+          >
+            {visible.map((t) => (
+              <div key={t.id}>{t.title}</div>
+            ))}
+          </div>
+        )
+      })}
     </section>
   )
 }
