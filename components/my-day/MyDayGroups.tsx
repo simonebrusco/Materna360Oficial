@@ -18,6 +18,7 @@ import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { isPremium } from '@/app/lib/plan'
 
 type GroupId = keyof GroupedTasks
 
@@ -55,29 +56,15 @@ function safeParseJSON<T>(raw: string | null): T | null {
 }
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  if (t.status) return t.status
-  if (t.done === true) return 'done'
+  if ((t as any).status) return (t as any).status
+  if ((t as any).done === true) return 'done'
   return 'active'
 }
 
 function timeOf(t: MyDayTaskItem): number {
-  const iso = t.createdAt
+  const iso = (t as any).createdAt
   const n = iso ? Date.parse(iso) : NaN
   return Number.isFinite(n) ? n : 0
-}
-
-function sortForGroup(items: MyDayTaskItem[]) {
-  const rank = (t: MyDayTaskItem) => {
-    const s = statusOf(t)
-    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
-  }
-
-  return [...items].sort((a, b) => {
-    const ra = rank(a)
-    const rb = rank(b)
-    if (ra !== rb) return ra - rb
-    return timeOf(a) - timeOf(b) // mais antigo primeiro
-  })
 }
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -190,6 +177,97 @@ function microcopyForPersona(persona?: string) {
   return base
 }
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n))
+}
+
+/**
+ * P17.2 — Micropriorização premium (determinística, sem “algoritmo”)
+ * - prazo hoje (se existir algum campo de prazo)
+ * - “já iniciada” (se existir startedAt / progress / inProgress)
+ * - “mexida ontem” (se existir updatedAt / lastTouchedAt)
+ * - depois: status (active > snoozed > done)
+ * - e por fim: tempo (premium: mais recente levemente sobe)
+ */
+function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; dateKey: string }) {
+  const { premium, dateKey } = opts
+
+  const statusRank = (t: MyDayTaskItem) => {
+    const s = statusOf(t)
+    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
+  }
+
+  const dueToday = (t: MyDayTaskItem) => {
+    const anyT: any = t as any
+    const dk = (anyT.dueKey || anyT.dueDateKey || anyT.dateKey || anyT.dueDate) as string | undefined
+    if (!dk) return false
+    // aceita tanto "YYYY-MM-DD" quanto ISO; se for ISO, tenta extrair "YYYY-MM-DD"
+    const normalized = dk.includes('T') ? dk.slice(0, 10) : dk
+    return normalized === dateKey
+  }
+
+  const started = (t: MyDayTaskItem) => {
+    const anyT: any = t as any
+    if (anyT.startedAt) return true
+    if (anyT.inProgress === true) return true
+    if (typeof anyT.progress === 'number' && anyT.progress > 0) return true
+    return false
+  }
+
+  const touchedYesterday = (t: MyDayTaskItem) => {
+    const anyT: any = t as any
+    const iso = (anyT.updatedAt || anyT.lastTouchedAt || anyT.lastEditedAt) as string | undefined
+    if (!iso) return false
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return false
+    // compara por chave Brasil (padrão do app)
+    const touchedKey = getBrazilDateKey(d)
+    // "ontem" em Brasil
+    const now = new Date()
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    const yesterdayKey = getBrazilDateKey(yesterday)
+    return touchedKey === yesterdayKey
+  }
+
+  const premiumRank = (t: MyDayTaskItem) => {
+    // menor = mais prioritário
+    if (dueToday(t)) return 0
+    if (started(t)) return 1
+    if (touchedYesterday(t)) return 2
+    return 3
+  }
+
+  return [...items].sort((a, b) => {
+    if (premium) {
+      const pa = premiumRank(a)
+      const pb = premiumRank(b)
+      if (pa !== pb) return pa - pb
+    }
+
+    const ra = statusRank(a)
+    const rb = statusRank(b)
+    if (ra !== rb) return ra - rb
+
+    // base: mais antigo primeiro (previsível)
+    // premium: mais recente sobe um pouco (sensação de “hoje”)
+    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
+  })
+}
+
+function refineContinuityForPremium(dateKey: string) {
+  // curto, não explicativo, 1x/dia (a regra 1x/dia já é controlada pelo helper base)
+  const variants = [
+    'Hoje vale escolher menos — e sustentar melhor.',
+    'Um passo bem escolhido já muda o tom do dia.',
+    'Menos coisas, mais presença. Só o essencial agora.',
+    'Escolher uma prioridade já é um cuidado com você.',
+  ]
+  // determinístico por dia
+  let acc = 0
+  for (let i = 0; i < dateKey.length; i++) acc = (acc + dateKey.charCodeAt(i) * (i + 1)) % 10_000
+  return variants[acc % variants.length]
+}
+
 export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -201,8 +279,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   // P12 — sinal reativo (tone + listLimit)
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
-  // P13 — linha de continuidade (no máximo 1x/dia)
+  // P13/P17.3 — linha de continuidade (no máximo 1x/dia)
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
+
+  // P16 — premium reativo (SSR-safe)
+  const [premium, setPremium] = useState(false)
 
   // ✅ padroniza com “Brasil” igual o resto do app
   const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
@@ -213,15 +294,43 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const personaId = useMemo(() => getPersonaId(aiContext), [aiContext])
   const copy = useMemo(() => microcopyForPersona(personaId), [personaId])
 
-  const listLimit = useMemo(() => {
-    const n = Number(euSignal?.listLimit)
-    const resolved = Number.isFinite(n) ? n : DEFAULT_LIMIT
-    return Math.max(1, resolved || DEFAULT_LIMIT)
-  }, [euSignal])
+  // P17.1 — densidade: free 5–6 | premium 3–4 (sem inventar)
+  const effectiveLimit = useMemo(() => {
+    const raw = Number(euSignal?.listLimit)
+    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
+
+    if (premium) return clamp(resolved, 3, 4)
+    return clamp(resolved, 5, 6)
+  }, [euSignal, premium])
 
   function refresh() {
     setTasks(listMyDayTasks())
   }
+
+  // P16 — lê premium após mount + reage a upgrade (mesma aba) via event custom
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setPremium(isPremium())
+      } catch {
+        setPremium(false)
+      }
+    }
+
+    sync()
+
+    const onPlanUpdated = () => sync()
+
+    try {
+      window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
+      } catch {}
+    }
+  }, [])
 
   // P12 — atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
   useEffect(() => {
@@ -262,21 +371,87 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
       const current = listMyDayTasks()
       const g = groupTasks(current)
       const groupsCount = GROUP_ORDER.filter((id) => (g[id]?.items?.length ?? 0) > 0).length
-      track('my_day.group.render', { dateKey, groupsCount, tasksCount: current.length, persona: personaId ?? null })
+      track('my_day.group.render', {
+        dateKey,
+        groupsCount,
+        tasksCount: current.length,
+        persona: personaId ?? null,
+      })
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // P13 — calcular a frase de continuidade (1x/dia, nunca no primeiro uso)
+  // P17.4 — telemetria: ajuste premium aplicado (1x/dia)
+  const premiumAppliedRef = React.useRef<{ dateKey?: string; density?: boolean; priority?: boolean }>({})
+  useEffect(() => {
+    if (!premium) return
+
+    // reset diário
+    if (premiumAppliedRef.current.dateKey !== dateKey) {
+      premiumAppliedRef.current = { dateKey, density: false, priority: false }
+    }
+
+    // density aplicado quando premium + existe limite efetivo premium
+    if (!premiumAppliedRef.current.density) {
+      premiumAppliedRef.current.density = true
+      try {
+        track('premium_adjustment_applied', {
+          tab: 'meu-dia',
+          type: 'density',
+          timestamp: new Date().toISOString(),
+        })
+      } catch {}
+    }
+
+    // priority aplicado quando premium (a ordenação premium está ativa)
+    if (!premiumAppliedRef.current.priority) {
+      premiumAppliedRef.current.priority = true
+      try {
+        track('premium_adjustment_applied', {
+          tab: 'meu-dia',
+          type: 'priority',
+          timestamp: new Date().toISOString(),
+        })
+      } catch {}
+    }
+  }, [premium, dateKey])
+
+  // P17.4 — 1ª interação premium (1x/dia)
+  const premiumInteractionTrackedRef = React.useRef(false)
+  useEffect(() => {
+    premiumInteractionTrackedRef.current = false
+  }, [dateKey])
+
+  function trackPremiumFirstInteraction() {
+    if (!premium) return
+    if (premiumInteractionTrackedRef.current) return
+
+    premiumInteractionTrackedRef.current = true
+    try {
+      track('premium_day_interaction', {
+        tab: 'meu-dia',
+        timestamp: new Date().toISOString(),
+      })
+    } catch {}
+  }
+
+  // P13/P17.3 — calcular a frase de continuidade (1x/dia, nunca no primeiro uso)
   useEffect(() => {
     try {
       const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
       const line = getMyDayContinuityLine({ dateKey, tone })
-      setContinuityLine(line?.text ?? null)
+
+      if (!line?.text) {
+        setContinuityLine(null)
+        return
+      }
+
+      // Free mantém base; Premium usa variação um pouco mais contextual (curta, discreta)
+      setContinuityLine(premium ? refineContinuityForPremium(dateKey) : line.text)
     } catch {
       setContinuityLine(null)
     }
-  }, [dateKey, euSignal?.tone])
+  }, [dateKey, euSignal?.tone, premium])
 
   // P9 — detectar “acabou de salvar” e abrir/destacar o bloco certo
   useEffect(() => {
@@ -307,6 +482,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }, [])
 
   function toggleGroup(id: GroupId) {
+    trackPremiumFirstInteraction()
+
     setExpanded((prev) => {
       const next = { ...prev, [id]: !prev[id] }
       try {
@@ -317,6 +494,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }
 
   async function onDone(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = toggleDone(taskId)
     if (res.ok) {
       try {
@@ -327,6 +506,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }
 
   async function onSnooze(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = snoozeTask(taskId, 1)
     if (res.ok) {
       try {
@@ -337,6 +518,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }
 
   async function onUnsnooze(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = unsnoozeTask(taskId)
     if (res.ok) {
       try {
@@ -347,6 +530,8 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }
 
   async function onRemove(taskId: string, groupId: GroupId) {
+    trackPremiumFirstInteraction()
+
     const res = removeTask(taskId)
     if (res.ok) {
       try {
@@ -365,7 +550,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           <h3 className="text-[18px] md:text-[20px] font-semibold text-white leading-tight">{copy.headerTitle}</h3>
           <p className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-2xl">{copy.headerSubtitle}</p>
 
-          {/* P13 — Micro-frase de continuidade (1 por dia, no máximo) */}
+          {/* P13/P17.3 — Micro-frase de continuidade (1 por dia, no máximo) */}
           {continuityLine ? (
             <p className="mt-2 text-[12px] md:text-[13px] text-white/80 max-w-2xl">{continuityLine}</p>
           ) : null}
@@ -399,13 +584,13 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         <div className="space-y-4 md:space-y-5">
           {GROUP_ORDER.map((groupId) => {
             const group = grouped[groupId]
-            const sorted = sortForGroup(group.items)
+            const sorted = sortForGroup(group.items, { premium, dateKey })
             const count = sorted.length
             if (count === 0) return null
 
             const isExpanded = !!expanded[groupId]
-            const visible = isExpanded ? sorted : sorted.slice(0, listLimit)
-            const hasMore = count > listLimit
+            const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
+            const hasMore = count > effectiveLimit
             const isHighlighted = highlightGroup === groupId
 
             return (
@@ -485,9 +670,9 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                               <span className="inline-flex items-center rounded-full border border-[var(--color-border-soft)] bg-[#ffe1f1] px-3 py-1 text-[12px] text-[var(--color-text-main)]">
                                 não é pra hoje
                               </span>
-                              {t.snoozeUntil ? (
+                              {(t as any).snoozeUntil ? (
                                 <span className="text-[12px] text-[var(--color-text-muted)]">
-                                  volta em: {t.snoozeUntil}
+                                  volta em: {(t as any).snoozeUntil}
                                 </span>
                               ) : null}
                             </div>
