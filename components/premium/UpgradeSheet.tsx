@@ -1,66 +1,19 @@
 'use client'
 
 import * as React from 'react'
-import clsx from 'clsx'
+import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-import { upgradeToPremium } from '@/app/lib/plan'
 import AppIcon from '@/components/ui/AppIcon'
-
-type PlanId = 'materna-plus' | 'materna-360'
+import { track } from '@/app/lib/telemetry'
 
 type Props = {
   open: boolean
   onOpenChange: (b: boolean) => void
-
-  /**
-   * P15 — abre contextualizado (sem pressão).
-   * Default mantém compatibilidade com chamadas antigas.
-   */
-  planId?: PlanId
+  /** opcional: se você quiser abrir já “ancorado” em algum plano */
+  selectedPlanId?: 'materna-plus' | 'materna-360'
 }
 
-const PLAN_CONTENT: Record<
-  PlanId,
-  {
-    badge: string
-    title: string
-    subtitle: string
-    highlights: string[]
-    primaryCta: string
-    secondaryCta: string
-  }
-> = {
-  'materna-plus': {
-    badge: 'Materna+',
-    title: 'Mais apoio, com o seu ritmo',
-    subtitle:
-      'Um upgrade para trazer mais clareza e personalização no dia a dia — sem te exigir mais.',
-    highlights: [
-      'Mais personalização no tom e no volume de sugestões',
-      'Histórico ampliado para você se situar com calma',
-      'Exportar PDF (Planner, Rotina Leve, Como Estou Hoje)',
-      'Biblioteca Materna completa e trilhas mais profundas',
-    ],
-    primaryCta: 'Quero o Materna+',
-    secondaryCta: 'Agora não',
-  },
-  'materna-360': {
-    badge: 'Materna+ 360',
-    title: 'A experiência completa de acompanhamento',
-    subtitle:
-      'Para quem quer mais profundidade e consistência — com presença, sem cobrança e sem pressão.',
-    highlights: [
-      'Orientações ilimitadas (sempre no seu tom)',
-      'Resumos por semana e por mês para você se localizar',
-      'Rotina 360 com ajustes ao longo da semana',
-      'Trilhas personalizadas para sua família',
-    ],
-    primaryCta: 'Quero o Materna+ 360',
-    secondaryCta: 'Vou pensar com calma',
-  },
-}
-
-export default function UpgradeSheet({ open, onOpenChange, planId = 'materna-plus' }: Props) {
+export default function UpgradeSheet({ open, onOpenChange, selectedPlanId }: Props) {
   React.useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onOpenChange(false)
@@ -69,9 +22,28 @@ export default function UpgradeSheet({ open, onOpenChange, planId = 'materna-plu
     return () => document.removeEventListener('keydown', onEsc)
   }, [open, onOpenChange])
 
+  React.useEffect(() => {
+    if (!open) return
+    try {
+      track('paywall_sheet_open', {
+        source: 'upgrade_sheet',
+        selectedPlanId: selectedPlanId ?? null,
+      })
+    } catch {}
+  }, [open, selectedPlanId])
+
   if (!open) return null
 
-  const content = PLAN_CONTENT[planId]
+  const title = 'Materna360+ no seu ritmo'
+  const subtitle =
+    'Se fizer sentido para você agora, destrave uma experiência mais profunda — sem pressão e sem cobrança.'
+
+  const bullets = [
+    { icon: 'sparkles', text: 'Ajustes automáticos mais profundos (menos peso nos dias difíceis)' },
+    { icon: 'heart', text: 'Histórico emocional expandido e visão mais completa da sua jornada' },
+    { icon: 'check', text: 'Insights mais personalizados e orientações com mais contexto' },
+    { icon: 'file-text', text: 'Exportar PDF (planner e registros) para guardar ou organizar' },
+  ] as const
 
   return (
     <div className="fixed inset-0 z-50">
@@ -83,92 +55,98 @@ export default function UpgradeSheet({ open, onOpenChange, planId = 'materna-plu
       />
 
       {/* sheet */}
-      <div className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-md px-3 pb-3 sm:px-4 sm:pb-4">
-        <div
-          className={clsx(
-            'rounded-3xl bg-white',
-            'border border-[#ffd8e6]',
-            'shadow-[0_18px_45px_rgba(0,0,0,0.22)]',
-            'p-4 sm:p-5'
-          )}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Upgrade Materna360"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#ffd8e6] bg-[#ffe1f1]/70 px-3 py-1">
-                <AppIcon name="sparkles" size={14} decorative className="text-[#fd2597]" />
-                <span className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#2f3a56]">
-                  {content.badge}
-                </span>
+      <div className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-md">
+        <div className="mx-3 mb-3 rounded-3xl border border-[#f5d7e5] bg-white shadow-[0_18px_50px_rgba(0,0,0,0.22)] overflow-hidden">
+          {/* header */}
+          <div className="px-5 pt-5 pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#6a6a6a]">
+                  Materna360+
+                </p>
+                <h3 className="mt-1 text-[18px] font-semibold text-[#2f3a56] leading-snug">
+                  {title}
+                </h3>
+                <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
+                  {subtitle}
+                </p>
               </div>
 
-              <h3 className="mt-3 text-base sm:text-lg font-semibold text-[#2f3a56] leading-snug">
-                {content.title}
-              </h3>
+              <button
+                aria-label="Fechar"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-2xl hover:bg-[#ffe1f1] transition-colors"
+                onClick={() => onOpenChange(false)}
+              >
+                <span className="text-[#545454] text-lg leading-none">✕</span>
+              </button>
+            </div>
+          </div>
 
-              <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
-                {content.subtitle}
+          {/* body */}
+          <div className="px-5 pb-4">
+            <div className="rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-4">
+              <p className="text-[12px] font-semibold text-[#2f3a56]">
+                O que muda quando você destrava o Materna360+
+              </p>
+
+              <div className="mt-3 space-y-2.5">
+                {bullets.map((b, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <AppIcon
+                      name={b.icon as any}
+                      size={16}
+                      decorative
+                      className="mt-0.5 text-[#fd2597] flex-shrink-0"
+                    />
+                    <p className="text-[12px] text-[#545454] leading-relaxed">
+                      {b.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-3 text-[11px] text-[#6a6a6a] leading-relaxed">
+                Você pode conhecer os detalhes e escolher com calma. O plano acompanha sua fase — não o contrário.
               </p>
             </div>
 
-            <button
-              aria-label="Fechar"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-2xl hover:bg-[#ffe1f1] transition-colors text-[#2f3a56]"
-              onClick={() => onOpenChange(false)}
-            >
-              ✕
-            </button>
-          </div>
+            {/* actions */}
+            <div className="mt-4 flex gap-2">
+              <Link href="/planos" className="flex-1">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full"
+                  onClick={() => {
+                    try {
+                      track('paywall_sheet_cta', { action: 'go_to_planos', selectedPlanId: selectedPlanId ?? null })
+                    } catch {}
+                    onOpenChange(false)
+                  }}
+                >
+                  Entender os planos
+                </Button>
+              </Link>
 
-          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3">
-            <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#6a6a6a]">
-              O que muda na prática
-            </p>
-
-            <ul className="mt-2 space-y-2">
-              {content.highlights.map((t, idx) => (
-                <li key={idx} className="flex items-start gap-2">
-                  <AppIcon
-                    name="check"
-                    size={16}
-                    decorative
-                    className="mt-0.5 text-[#fd2597] flex-shrink-0"
-                  />
-                  <span className="text-[13px] text-[#2f3a56] leading-relaxed">{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <p className="mt-3 text-[11px] text-[#6a6a6a] leading-relaxed">
-            Você pode testar com calma. Se não fizer sentido agora, tudo bem — o app continua funcionando no Essencial.
-          </p>
-
-          <div className="mt-4 flex gap-2">
-            <Button
-              variant="primary"
-              size="md"
-              className="flex-1"
-              onClick={() => {
-                upgradeToPremium()
-                onOpenChange(false)
-              }}
-            >
-              {content.primaryCta}
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="md"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              {content.secondaryCta}
-            </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-[120px]"
+                onClick={() => {
+                  try {
+                    track('paywall_sheet_cta', { action: 'later', selectedPlanId: selectedPlanId ?? null })
+                  } catch {}
+                  onOpenChange(false)
+                }}
+              >
+                Depois
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* safe bottom spacing */}
+        <div className="h-2" />
       </div>
     </div>
   )
