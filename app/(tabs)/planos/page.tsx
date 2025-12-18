@@ -167,17 +167,23 @@ export default function PlanosPage() {
               return (
                 <SoftCard
                   key={planConfig.id}
-                  className={`rounded-3xl border transition-all flex flex-col relative bg-white shadow-[0_6px_22px_rgba(0,0,0,0.08)] ${
-                    isCurrentPlan
-                      ? 'border-[var(--color-brand)]/40'
-                      : isHighlighted
-                        ? 'border-[var(--color-brand-plum)]/30'
-                        : 'border-[var(--color-pink-snow)]/80'
-                  } ${
-                    isHighlighted
-                      ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.18)]'
-                      : ''
-                  } p-6 sm:p-8`}
+                  className={`
+                    rounded-3xl border transition-all flex flex-col relative
+                    bg-white shadow-[0_6px_22px_rgba(0,0,0,0.08)]
+                    ${
+                      isCurrentPlan
+                        ? 'border-[var(--color-brand)]/40'
+                        : isHighlighted
+                          ? 'border-[var(--color-brand-plum)]/30'
+                          : 'border-[var(--color-pink-snow)]/80'
+                    }
+                    ${
+                      isHighlighted
+                        ? 'lg:scale-105 lg:shadow-[0_18px_45px_rgba(155,77,150,0.18)]'
+                        : ''
+                    }
+                    p-6 sm:p-8
+                  `}
                 >
                   {/* Badge */}
                   <div className="mb-4">
@@ -204,7 +210,9 @@ export default function PlanosPage() {
                     >
                       {planConfig.name}
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)]">{planConfig.subtitle}</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      {planConfig.subtitle}
+                    </p>
                   </div>
 
                   {/* Preço */}
@@ -223,12 +231,12 @@ export default function PlanosPage() {
                         {planConfig.pricePeriod}
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2">{planConfig.priceNote}</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                      {planConfig.priceNote}
+                    </p>
                   </div>
 
-                  {/* Lista de benefícios
-                      Ajuste sutil: altura máxima + scroll interno no mobile para não virar “paredão”,
-                      mantendo o mesmo visual. */}
+                  {/* Lista de benefícios */}
                   <div className="flex-1 space-y-2.5 mb-6 max-h-[320px] sm:max-h-none overflow-auto pr-1">
                     {planConfig.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-3">
@@ -302,66 +310,16 @@ export default function PlanosPage() {
                 </div>
 
                 {[
-                  {
-                    feature: 'Planner diário',
-                    essencial: 'Básico',
-                    plus: 'Avançado',
-                    full: 'Avançado + visão por semanas',
-                  },
-                  {
-                    feature: 'Humor e energia',
-                    essencial: 'Registro simples',
-                    plus: 'Visão ampliada',
-                    full: 'Com resumos e histórico',
-                  },
-                  {
-                    feature: 'Orientações personalizadas',
-                    essencial: 'Até 5 por dia',
-                    plus: 'Até 40 por dia',
-                    full: 'Ilimitadas',
-                  },
-                  {
-                    feature: 'Biblioteca Materna',
-                    essencial: 'Limitada',
-                    plus: 'Completa',
-                    full: 'Completa + conteúdos avançados',
-                  },
-                  {
-                    feature: 'Trilhas educativas',
-                    essencial: 'Introdutória',
-                    plus: 'Completas',
-                    full: 'Personalizadas',
-                  },
-                  {
-                    feature: 'Exportar PDF',
-                    essencial: 'Não incluído',
-                    plus: 'Disponível',
-                    full: 'Disponível',
-                  },
-                  {
-                    feature: 'Produtos digitais',
-                    essencial: 'Não incluídos',
-                    plus: 'Incluídos',
-                    full: 'Incluídos',
-                  },
-                  {
-                    feature: 'Conquistas',
-                    essencial: 'Não disponível',
-                    plus: 'Níveis 1 e 2',
-                    full: 'Níveis 3 a 5 e painel avançado',
-                  },
-                  {
-                    feature: 'Mentorias com parceiros',
-                    essencial: 'Valor integral',
-                    plus: 'Valor integral',
-                    full: 'Descontos de 10% a 15%',
-                  },
-                  {
-                    feature: 'MaternaBox',
-                    essencial: 'Sem benefícios adicionais',
-                    plus: 'Condições especiais',
-                    full: 'Condições especiais',
-                  },
+                  { feature: 'Planner diário', essencial: 'Básico', plus: 'Avançado', full: 'Avançado + visão por semanas' },
+                  { feature: 'Humor e energia', essencial: 'Registro simples', plus: 'Visão ampliada', full: 'Com resumos e histórico' },
+                  { feature: 'Orientações personalizadas', essencial: 'Até 5 por dia', plus: 'Até 40 por dia', full: 'Ilimitadas' },
+                  { feature: 'Biblioteca Materna', essencial: 'Limitada', plus: 'Completa', full: 'Completa + conteúdos avançados' },
+                  { feature: 'Trilhas educativas', essencial: 'Introdutória', plus: 'Completas', full: 'Personalizadas' },
+                  { feature: 'Exportar PDF', essencial: 'Não incluído', plus: 'Disponível', full: 'Disponível' },
+                  { feature: 'Produtos digitais', essencial: 'Não incluídos', plus: 'Incluídos', full: 'Incluídos' },
+                  { feature: 'Conquistas', essencial: 'Não disponível', plus: 'Níveis 1 e 2', full: 'Níveis 3 a 5 e painel avançado' },
+                  { feature: 'Mentorias com parceiros', essencial: 'Valor integral', plus: 'Valor integral', full: 'Descontos de 10% a 15%' },
+                  { feature: 'MaternaBox', essencial: 'Sem benefícios adicionais', plus: 'Condições especiais', full: 'Condições especiais' },
                 ].map((row) => (
                   <div
                     key={row.feature}
@@ -394,14 +352,8 @@ export default function PlanosPage() {
               Se você já faz parte da nossa jornada:
             </p>
             <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-muted)] mb-2">
-              <li>
-                Assinantes Materna+ recebem 5% de desconto no investimento da
-                MaternaBox.
-              </li>
-              <li>
-                Assinantes Materna+ 360 recebem 10% de desconto no valor final
-                da MaternaBox.
-              </li>
+              <li>Assinantes Materna+ recebem 5% de desconto no investimento da MaternaBox.</li>
+              <li>Assinantes Materna+ 360 recebem 10% de desconto no valor final da MaternaBox.</li>
             </ul>
             <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
               O ajuste é aplicado automaticamente no checkout. É a nossa forma
@@ -500,14 +452,10 @@ export default function PlanosPage() {
         </div>
 
         {/* Sheet de upgrade
-            Ajuste P15: re-mount quando mudar selectedPlanId (sem alterar API do componente).
+            P15: re-mount quando mudar selectedPlanId (sem alterar API do componente).
+            CRÍTICO: não passar planId se o componente não suporta.
          */}
-       <UpgradeSheet
-  key={selectedPlanId}
-  open={open}
-  onOpenChange={setOpen}
-  planId={selectedPlanId === 'materna-360' ? 'materna-360' : 'materna-plus'}
-/>
+        <UpgradeSheet key={selectedPlanId} open={open} onOpenChange={setOpen} />
       </div>
 
       <LegalFooter />
