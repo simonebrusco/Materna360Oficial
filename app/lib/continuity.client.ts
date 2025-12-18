@@ -160,10 +160,7 @@ function pickPhrase(params: {
  * - não repetir frases consecutivas
  * - base local, sem métricas explícitas
  */
-export function getMyDayContinuityLine(input: {
-  dateKey: string
-  tone: Tone
-}): { text: string; phraseId: string } | null {
+export function getMyDayContinuityLine(input: { dateKey: string; tone: Tone }): { text: string; phraseId: string } | null {
   const { dateKey, tone } = input
   if (!isValidDateKey(dateKey)) return null
 
@@ -219,16 +216,14 @@ export function getMyDayContinuityLine(input: {
 }
 
 /**
- * P13 — Eu360 (quinzenal)
+ * P13/P15 — Eu360 (quinzenal)
  * Regras:
  * - no máximo 1x/14 dias
  * - nunca no primeiro uso
- * - texto curto, sem números, sem gráficos, sem insistência
+ * - nunca repetir no mesmo dia
+ * - 1 frase, neutra, sem CTA, sem números, sem avaliação
  */
-export function getEu360FortnightLine(input: {
-  dateKey: string
-  tone: Tone
-}): { text: string; phraseId: string } | null {
+export function getEu360FortnightLine(input: { dateKey: string; tone: Tone }): { text: string; phraseId: string } | null {
   const { dateKey, tone } = input
   if (!isValidDateKey(dateKey)) return null
 
@@ -250,27 +245,30 @@ export function getEu360FortnightLine(input: {
   // Frequência: no máximo 1x/dia (mesmo que o quinzenal “deixe”)
   if (meta.lastShownDateKey === dateKey) return null
 
-  // 14 dias (comparação simples via Date)
-  const lastShown = meta.lastShownDateKey ? toDate(meta.lastShownDateKey) : null
-  const now = toDate(dateKey)
+  // 14 dias (comparação simples via Date) — com guarda para dateKey inválida em meta legado
+  if (meta.lastShownDateKey && isValidDateKey(meta.lastShownDateKey)) {
+    const lastShown = toDate(meta.lastShownDateKey)
+    const now = toDate(dateKey)
 
-  if (meta.lastShownDateKey && lastShown && !Number.isNaN(lastShown.getTime())) {
-    const diffDays = Math.floor((now.getTime() - lastShown.getTime()) / (1000 * 60 * 60 * 24))
-    if (diffDays < 14) return null
+    if (!Number.isNaN(lastShown.getTime()) && !Number.isNaN(now.getTime())) {
+      const diffDays = Math.floor((now.getTime() - lastShown.getTime()) / (1000 * 60 * 60 * 24))
+      if (diffDays < 14) return null
+    }
   }
 
   const hasHistory = hasAnyHistoryBesides(dateKey)
   if (!hasHistory) return null
 
+  // 1 frase, neutra, sem “progresso/resultado/evolução”, sem pressupor “melhora”
   const options: ContinuityPhrase[] =
     tone === 'direto'
       ? [
-          { id: 'e_d_01', text: 'Nas últimas semanas, você seguiu do seu jeito — e isso importa.' },
-          { id: 'e_d_02', text: 'Teve dias diferentes. Você continuou presente.' },
+          { id: 'e_d_01', text: 'Nas últimas semanas, teve dias diferentes — e hoje você pode ir pelo possível.' },
+          { id: 'e_d_02', text: 'Nas últimas semanas, o ritmo mudou algumas vezes — e está tudo bem em ajustar por aqui.' },
         ]
       : [
-          { id: 'e_g_01', text: 'Nas últimas semanas, você foi levando do seu jeito — e isso é cuidado.' },
-          { id: 'e_g_02', text: 'Teve dias leves e dias difíceis. Você não passou por tudo sozinha.' },
+          { id: 'e_g_01', text: 'Nas últimas semanas, teve dias diferentes — e você pode se tratar com mais gentileza por aqui.' },
+          { id: 'e_g_02', text: 'Nas últimas semanas, o ritmo variou — e o essencial continua sendo respeitar o seu momento.' },
         ]
 
   const lastPhraseId = meta.lastPhraseId
@@ -283,6 +281,7 @@ export function getEu360FortnightLine(input: {
     save(KEY, { ...meta, lastShownDateKey: dateKey, lastPhraseId: picked.id })
   } catch {}
 
+  // Telemetria: manter apenas evento existente, sem payload emocional
   try {
     track('continuity.eu360.shown', { dateKey, phraseId: picked.id, tone })
   } catch {}
