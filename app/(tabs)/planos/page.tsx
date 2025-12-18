@@ -502,7 +502,12 @@ export default function PlanosPage() {
         {/* Sheet de upgrade
             Ajuste P15: re-mount quando mudar selectedPlanId (sem alterar API do componente).
          */}
-        <UpgradeSheet key={selectedPlanId} open={open} onOpenChange={setOpen} />
+       <UpgradeSheet
+  key={selectedPlanId}
+  open={open}
+  onOpenChange={setOpen}
+  planId={selectedPlanId === 'materna-360' ? 'materna-360' : 'materna-plus'}
+/>
       </div>
 
       <LegalFooter />
