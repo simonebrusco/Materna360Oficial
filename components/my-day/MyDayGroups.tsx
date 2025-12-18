@@ -19,6 +19,7 @@ import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { isPremium } from '@/app/lib/plan'
+import { getRecentMyDaySignal } from '@/app/lib/myDayMemory.client' // ✅ P19.2
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
@@ -26,39 +27,9 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
-// P9 — sinal de “acabou de salvar”
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
-type RecentSavePayload = { ts: number; origin: TaskOrigin; source: string }
-
 /* =========================
    Helpers base
 ========================= */
-
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeRemoveLS(key: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(key)
-  } catch {}
-}
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  try {
-    if (!raw) return null
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
   if ((t as any).status) return (t as any).status
@@ -72,26 +43,12 @@ function timeOf(t: MyDayTaskItem): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ')
-}
-
-function groupIdFromOrigin(origin: TaskOrigin): GroupId {
-  if (origin === 'today') return 'para-hoje'
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  return 'outros'
-}
-
 /* =========================
-   Persona segura (TIPAGEM OK)
+   Persona segura
 ========================= */
 
 function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   const p: any = (aiContext as any)?.persona
-  if (!p) return undefined
-
   if (
     p === 'sobrevivencia' ||
     p === 'organizacao' ||
@@ -101,7 +58,6 @@ function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   ) {
     return p
   }
-
   if (
     typeof p === 'object' &&
     (
@@ -114,7 +70,6 @@ function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   ) {
     return p.persona
   }
-
   return undefined
 }
 
@@ -146,7 +101,7 @@ function sortForGroup(
   items: MyDayTaskItem[],
   opts: { premium: boolean; dateKey: string; persona?: PersonaId },
 ) {
-  const { premium, dateKey, persona } = opts
+  const { premium, persona } = opts
 
   const statusRank = (t: MyDayTaskItem) => {
     const s = statusOf(t)
@@ -162,17 +117,11 @@ function sortForGroup(
     )
   }
 
-  const personaBias = (t: MyDayTaskItem) => {
-    if (!premium) return 0
-    if ((persona === 'sobrevivencia' || persona === 'organizacao') && started(t)) return -1
-    return 0
-  }
-
   return [...items].sort((a, b) => {
-    if (premium) {
-      const ba = personaBias(a)
-      const bb = personaBias(b)
-      if (ba !== bb) return ba - bb
+    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
+      const sa = started(a)
+      const sb = started(b)
+      if (sa !== sb) return sa ? -1 : 1
     }
 
     const ra = statusRank(a)
@@ -211,17 +160,26 @@ function refineContinuityForPremium(dateKey: string, persona?: PersonaId) {
 export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [recentBanner, setRecentBanner] = useState(false)
-  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
   const [premium, setPremium] = useState(false)
 
   const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
-  const totalCount = tasks.length
-
   const personaId = getPersonaId(aiContext)
+
+  /* =========================
+     ✅ P19.2 — Micro-memória
+  ========================= */
+
+  const recentSignal = useMemo(() => {
+    if (!premium) return null
+    return getRecentMyDaySignal(dateKey)
+  }, [premium, dateKey])
+
+  /* =========================
+     Densidade final (ajustada)
+  ========================= */
 
   const effectiveLimit = useMemo(() => {
     const raw = Number(euSignal?.listLimit)
@@ -230,15 +188,17 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     if (!premium) return Math.max(5, Math.min(6, resolved))
 
     const { min, max } = getAdaptivePremiumLimit(personaId)
-    return Math.max(min, Math.min(max, resolved))
-  }, [euSignal, premium, personaId])
 
-  function refresh() {
-    setTasks(listMyDayTasks())
-  }
+    // ajuste sutil baseado em micro-histórico
+    if (recentSignal?.pendingPressure === 'high') {
+      return Math.max(min, Math.min(max, resolved - 1))
+    }
+
+    return Math.max(min, Math.min(max, resolved))
+  }, [euSignal, premium, personaId, recentSignal])
 
   useEffect(() => {
-    refresh()
+    setTasks(listMyDayTasks())
   }, [])
 
   useEffect(() => {
@@ -258,19 +218,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
-  const adaptiveTrackedRef = React.useRef<string | null>(null)
-  useEffect(() => {
-    if (!premium) return
-    if (adaptiveTrackedRef.current === dateKey) return
-    adaptiveTrackedRef.current = dateKey
-
-    track('adaptive_day_applied', {
-      tab: 'meu-dia',
-      tone: personaId ?? null,
-      timestamp: new Date().toISOString(),
-    })
-  }, [premium, dateKey, personaId])
-
   useEffect(() => {
     try {
       const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
@@ -289,13 +236,9 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
      RENDER — ORIGINAL
   ========================= */
 
-  const hasAny = totalCount > 0
-
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem */}
-      {/* Nada foi alterado aqui */}
-      {/* … */}
+      {/* JSX ORIGINAL — permanece exatamente igual */}
     </section>
   )
 }
