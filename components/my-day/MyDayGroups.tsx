@@ -133,7 +133,10 @@ function getAdaptivePremiumLimit(persona?: PersonaId) {
    P18 — Ordenação contextual
 ========================= */
 
-function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; dateKey: string; persona?: PersonaId }) {
+function sortForGroup(
+  items: MyDayTaskItem[],
+  opts: { premium: boolean; dateKey: string; persona?: PersonaId },
+) {
   const { premium, persona } = opts
 
   const statusRank = (t: MyDayTaskItem) => {
@@ -143,7 +146,11 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; dateKey:
 
   const started = (t: MyDayTaskItem) => {
     const anyT: any = t as any
-    return !!(anyT.startedAt || anyT.inProgress === true || (typeof anyT.progress === 'number' && anyT.progress > 0))
+    return !!(
+      anyT.startedAt ||
+      anyT.inProgress === true ||
+      (typeof anyT.progress === 'number' && anyT.progress > 0)
+    )
   }
 
   return [...items].sort((a, b) => {
@@ -203,18 +210,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   const totalCount = tasks.length
 
-  /* =========================
-     ✅ P19.2 — Micro-memória
-  ========================= */
-
   const recentSignal = useMemo(() => {
     if (!premium) return null
     return getRecentMyDaySignal(dateKey)
   }, [premium, dateKey])
-
-  /* =========================
-     Densidade final (ajustada)
-  ========================= */
 
   const effectiveLimit = useMemo(() => {
     const raw = Number(euSignal?.listLimit)
@@ -224,7 +223,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
     const { min, max } = getAdaptivePremiumLimit(personaId)
 
-    // ajuste sutil baseado em micro-histórico
     if (recentSignal?.pendingPressure === 'high') {
       return Math.max(min, Math.min(max, resolved - 1))
     }
@@ -257,63 +255,31 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
-  /* =========================
-     ✅ P9 — Consumir sinal pós-salvar
-<<<<<<< Updated upstream
-     - só no Premium (evita comportamento colateral no Free)
-     - abre o grupo certo
-     - marca "ativo" por poucos segundos
-     - remove a key para não repetir
-     - reavalia por dateKey (troca de dia)
-=======
-     - abre o grupo certo
-     - marca "ativo" por poucos segundos
-     - remove a key para não repetir
->>>>>>> Stashed changes
-  ========================= */
-
   useEffect(() => {
     try {
-<<<<<<< Updated upstream
       if (!premium) {
         setRecentSaveActive(false)
         setHighlightGroup(null)
         return
       }
 
-=======
->>>>>>> Stashed changes
       const raw = safeGetLS(LS_RECENT_SAVE)
       if (!raw) return
 
       const payload = safeParseJSON<RecentSavePayload>(raw)
-      safeRemoveLS(LS_RECENT_SAVE) // consumir sempre, mesmo se inválido
+      safeRemoveLS(LS_RECENT_SAVE)
 
       if (!payload || typeof payload.ts !== 'number' || !payload.origin) return
 
-      // janela curta para evitar efeito atrasado (UX)
       const ageMs = Date.now() - payload.ts
-<<<<<<< Updated upstream
       if (ageMs < 0 || ageMs > 12_000) return
-=======
-      if (ageMs < 0 || ageMs > 10 * 60 * 1000) return
->>>>>>> Stashed changes
 
       const gid = groupIdFromRecentOrigin(payload.origin)
       setHighlightGroup(gid)
-
-      // abre o bloco automaticamente (sem texto, sem CTA)
       setExpanded((prev) => ({ ...prev, [gid]: true }))
 
-<<<<<<< Updated upstream
-      // marca ativo por um curto período para P20 não empilhar micro-frase
       setRecentSaveActive(true)
-      const t = window.setTimeout(() => setRecentSaveActive(false), 12_000)
-=======
-      // marca ativo por curto período para P20 não empilhar micro-frase
-      setRecentSaveActive(true)
-      window.setTimeout(() => setRecentSaveActive(false), 2600)
->>>>>>> Stashed changes
+      const t = window.setTimeout(() => setRecentSaveActive(false), 2600)
 
       try {
         track('my_day.recent_save.consumed', {
@@ -322,27 +288,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           ageMs,
         })
       } catch {}
-<<<<<<< Updated upstream
 
       return () => window.clearTimeout(t)
     } catch {
       // silencioso
     }
-  }, [premium, dateKey])
-=======
-    } catch {
-      // silencioso
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
->>>>>>> Stashed changes
-
-  /* =========================
-     ✅ P20 — Silêncio inteligente (timing)
-     - Free: intacto (mantém base)
-     - Premium: só mostra quando faz sentido humano
-       + não empilha com pós-salvar
-  ========================= */
+  }, [premium])
 
   useEffect(() => {
     try {
@@ -359,25 +310,16 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         return
       }
 
-      // ✅ P20: se acabou de salvar, não empilha micro-frase
       if (recentSaveActive) {
         setContinuityLine(null)
         return
       }
 
-<<<<<<< Updated upstream
-      // 1) Se o dia está vazio, silêncio.
-=======
->>>>>>> Stashed changes
       if (totalCount === 0) {
         setContinuityLine(null)
         return
       }
 
-<<<<<<< Updated upstream
-      // 2) Se não há pressão e não houve ação recente, silêncio.
-=======
->>>>>>> Stashed changes
       if (recentSignal?.pendingPressure === 'low' && recentSignal?.hadCompletionRecently === false) {
         setContinuityLine(null)
         return
@@ -398,32 +340,9 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     recentSaveActive,
   ])
 
-<<<<<<< Updated upstream
-  /* =========================
-     RENDER — ORIGINAL
-     (Você mantém seu JSX real aqui. Eu não invento markup.)
-  ========================= */
-
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
-      {/* Importante: onde você renderiza grupos, você já tem acesso a:
-=======
-  return (
-    <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {/* JSX ORIGINAL — permanece exatamente igual ao que você já tem no seu projeto */}
-      {/* Você já tem acesso a:
->>>>>>> Stashed changes
-          - grouped
-          - expanded / setExpanded
-          - effectiveLimit
-          - continuityLine
-<<<<<<< Updated upstream
-          - highlightGroup (se quiser usar só para um "ring" sutil existente; não é obrigatório)
-=======
-          - highlightGroup (se quiser aplicar só um destaque sutil já existente; opcional)
->>>>>>> Stashed changes
-      */}
     </section>
   )
 }
