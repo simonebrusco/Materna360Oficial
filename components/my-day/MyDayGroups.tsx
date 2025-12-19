@@ -20,16 +20,13 @@ import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getRecentMyDaySignal } from '@/app/lib/myDayMemory.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
+import { getDensityLevel } from '@/app/lib/experience/density'
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
-
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-type RecentSaveOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
-type RecentSavePayload = { ts: number; origin: RecentSaveOrigin; source: string }
 
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
@@ -104,6 +101,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
 
   const experienceTier = getExperienceTier()
+  const densityLevel = getDensityLevel()
   const isPremiumExperience = experienceTier === 'premium'
 
   const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
@@ -122,9 +120,13 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const raw = Number(euSignal?.listLimit)
     const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
 
-    if (!isPremiumExperience) return Math.max(5, Math.min(6, resolved))
+    if (densityLevel === 'normal') {
+      return Math.max(5, Math.min(6, resolved))
+    }
+
+    // density === 'reduced' (premium invisível)
     return Math.max(3, Math.min(4, resolved))
-  }, [euSignal, isPremiumExperience])
+  }, [euSignal, densityLevel])
 
   function refresh() {
     setTasks(listMyDayTasks())
