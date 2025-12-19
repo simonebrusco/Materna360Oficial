@@ -1,22 +1,22 @@
-'use client';
+'use client'
 
-import React from 'react';
-import AppIcon from './AppIcon';
-import { Card } from './card';
-import { Skeleton } from './Skeleton';
-import { Empty } from './Empty';
+import React from 'react'
+import AppIcon from './AppIcon'
+import { Card } from './card'
+import { Skeleton } from './Skeleton'
+import { Empty } from './Empty'
 
 interface WeeklySummaryData {
-  humor: { daysLogged: number; totalDays: number; data: number[] };
-  checklist: { completed: number; total: number; data: number[] };
-  planner: { completed: number; total: number; data: number[] };
-  achievements: { unlocked: number; total: number; data: number[] };
+  humor: { daysLogged: number; totalDays: number; data: number[] }
+  checklist: { completed: number; total: number; data: number[] }
+  planner: { completed: number; total: number; data: number[] }
+  achievements: { unlocked: number; total: number; data: number[] }
 }
 
 interface WeeklySummaryProps {
-  data?: WeeklySummaryData;
-  isLoading?: boolean;
-  onViewDetails?: () => void;
+  data?: WeeklySummaryData
+  isLoading?: boolean
+  onViewDetails?: () => void
 }
 
 /**
@@ -24,26 +24,24 @@ interface WeeklySummaryProps {
  * Renders 7 data points as a small line chart.
  */
 function SparklineChart({ data }: { data: number[] }) {
-  const width = 100;
-  const height = 30;
-  const padding = 4;
-  const innerWidth = width - padding * 2;
-  const innerHeight = height - padding * 2;
+  const width = 100
+  const height = 30
+  const padding = 4
+  const innerWidth = width - padding * 2
+  const innerHeight = height - padding * 2
 
-  // Normalize data to 0-1 range
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const range = max - min || 1;
+  const max = Math.max(...data, 1)
+  const min = Math.min(...data, 0)
+  const range = max - min || 1
 
-  // Create path
   const points = data.map((val, idx) => {
-    const x = (idx / (data.length - 1)) * innerWidth + padding;
-    const normalized = (val - min) / range;
-    const y = height - normalized * innerHeight - padding;
-    return `${x},${y}`;
-  });
+    const x = (idx / (data.length - 1)) * innerWidth + padding
+    const normalized = (val - min) / range
+    const y = height - normalized * innerHeight - padding
+    return `${x},${y}`
+  })
 
-  const pathD = `M${points.join(' L')}`;
+  const pathD = `M${points.join(' L')}`
 
   return (
     <svg
@@ -61,10 +59,22 @@ function SparklineChart({ data }: { data: number[] }) {
         vectorEffect="non-scaling-stroke"
         className="text-primary"
       />
-      <circle cx={padding} cy={height - padding} r="1.5" fill="currentColor" className="text-primary" />
-      <circle cx={width - padding} cy={height - ((data[data.length - 1] - min) / range) * innerHeight - padding} r="1.5" fill="currentColor" className="text-primary" />
+      <circle
+        cx={padding}
+        cy={height - padding}
+        r="1.5"
+        fill="currentColor"
+        className="text-primary"
+      />
+      <circle
+        cx={width - padding}
+        cy={height - ((data[data.length - 1] - min) / range) * innerHeight - padding}
+        r="1.5"
+        fill="currentColor"
+        className="text-primary"
+      />
     </svg>
-  );
+  )
 }
 
 /**
@@ -92,7 +102,7 @@ function generateDemoData(): WeeklySummaryData {
       total: 12,
       data: [0, 1, 0, 0, 1, 0, 1],
     },
-  };
+  }
 }
 
 export function WeeklySummary({
@@ -100,19 +110,19 @@ export function WeeklySummary({
   isLoading = false,
   onViewDetails,
 }: WeeklySummaryProps) {
-  const displayData = data || generateDemoData();
-  const showEmpty = !isLoading && !data;
+  const displayData = data || generateDemoData()
+  const showEmpty = !isLoading && !data
 
   if (showEmpty) {
     return (
       <Empty
         icon="heart"
-        title="Comece sua semana"
-        subtitle="Registre humor, atividades e conquistas para ver seu progresso."
-        actionLabel="Começar agora"
+        title="Sua semana começa por aqui"
+        subtitle="Quando fizer sentido, registre pequenos momentos para acompanhar como você está."
+        actionLabel="Explorar agora"
         onAction={onViewDetails}
       />
-    );
+    )
   }
 
   if (isLoading) {
@@ -122,7 +132,7 @@ export function WeeklySummary({
           <Skeleton key={idx} variant="card" />
         ))}
       </div>
-    );
+    )
   }
 
   const tiles = [
@@ -154,51 +164,54 @@ export function WeeklySummary({
       stat: `${displayData.achievements.unlocked}/${displayData.achievements.total}`,
       data: displayData.achievements.data,
     },
-  ];
+  ]
 
   return (
     <div className="space-y-4">
-      {/* 2x2 Grid */}
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {tiles.map((tile) => (
           <Card
             key={tile.id}
             className="rounded-xl bg-white border border-white/60 shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-3 md:p-4"
           >
-            {/* Header */}
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-semibold text-support-1">{tile.title}</h4>
-              <AppIcon name={tile.icon} size={18} className="text-primary" />
+              <h4 className="text-sm font-semibold text-support-1">
+                {tile.title}
+              </h4>
+              <AppIcon
+                name={tile.icon}
+                size={18}
+                className="text-primary"
+              />
             </div>
 
-            {/* Stat */}
-            <p className="text-lg font-bold text-primary mb-2">{tile.stat}</p>
+            <p className="text-lg font-bold text-primary mb-2">
+              {tile.stat}
+            </p>
 
-            {/* Sparkline */}
             <SparklineChart data={tile.data} />
           </Card>
         ))}
       </div>
 
-      {/* Positive Reinforcement Copy */}
+      {/* P22 — reforço neutro e acolhedor */}
       <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 md:p-4">
         <p className="text-sm text-support-1 font-medium">
-           Você manteve {displayData.humor.daysLogged} dias de humor registrado — ótimo!
+          Nesta semana, você registrou seu humor em {displayData.humor.daysLogged} dias.
         </p>
         <p className="text-xs text-support-2 mt-1">
-          Continue assim para desbloquear novas conquistas e insights sobre sua semana.
+          Esses registros ajudam você a perceber padrões e cuidar de si com mais clareza.
         </p>
       </div>
 
-      {/* Optional View Details CTA */}
       {onViewDetails && (
         <button
           onClick={onViewDetails}
           className="w-full text-center text-sm font-medium text-primary hover:text-primary/80 transition-colors py-2"
         >
-          Ver detalhes completos →
+          Ver a semana com mais calma
         </button>
       )}
     </div>
-  );
+  )
 }
