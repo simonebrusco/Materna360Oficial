@@ -22,29 +22,54 @@ function normalizeTier(raw: unknown): ExperienceTier {
   return 'unknown'
 }
 
+function safeTodayKey(d = new Date()) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}${m}${day}`
+}
+
 export default function ExportButton({ variant }: ExportButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // ✅ Hooks sempre no topo, sem early return antes deles
-  const ffEnabled = useMemo(() => isEnabled('FF_PDF_EXPORT'), [])
-  const tier = useMemo(() => normalizeTier(getExperienceTier() as any), [])
+  // ✅ Estado “hidratado” (evita qualquer risco de mismatch e mantém hooks sempre no topo)
+  const [ffEnabled, setFfEnabled] = useState(false)
+  const [tier, setTier] = useState<ExperienceTier>('unknown')
+
+  useEffect(() => {
+    try {
+      setFfEnabled(Boolean(isEnabled('FF_PDF_EXPORT')))
+    } catch {
+      setFfEnabled(false)
+    }
+
+    try {
+      setTier(normalizeTier(getExperienceTier() as any))
+    } catch {
+      setTier('unknown')
+    }
+  }, [])
+
   const isPremiumExperience = tier === 'premium' || tier === 'plus'
 
-  // Data availability (não é hook)
+  // Data availability (client-only — este componente é 'use client')
   const moodData = getMoodEntries()
   const hasData = Array.isArray(moodData) && moodData.length > 0
 
   useEffect(() => {
+    if (!ffEnabled) return
     try {
       trackTelemetry('pdf.export_view', { variant, tier })
     } catch {}
-  }, [variant, tier])
+  }, [variant, tier, ffEnabled])
 
-  // ✅ Agora sim: return condicional (depois dos hooks)
-  if (!ffEnabled) return null
+  const buttonText = useMemo(() => {
+    return variant === 'wellness' ? 'Exportar Relatorio' : 'Exportar Insights'
+  }, [variant])
 
   const handleExport = async () => {
+    if (!ffEnabled) return
     if (isLoading || !hasData) return
 
     const startTime = performance.now()
@@ -54,23 +79,24 @@ export default function ExportButton({ variant }: ExportButtonProps) {
     try {
       trackTelemetry('pdf.export_start', { variant, tier })
 
+      const todayKey = safeTodayKey(new Date())
+
       let reportData: any
-      let filename = `materna360-${variant}-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(
-        2,
-        '0',
-      )}${String(new Date().getDate()).padStart(2, '0')}.pdf`
+      let filename = `materna360-${variant}-${todayKey}.pdf`
 
       if (variant === 'wellness') {
         const today = new Date()
         const todayStr = today.toISOString().split('T')[0]
         const todayTasks = getPlannerItemsWithin(1).filter((t) => t.date === todayStr)
 
+        // Free: base útil
         const coachTipsBase = [
           { title: 'Dar um tempo para si mesma', description: 'Reserve 15 minutos para uma atividade que te relaxa.' },
           { title: 'Conectar com seu filho', description: 'Uma conversa de qualidade fortalece o vinculo.' },
           { title: 'Respiracao consciente', description: 'Pratique 3 respiracoes profundas quando se sentir estressada.' },
         ]
 
+        // Premium/Plus: melhor (sem “explicar por quê”)
         const coachTipsPremium = [
           ...coachTipsBase,
           { title: 'Transicao suave', description: 'Antes de mudar de tarefa, respire e escolha um unico proximo passo.' },
@@ -83,32 +109,31 @@ export default function ExportButton({ variant }: ExportButtonProps) {
           coachTips: isPremiumExperience ? coachTipsPremium : coachTipsBase,
         }
 
-        filename = `materna360-wellness-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(
-          today.getDate(),
-        ).padStart(2, '0')}.pdf`
+        filename = `materna360-wellness-${todayKey}.pdf`
       } else if (variant === 'insights') {
         const events = readLocalEvents()
         const now = Date.now()
 
+        // Free: 7 dias | Premium/Plus: 30 dias (melhor)
         const daysWindow = isPremiumExperience ? 30 : 7
         const cutoff = now - daysWindow * 24 * 60 * 60 * 1000
-
-        const recent = Array.isArray(events) ? events.filter((e) => e.ts >= cutoff) : []
+        const recent = Array.isArray(events) ? events.filter((e) => (e as any)?.ts >= cutoff) : []
 
         const counters: Record<string, number> = {}
         for (const e of recent) {
-          const key = String((e as any).event || 'unknown')
+          const key = String((e as any)?.event || 'unknown')
           counters[key] = (counters[key] || 0) + 1
         }
 
+        // Free: top 5 | Premium/Plus: top 10 (melhor)
         const topLimit = isPremiumExperience ? 10 : 5
         const entries = Object.entries(counters).map(([event, count]) => ({ event, count }))
         entries.sort((a, b) => b.count - a.count)
         const topActions = entries.slice(0, topLimit)
 
         const mood = getMoodEntries()
-        const moodSeries = (Array.isArray(mood) ? mood : []).map((m) => (m as any).mood)
-        const energySeries = (Array.isArray(mood) ? mood : []).map((m) => (m as any).energy)
+        const moodSeries = (Array.isArray(mood) ? mood : []).map((m) => Number((m as any)?.mood ?? 0))
+        const energySeries = (Array.isArray(mood) ? mood : []).map((m) => Number((m as any)?.energy ?? 0))
 
         reportData = {
           windowDays: daysWindow,
@@ -118,10 +143,7 @@ export default function ExportButton({ variant }: ExportButtonProps) {
           energySeries,
         }
 
-        filename = `materna360-insights-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(
-          2,
-          '0',
-        )}${String(new Date().getDate()).padStart(2, '0')}.pdf`
+        filename = `materna360-insights-${todayKey}.pdf`
       } else {
         throw new Error(`Unknown variant: ${variant}`)
       }
@@ -170,7 +192,8 @@ export default function ExportButton({ variant }: ExportButtonProps) {
     }
   }
 
-  const buttonText = variant === 'wellness' ? 'Exportar Relatorio' : 'Exportar Insights'
+  // ✅ Return condicional só depois dos hooks
+  if (!ffEnabled) return null
 
   return (
     <div>
