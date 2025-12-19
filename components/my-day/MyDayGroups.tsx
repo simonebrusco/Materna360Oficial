@@ -64,6 +64,36 @@ function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
 }
 
 /* =========================
+   Ordenação contextual (mantida)
+========================= */
+
+function sortForGroup(
+  items: MyDayTaskItem[],
+  opts: { premium: boolean; persona?: PersonaId },
+) {
+  const { premium, persona } = opts
+
+  const statusRank = (t: MyDayTaskItem) => {
+    const s = statusOf(t)
+    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
+  }
+
+  return [...items].sort((a, b) => {
+    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
+      const sa = timeOf(a)
+      const sb = timeOf(b)
+      if (sa !== sb) return sb - sa
+    }
+
+    const ra = statusRank(a)
+    const rb = statusRank(b)
+    if (ra !== rb) return ra - rb
+
+    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
+  })
+}
+
+/* =========================
    COMPONENTE
 ========================= */
 
@@ -93,7 +123,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
 
     if (!isPremiumExperience) return Math.max(5, Math.min(6, resolved))
-
     return Math.max(3, Math.min(4, resolved))
   }, [euSignal, isPremiumExperience])
 
@@ -130,7 +159,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
             const group = grouped[groupId]
             if (!group) return null
 
-            const sorted = group.items
+            const sorted = sortForGroup(group.items, {
+              premium: isPremiumExperience,
+              persona: personaId,
+            })
+
             const count = sorted.length
             if (count === 0) return null
 
