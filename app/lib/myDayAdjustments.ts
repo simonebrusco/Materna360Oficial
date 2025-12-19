@@ -1,5 +1,7 @@
 import type { MyDayTaskItem } from '@/app/lib/myDayTasks.client'
-import { isPremium } from '@/app/lib/plan'
+
+// ✅ P23 — camada de experiência (nunca chamar isPremium diretamente aqui)
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 /**
  * Tipos internos
@@ -30,7 +32,7 @@ function getTime(task: MyDayTaskItem): number {
  * Regra simples, previsível e silenciosa.
  */
 export function getMyDayListLimit(): number {
-  return isPremium() ? 3 : 5
+  return getExperienceTier() === 'premium' ? 3 : 5
 }
 
 /**
@@ -42,12 +44,10 @@ export function getMyDayListLimit(): number {
  * 2. Tarefas mais recentes sobem levemente
  * 3. Premium tem ordenação mais "assertiva"
  */
-export function applyMyDayAdjustments(
-  tasks: MyDayTaskItem[],
-): MyDayTaskItem[] {
-  const premium = isPremium()
+export function applyMyDayAdjustments(tasks: MyDayTaskItem[]): MyDayTaskItem[] {
+  const isPremiumExperience = getExperienceTier() === 'premium'
 
-  if (!premium) {
+  if (!isPremiumExperience) {
     // Free: mantém ordem natural (mais antiga primeiro)
     return [...tasks].sort((a, b) => getTime(a) - getTime(b))
   }
