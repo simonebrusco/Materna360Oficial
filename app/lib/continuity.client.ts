@@ -4,6 +4,7 @@ import { load, save } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import type { TaskItem } from '@/app/lib/myDayTasks.client'
 import type { Eu360Signal } from '@/app/lib/eu360Signals.client'
+import { getContinuityTone } from '@/app/lib/experience/continuityTone'
 
 type Tone = NonNullable<Eu360Signal['tone']>
 
@@ -104,7 +105,6 @@ function toDate(dk: string) {
 
 function phrasesByTone(tone: Tone): ContinuityPhrase[] {
   // P13 — neutras, humanas, sem avaliação, sem cobrança, sem “progresso”
-  // Observação: mantemos um conjunto curto, mas com variação suficiente para evitar repetição.
   if (tone === 'direto') {
     return [
       { id: 'd_01', text: 'Ontem foi diferente. Hoje pode ser mais leve.' },
@@ -115,7 +115,6 @@ function phrasesByTone(tone: Tone): ContinuityPhrase[] {
     ]
   }
 
-  // default: gentil
   return [
     { id: 'g_01', text: 'Você já passou por dias assim.' },
     { id: 'g_02', text: 'Nem todo dia precisa ser igual — e tudo bem.' },
@@ -137,8 +136,7 @@ function pickPhrase(params: {
 
   if (!hasHistory) return null
 
-  // Ajuste contextual leve:
-  // - se não há ontem, evitamos frases que mencionem “ontem”
+  // se não há ontem, evitamos frases que mencionem “ontem”
   const filtered = base.filter((p) => (hasYesterday ? true : !p.text.toLowerCase().includes('ontem')))
 
   const pool = filtered.length > 0 ? filtered : base
@@ -159,15 +157,20 @@ function pickPhrase(params: {
  * - nunca no primeiro uso (primeiro “contato” do app com continuidade)
  * - não repetir frases consecutivas
  * - base local, sem métricas explícitas
+ *
+ * P23 — Tom:
+ * - Free: sempre gentil (seguro)
+ * - Premium: respeita o tom solicitado
  */
 export function getMyDayContinuityLine(input: { dateKey: string; tone: Tone }): { text: string; phraseId: string } | null {
-  const { dateKey, tone } = input
+  const { dateKey } = input
   if (!isValidDateKey(dateKey)) return null
+
+  const tone = getContinuityTone(input.tone as any) as Tone
 
   const meta = getMeta()
 
   // Nunca aparecer no primeiro uso:
-  // 1) se não temos firstSeenDateKey ainda, gravamos e não mostramos.
   if (!meta.firstSeenDateKey) {
     setMeta({ ...meta, firstSeenDateKey: dateKey })
     return null
@@ -222,10 +225,16 @@ export function getMyDayContinuityLine(input: { dateKey: string; tone: Tone }): 
  * - nunca no primeiro uso
  * - nunca repetir no mesmo dia
  * - 1 frase, neutra, sem CTA, sem números, sem avaliação
+ *
+ * P23 — Tom:
+ * - Free: sempre gentil (seguro)
+ * - Premium: respeita o tom solicitado
  */
 export function getEu360FortnightLine(input: { dateKey: string; tone: Tone }): { text: string; phraseId: string } | null {
-  const { dateKey, tone } = input
+  const { dateKey } = input
   if (!isValidDateKey(dateKey)) return null
+
+  const tone = getContinuityTone(input.tone as any) as Tone
 
   // meta separado para Eu360 (não mistura frequência)
   const KEY = 'continuity/eu360/meta'
@@ -242,10 +251,10 @@ export function getEu360FortnightLine(input: { dateKey: string; tone: Tone }): {
   // Se ainda é o mesmo dia do firstSeen, continua sem mostrar
   if (meta.firstSeenDateKey === dateKey) return null
 
-  // Frequência: no máximo 1x/dia (mesmo que o quinzenal “deixe”)
+  // Frequência: no máximo 1x/dia
   if (meta.lastShownDateKey === dateKey) return null
 
-  // 14 dias (comparação simples via Date) — com guarda para dateKey inválida em meta legado
+  // 14 dias — guarda para dateKey inválida em meta legado
   if (meta.lastShownDateKey && isValidDateKey(meta.lastShownDateKey)) {
     const lastShown = toDate(meta.lastShownDateKey)
     const now = toDate(dateKey)
@@ -259,7 +268,6 @@ export function getEu360FortnightLine(input: { dateKey: string; tone: Tone }): {
   const hasHistory = hasAnyHistoryBesides(dateKey)
   if (!hasHistory) return null
 
-  // 1 frase, neutra, sem “progresso/resultado/evolução”, sem pressupor “melhora”
   const options: ContinuityPhrase[] =
     tone === 'direto'
       ? [
@@ -281,7 +289,6 @@ export function getEu360FortnightLine(input: { dateKey: string; tone: Tone }): {
     save(KEY, { ...meta, lastShownDateKey: dateKey, lastPhraseId: picked.id })
   } catch {}
 
-  // Telemetria: manter apenas evento existente, sem payload emocional
   try {
     track('continuity.eu360.shown', { dateKey, phraseId: picked.id, tone })
   } catch {}
