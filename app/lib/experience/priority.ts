@@ -33,10 +33,21 @@ export function prioritizeItems<T>(
  * - Must NEVER create new items
  * - Must preserve referential integrity
  *
- * This function is intentionally conservative.
- * For now, it returns the same list.
- * Context-aware ordering will be refined at call sites.
+ * Conservative default: stable partition
+ * - pending/active first
+ * - completed/done last
+ * preserving original order within each group
  */
 function applyContextualPriority<T>(items: T[]): T[] {
-  return items
+  const pending: T[] = []
+  const done: T[] = []
+
+  for (const it of items) {
+    const anyIt: any = it as any
+    const isDone = Boolean(anyIt?.done ?? anyIt?.completed) || anyIt?.status === 'done'
+    if (isDone) done.push(it)
+    else pending.push(it)
+  }
+
+  return pending.concat(done)
 }
