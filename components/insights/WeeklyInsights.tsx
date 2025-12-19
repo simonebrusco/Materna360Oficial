@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { buildWeekLabels, getWeekStartKey, formatDateKey } from '@/app/lib/weekLabels'
 
+// ✅ P23 — camada de experiência (não chamar isPremium aqui)
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
+
 type DayPoint = { label: string; mood: number; energy: number }
+
 type Stats = {
   avgMood: number
   avgEnergy: number
@@ -24,6 +28,7 @@ function computeStats(points: DayPoint[]): Stats {
   const avgEnergy = Math.round((sumEnergy / points.length) * 10) / 10
 
   const best = [...points].sort((a, b) => b.mood - a.mood)[0]
+
   return {
     avgMood,
     avgEnergy,
@@ -50,10 +55,34 @@ function Sparkline({ points }: { points: DayPoint[] }) {
   )
 }
 
+function clamp01(n: number) {
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(100, n))
+}
+
+function pickFocus(points: DayPoint[]) {
+  // Heurística simples: se energia baixa, sugere “energia”; se humor baixo, “humor”; senão “estabilidade”
+  const avgMood = points.reduce((a, p) => a + clamp01(p.mood), 0) / Math.max(1, points.length)
+  const avgEnergy = points.reduce((a, p) => a + clamp01(p.energy), 0) / Math.max(1, points.length)
+
+  if (avgEnergy <= 35) return 'energia'
+  if (avgMood <= 35) return 'humor'
+  return 'estabilidade'
+}
+
 export default function WeeklyInsights() {
   const [data, setData] = React.useState<DayPoint[] | null>(null)
+  const [tier, setTier] = React.useState<'free' | 'premium'>('free')
 
   React.useEffect(() => {
+    // tier (client-only)
+    try {
+      setTier(getExperienceTier() === 'premium' ? 'premium' : 'free')
+    } catch {
+      setTier('free')
+    }
+
+    // data (client-only)
     try {
       const weekStartKey = getWeekStartKey(formatDateKey(new Date()))
       const result = buildWeekLabels(weekStartKey)
@@ -90,9 +119,22 @@ export default function WeeklyInsights() {
   const points = data ?? []
   const stats = computeStats(points)
 
-  const suggestionText =
-    points.length === 0
-      ? 'Se esta semana estiver vazia, tudo bem. Quando você registrar aos poucos, este resumo começa a ganhar forma.'
+  const hasAny = points.length > 0
+  const focus = hasAny ? pickFocus(points) : 'estabilidade'
+
+  // P23 — Free nunca frustra / Premium sempre melhor (sem explicar por quê)
+  const suggestionText = !hasAny
+    ? 'Se esta semana estiver vazia, tudo bem. Quando você registrar aos poucos, este resumo começa a ganhar forma.'
+    : tier === 'premium'
+      ? (() => {
+          if (focus === 'energia') {
+            return `Nos dias ${stats.bestLabel}, seu ritmo ficou mais favorável. Hoje, tente proteger 10 minutos sem telas e um copo d’água logo no começo da tarde.`
+          }
+          if (focus === 'humor') {
+            return `Nos dias ${stats.bestLabel}, seu humor ficou mais alto. Se fizer sentido, repita um detalhe simples: um respiro curto + uma pausa rápida só sua antes do fim do dia.`
+          }
+          return `Nos dias ${stats.bestLabel}, seu padrão ficou mais estável. Para manter esse clima, escolha uma coisa pequena para simplificar hoje e preserve um momento curto de respiro.`
+        })()
       : `Nos dias ${stats.bestLabel}, seu humor ficou mais alto. Se fizer sentido, experimente repetir um detalhe simples desse dia: um respiro curto, uma pausa sem telas e uma escolha pequena de autocuidado.`
 
   return (
