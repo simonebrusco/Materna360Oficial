@@ -26,15 +26,12 @@ export default function ExportButton({ variant }: ExportButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Feature flag
-  const ffEnabled = isEnabled('FF_PDF_EXPORT')
-  if (!ffEnabled) return null
-
-  // P23: experiência (sem paywall visível)
+  // ✅ Hooks sempre no topo, sem early return antes deles
+  const ffEnabled = useMemo(() => isEnabled('FF_PDF_EXPORT'), [])
   const tier = useMemo(() => normalizeTier(getExperienceTier() as any), [])
   const isPremiumExperience = tier === 'premium' || tier === 'plus'
 
-  // Data availability
+  // Data availability (não é hook)
   const moodData = getMoodEntries()
   const hasData = Array.isArray(moodData) && moodData.length > 0
 
@@ -43,6 +40,9 @@ export default function ExportButton({ variant }: ExportButtonProps) {
       trackTelemetry('pdf.export_view', { variant, tier })
     } catch {}
   }, [variant, tier])
+
+  // ✅ Agora sim: return condicional (depois dos hooks)
+  if (!ffEnabled) return null
 
   const handleExport = async () => {
     if (isLoading || !hasData) return
@@ -90,7 +90,6 @@ export default function ExportButton({ variant }: ExportButtonProps) {
         const events = readLocalEvents()
         const now = Date.now()
 
-        // P23: free menor janela; premium maior janela (sem UI)
         const daysWindow = isPremiumExperience ? 30 : 7
         const cutoff = now - daysWindow * 24 * 60 * 60 * 1000
 
@@ -98,7 +97,7 @@ export default function ExportButton({ variant }: ExportButtonProps) {
 
         const counters: Record<string, number> = {}
         for (const e of recent) {
-          const key = String(e.event || 'unknown')
+          const key = String((e as any).event || 'unknown')
           counters[key] = (counters[key] || 0) + 1
         }
 
@@ -108,8 +107,8 @@ export default function ExportButton({ variant }: ExportButtonProps) {
         const topActions = entries.slice(0, topLimit)
 
         const mood = getMoodEntries()
-        const moodSeries = (Array.isArray(mood) ? mood : []).map((m) => m.mood)
-        const energySeries = (Array.isArray(mood) ? mood : []).map((m) => m.energy)
+        const moodSeries = (Array.isArray(mood) ? mood : []).map((m) => (m as any).mood)
+        const energySeries = (Array.isArray(mood) ? mood : []).map((m) => (m as any).energy)
 
         reportData = {
           windowDays: daysWindow,
@@ -137,7 +136,7 @@ export default function ExportButton({ variant }: ExportButtonProps) {
         let msg = `HTTP ${response.status}`
         try {
           const errorData = await response.json()
-          msg = errorData?.error || msg
+          msg = (errorData as any)?.error || msg
         } catch {}
         throw new Error(msg)
       }
