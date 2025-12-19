@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
@@ -101,7 +101,7 @@ export default function MeuDiaClient() {
     return () => window.clearTimeout(t)
   }, [])
 
-  function refreshAiContextAndContinuity() {
+  const refreshAiContextAndContinuity = useCallback(() => {
     try {
       setAiContext(buildAiContext())
     } catch {}
@@ -119,9 +119,9 @@ export default function MeuDiaClient() {
     } catch {
       setContinuityLine(null)
     }
-  }
+  }, [todayKey])
 
-  function refreshPremiumState() {
+  const refreshPremiumState = useCallback(() => {
     try {
       const tier = getExperienceTier()
       const next = tier === 'premium'
@@ -146,7 +146,7 @@ export default function MeuDiaClient() {
     } catch {
       setPremium(false)
     }
-  }
+  }, [todayKey])
 
   useEffect(() => {
     refreshAiContextAndContinuity()
@@ -169,7 +169,7 @@ export default function MeuDiaClient() {
       window.removeEventListener('eu360:persona-updated', onCustomPersona as EventListener)
       window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
     }
-  }, [todayKey])
+  }, [refreshAiContextAndContinuity, refreshPremiumState])
 
   // 🔹 P22 — regra de ordem silenciosa
   const showMessageFirst = milestones.isFirstDay || milestones.isReturnAfterAbsence
@@ -203,14 +203,10 @@ export default function MeuDiaClient() {
 
           <div className="pt-4 space-y-1">
             <ClientOnly>
-              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">
-                {greeting || 'Bom dia'}
-              </h2>
+              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
             </ClientOnly>
 
-            <p className="text-sm md:text-base text-white/95 max-w-xl">
-              “{dailyMessage}”
-            </p>
+            <p className="text-sm md:text-base text-white/95 max-w-xl">“{dailyMessage}”</p>
 
             {continuityLine?.text ? (
               <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
