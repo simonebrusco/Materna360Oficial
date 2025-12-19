@@ -183,7 +183,7 @@ export function WeeklySummary({
       {/* Positive Reinforcement Copy */}
       <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 md:p-4">
         <p className="text-sm text-support-1 font-medium">
-          ✨ Você manteve {displayData.humor.daysLogged} dias de humor registrado — ótimo!
+           Você manteve {displayData.humor.daysLogged} dias de humor registrado — ótimo!
         </p>
         <p className="text-xs text-support-2 mt-1">
           Continue assim para desbloquear novas conquistas e insights sobre sua semana.

@@ -303,7 +303,7 @@ export default function ComoEstouHojePage() {
   const handleCheckin = async () => {
     if (isOverLimit) {
       toast.info(
-        'Você já registrou como está hoje algumas vezes. O resto do dia pode ser só vivido, do seu jeito 💗',
+        'Você já registrou como está hoje algumas vezes. O resto do dia pode ser só vivido, do seu jeito',
       )
       try {
         track('como_estou_hoje.checkin.limit_reached', {
@@ -378,7 +378,7 @@ export default function ComoEstouHojePage() {
         // ignora
       }
 
-      toast.success('Seu momento foi registrado com carinho 💗')
+      toast.success('Seu momento foi registrado com carinho')
       setNote('')
     } catch (error) {
       console.error('[Como Estou Hoje] Erro ao registrar check-in:', error)
@@ -448,7 +448,7 @@ export default function ComoEstouHojePage() {
         )
       }
 
-      toast.success('Sugestão levada para o planner ✨')
+      toast.success('Sugestão levada para o planner')
     } catch (error) {
       console.error(
         '[Como Estou Hoje] Erro ao salvar sugestão semanal:',
@@ -491,7 +491,7 @@ export default function ComoEstouHojePage() {
         // ignora
       }
 
-      toast.success('Insight levado para o planner ✨')
+      toast.success('Insight levado para o planner')
     } catch (error) {
       console.error('[Como Estou Hoje] Erro ao salvar insight do dia:', error)
       toast.danger('Não consegui levar esse insight pro planner agora.')
@@ -713,7 +713,7 @@ export default function ComoEstouHojePage() {
                   {isOverLimit && (
                     <p className="text-[#fd2597] font-medium">
                       Você chegou ao limite de registros por hoje. O que você já
-                      fez até aqui já conta muito 💗
+                      fez até aqui já conta muito
                     </p>
                   )}
                 </div>

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
-import { Button } from '@/components/ui/Button'
-import { Reveal } from '@/components/ui/Reveal'
-import { toast } from '@/app/lib/toast'
+import { useState } from'react'
+import { SoftCard } from'@/components/ui/card'
+import AppIcon from'@/components/ui/AppIcon'
+import { Button } from'@/components/ui/Button'
+import { Reveal } from'@/components/ui/Reveal'
+import { toast } from'@/app/lib/toast'
 
 export function WeeklyEmotionalInsightCard() {
   const [loading, setLoading] = useState(false)
@@ -16,11 +16,11 @@ export function WeeklyEmotionalInsightCard() {
 
     try {
       const res = await fetch('/api/ai/emocional', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST',
+        headers: {'Content-Type':'application/json' },
         body: JSON.stringify({
-          feature: 'weekly_overview',
-          origin: 'eu360',
+          feature:'weekly_overview',
+          origin:'eu360',
           humor: null,
           energy: null,
         }),
@@ -41,10 +41,10 @@ export function WeeklyEmotionalInsightCard() {
       console.error('[Eu360] Weekly emotional insight fallback:', error)
 
       setInsight(
-        'Sua semana não precisa ser perfeita para ser importante. Observe quais dias foram mais leves e quais pesaram um pouco mais. Essa consciência já é um grande ato de cuidado com você mesma. 💗'
+'Sua semana não precisa ser perfeita para ser importante. Observe quais dias foram mais leves e quais pesaram um pouco mais. Essa consciência já é um grande ato de cuidado com você mesma.'
       )
 
-      toast.info('Trouxemos uma leitura especial da sua semana ✨')
+      toast.info('Trouxemos uma leitura especial da sua semana')
     } finally {
       setLoading(false)
     }
@@ -89,7 +89,7 @@ export function WeeklyEmotionalInsightCard() {
             disabled={loading}
             className="w-full"
           >
-            {loading ? 'Gerando leitura…' : 'Gerar leitura da semana'}
+            {loading ?'Gerando leitura…' :'Gerar leitura da semana'}
           </Button>
         </div>
       </SoftCard>

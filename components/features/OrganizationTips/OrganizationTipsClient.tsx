@@ -494,7 +494,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                     </ul>
 
                     {allDone && (
-                      <p className="text-sm font-semibold text-primary"><span aria-hidden>✨</span> Você fez o seu melhor hoje!</p>
+                      <p className="text-sm font-semibold text-primary">Você fez o seu melhor hoje!</p>
                     )}
                   </div>
                 )}

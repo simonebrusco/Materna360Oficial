@@ -138,7 +138,7 @@ export function SavedContentDrawer({
 
                 {/* Pediatrician note */}
                 <p className="text-xs text-[var(--color-text-muted)] italic bg-[var(--color-soft-bg)] p-3 rounded-lg">
-                  💡 Lembre-se: adapte sempre ��s orientações do pediatra.
+                  Lembre-se: adapte sempre as orientações do pediatra.
                 </p>
               </div>
             )}
