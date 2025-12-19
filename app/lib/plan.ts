@@ -27,6 +27,11 @@ function normalizePlan(raw: string | null | undefined): PlanName {
 /**
  * Get the current plan from localStorage.
  * SSR-safe: returns 'free' on server.
+ *
+ * ⚠️ Regra P23:
+ * Este módulo existe para persistência/infra de plano.
+ * Componentes de UI não devem decidir comportamento via isPremium/isPaid;
+ * devem usar a camada de experiência (app/lib/experience/*).
  */
 export function getPlan(): PlanName {
   if (typeof window === 'undefined') return 'free'
@@ -35,9 +40,22 @@ export function getPlan(): PlanName {
 
 /**
  * Helpers
+ *
+ * @deprecated (P23) Não use em UI. Use app/lib/experience/experienceTier + helpers.
+ * Mantido por compatibilidade com código legado.
  */
 export const isPaid = () => getPlan() !== 'free'
-export const isPremium = () => isPaid() // mantém semântica antiga (premium = pago)
+
+/**
+ * @deprecated (P23) Não use em UI. Use app/lib/experience/experienceTier + helpers.
+ * Mantém semântica antiga: "premium" = "pago".
+ */
+export const isPremium = () => isPaid()
+
+/**
+ * OK usar quando for regra de infra/roteamento (ex.: gating de endpoints ou persistência),
+ * mas evite em UI. Preferir experience tier.
+ */
 export const isMaterna360 = () => getPlan() === 'materna-360'
 
 /**
@@ -46,7 +64,7 @@ export const isMaterna360 = () => getPlan() === 'materna-360'
 export function setPlan(plan: PlanName): void {
   if (typeof window === 'undefined') return
   const previousPlan = getPlan()
-  localStorage.setItem('m360.plan', plan)
+  localStorage.setItem(STORAGE_KEY, plan)
 
   if (plan !== previousPlan) {
     track('plan_upgrade_attempt', {
@@ -63,7 +81,7 @@ export function setPlan(plan: PlanName): void {
 }
 
 /**
- * Upgrade to a paid plan (Materna+ or Materna+ 360).
+ * Upgrade to a paid plan (Materna+ or Materna 360).
  * Used by the UpgradeSheet contextual CTA.
  */
 export function upgradeToPlan(planId: PaidPlanId, source: string = 'plan_upgrade_button'): void {
