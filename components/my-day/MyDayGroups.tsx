@@ -27,7 +27,7 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
 
-// ✅ P9 — sinal pós-salvar vindo do Meu Dia Leve
+// P9 — sinal pós-salvar vindo do Maternar/Meu Dia Leve
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 type RecentSaveOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 type RecentSavePayload = { ts: number; origin: RecentSaveOrigin; source: string }
@@ -198,7 +198,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [continuityLine, setContinuityLine] = useState<string | null>(null)
   const [premium, setPremium] = useState(false)
 
-  // ✅ P21 — pós-salvar sutil (sem UI nova)
+  // ✅ P21 — pós-salvar sutil (sem UI nova): highlight temporário + auto-expand
   const [recentSaveActive, setRecentSaveActive] = useState(false)
   const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
 
@@ -317,8 +317,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
-  // ✅ P21 — consume sinal pós-salvar e aplica highlight sutil + auto-expand (TTL)
+  // ✅ P21 — consome sinal pós-salvar e aplica highlight sutil + auto-expand (TTL curto)
   useEffect(() => {
+    let t: number | undefined
+
     try {
       if (!premium) {
         setRecentSaveActive(false)
@@ -340,12 +342,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
       const gid = groupIdFromRecentOrigin(payload.origin)
 
-      // abre o grupo e aplica destaque sutil
+      // abre o grupo e aplica destaque sutil (sem texto/CTA/alerta)
       setHighlightGroup(gid)
       setExpanded((prev) => ({ ...prev, [gid]: true }))
 
       setRecentSaveActive(true)
-      const t = window.setTimeout(() => {
+      t = window.setTimeout(() => {
         setRecentSaveActive(false)
         setHighlightGroup(null)
       }, 2600)
@@ -357,10 +359,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           ageMs,
         })
       } catch {}
-
-      return () => window.clearTimeout(t)
     } catch {
       // silencioso
+    }
+
+    return () => {
+      if (t) window.clearTimeout(t)
     }
   }, [premium])
 
