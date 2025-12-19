@@ -30,7 +30,7 @@ export default function ExportButton({ variant }: ExportButtonProps) {
   const ffEnabled = isEnabled('FF_PDF_EXPORT')
   if (!ffEnabled) return null
 
-  // Experience (P23): sem paywall visível. Diferença é invisível no conteúdo exportado.
+  // P23: experiência (sem paywall visível)
   const tier = useMemo(() => normalizeTier(getExperienceTier() as any), [])
   const isPremiumExperience = tier === 'premium' || tier === 'plus'
 
@@ -40,13 +40,9 @@ export default function ExportButton({ variant }: ExportButtonProps) {
 
   useEffect(() => {
     try {
-      trackTelemetry('pdf.export_view', {
-        variant,
-        tier,
-      })
+      trackTelemetry('pdf.export_view', { variant, tier })
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant])
+  }, [variant, tier])
 
   const handleExport = async () => {
     if (isLoading || !hasData) return
@@ -69,7 +65,6 @@ export default function ExportButton({ variant }: ExportButtonProps) {
         const todayStr = today.toISOString().split('T')[0]
         const todayTasks = getPlannerItemsWithin(1).filter((t) => t.date === todayStr)
 
-        // P23: premium invisível -> mais profundidade, sem rótulo/explicação
         const coachTipsBase = [
           { title: 'Dar um tempo para si mesma', description: 'Reserve 15 minutos para uma atividade que te relaxa.' },
           { title: 'Conectar com seu filho', description: 'Uma conversa de qualidade fortalece o vinculo.' },
@@ -95,16 +90,112 @@ export default function ExportButton({ variant }: ExportButtonProps) {
         const events = readLocalEvents()
         const now = Date.now()
 
-        // P23: free menor janela; premium maior janela (sem falar isso na UI)
+        // P23: free menor janela; premium maior janela (sem UI)
         const daysWindow = isPremiumExperience ? 30 : 7
         const cutoff = now - daysWindow * 24 * 60 * 60 * 1000
 
-        const recent = events.filter((e) => e.ts >= cutoff)
+        const recent = Array.isArray(events) ? events.filter((e) => e.ts >= cutoff) : []
 
         const counters: Record<string, number> = {}
-        recent.forEach((e) => {
-          counters[e.event] = (counters[e.event] || 0) + 1
-        })
+        for (const e of recent) {
+          const key = String(e.event || 'unknown')
+          counters[key] = (counters[key] || 0) + 1
+        }
 
         const topLimit = isPremiumExperience ? 10 : 5
-        const topActions = Object.entries(counters)
+        const entries = Object.entries(counters).map(([event, count]) => ({ event, count }))
+        entries.sort((a, b) => b.count - a.count)
+        const topActions = entries.slice(0, topLimit)
+
+        const mood = getMoodEntries()
+        const moodSeries = (Array.isArray(mood) ? mood : []).map((m) => m.mood)
+        const energySeries = (Array.isArray(mood) ? mood : []).map((m) => m.energy)
+
+        reportData = {
+          windowDays: daysWindow,
+          counters,
+          topActions,
+          moodSeries,
+          energySeries,
+        }
+
+        filename = `materna360-insights-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(
+          2,
+          '0',
+        )}${String(new Date().getDate()).padStart(2, '0')}.pdf`
+      } else {
+        throw new Error(`Unknown variant: ${variant}`)
+      }
+
+      const response = await fetch('/api/pdf/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variant, data: reportData }),
+      })
+
+      if (!response.ok) {
+        let msg = `HTTP ${response.status}`
+        try {
+          const errorData = await response.json()
+          msg = errorData?.error || msg
+        } catch {}
+        throw new Error(msg)
+      }
+
+      const blob = await response.blob()
+      const bytes = blob.size
+      const durationMs = Math.round(performance.now() - startTime)
+
+      trackTelemetry('pdf.export_success', { variant, bytes, durationMs, tier })
+
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      const durationMs = Math.round(performance.now() - startTime)
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error'
+
+      try {
+        trackTelemetry('pdf.export_error', { variant, error: errorMsg, durationMs, tier })
+      } catch {}
+
+      setError(errorMsg)
+      console.error('PDF export error:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const buttonText = variant === 'wellness' ? 'Exportar Relatorio' : 'Exportar Insights'
+
+  return (
+    <div>
+      <button
+        onClick={handleExport}
+        disabled={isLoading || !hasData}
+        aria-label="Export as PDF"
+        className="inline-flex items-center gap-2 rounded-lg border border-white/60 bg-white/90 px-3 py-2 text-xs font-medium text-support-1 hover:bg-white/95 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <FileDown size={16} aria-hidden="true" className={isLoading ? 'animate-pulse' : ''} />
+        <span>{isLoading ? 'Exportando...' : buttonText}</span>
+      </button>
+
+      {error ? (
+        <div className="mt-2 text-xs text-primary rounded-md bg-primary/10 p-2" role="alert">
+          Erro ao exportar: {error}
+        </div>
+      ) : null}
+
+      {!hasData ? (
+        <div className="mt-2 text-xs text-support-2 rounded-md bg-support-3/10 p-2" role="note">
+          Nenhum dado disponivel para exportar
+        </div>
+      ) : null}
+    </div>
+  )
+}
