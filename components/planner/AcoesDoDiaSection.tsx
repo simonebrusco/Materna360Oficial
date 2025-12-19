@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import type { PlannerTask } from './types'
-
+import { getDensityLevel } from '@/app/lib/experience/density'
+import { prioritizeItems } from '@/app/lib/experience/priority'
 
 // ✅ Tipagem local para não depender do MeuDiaPremium
 // (mantém o build estável mesmo que a estrutura de task evolua)
@@ -14,8 +15,22 @@ interface AcoesDoDiaSectionProps {
 export default function AcoesDoDiaSection({ tasks }: AcoesDoDiaSectionProps) {
   const [open, setOpen] = useState(false)
 
-  const total = Array.isArray(tasks) ? tasks.length : 0
-  const doneCount = (tasks || []).filter((t) => Boolean(t?.done ?? t?.completed)).length
+  const density = getDensityLevel()
+
+  const safeTasks = useMemo(() => (Array.isArray(tasks) ? tasks : []), [tasks])
+
+  const orderedTasks = useMemo(() => {
+    // Free: permanece estável
+    // Premium: ordem contextual (definida no helper)
+    return prioritizeItems(safeTasks, 'contextual')
+  }, [safeTasks])
+
+  const total = safeTasks.length
+  const doneCount = safeTasks.filter((t) => Boolean((t as any)?.done ?? (t as any)?.completed)).length
+
+  // Densidade invisível (não é feature, é pacing)
+  const maxVisible = density === 'reduced' ? 5 : 8
+  const visibleTasks = open ? orderedTasks.slice(0, maxVisible) : []
 
   return (
     <section className="rounded-2xl border border-white/50 bg-white/85 backdrop-blur-md p-4 md:p-5">
@@ -30,9 +45,7 @@ export default function AcoesDoDiaSection({ tasks }: AcoesDoDiaSectionProps) {
             <AppIcon name="check" size={20} className="text-[#fd2597]" />
           </div>
           <div className="text-left">
-            <h3 className="text-[15px] md:text-[16px] font-semibold text-[#2f3a56]">
-              Ações do dia
-            </h3>
+            <h3 className="text-[15px] md:text-[16px] font-semibold text-[#2f3a56]">Ações do dia</h3>
             <p className="text-[12px] md:text-[13px] text-[#6a6a6a]">
               {doneCount}/{total} concluídas
             </p>
@@ -48,32 +61,24 @@ export default function AcoesDoDiaSection({ tasks }: AcoesDoDiaSectionProps) {
 
       {open && (
         <div className="mt-4 space-y-2">
-          {(tasks || []).slice(0, 8).map((t) => {
-            const label = (t.title ?? t.text ?? 'Tarefa').toString()
-            const isDone = Boolean(t.done ?? t.completed)
+          {visibleTasks.map((t) => {
+            const label = (t.title ?? (t as any).text ?? 'Tarefa').toString()
+            const isDone = Boolean((t as any).done ?? (t as any).completed)
 
             return (
               <div
-                key={String(t.id)}
+                key={String((t as any).id)}
                 className="flex items-center justify-between rounded-xl bg-white/70 border border-white/60 px-3 py-2"
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      isDone ? 'bg-[#fd2597]' : 'bg-[#bdbdbd]'
-                    }`}
+                    className={`h-2.5 w-2.5 rounded-full ${isDone ? 'bg-[#fd2597]' : 'bg-[#bdbdbd]'}`}
                     aria-hidden
                   />
-                  <span className="text-[13px] md:text-[14px] text-[#2f3a56]">
-                    {label}
-                  </span>
+                  <span className="text-[13px] md:text-[14px] text-[#2f3a56]">{label}</span>
                 </div>
 
-                {isDone && (
-                  <span className="text-[11px] font-semibold text-[#b8236b]">
-                    Feita
-                  </span>
-                )}
+                {isDone && <span className="text-[11px] font-semibold text-[#b8236b]">Feita</span>}
               </div>
             )
           })}

@@ -13,6 +13,11 @@
  * Importante:
  * - Este sinal não é "diagnóstico".
  * - É apenas calibração de UX: volume + tom + ritmo.
+ *
+ * P23 — Governança:
+ * - Este arquivo NÃO decide free vs premium.
+ * - Ele apenas emite sinais "crus".
+ * - A decisão final de tom/densidade/prioridade deve acontecer na camada experience/*.
  */
 
 export type EuTone = 'gentil' | 'direto'
@@ -72,8 +77,21 @@ function isPersonaId(p: unknown): p is PersonaId {
 }
 
 /**
+ * Clamp emocional do listLimit:
+ * - Evita extremos (muito baixo ou muito alto) que podem parecer “quase premium”.
+ * - Mantém o sinal útil para ritmo, sem virar ferramenta de monetização visível.
+ */
+function clampListLimit(n: number) {
+  return clampInt(n, 3, 8)
+}
+
+/**
  * Mapeamento oficial do ritmo por persona.
  * Você pode ajustar esses números sem risco de quebrar tipagem/UI.
+ *
+ * Observação P23:
+ * - Os valores são sugestão de ritmo, não regra rígida.
+ * - A camada experience pode reduzir densidade/ruído sem depender desse sinal.
  */
 function mapPersonaToSignal(persona: PersonaId): Eu360Signal {
   switch (persona) {
@@ -130,7 +148,7 @@ export function getEu360Signal(): Eu360Signal {
   const persona = parsed?.persona
   if (!isPersonaId(persona)) {
     const d = defaultSignal()
-    return { ...d, listLimit: clampInt(d.listLimit, 1, 12) }
+    return { ...d, listLimit: clampListLimit(d.listLimit) }
   }
 
   const mapped = mapPersonaToSignal(persona)
@@ -138,6 +156,6 @@ export function getEu360Signal(): Eu360Signal {
   // Segurança extra: garante limites aceitáveis mesmo que alguém altere o LS manualmente
   return {
     ...mapped,
-    listLimit: clampInt(mapped.listLimit, 1, 12),
+    listLimit: clampListLimit(mapped.listLimit),
   }
 }
