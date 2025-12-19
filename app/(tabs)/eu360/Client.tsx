@@ -18,6 +18,9 @@ import LegalFooter from '@/components/common/LegalFooter'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getEu360FortnightLine } from '@/app/lib/continuity.client'
 
+// ✅ P23 — Tom por camada de experiência (free sempre gentil)
+import { getContinuityTone } from '@/app/lib/experience/continuityTone'
+
 type WeeklyInsight = {
   title: string
   summary: string
@@ -158,6 +161,30 @@ function personaCopy(persona: PersonaId) {
   }
 }
 
+/**
+ * P23 — Tom de conversa (invisível):
+ * - Free: sempre gentil (seguro, acolhedor)
+ * - Premium: respeita o tom real do momento
+ *
+ * Observação:
+ * - Não altera features, não altera layout.
+ * - Apenas ajusta o texto quando o tom resolvido é "gentil".
+ */
+function refineMicroCopyForTone(input: { persona: PersonaId; base: string; tone: NonNullable<Eu360Signal['tone']> }) {
+  const { persona, base, tone } = input
+  if (tone !== 'gentil') return base
+
+  // Quando o tom for gentil, evitamos “pressa/empuxo” em personas mais expansivas.
+  if (persona === 'equilibrio') {
+    return 'Você está encontrando ritmo. Um passo por vez, com clareza e menos peso.'
+  }
+  if (persona === 'expansao') {
+    return 'Você tem energia para avançar. Se fizer sentido, escolha um foco por vez — sem se cobrar.'
+  }
+
+  return base
+}
+
 function readPersonaFromLS(): PersonaResult | null {
   const raw = safeGetLS(LS_KEYS.eu360Persona)
   return safeParseJSON<PersonaResult>(raw)
@@ -296,6 +323,11 @@ export default function Eu360Client() {
   const [fortnightLine, setFortnightLine] = useState<string | null>(null)
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
 
+  // ✅ P23 — tom resolvido (free sempre gentil; premium respeita)
+  const resolvedTone = useMemo(() => {
+    return getContinuityTone((euSignal?.tone ?? 'gentil') as any) as NonNullable<Eu360Signal['tone']>
+  }, [euSignal?.tone])
+
   useEffect(() => {
     const saved = readPersonaFromLS()
     if (saved) {
@@ -306,8 +338,13 @@ export default function Eu360Client() {
 
   const personaPreview = useMemo(() => {
     const p = computePersona(answers)
-    return { persona: p, ...personaCopy(p) }
-  }, [answers])
+    const base = personaCopy(p)
+    return {
+      persona: p,
+      label: base.label,
+      microCopy: refineMicroCopyForTone({ persona: p, base: base.microCopy, tone: resolvedTone }),
+    }
+  }, [answers, resolvedTone])
 
   const totalAnswered = useMemo(() => {
     const keys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] as const
@@ -351,13 +388,12 @@ export default function Eu360Client() {
   // ✅ P14 — calcula linha quinzenal (1x/14 dias, respeita regras internas)
   useEffect(() => {
     try {
-      const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
-      const line = getEu360FortnightLine({ dateKey, tone })
+      const line = getEu360FortnightLine({ dateKey, tone: resolvedTone })
       setFortnightLine(line?.text ?? null)
     } catch {
       setFortnightLine(null)
     }
-  }, [dateKey, euSignal])
+  }, [dateKey, resolvedTone])
 
   useEffect(() => {
     let isMounted = true
@@ -414,7 +450,7 @@ export default function Eu360Client() {
       const result: PersonaResult = {
         persona,
         label: copy.label,
-        microCopy: copy.microCopy,
+        microCopy: copy.microCopy, // mantém base estável (não tier-specific)
         updatedAtISO: new Date().toISOString(),
         answers,
       }
@@ -479,7 +515,9 @@ export default function Eu360Client() {
                       {personaResult ? personaResult.label : personaPreview.label}
                     </p>
                     <p className="text-[12px] text-white/85 leading-relaxed">
-                      {personaResult ? personaResult.microCopy : personaPreview.microCopy}
+                      {personaResult
+                        ? refineMicroCopyForTone({ persona: personaResult.persona, base: personaResult.microCopy, tone: resolvedTone })
+                        : personaPreview.microCopy}
                     </p>
 
                     {/* ✅ P15 — continuidade quinzenal (leve, 1x/14 dias) */}
@@ -765,7 +803,6 @@ export default function Eu360Client() {
           </SectionWrapper>
 
           {/* 3 — PAINEL DA JORNADA */}
-          {/* ✅ P15 — menos ruído vertical */}
           <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
@@ -854,7 +891,6 @@ export default function Eu360Client() {
           </SectionWrapper>
 
           {/* 4 — BANNER DE PLANOS */}
-          {/* ✅ P15 — menos ruído vertical */}
           <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl border border-white/60 bg-[radial-gradient(circle_at_top_left,#fd2597_0,#b8236b_45%,#fdbed7_100%)] px-6 py-6 md:px-8 md:py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] text-white overflow-hidden relative">
