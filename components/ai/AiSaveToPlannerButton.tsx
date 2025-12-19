@@ -119,7 +119,7 @@ export function AiSaveToPlannerButton(props: AiSaveToPlannerButtonProps) {
       }
     >
       {/* Ícone simples de “salvar” */}
-      <span aria-hidden="true">💾</span>
+
       <span>{label ?? 'Salvar no planner'}</span>
     </button>
   )

@@ -167,7 +167,7 @@ export function IdeasPanel({ initialPlan = 'Free' }: IdeasPanelProps) {
                     <p className="text-sm text-support-2 mb-3">{idea.description}</p>
                     <div className="flex flex-wrap gap-3 text-xs text-support-3">
                       <span>⏱️ {idea.duration}</span>
-                      <span>👶 {idea.age_range}</span>
+                      <span>{idea.age_range}</span>
                     </div>
                   </div>
                   <button

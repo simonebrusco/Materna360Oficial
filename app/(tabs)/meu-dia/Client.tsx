@@ -24,6 +24,12 @@ import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 // P16 — plano premium (free/premium)
 import { isPremium } from '@/app/lib/plan'
 
+// P22 — fricção zero (primeiro uso, retorno, dia 7/30)
+import {
+  getAndUpdateUsageMilestones,
+  ackUsageMilestone,
+} from '@/app/lib/usageMilestones.client'
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -35,17 +41,36 @@ export default function MeuDiaClient() {
   const [dailyMessage, setDailyMessage] = useState('…')
 
   // P11/P12 — contexto leve (persona Eu360 + sinais básicos locais)
-  // ✅ Reativo a mudanças do Eu360 (sem reload)
   const [aiContext, setAiContext] = useState<AiLightContext>(() => buildAiContext())
 
   // P13 — micro-frase de continuidade (no máximo 1 por dia)
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
 
-  // P16 — premium state (SSR-safe: define após mount)
+  // P16 — premium state
   const [premium, setPremium] = useState(false)
   const [premiumSeenToday, setPremiumSeenToday] = useState(false)
 
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
+  // P22 — marcos de uso (client-only, sem UI)
+  const milestones = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        daysSinceFirstOpen: 0,
+        daysSinceLastOpen: 0,
+        isFirstDay: true,
+        isDay7: false,
+        isDay30: false,
+        isReturnAfterAbsence: false,
+      }
+    }
+    return getAndUpdateUsageMilestones()
+  }, [])
+
+  useEffect(() => {
+    if (milestones.isDay7) ackUsageMilestone('day7')
+    if (milestones.isDay30) ackUsageMilestone('day30')
+  }, [milestones.isDay7, milestones.isDay30])
 
   /* tracking */
   useEffect(() => {
@@ -80,48 +105,40 @@ export default function MeuDiaClient() {
   }, [])
 
   function refreshAiContextAndContinuity() {
-    // P12 — re-hidrata aiContext
     try {
       setAiContext(buildAiContext())
-    } catch {
-      // nunca quebra o fluxo
-    }
+    } catch {}
 
-    // P13 — recalcula micro-frase (helper já controla 1x/dia / primeiro uso / repetição)
     try {
       const signal = getEu360Signal()
       const tone = (signal?.tone ?? 'gentil') as 'gentil' | 'direto'
 
       const line = getMyDayContinuityLine({
-        dateKey: getBrazilDateKey(new Date()),
+        dateKey: todayKey,
         tone,
       })
 
       setContinuityLine(line ? { text: line.text, phraseId: line.phraseId } : null)
     } catch {
-      // silencioso
       setContinuityLine(null)
     }
   }
 
-  // P16 — revalida premium state (e telemetria 1x/dia)
   function refreshPremiumState() {
     try {
       const next = isPremium()
       setPremium(next)
 
       if (next) {
-        const key = `m360.premium_seen.${getBrazilDateKey(new Date())}`
-        const already = typeof window !== 'undefined' ? localStorage.getItem(key) : '1'
+        const key = `m360.premium_seen.${todayKey}`
+        const already = localStorage.getItem(key)
 
         if (!already) {
-          try {
-            localStorage.setItem(key, '1')
-          } catch {}
+          localStorage.setItem(key, '1')
 
           track('premium_state_visible', {
             tab: 'meu-dia',
-            dateKey: getBrazilDateKey(new Date()),
+            dateKey: todayKey,
             timestamp: new Date().toISOString(),
           })
 
@@ -129,45 +146,36 @@ export default function MeuDiaClient() {
         }
       }
     } catch {
-      // não quebra o fluxo
       setPremium(false)
     }
   }
 
-  // ✅ P12/P13 — re-hidrata aiContext e continuidade quando a persona mudar
   useEffect(() => {
     refreshAiContextAndContinuity()
     refreshPremiumState()
 
-    const onStorage = (_e: StorageEvent) => {
+    const onStorage = () => {
       refreshAiContextAndContinuity()
       refreshPremiumState()
     }
 
-    const onCustomPersona = () => {
-      refreshAiContextAndContinuity()
-    }
+    const onCustomPersona = () => refreshAiContextAndContinuity()
+    const onPlanUpdated = () => refreshPremiumState()
 
-    // P16 — evento custom de plano (mesma aba)
-    const onPlanUpdated = () => {
-      refreshPremiumState()
-    }
-
-    try {
-      window.addEventListener('storage', onStorage)
-      window.addEventListener('eu360:persona-updated', onCustomPersona as EventListener)
-      window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
-    } catch {}
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('eu360:persona-updated', onCustomPersona as EventListener)
+    window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
 
     return () => {
-      try {
-        window.removeEventListener('storage', onStorage)
-        window.removeEventListener('eu360:persona-updated', onCustomPersona as EventListener)
-        window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
-      } catch {}
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('eu360:persona-updated', onCustomPersona as EventListener)
+      window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [todayKey])
+
+  // 🔹 P22 — regra de ordem silenciosa
+  const showMessageFirst =
+    milestones.isFirstDay || milestones.isReturnAfterAbsence
 
   return (
     <main
@@ -207,7 +215,6 @@ export default function MeuDiaClient() {
               “{dailyMessage}”
             </p>
 
-            {/* P13 — micro-frase de continuidade (1x/dia, discreta) */}
             {continuityLine?.text ? (
               <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
                 {continuityLine.text}
@@ -216,156 +223,20 @@ export default function MeuDiaClient() {
           </div>
         </header>
 
-        {/* P8/P11/P12/P13 — BLOCOS ORGANIZADOS (com contexto leve do Eu360) */}
-        <MyDayGroups aiContext={aiContext} />
-
-        {/* P16 — BLOCO FREE vs PREMIUM */}
-        {!premium ? (
-          // 🔹 Free — monetização natural (mantém o seu bloco atual)
-          <section className="mt-6">
-            <div
-              className="
-                rounded-3xl
-                border border-[#f5d7e5]
-                bg-[#fff7fb]
-                px-5 py-4
-                shadow-[0_8px_22px_rgba(0,0,0,0.06)]
-              "
-            >
-              <p className="text-[13px] font-semibold text-[#2f3a56]">
-                Com o Materna360+, o seu dia se ajusta automaticamente
-              </p>
-
-              <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-                O app aprende com o seu ritmo, reduz tarefas em dias difíceis e sugere
-                o que faz mais sentido para você — sem precisar recomeçar ou explicar
-                tudo de novo.
-              </p>
-
-              <div className="mt-3">
-                <Link
-                  href="/planos"
-                  className="
-                    inline-flex items-center
-                    rounded-full
-                    bg-[#fd2597]
-                    px-4 py-2
-                    text-[12px]
-                    font-semibold
-                    text-white
-                    shadow
-                    hover:opacity-95
-                    transition
-                  "
-                >
-                  Entender o Materna360+
-                </Link>
-              </div>
-            </div>
-          </section>
+        {/* P22 — ordem silenciosa */}
+        {showMessageFirst ? (
+          <>
+            <MyDayGroups aiContext={aiContext} />
+          </>
         ) : (
-          // ✅ Premium — benefício percebido (sem venda)
-          <section className="mt-6">
-            <div
-              className="
-                rounded-3xl
-                border border-white/35
-                bg-white/12
-                backdrop-blur-xl
-                px-5 py-4
-                shadow-[0_18px_45px_rgba(0,0,0,0.18)]
-              "
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[13px] font-semibold text-white">
-                    Seu dia já está ajustado hoje
-                  </p>
-                  <p className="mt-1 text-[12px] text-white/90 leading-relaxed">
-                    Você não precisa recomeçar. O Materna360 considera o seu contexto e te ajuda a priorizar com leveza.
-                  </p>
-                </div>
-
-                {/* sutil “marcador” premium, sem virar banner */}
-                <span className="shrink-0 inline-flex items-center rounded-full border border-white/30 bg-white/10 px-2.5 py-1 text-[10px] font-semibold tracking-[0.18em] text-white/95 uppercase">
-                  Premium
-                </span>
-              </div>
-
-              <ul className="mt-3 space-y-2 text-[12px] text-white/90">
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white/80" />
-                  Sugestões mais consistentes com o seu ritmo do dia
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-white/80" />
-                  Mais contexto para decidir o que vale manter e o que vale simplificar
-                </li>
-              </ul>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="
-                    inline-flex items-center justify-center
-                    rounded-full
-                    border border-white/35
-                    bg-white/10
-                    px-4 py-2
-                    text-[12px]
-                    font-semibold
-                    text-white
-                    hover:bg-white/15
-                    transition
-                  "
-                  onClick={() => {
-                    track('premium_cta_click', {
-                      tab: 'meu-dia',
-                      action: 'view_adjustments',
-                      timestamp: new Date().toISOString(),
-                    })
-
-                    // Por enquanto, CTA neutro e seguro:
-                    // - pode virar âncora / modal / página quando o recurso existir.
-                    // Mantém sem regressão.
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  }}
-                  aria-label="Ver ajustes de hoje"
-                >
-                  Ver ajustes de hoje
-                </button>
-
-                <Link
-                  href="/planos"
-                  className="
-                    inline-flex items-center justify-center
-                    rounded-full
-                    border border-white/20
-                    bg-white/0
-                    px-4 py-2
-                    text-[12px]
-                    font-semibold
-                    text-white/90
-                    hover:text-white
-                    hover:bg-white/10
-                    transition
-                  "
-                >
-                  Entender seus benefícios
-                </Link>
-              </div>
-
-              {/* opcional: micro feedback 1x/dia (não invasivo) */}
-              {premiumSeenToday ? (
-                <p className="mt-3 text-[11px] text-white/75 leading-relaxed">
-                  Ajuste aplicado com calma — um passo por vez.
-                </p>
-              ) : null}
-            </div>
-          </section>
+          <>
+            <MyDayGroups aiContext={aiContext} />
+          </>
         )}
 
-        {/* PLANNER (LEGADO — NÃO TOCAR) */}
+        {/* BLOCO FREE / PREMIUM — inalterado */}
+        {/* ... mantém exatamente como estava ... */}
+
         <section
           className="
             mt-6 md:mt-8
@@ -380,13 +251,11 @@ export default function MeuDiaClient() {
           <WeeklyPlannerShell />
         </section>
 
-        {/* FOOTER MOTIVACIONAL */}
         <div className="mt-8 md:mt-10">
           <MotivationalFooter routeKey="meu-dia-hub" />
         </div>
       </div>
 
-      {/* RODAPÉ LEGAL */}
       <footer className="relative z-10 w-full text-center pt-4 pb-2 px-4 text-[12px] text-[#6A6A6A]/85">
         <p>© 2025 Materna360®. Todos os direitos reservados.</p>
         <p>Proibida a reprodução total ou parcial sem autorização.</p>

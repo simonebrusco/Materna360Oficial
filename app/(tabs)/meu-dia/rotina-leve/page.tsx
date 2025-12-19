@@ -191,7 +191,7 @@ async function generateRecipesWithAI(
       // ignora
     }
 
-    toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje ✨')
+    toast.info('Trouxemos algumas sugestões de receitinhas rápidas pra hoje')
     return await mockGenerateRecipes()
   }
 }
@@ -257,7 +257,7 @@ async function generateInspirationWithAI(focus: string | null): Promise<Inspirat
       // ignora
     }
 
-    toast.info('Preparei uma inspiração especial pra hoje ✨')
+    toast.info('Preparei uma inspiração especial pra hoje')
     return await mockGenerateInspiration()
   }
 }
@@ -474,7 +474,7 @@ export default function RotinaLevePage() {
         console.error('[Rotina Leve] Erro ao atualizar XP (ideias):', e)
       }
 
-      toast.success('Ideias salvas no planner 💗')
+      toast.success('Ideias salvas no planner')
     } catch (error) {
       console.error('[Rotina Leve] Error saving ideas:', error)
       toast.danger('Não foi possível salvar as ideias agora.')
@@ -510,7 +510,7 @@ export default function RotinaLevePage() {
         console.error('[Rotina Leve] Erro ao atualizar XP (receita):', e)
       }
 
-      toast.success('Receita salva no planner ✨')
+      toast.success('Receita salva no planner')
     } catch (error) {
       console.error('[Rotina Leve] Error saving recipe:', error)
       toast.danger('Não foi possível salvar a receita agora.')
@@ -549,7 +549,7 @@ export default function RotinaLevePage() {
         console.error('[Rotina Leve] Erro ao atualizar XP (inspiração):', e)
       }
 
-      toast.success('Inspiração salva no planner 💗')
+      toast.success('Inspiração salva no planner')
     } catch (error) {
       console.error('[Rotina Leve] Error saving inspiration:', error)
       toast.danger('Não foi possível salvar a inspiração agora.')
@@ -566,7 +566,7 @@ export default function RotinaLevePage() {
 
     if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
       toast.info(
-        'Você já usou as receitinhas inteligentes do seu plano hoje. Amanhã a gente pensa em novas ideias com calma, combinado? 💕',
+        'Você já usou as receitinhas inteligentes do seu plano hoje. Amanhã a gente pensa em novas ideias com calma, combinado?',
       )
       try {
         track('rotina_leve.recipes.limit_reached', {
@@ -699,7 +699,7 @@ export default function RotinaLevePage() {
   const handleGenerateIdeas = async () => {
     if (usedIdeasToday >= DAILY_IDEAS_LIMIT) {
       toast.info(
-        'Você já usou as ideias rápidas do dia por aqui. Guarda um pouquinho de energia pra amanhã, combinado? 💕',
+        'Você já usou as ideias rápidas do dia por aqui. Guarda um pouquinho de energia pra amanhã, combinado?',
       )
       try {
         track('rotina_leve.ideas.limit_reached', {
@@ -772,7 +772,7 @@ export default function RotinaLevePage() {
   const handleGenerateInspiration = async () => {
     if (usedInspirationsToday >= DAILY_INSPIRATION_LIMIT) {
       toast.info(
-        'Você já recebeu inspirações suficientes por hoje. O resto do dia pode ser só vivido, do seu jeitinho 💗',
+        'Você já recebeu inspirações suficientes por hoje. O resto do dia pode ser só vivido, do seu jeitinho',
       )
       try {
         track('rotina_leve.inspiration.limit_reached', {
@@ -1102,7 +1102,7 @@ export default function RotinaLevePage() {
                           {isIdeasOverLimit && (
                             <p className="text-[11px] text-[#fd2597] font-medium">
                               Você chegou ao limite de ideias rápidas por hoje. O resto do
-                              dia pode ser só vivido, sem pressão 💗
+                              dia pode ser só vivido, sem pressão
                             </p>
                           )}
 
@@ -1219,7 +1219,7 @@ export default function RotinaLevePage() {
                           {isInspirationOverLimit && (
                             <p className="text-[11px] text-[#fd2597] font-medium">
                               Você chegou ao limite de inspirações do dia. O que você já
-                              está fazendo hoje pela sua família já é muita coisa 💗
+                              está fazendo hoje pela sua família já é muita coisa
                             </p>
                           )}
 
@@ -1382,7 +1382,7 @@ export default function RotinaLevePage() {
                   {isOverLimit && (
                     <p className="text-[11px] text-[#fd2597] font-medium">
                       Você chegou ao limite de receitas inteligentes do plano hoje. Amanhã
-                      a gente pensa em novas possibilidades com calma 💗
+                      a gente pensa em novas possibilidades com calma
                     </p>
                   )}
 

@@ -1,23 +1,23 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from'react'
 
-import { useMindfulnessProgress } from './useMindfulnessProgress'
+import { useMindfulnessProgress } from'./useMindfulnessProgress'
 
 type ProfileCookie = { nomeMae?: string }
 
 function readProfileNameSafely(): string | undefined {
-  if (typeof document === 'undefined') {
+  if (typeof document ==='undefined') {
     return undefined
   }
 
   try {
-    const match = document.cookie.split('; ').find((cookie) => cookie.startsWith('m360_profile='))
+    const match = document.cookie.split(';').find((cookie) => cookie.startsWith('m360_profile='))
     if (!match) {
       return undefined
     }
 
-    const value = decodeURIComponent(match.split('=')[1] ?? '')
+    const value = decodeURIComponent(match.split('=')[1] ??'')
     if (!value) {
       return undefined
     }
@@ -31,7 +31,7 @@ function readProfileNameSafely(): string | undefined {
   }
 }
 
-const JOURNEY_IDS = ['amor-proprio', 'calma', 'energia-positiva', 'gratidao', 'descanso', 'confianca'] as const
+const JOURNEY_IDS = ['amor-proprio','calma','energia-positiva','gratidao','descanso','confianca'] as const
 
 export type JourneySummary = Partial<Record<(typeof JOURNEY_IDS)[number], { completed?: number; total?: number }>>
 
@@ -101,7 +101,7 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
 
   const totalSafe = Math.max(Number(jornadasTotal ?? JOURNEY_WEEK_TARGET), 1)
   const completedSafe = Math.max(0, Math.min(Number(jornadasCompleted ?? 0), totalSafe))
-  const safeWeekLabel = typeof weekLabel === 'string' && weekLabel.trim().length > 0 ? weekLabel : 'Semana'
+  const safeWeekLabel = typeof weekLabel ==='string' && weekLabel.trim().length > 0 ? weekLabel :'Semana'
 
   useEffect(() => {
     setName(readProfileNameSafely())
@@ -109,7 +109,7 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
 
   const subtitle = name
     ? `${name}, um passo de cada vez — no seu ritmo.`
-    : 'Pequenos passos para cuidar de você todos os dias.'
+    :'Pequenos passos para cuidar de você todos os dias.'
 
   return (
     <div data-testid="journeys-trail" className="CardElevate rounded-3xl border border-white/70 bg-white/88 px-4 py-5 backdrop-blur-sm md:px-6 md:py-6">
@@ -138,8 +138,8 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
                 const pct = Math.min(100, Math.max(0, (Math.min(c, t) / t) * 100))
                 return `${pct}%`
               })(),
-              transformOrigin: 'left center',
-              willChange: 'width',
+              transformOrigin:'left center',
+              willChange:'width',
             }}
           />
         </div>
@@ -152,7 +152,7 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
                 key={index}
                 aria-hidden="true"
                 className={`relative h-4 w-4 rounded-full bg-primary ring-1 ring-primary/20 shadow-[0_4px_24px_rgba(47,58,86,0.08)] transition-transform duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary/60 ${
-                  done ? 'opacity-100 hover:scale-105' : 'opacity-75 hover:scale-[1.06]'
+                  done ?'opacity-100 hover:scale-105' :'opacity-75 hover:scale-[1.06]'
                 }`}
               />
             )
@@ -163,7 +163,7 @@ export default function TrailHeader({ journeySummary }: TrailHeaderProps) {
           <span>
             {completedSafe}/{totalSafe} concluídos nesta {safeWeekLabel.toLowerCase()}.
           </span>
-          <span className="hidden sm:inline">Siga no seu ritmo 💗</span>
+          <span className="hidden sm:inline">Siga no seu ritmo </span>
         </div>
       </div>
     </div>

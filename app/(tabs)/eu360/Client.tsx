@@ -438,13 +438,17 @@ export default function Eu360Client() {
   }
 
   const heroTitle = 'Seu mundo em perspectiva'
-  const heroSubtitle = 'Aqui a gente personaliza o Materna360 para a sua fase — com leveza, sem te pedir perfeição.'
+  const heroSubtitle = 'Um espaço para o Materna360 entender sua fase e te acompanhar com mais leveza, sem cobrança.'
 
   // (Mantemos como referência futura; não muda fluxo agora)
   void buildAiContext
 
   const content = (
-    <main data-layout="page-template-v1" data-tab="eu360" className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden">
+    <main
+      data-layout="page-template-v1"
+      data-tab="eu360"
+      className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden"
+    >
       <div className="relative z-10 mx-auto max-w-3xl px-4 md:px-6">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
@@ -464,18 +468,24 @@ export default function Eu360Client() {
           <div className="mt-4 rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-4 md:px-5 md:py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">Seu ajuste da semana</p>
+                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
+                  Seu tom por aqui, nesta fase
+                </p>
 
                 <div className="mt-2 flex items-start gap-2">
                   <AppIcon name="sparkles" size={18} className="text-white" decorative />
                   <div>
-                    <p className="text-sm font-semibold text-white">{personaResult ? personaResult.label : personaPreview.label}</p>
+                    <p className="text-sm font-semibold text-white">
+                      {personaResult ? personaResult.label : personaPreview.label}
+                    </p>
                     <p className="text-[12px] text-white/85 leading-relaxed">
                       {personaResult ? personaResult.microCopy : personaPreview.microCopy}
                     </p>
 
                     {/* ✅ P15 — continuidade quinzenal (leve, 1x/14 dias) */}
-                    {fortnightLine ? <p className="mt-2 text-[12px] text-white/80 leading-relaxed">{fortnightLine}</p> : null}
+                    {fortnightLine ? (
+                      <p className="mt-2 text-[12px] text-white/80 leading-relaxed">{fortnightLine}</p>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -505,7 +515,7 @@ export default function Eu360Client() {
                 className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2"
               >
                 <AppIcon name="sparkles" size={16} decorative />
-                <span>{personaResult ? 'Ajustar novamente' : 'Fazer agora (2 min)'}</span>
+                <span>{personaResult ? 'Refazer com calma' : 'Fazer quando fizer sentido (2 min)'}</span>
               </button>
 
               <Link
@@ -536,10 +546,10 @@ export default function Eu360Client() {
                       Questionário rápido (2 min)
                     </p>
                     <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
-                      Para o app se ajustar ao seu momento real
+                      Para o app acompanhar o seu momento real
                     </h2>
                     <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
-                      Sem teste, sem diagnóstico. Só contexto para o Materna360 te entregar menos peso e mais clareza.
+                      Sem teste, sem diagnóstico. Só um jeito simples de reduzir ruído e deixar o Materna360 mais coerente com a sua fase.
                     </p>
                   </div>
 
@@ -552,7 +562,7 @@ export default function Eu360Client() {
 
                 {!personaResult ? (
                   <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 px-4 py-3">
-                    <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#6a6a6a]">Prévia do ajuste</p>
+                    <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#6a6a6a]">Prévia do tom</p>
                     <div className="mt-1 flex items-start gap-2">
                       <AppIcon name="sparkles" size={18} className="text-[#fd2597]" decorative />
                       <div>
@@ -576,7 +586,7 @@ export default function Eu360Client() {
                       <div>
                         <p className="text-[12px] font-semibold text-[#2f3a56]">Questionário concluído</p>
                         <p className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                          A partir de agora, o Materna360 pode calibrar o tom, o volume de sugestões e o ritmo do app para você.
+                          A partir de agora, o Materna360 pode ajustar o tom e o ritmo das sugestões para te acompanhar com menos peso.
                         </p>
                       </div>
                     </div>
@@ -763,8 +773,11 @@ export default function Eu360Client() {
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">Painel da sua jornada</p>
                     <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
-                      Um olhar rápido sobre como você vem cuidando de vocês
+                      Um olhar rápido, sem cobrança
                     </h2>
+                    <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
+                      Aqui é só para te ajudar a enxergar padrões e reconhecer o que já foi possível.
+                    </p>
                   </div>
                   <AppIcon name="sparkles" className="h-6 w-6 text-[#fd2597] hidden md:block" />
                 </div>
@@ -818,7 +831,7 @@ export default function Eu360Client() {
                           {weeklyInsight?.suggestions && weeklyInsight.suggestions.length > 0 && (
                             <div className="space-y-1.5">
                               <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
-                                Pequenos passos para os próximos dias
+                                Pequenos passos, se fizer sentido
                               </p>
                               <ul className="space-y-1.5 text-sm text-[#2f3a56]">
                                 {weeklyInsight.suggestions.map((item, idx) => (
@@ -829,7 +842,7 @@ export default function Eu360Client() {
                           )}
 
                           <p className="text-[11px] text-[#6a6a6a] mt-2 leading-relaxed">
-                            Isso não é um diagnóstico — é um convite para você se observar com cuidado. Um passo por vez já é muito.
+                            Isso não é um diagnóstico — é só um convite para você se observar com cuidado. Um passo por vez.
                           </p>
                         </>
                       )}
@@ -849,10 +862,11 @@ export default function Eu360Client() {
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                   <div className="space-y-2 max-w-xl">
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">Materna360+</p>
-                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">Leve o Materna360 para o próximo nível</h2>
+                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">
+                      Um apoio a mais, quando você quiser
+                    </h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                      Desbloqueie conteúdos exclusivos, acompanhamento mais próximo e ferramentas avançadas para cuidar de você, da sua rotina e da
-                      sua família.
+                      Conteúdos e recursos extras para aprofundar o cuidado com você, com a sua rotina e com a sua família — no seu tempo.
                     </p>
                   </div>
 
@@ -866,7 +880,7 @@ export default function Eu360Client() {
                       </button>
                     </Link>
                     <p className="text-[11px] text-white/85 md:text-right max-w-xs">
-                      Planos pensados para diferentes fases — você escolhe o que faz sentido agora.
+                      Planos pensados para fases diferentes — você escolhe o que faz sentido agora.
                     </p>
                   </div>
                 </div>
