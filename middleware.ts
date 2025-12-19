@@ -4,6 +4,17 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 
+// 🔒 IMPORTANTÍSSIMO (P24)
+// O middleware NÃO pode interceptar chamadas do Supabase Auth,
+// senão você verá "Failed to fetch" / "CORS error" no signup/login.
+function isSupabaseAuthPath(pathname: string) {
+  // endpoints padrão do auth-helpers / Supabase no Next
+  if (pathname.startsWith('/auth')) return true
+  // (alguns setups expõem callbacks sob /api/auth também)
+  if (pathname.startsWith('/api/auth')) return true
+  return false
+}
+
 // Rotas públicas (sem login)
 function isPublicPath(pathname: string) {
   if (pathname === '/') return true
@@ -38,6 +49,12 @@ function isProtectedPath(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // ✅ Bypass total: Supabase Auth endpoints
+  // Sem isso: o middleware pode quebrar preflight/cookies e causar CORS/Failed to fetch
+  if (isSupabaseAuthPath(pathname)) {
+    return NextResponse.next()
+  }
+
   // Allow Builder preview mode to pass through (both ?builder.preview=1 and /builder-embed paths)
   if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
     return NextResponse.next()
@@ -48,11 +65,6 @@ export async function middleware(request: NextRequest) {
     ? pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
     : pathname
 
-  // Se for rota pública, ainda podemos redirecionar "/" para "/maternar" somente se estiver logada
-  // ("/" continua público como landing, conforme P24)
-  // A verificação de sessão vem abaixo.
-
-  const url = request.nextUrl.clone()
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
   // Fallback seguro: se env do Supabase não existir no ambiente, não bloqueia (para dev/build não quebrar)
@@ -62,7 +74,7 @@ export async function middleware(request: NextRequest) {
 
   let hasSession = false
 
-  // Só cria client se houver env
+  // ⚠️ IMPORTANT: usar response (NextResponse.next) e passar no createMiddlewareClient
   const response = NextResponse.next()
 
   if (canAuth) {
@@ -116,6 +128,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Mantém a exclusão de _next, api e arquivos estáticos (como estava a intenção original)
-  matcher: ['/((?!_next|api|.*\\..*|builder-embed).*)'],
+  // Exclui _next, api, arquivos estáticos e builder-embed
+  // + Exclui /auth e /api/auth para não quebrar Supabase Auth (CORS/Failed to fetch)
+  matcher: ['/((?!_next|api|.*\\..*|builder-embed|auth).*)'],
 }
