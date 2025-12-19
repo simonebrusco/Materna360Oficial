@@ -21,14 +21,11 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
-// P16 — plano premium (free/premium)
-import { isPremium } from '@/app/lib/plan'
+// ✅ P23 — camada de experiência (nunca chamar isPremium diretamente em componente)
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 // P22 — fricção zero (primeiro uso, retorno, dia 7/30)
-import {
-  getAndUpdateUsageMilestones,
-  ackUsageMilestone,
-} from '@/app/lib/usageMilestones.client'
+import { getAndUpdateUsageMilestones, ackUsageMilestone } from '@/app/lib/usageMilestones.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -46,7 +43,7 @@ export default function MeuDiaClient() {
   // P13 — micro-frase de continuidade (no máximo 1 por dia)
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
 
-  // P16 — premium state
+  // P16 — premium state (agora via experience tier)
   const [premium, setPremium] = useState(false)
   const [premiumSeenToday, setPremiumSeenToday] = useState(false)
 
@@ -126,7 +123,8 @@ export default function MeuDiaClient() {
 
   function refreshPremiumState() {
     try {
-      const next = isPremium()
+      const tier = getExperienceTier()
+      const next = tier === 'premium'
       setPremium(next)
 
       if (next) {
@@ -174,8 +172,7 @@ export default function MeuDiaClient() {
   }, [todayKey])
 
   // 🔹 P22 — regra de ordem silenciosa
-  const showMessageFirst =
-    milestones.isFirstDay || milestones.isReturnAfterAbsence
+  const showMessageFirst = milestones.isFirstDay || milestones.isReturnAfterAbsence
 
   return (
     <main
