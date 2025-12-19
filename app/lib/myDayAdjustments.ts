@@ -1,3 +1,5 @@
+'use client'
+
 import type { MyDayTaskItem } from '@/app/lib/myDayTasks.client'
 
 // ✅ P23 — camada de experiência (nunca chamar isPremium diretamente aqui)
@@ -13,8 +15,8 @@ export type TaskStatus = 'active' | 'snoozed' | 'done'
  * Mantém compatibilidade com dados antigos.
  */
 function getStatus(task: MyDayTaskItem): TaskStatus {
-  if (task.status) return task.status
-  if (task.done === true) return 'done'
+  if ((task as any).status) return (task as any).status
+  if ((task as any).done === true) return 'done'
   return 'active'
 }
 
@@ -22,7 +24,7 @@ function getStatus(task: MyDayTaskItem): TaskStatus {
  * Extrai timestamp seguro para ordenação.
  */
 function getTime(task: MyDayTaskItem): number {
-  const iso = task.createdAt
+  const iso = (task as any).createdAt
   const n = iso ? Date.parse(iso) : NaN
   return Number.isFinite(n) ? n : 0
 }
