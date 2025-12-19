@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import type { PlannerTask } from './types'
+import { prioritizeItems } from '@/app/lib/experience/priority'
 
 interface CuidarDoMeuFilhoSectionProps {
   tasks: PlannerTask[]
@@ -17,6 +18,13 @@ export default function CuidarDoMeuFilhoSection({
   onTogglePriority,
   onAddTask,
 }: CuidarDoMeuFilhoSectionProps) {
+  const safeTasks = useMemo(() => (Array.isArray(tasks) ? tasks : []), [tasks])
+
+  // Free: ordem estável | Premium: ordem contextual (invisível)
+  const orderedTasks = useMemo(() => {
+    return prioritizeItems(safeTasks, 'contextual')
+  }, [safeTasks])
+
   return (
     <div className="space-y-4">
       {/* Section Header */}
@@ -24,13 +32,13 @@ export default function CuidarDoMeuFilhoSection({
         <AppIcon name="smile" className="w-5 h-5 text-[var(--color-brand)]" />
         <h2 className="text-lg md:text-xl font-bold text-[var(--color-text-main)]">Cuidar do Meu Filho</h2>
         <span className="text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)] px-2 py-1 rounded-full">
-          {tasks.length}
+          {safeTasks.length}
         </span>
       </div>
 
       {/* Compact Cards Grid - 3 columns on desktop, 2 on mobile */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {tasks.map(task => (
+        {orderedTasks.map((task) => (
           <div
             key={task.id}
             className={`rounded-[14px] border border-black/5 p-3 transition-all ${
@@ -42,9 +50,7 @@ export default function CuidarDoMeuFilhoSection({
             {/* Checkbox - Larger hit area */}
             <button
               onClick={() => onToggle(task.id)}
-              className={`w-full flex items-center gap-2 mb-2 ${
-                task.done ? 'opacity-50' : ''
-              }`}
+              className={`w-full flex items-center gap-2 mb-2 ${task.done ? 'opacity-50' : ''}`}
             >
               <div
                 className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
