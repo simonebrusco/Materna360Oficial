@@ -32,12 +32,18 @@ function isPublicPath(pathname: string) {
   // Callbacks de autenticação (confirm/reset, etc.) devem ser públicos
   if (pathname.startsWith('/auth')) return true
 
+  // Rotas públicas de recuperação (P24)
+  if (pathname.startsWith('/recuperar-senha')) return true
+
   return false
 }
 
 // Rotas protegidas (login obrigatório)
 function isProtectedPath(pathname: string) {
   const p = pathname
+
+  // P25 — onboarding pós-login
+  if (p === '/bem-vinda' || p.startsWith('/bem-vinda/')) return true
 
   // Protege hubs e áreas sensíveis
   if (p === '/meu-dia' || p.startsWith('/meu-dia/')) return true
@@ -130,8 +136,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Exclui: _next (assets internos), api, arquivos estáticos (.*\..*),
-  // e arquivos/páginas comuns de SEO/infra. Mantém builder-embed fora do middleware.
   matcher: [
     '/((?!_next/|api/|.*\\..*|builder-embed|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest).*)',
   ],

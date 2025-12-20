@@ -32,7 +32,15 @@ export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
  * Origem/Intenção
  * Inclui origens do Planner + origens do Meu Dia.
  */
-export type TaskOrigin = 'today' | 'top3' | 'agenda' | 'family' | 'selfcare' | 'home' | 'other'
+export type TaskOrigin =
+  | 'today'
+  | 'top3'
+  | 'agenda'
+  | 'family'
+  | 'selfcare'
+  | 'home'
+  | 'other'
+  | 'custom'
 
 /**
  * Shape do PLANNER (não mudar):
@@ -131,7 +139,8 @@ function isTaskOrigin(v: unknown): v is TaskOrigin {
     v === 'family' ||
     v === 'selfcare' ||
     v === 'home' ||
-    v === 'other'
+    v === 'other' ||
+    v === 'custom'
   )
 }
 
@@ -449,6 +458,7 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
 /**
  * Agrupamento por intenção/origin.
  * - top3 e agenda entram em "Para hoje"
+ * - custom cai em "Outros" (lembrete livre)
  */
 export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
   const grouped: GroupedTasks = {
