@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 import { track } from '@/app/lib/telemetry'
@@ -32,8 +31,26 @@ export const revalidate = 0
 
 type ContinuityLine = { text: string; phraseId: string }
 
+function getFirstName(fullName: string | null | undefined) {
+  const n = (fullName ?? '').trim()
+  if (!n) return ''
+  return n.split(/\s+/)[0] ?? ''
+}
+
+function withName(baseGreeting: string, firstName: string) {
+  const g = (baseGreeting ?? '').trim()
+  const f = (firstName ?? '').trim()
+  if (!f) return g || 'Bom dia'
+  // Evita duplicar se alguma função já inserir o nome
+  if (g.toLowerCase().includes(f.toLowerCase())) return g
+  return g ? `${g}, ${f}` : `Bom dia, ${f}`
+}
+
 export default function MeuDiaClient() {
   const { name } = useProfile()
+
+  const firstName = useMemo(() => getFirstName(name), [name])
+
   const [greeting, setGreeting] = useState('')
   const [dailyMessage, setDailyMessage] = useState('…')
 
@@ -77,14 +94,18 @@ export default function MeuDiaClient() {
     })
   }, [])
 
-  /* saudação */
+  /* saudação (com nome quando houver) */
   useEffect(() => {
-    const firstName = name ? name.split(' ')[0] : ''
-    const updateGreeting = () => setGreeting(getTimeGreeting(firstName))
+    const updateGreeting = () => {
+      // getTimeGreeting pode mudar ao longo do dia; o nome vem separado para garantir personalização.
+      const base = getTimeGreeting('')
+      setGreeting(withName(base, firstName))
+    }
+
     updateGreeting()
     const interval = window.setInterval(updateGreeting, 60_000)
     return () => window.clearInterval(interval)
-  }, [name])
+  }, [firstName])
 
   /* mensagem do dia */
   useEffect(() => {
@@ -193,12 +214,18 @@ export default function MeuDiaClient() {
             MEU DIA
           </span>
 
+          {/* Copy alinhada à promessa (menos “produtividade”, mais “apoio”) */}
           <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
-            Organização do seu dia
+            Seu dia, do seu jeito
           </h1>
 
           <p className="mt-1 text-sm md:text-base text-white/90 max-w-xl">
-            Aqui você organiza compromissos, lembretes e tudo que salvou no app — sem precisar procurar.
+            Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
+          </p>
+
+          {/* Frase-permissão (primeira vitória) */}
+          <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
+            Você não precisa dar conta de tudo. Só do que fizer sentido agora.
           </p>
 
           <div className="pt-4 space-y-1">
