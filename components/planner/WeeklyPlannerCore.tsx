@@ -1276,57 +1276,50 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* CARD FINAL — abre calendário do planner */}
-          <SoftCard
-            className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
-            onClick={openMonthSheet}
-          >
-            <p className="text-center text-sm font-semibold text-[var(--color-text-main)]">
-              Se fizer sentido, você pode revisar um dia anterior ou se organizar para o próximo.
-            </p>
-            <p className="mt-1 text-center text-xs text-[var(--color-text-muted)]">
-              Toque aqui para abrir o calendário do planner.
-            </p>
-          </SoftCard>
+  
+          {/* Card de navegação dia anterior/próximo (agora com propósito: abre calendário no centro) */}
+<SoftCard
+  className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
+  onClick={openMonthSheet}
+>
+  <div className="flex items-center justify-between gap-2">
+    <button
+      type="button"
+      className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+      onClick={(e) => {
+        e.stopPropagation()
+        const d = new Date(selectedDate)
+        d.setDate(d.getDate() - 1)
+        handleDateSelect(d)
+      }}
+      aria-label="Dia anterior"
+    >
+      ‹
+    </button>
 
-          {/* Card de navegação dia anterior/próximo (mantém sentido) */}
-          <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
-            <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-                onClick={() => {
-                  const d = new Date(selectedDate)
-                  d.setDate(d.getDate() - 1)
-                  handleDateSelect(d)
-                }}
-                aria-label="Dia anterior"
-              >
-                ‹
-              </button>
+    <div className="text-sm font-semibold text-[var(--color-text-main)]">
+      {selectedDate.toLocaleDateString('pt-BR')}
+    </div>
 
-              <div className="text-sm font-semibold text-[var(--color-text-main)]">
-                {selectedDate.toLocaleDateString('pt-BR')}
-              </div>
+    <button
+      type="button"
+      className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+      onClick={(e) => {
+        e.stopPropagation()
+        const d = new Date(selectedDate)
+        d.setDate(d.getDate() + 1)
+        handleDateSelect(d)
+      }}
+      aria-label="Próximo dia"
+    >
+      ›
+    </button>
+  </div>
 
-              <button
-                type="button"
-                className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-                onClick={() => {
-                  const d = new Date(selectedDate)
-                  d.setDate(d.getDate() + 1)
-                  handleDateSelect(d)
-                }}
-                aria-label="Próximo dia"
-              >
-                ›
-              </button>
-            </div>
-
-            <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
-              Se fizer sentido, você pode revisar um dia anterior ou se organizar para o próximo.
-            </p>
-          </SoftCard>
+  <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
+    Toque no centro para abrir o calendário do planner.
+  </p>
+</SoftCard>
         </div>
       </Reveal>
 
