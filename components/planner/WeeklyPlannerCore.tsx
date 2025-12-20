@@ -208,6 +208,34 @@ export default function WeeklyPlannerCore() {
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
+  // ======================================================
+  // Onboarding (cardzinhos externos) — 1ª vez no Meu Dia
+  // ======================================================
+  const ONBOARDING_KEY = 'onboarding.meu-dia.v1'
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3>(1)
+
+  useEffect(() => {
+    if (!isHydrated) return
+    try {
+      const seen = localStorage.getItem(ONBOARDING_KEY)
+      setShowOnboarding(!seen)
+    } catch {
+      setShowOnboarding(false)
+    }
+  }, [isHydrated])
+
+  const dismissOnboarding = () => {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, '1')
+    } catch {}
+    setShowOnboarding(false)
+  }
+
+  const nextOnboarding = () => {
+    setOnboardingStep((s) => (s === 3 ? 3 : ((s + 1) as 1 | 2 | 3)))
+  }
+
   // Atualiza signal quando persona mudar
   useEffect(() => {
     const refresh = () => {
@@ -594,6 +622,79 @@ export default function WeeklyPlannerCore() {
 
           {viewMode === 'day' && (
             <div className="space-y-6">
+              {/* ======================================================
+                  ONBOARDING (cardzinhos externos) — só 1ª vez
+                 ====================================================== */}
+              {showOnboarding && (
+                <div className="space-y-3">
+                  {onboardingStep === 1 && (
+                    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-5">
+                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                        PRIMEIRO ACESSO
+                      </p>
+                      <p className="mt-2 text-sm text-[var(--color-text-main)]">
+                        Aqui você não precisa “dar conta de tudo”. A ideia é só organizar o que fizer sentido hoje.
+                      </p>
+
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={nextOnboarding}
+                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e00070]"
+                        >
+                          Entendi
+                        </button>
+                      </div>
+                    </SoftCard>
+                  )}
+
+                  {onboardingStep === 2 && (
+                    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-5">
+                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                        DICA RÁPIDA
+                      </p>
+                      <p className="mt-2 text-sm text-[var(--color-text-main)]">
+                        Comece pelos <strong>Lembretes do dia</strong>: um lembrete curto já muda o ritmo.
+                      </p>
+                      <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                        Use o <strong>+</strong> para registrar, e o <strong>⋮</strong> para editar ou excluir.
+                      </p>
+
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={nextOnboarding}
+                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e00070]"
+                        >
+                          Entendi
+                        </button>
+                      </div>
+                    </SoftCard>
+                  )}
+
+                  {onboardingStep === 3 && (
+                    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-5">
+                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                        ORGANIZAÇÃO DO TEMPO
+                      </p>
+                      <p className="mt-2 text-sm text-[var(--color-text-main)]">
+                        Quando quiser, use o card do final da página para abrir o calendário do planner e se organizar com calma.
+                      </p>
+
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={dismissOnboarding}
+                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e00070]"
+                        >
+                          Entendi
+                        </button>
+                      </div>
+                    </SoftCard>
+                  )}
+                </div>
+              )}
+
               {/* LEMBRETES */}
               <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 space-y-4">
                 <div className="flex items-start justify-between gap-3">
@@ -914,7 +1015,7 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* CARD FINAL — abre calendário do planner */}
+          {/* CARD FINAL — abre calendário do planner (ÚNICO clicável para calendário) */}
           <SoftCard
             className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
             onClick={openMonthSheet}
@@ -927,7 +1028,7 @@ export default function WeeklyPlannerCore() {
             </p>
           </SoftCard>
 
-          {/* Card de navegação dia anterior/próximo (mantém sentido) */}
+          {/* Card de navegação dia anterior/próximo (mantém sentido, SEM competir com o card do calendário) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -962,7 +1063,7 @@ export default function WeeklyPlannerCore() {
             </div>
 
             <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
-              Se fizer sentido, você pode revisar um dia anterior ou se organizar para o próximo.
+              Use as setas para navegar entre dias.
             </p>
           </SoftCard>
         </div>
