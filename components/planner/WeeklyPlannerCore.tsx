@@ -85,7 +85,7 @@ function buildWeekData(baseDate: Date, plannerData: PlannerData): WeekDaySummary
     agendaCountByKey[a.dateKey] = (agendaCountByKey[a.dateKey] ?? 0) + 1
   }
 
-  // Mantido como antes: counts do dia selecionado (tasks carregam por dia)
+  // Contagens do dia selecionado
   const selectedKey = getBrazilDateKey(baseDate)
   const counts = { top3: 0, selfcare: 0, family: 0 }
   for (const t of plannerData.tasks) {
@@ -171,62 +171,8 @@ function generateMonthMatrix(monthBase: Date): MonthCell[][] {
   return rows
 }
 
-// =======================================================
-// ONBOARDING (cards fora dos cards) — 1º acesso
-// =======================================================
-const ONBOARDING_KEY = 'onboarding.meu-dia.v1'
-
-function OnboardingOverlay({
-  onClose,
-}: {
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Como usar o Meu Dia">
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
-        onClick={onClose}
-        aria-label="Fechar"
-      />
-
-      <div className="absolute left-1/2 top-[10%] w-[92%] max-w-md -translate-x-1/2 space-y-3">
-        <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
-          <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Guia rápido</p>
-          <h3 className="mt-1 text-base font-semibold text-[var(--color-text-main)]">Você não precisa “fazer tudo”.</h3>
-          <p className="mt-2 text-sm text-[var(--color-text-muted)] leading-relaxed">
-            Aqui é um espaço para organizar o que importa hoje — com leveza.
-          </p>
-        </SoftCard>
-
-        <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
-          <h4 className="text-sm font-semibold text-[var(--color-text-main)]">Lembretes do dia</h4>
-          <ul className="mt-2 space-y-1.5 text-sm text-[var(--color-text-muted)]">
-            <li>• Clique no <strong>+</strong> para criar um lembrete.</li>
-            <li>• Toque no lembrete para marcar como feito.</li>
-            <li>• Use <strong>⋮</strong> para editar ou excluir.</li>
-          </ul>
-        </SoftCard>
-
-        <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
-          <h4 className="text-sm font-semibold text-[var(--color-text-main)]">Compromissos (Agenda)</h4>
-          <p className="mt-2 text-sm text-[var(--color-text-muted)] leading-relaxed">
-            Use o <strong>+</strong> da Agenda para registrar compromissos. Se preferir, toque no card final para abrir o calendário do mês.
-          </p>
-
-          <div className="mt-3 flex justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full bg-[var(--color-brand)] text-white px-4 py-2 text-xs font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
-            >
-              Entendi
-            </button>
-          </div>
-        </SoftCard>
-      </div>
-    </div>
-  )
+function normalizeText(s: string) {
+  return (s ?? '').trim().replace(/\s+/g, ' ')
 }
 
 // =======================================================
@@ -244,20 +190,14 @@ export default function WeeklyPlannerCore() {
 
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
 
-  // P12 — Inteligência de Ritmo (reativa)
+  // P12 — Eu360 signal (reativo)
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
   const [showAllReminders, setShowAllReminders] = useState(false)
   const [showAllAppointments, setShowAllAppointments] = useState(false)
 
-  // P13 — Continuidade (1x/dia, só hoje, sem cobrança)
+  // P13 — Continuidade
   const [continuityLine, setContinuityLine] = useState<string>('')
-
-  // Menu ⋮
-  const [openTaskMenuId, setOpenTaskMenuId] = useState<string | null>(null)
-
-  // Onboarding overlay (1ª vez)
-  const [showOnboarding, setShowOnboarding] = useState(false)
 
   const isGentleTone = euSignal.tone === 'gentil'
 
@@ -268,7 +208,7 @@ export default function WeeklyPlannerCore() {
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
-  // Atualiza signal quando persona mudar (mesma aba via event custom; outra aba via storage)
+  // Atualiza signal quando persona mudar
   useEffect(() => {
     const refresh = () => {
       try {
@@ -292,11 +232,9 @@ export default function WeeklyPlannerCore() {
     }
   }, [])
 
-  // Reset do "mostrar tudo" quando troca o dia
   useEffect(() => {
     setShowAllReminders(false)
     setShowAllAppointments(false)
-    setOpenTaskMenuId(null)
   }, [selectedDateKey])
 
   // Modal premium (create/edit)
@@ -307,6 +245,14 @@ export default function WeeklyPlannerCore() {
   // Sheet premium: calendário mensal
   const [monthSheetOpen, setMonthSheetOpen] = useState(false)
   const [monthCursor, setMonthCursor] = useState<Date>(toFirstOfMonth(new Date()))
+
+  // ---------- Reminders UI (SEM prompt do browser) ----------
+  const [reminderModalOpen, setReminderModalOpen] = useState(false)
+  const [reminderDraft, setReminderDraft] = useState('')
+  const [reminderOrigin, setReminderOrigin] = useState<TaskOrigin>('other')
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null)
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [editingDraft, setEditingDraft] = useState('')
 
   // ======================================================
   // HYDRATION
@@ -324,21 +270,6 @@ export default function WeeklyPlannerCore() {
     try {
       track('planner.opened', { tab: 'meu-dia', dateKey })
     } catch {}
-
-    // Onboarding (1ª vez)
-    try {
-      const seen = window.localStorage.getItem(ONBOARDING_KEY)
-      setShowOnboarding(!seen)
-    } catch {
-      setShowOnboarding(false)
-    }
-  }, [])
-
-  const dismissOnboarding = useCallback(() => {
-    try {
-      window.localStorage.setItem(ONBOARDING_KEY, '1')
-    } catch {}
-    setShowOnboarding(false)
   }, [])
 
   // ======================================================
@@ -377,7 +308,7 @@ export default function WeeklyPlannerCore() {
   }, [plannerData.notes, selectedDateKey, isHydrated])
 
   // ======================================================
-  // P13 — Continuidade (só para HOJE)
+  // P13 — Continuidade (só HOJE)
   // ======================================================
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
@@ -454,22 +385,31 @@ export default function WeeklyPlannerCore() {
     } catch {}
   }, [])
 
-  const addTask = useCallback((title: string, origin: TaskOrigin) => {
-    const normalizedTitle = (title ?? '').trim()
-    if (!normalizedTitle) return
+  const addTask = useCallback(
+    (title: string, origin: TaskOrigin) => {
+      const normalizedTitle = normalizeText(title)
+      if (!normalizedTitle) return
 
-    const t: TaskItem = { id: safeId(), title: normalizedTitle, done: false, origin }
-    setPlannerData((prev) => ({ ...prev, tasks: [...prev.tasks, t] }))
+      // evita duplicado igual (título + origin)
+      const exists = plannerData.tasks.some(
+        (t) => normalizeText(t.title).toLowerCase() === normalizedTitle.toLowerCase() && t.origin === origin,
+      )
+      if (exists) return
 
-    try {
-      track('planner.task_added', { tab: 'meu-dia', origin })
-    } catch {}
+      const t: TaskItem = { id: safeId(), title: normalizedTitle, done: false, origin }
+      setPlannerData((prev) => ({ ...prev, tasks: [...prev.tasks, t] }))
 
-    try {
-      const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
-      void updateXP(base)
-    } catch {}
-  }, [])
+      try {
+        track('planner.task_added', { tab: 'meu-dia', origin })
+      } catch {}
+
+      try {
+        const base = origin === 'top3' || origin === 'selfcare' ? 8 : 5
+        void updateXP(base)
+      } catch {}
+    },
+    [plannerData.tasks],
+  )
 
   const toggleTask = useCallback((id: string) => {
     setPlannerData((prev) => ({
@@ -478,52 +418,30 @@ export default function WeeklyPlannerCore() {
     }))
   }, [])
 
-  const editTask = useCallback((id: string, currentTitle: string) => {
-    const next = window.prompt('Editar lembrete:', currentTitle)
-    const normalized = (next ?? '').trim()
-    if (!normalized) return
-
-    setPlannerData((prev) => ({
-      ...prev,
-      tasks: prev.tasks.map((t) => (t.id === id ? { ...t, title: normalized } : t)),
-    }))
-
-    try {
-      track('planner.task_edited', { tab: 'meu-dia' })
-    } catch {}
-  }, [])
-
   const removeTask = useCallback((id: string) => {
-    const ok = window.confirm('Excluir este lembrete?')
-    if (!ok) return
+    setPlannerData((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== id) }))
+  }, [])
+
+  const beginEditTask = useCallback((task: TaskItem) => {
+    setEditingTaskId(task.id)
+    setEditingDraft(task.title ?? '')
+    setOpenMenuTaskId(null)
+  }, [])
+
+  const commitEditTask = useCallback(() => {
+    const next = normalizeText(editingDraft)
+    const id = editingTaskId
+    if (!id) return
+    if (!next) return
 
     setPlannerData((prev) => ({
       ...prev,
-      tasks: prev.tasks.filter((t) => t.id !== id),
+      tasks: prev.tasks.map((t) => (t.id === id ? { ...t, title: next } : t)),
     }))
 
-    try {
-      track('planner.task_removed', { tab: 'meu-dia' })
-    } catch {}
-  }, [])
-
-  // ======================================================
-  // LEMBRETES (livre arbítrio)
-  // ======================================================
-  const promptReminder = useCallback(
-    (opts?: { title?: string; placeholder?: string; origin?: TaskOrigin }) => {
-      const message = opts?.title ?? 'O que você quer lembrar hoje?'
-      const placeholder = opts?.placeholder ?? ''
-      const origin = (opts?.origin ?? 'other') as TaskOrigin // ✅ nunca usar 'custom'/'outros'
-
-      const text = window.prompt(message, placeholder)
-      const normalized = (text ?? '').trim()
-      if (!normalized) return
-
-      addTask(normalized, origin)
-    },
-    [addTask],
-  )
+    setEditingTaskId(null)
+    setEditingDraft('')
+  }, [editingDraft, editingTaskId])
 
   // ======================================================
   // MODAL OPENERS
@@ -592,14 +510,38 @@ export default function WeeklyPlannerCore() {
   if (!isHydrated) return null
 
   // ======================================================
+  // REMINDER MODAL ACTIONS
+  // ======================================================
+  const openReminderModal = (origin: TaskOrigin, seed?: string) => {
+    setReminderOrigin(origin)
+    setReminderDraft(seed ?? '')
+    setReminderModalOpen(true)
+
+    try {
+      track('planner.reminder_modal_opened', { tab: 'meu-dia', origin })
+    } catch {}
+  }
+
+  const submitReminder = () => {
+    const text = normalizeText(reminderDraft)
+    if (!text) return
+    addTask(text, reminderOrigin)
+    setReminderDraft('')
+    setReminderModalOpen(false)
+
+    try {
+      track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
+    } catch {}
+  }
+
+  // ======================================================
   // RENDER
   // ======================================================
   return (
     <>
-      {showOnboarding && <OnboardingOverlay onClose={dismissOnboarding} />}
-
       <Reveal>
         <div className="space-y-6 md:space-y-8">
+          {/* HEADER / CONTROLES */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-3">
               <button
@@ -673,15 +615,10 @@ export default function WeeklyPlannerCore() {
                     )}
                   </div>
 
+                  {/* + abre modal interno (sem prompt do browser) */}
                   <button
                     type="button"
-                    onClick={() =>
-                      promptReminder({
-                        title: 'O que você quer lembrar hoje?',
-                        placeholder: '',
-                        origin: 'other',
-                      })
-                    }
+                    onClick={() => openReminderModal('other')}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
                     aria-label="Adicionar lembrete"
                   >
@@ -704,12 +641,13 @@ export default function WeeklyPlannerCore() {
                       return (
                         <>
                           {visible.map((task) => {
-                            const menuOpen = openTaskMenuId === task.id
+                            const isEditing = editingTaskId === task.id
+                            const isMenuOpen = openMenuTaskId === task.id
 
                             return (
                               <div
                                 key={task.id}
-                                className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all relative ${
+                                className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
                                   task.done
                                     ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)]'
                                     : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
@@ -718,64 +656,104 @@ export default function WeeklyPlannerCore() {
                                 <button
                                   type="button"
                                   onClick={() => toggleTask(task.id)}
-                                  className="flex h-6 w-6 items-center justify-center"
-                                  aria-label="Marcar como feito"
+                                  className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                                    task.done
+                                      ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
+                                      : 'border-[#FFB3D3] text-[var(--color-brand)]'
+                                  }`}
+                                  aria-label={task.done ? 'Marcar como não feito' : 'Marcar como feito'}
                                 >
-                                  <span
-                                    className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                                      task.done
-                                        ? 'bg-[var(--color-brand)] border-[var(--color-brand)] text-white'
-                                        : 'border-[#FFB3D3] text-[var(--color-brand)]'
-                                    }`}
-                                  >
-                                    {task.done ? '✓' : ''}
-                                  </span>
+                                  {task.done ? '✓' : ''}
                                 </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => toggleTask(task.id)}
-                                  className={`flex-1 text-left ${task.done ? 'line-through opacity-70' : ''}`}
-                                  aria-label="Alternar conclusão"
-                                >
-                                  {task.title}
-                                </button>
-
-                                <div className="relative">
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenTaskMenuId((cur) => (cur === task.id ? null : task.id))}
-                                    className="h-8 w-8 inline-flex items-center justify-center rounded-full hover:bg-black/5"
-                                    aria-label="Abrir menu do lembrete"
-                                  >
-                                    ⋮
-                                  </button>
-
-                                  {menuOpen && (
-                                    <div className="absolute right-0 top-9 z-10 w-36 rounded-2xl border border-[var(--color-soft-strong)] bg-white shadow-[0_16px_40px_rgba(0,0,0,0.12)] overflow-hidden">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setOpenTaskMenuId(null)
-                                          editTask(task.id, task.title)
-                                        }}
-                                        className="w-full px-3 py-2 text-left text-xs font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-soft-bg)]"
-                                      >
-                                        Editar
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setOpenTaskMenuId(null)
-                                          removeTask(task.id)
-                                        }}
-                                        className="w-full px-3 py-2 text-left text-xs font-semibold text-[#B42318] hover:bg-[#FFF1F1]"
-                                      >
-                                        Excluir
-                                      </button>
-                                    </div>
+                                <div className="flex-1 min-w-0">
+                                  {isEditing ? (
+                                    <input
+                                      value={editingDraft}
+                                      onChange={(e) => setEditingDraft(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') commitEditTask()
+                                        if (e.key === 'Escape') {
+                                          setEditingTaskId(null)
+                                          setEditingDraft('')
+                                        }
+                                      }}
+                                      className="w-full rounded-lg border border-[var(--color-soft-strong)] px-2 py-1 text-sm outline-none focus:border-[var(--color-brand)]"
+                                      autoFocus
+                                      aria-label="Editar lembrete"
+                                    />
+                                  ) : (
+                                    <span className={`block truncate ${task.done ? 'line-through opacity-70' : ''}`}>
+                                      {task.title}
+                                    </span>
                                   )}
                                 </div>
+
+                                {isEditing ? (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={commitEditTask}
+                                      className="rounded-full px-3 py-1 text-xs font-semibold bg-[var(--color-brand)] text-white hover:bg-[#e00070]"
+                                    >
+                                      Salvar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingTaskId(null)
+                                        setEditingDraft('')
+                                      }}
+                                      className="rounded-full px-3 py-1 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenMenuTaskId((v) => (v === task.id ? null : task.id))}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/80 hover:bg-[var(--color-soft-bg)]"
+                                      aria-label="Opções do lembrete"
+                                    >
+                                      ⋮
+                                    </button>
+
+                                    {isMenuOpen && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          className="fixed inset-0 z-[70] cursor-default"
+                                          onClick={() => setOpenMenuTaskId(null)}
+                                          aria-label="Fechar menu"
+                                        />
+                                        <div className="absolute right-0 top-9 z-[80] w-44 overflow-hidden rounded-2xl border border-[var(--color-soft-strong)] bg-white shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
+                                          <button
+                                            type="button"
+                                            onClick={() => beginEditTask(task)}
+                                            className="w-full px-3 py-2 text-left text-xs font-semibold text-[var(--color-text-main)] hover:bg-[var(--color-soft-bg)]"
+                                          >
+                                            Editar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setOpenMenuTaskId(null)
+                                              removeTask(task.id)
+                                              try {
+                                                track('planner.task_removed', { tab: 'meu-dia' })
+                                              } catch {}
+                                            }}
+                                            className="w-full px-3 py-2 text-left text-xs font-semibold text-[#B42318] hover:bg-[#FFF5F5]"
+                                          >
+                                            Excluir
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )
                           })}
@@ -805,16 +783,12 @@ export default function WeeklyPlannerCore() {
                   )}
                 </div>
 
-                {/* Atalhos */}
+                {/* Atalhos (abrem o mesmo modal leve) */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() =>
-                      promptReminder({
-                        title: 'O que realmente importa agora?',
-                        placeholder: isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial',
-                        origin: 'top3',
-                      })
+                      openReminderModal('top3', isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial')
                     }
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
@@ -831,13 +805,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      promptReminder({
-                        title: 'Qual respiro pequeno cabe hoje?',
-                        placeholder: 'Ex.: água, banho com calma, alongar 2 min…',
-                        origin: 'selfcare',
-                      })
-                    }
+                    onClick={() => openReminderModal('selfcare', 'Ex.: água, banho com calma, alongar 2 min…')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelSelfcare}
@@ -845,13 +813,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      promptReminder({
-                        title: 'Que cuidado importante você quer registrar?',
-                        placeholder: 'Ex.: recado da escola, remédio, conversa…',
-                        origin: 'family',
-                      })
-                    }
+                    onClick={() => openReminderModal('family', 'Ex.: recado da escola, remédio, conversa…')}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelFamily}
@@ -952,20 +914,20 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* Card final: abre calendário do mês */}
+          {/* CARD FINAL — abre calendário do planner */}
           <SoftCard
-            className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white"
+            className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
             onClick={openMonthSheet}
           >
             <p className="text-center text-sm font-semibold text-[var(--color-text-main)]">
               Se fizer sentido, você pode revisar um dia anterior ou se organizar para o próximo.
             </p>
-            <p className="mt-1 text-center text-[11px] text-[var(--color-text-muted)]">
+            <p className="mt-1 text-center text-xs text-[var(--color-text-muted)]">
               Toque aqui para abrir o calendário do planner.
             </p>
           </SoftCard>
 
-          {/* Navegação dia anterior / próximo (mantida) */}
+          {/* Card de navegação dia anterior/próximo (mantém sentido) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -1006,7 +968,77 @@ export default function WeeklyPlannerCore() {
         </div>
       </Reveal>
 
-      {/* Calendário do mês */}
+      {/* MODAL: adicionar lembrete (substitui prompt azul) */}
+      {reminderModalOpen && (
+        <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Adicionar lembrete">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+            onClick={() => setReminderModalOpen(false)}
+            aria-label="Fechar"
+          />
+          <div className="absolute left-1/2 top-[16%] w-[92%] max-w-md -translate-x-1/2">
+            <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                    Lembrete
+                  </p>
+                  <h3 className="text-base font-semibold text-[var(--color-text-main)]">
+                    O que você quer registrar?
+                  </h3>
+                  <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                    Uma frase curta já ajuda. Sem perfeição.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setReminderModalOpen(false)}
+                  className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                  aria-label="Fechar"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                <input
+                  value={reminderDraft}
+                  onChange={(e) => setReminderDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submitReminder()
+                    if (e.key === 'Escape') setReminderModalOpen(false)
+                  }}
+                  placeholder="Ex.: separar 10 min para respirar"
+                  className="w-full rounded-2xl border border-[var(--color-soft-strong)] px-3 py-3 text-sm outline-none focus:border-[var(--color-brand)]"
+                  autoFocus
+                />
+
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReminderModalOpen(false)}
+                    className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={submitReminder}
+                    className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </SoftCard>
+          </div>
+        </div>
+      )}
+
+      {/* SHEET: calendário do mês */}
       {monthSheetOpen && (
         <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Calendário do mês">
           <button
@@ -1020,7 +1052,9 @@ export default function WeeklyPlannerCore() {
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">Calendário</p>
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                    Calendário
+                  </p>
                   <h3 className="text-base font-semibold text-[var(--color-text-main)] capitalize">
                     {monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                   </h3>
