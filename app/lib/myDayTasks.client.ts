@@ -63,10 +63,14 @@ export type MyDayTaskItem = {
   id: string
   title: string
   origin: TaskOrigin
+
+  /** legado (Planner) — pode existir em dados antigos */
   done?: boolean
+
+  /** P8+ */
   status?: TaskStatus
-  snoozeUntil?: string
-  createdAt?: string
+  snoozeUntil?: string // YYYY-MM-DD
+  createdAt?: string // ISO
   source?: MyDaySource
 }
 
@@ -78,7 +82,7 @@ export type AddToMyDayInput = {
   source?: MyDaySource
 }
 
-/** Resultado compatível com o que os Clients precisam */
+/** Resultado compatível com o que os Clients precisam (created + dateKey) */
 export type AddToMyDayResult = {
   ok: boolean
   id?: string
@@ -97,7 +101,7 @@ export type GroupedTasks = Record<
   }
 >
 
-/* ---------- Helpers ---------- */
+/** ---------- Helpers ---------- */
 
 function safeParseJSON<T>(raw: string | null): T | null {
   if (!raw) return null
@@ -154,6 +158,325 @@ function makeId(): string {
     : `t_${Math.random().toString(16).slice(2)}_${Date.now()}`
 }
 
-/* ---------- Normalização e API pública ---------- */
-/* (restante do arquivo permanece exatamente igual ao que você enviou) */
+/**
+ * Normaliza tarefas vindas do storage (que pode conter):
+ * - TaskItem do Planner (done)
+ * - MyDayTaskItem do Meu Dia (status)
+ *
+ * Retorna também se houve migração silenciosa (para persistir no próximo write).
+ */
+function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | null; changed: boolean } {
+  if (!it) return { item: null, changed: false }
 
+  let changed = false
+
+  const title = typeof it.title === 'string' ? it.title : ''
+  if (!title) return { item: null, changed: false }
+
+  const origin: TaskOrigin = isTaskOrigin(it.origin) ? it.origin : 'other'
+  if (!isTaskOrigin(it.origin)) changed = true
+
+  // se não tiver id → gerar e persistir
+  let id = typeof it.id === 'string' ? it.id : ''
+  if (!id) {
+    id = makeId()
+    changed = true
+  }
+
+  const doneLegacy: boolean | undefined = typeof it.done === 'boolean' ? it.done : undefined
+  const statusRaw: TaskStatus | undefined = isTaskStatus(it.status) ? it.status : undefined
+  const snoozeUntil = typeof it.snoozeUntil === 'string' ? it.snoozeUntil : undefined
+  const createdAtRaw = typeof it.createdAt === 'string' ? it.createdAt : undefined
+  const source: MyDaySource | undefined = isMyDaySource(it.source) ? it.source : undefined
+
+  // se não tiver status → inferir (coerente com done legado)
+  const computedStatus: TaskStatus =
+    statusRaw ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : 'active')
+
+  if (statusRaw !== computedStatus) changed = true
+
+  // se não tiver createdAt → now
+  const createdAt = createdAtRaw ?? nowISO
+  if (!createdAtRaw) changed = true
+
+  // coerência mínima status <-> done
+  let done: boolean | undefined = doneLegacy
+  if (computedStatus === 'done' && doneLegacy !== true) {
+    done = true
+    changed = true
+  }
+  if (computedStatus !== 'done' && doneLegacy === true) {
+    done = false
+    changed = true
+  }
+
+  const item: MyDayTaskItem = {
+    id,
+    title,
+    origin,
+    done,
+    status: computedStatus,
+    snoozeUntil,
+    createdAt,
+    source,
+  }
+
+  return { item, changed }
+}
+
+function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
+  if (typeof window === 'undefined') return []
+  const key = storageKeyForDateKey(dateKey)
+  const parsed = safeParseJSON<unknown>(window.localStorage.getItem(key))
+  if (!Array.isArray(parsed)) return []
+
+  const nowISO = new Date().toISOString()
+  let changed = false
+
+  const normalized: MyDayTaskItem[] = []
+  for (const raw of parsed) {
+    const res = normalizeStoredTask(raw, nowISO)
+    if (res.item) normalized.push(res.item)
+    if (res.changed) changed = true
+  }
+
+  // migração silenciosa
+  if (changed) {
+    try {
+      window.localStorage.setItem(key, safeStringifyJSON(normalized))
+    } catch {}
+  }
+
+  return normalized
+}
+
+function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
+  if (typeof window === 'undefined') return
+  const key = storageKeyForDateKey(dateKey)
+  window.localStorage.setItem(key, safeStringifyJSON(tasks))
+}
+
+/** ---------- API pública ---------- */
+
+export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
+  try {
+    const dk = makeDateKey(input.date ?? new Date())
+    const nowISO = new Date().toISOString()
+    const tasks = readTasksByDateKey(dk)
+
+    const title = (input.title ?? '').trim()
+    const origin = input.origin ?? 'other'
+    const source = input.source ?? MY_DAY_SOURCES.UNKNOWN
+    if (!title) return { ok: false }
+
+    const exists = tasks.some((t) => t.title.trim().toLowerCase() === title.toLowerCase() && t.origin === origin)
+    if (exists) return { ok: true, created: false, dateKey: dk }
+
+    const id = makeId()
+
+    const next: MyDayTaskItem[] = [
+      ...tasks,
+      {
+        id,
+        title,
+        origin,
+        status: 'active',
+        createdAt: nowISO,
+        source,
+      },
+    ]
+
+    writeTasksByDateKey(dk, next)
+    return { ok: true, id, created: true, dateKey: dk }
+  } catch {
+    return { ok: false }
+  }
+}
+
+export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDaySource }) {
+  const res = addTaskToMyDay(input)
+  try {
+    track('my_day.task.add', {
+      ok: !!res.ok,
+      created: !!res.created,
+      origin: input.origin,
+      source: input.source,
+      dateKey: res.dateKey,
+    })
+  } catch {}
+  return res
+}
+
+/**
+ * Leitura do dia com auto-normalização:
+ * - Se estava snoozed e o snoozeUntil chegou/venceu, volta para active.
+ * - Persistimos só se houver mudança real.
+ */
+export function listMyDayTasks(date?: Date): MyDayTaskItem[] {
+  const dk = makeDateKey(date ?? new Date())
+  const tasks = readTasksByDateKey(dk)
+
+  let changed = false
+
+  const next: MyDayTaskItem[] = tasks.map((t): MyDayTaskItem => {
+    const status: TaskStatus = (t.status ?? (t.done ? 'done' : 'active')) as TaskStatus
+
+    // auto-unsnooze quando o dia chegou
+    if (status === 'snoozed' && t.snoozeUntil && dk >= t.snoozeUntil) {
+      changed = true
+      return { ...t, status: 'active', snoozeUntil: undefined, done: false }
+    }
+
+    // coerência mínima status <-> done
+    if (t.done === true && status !== 'done') {
+      changed = true
+      return { ...t, status: 'done' }
+    }
+
+    if (t.done === false && status === 'done') {
+      changed = true
+      return { ...t, done: true }
+    }
+
+    if (t.status !== status) changed = true
+    return { ...t, status }
+  })
+
+  if (changed) writeTasksByDateKey(dk, next)
+  return next
+}
+
+export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
+  try {
+    const dk = makeDateKey(date ?? new Date())
+    const tasks = readTasksByDateKey(dk)
+
+    const next: MyDayTaskItem[] = tasks.map((t) => {
+      if (t.id !== taskId) return t
+      const baseStatus = t.status ?? (t.done ? 'done' : 'active')
+      const nextStatus: TaskStatus = baseStatus === 'done' ? 'active' : 'done'
+      return { ...t, status: nextStatus, done: nextStatus === 'done' }
+    })
+
+    writeTasksByDateKey(dk, next)
+    try {
+      track('my_day.task.toggle_done', { ok: true })
+    } catch {}
+    return { ok: true }
+  } catch {
+    try {
+      track('my_day.task.toggle_done', { ok: false })
+    } catch {}
+    return { ok: false }
+  }
+}
+
+/**
+ * P8/P12 — Snooze: empurra a tarefa para frente (não some, só “não agora”).
+ * Export obrigatório (MyDayGroups importa isso).
+ */
+export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean; snoozeUntil?: string } {
+  try {
+    const base = date ?? new Date()
+    const dk = makeDateKey(base)
+
+    const until = new Date(base)
+    until.setDate(until.getDate() + Math.max(1, days))
+    const untilKey = makeDateKey(until)
+
+    const tasks = readTasksByDateKey(dk)
+
+    const next: MyDayTaskItem[] = tasks.map((t) => {
+      if (t.id !== taskId) return t
+      return { ...t, status: 'snoozed', snoozeUntil: untilKey, done: false }
+    })
+
+    writeTasksByDateKey(dk, next)
+    try {
+      track('my_day.task.snooze', { ok: true, days })
+    } catch {}
+    return { ok: true, snoozeUntil: untilKey }
+  } catch {
+    try {
+      track('my_day.task.snooze', { ok: false, days })
+    } catch {}
+    return { ok: false }
+  }
+}
+
+/**
+ * P8/P12 — Unsnooze: “Voltar para hoje”.
+ * Export obrigatório (MyDayGroups importa isso).
+ */
+export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
+  try {
+    const dk = makeDateKey(date ?? new Date())
+    const tasks = readTasksByDateKey(dk)
+
+    const next: MyDayTaskItem[] = tasks.map((t) => {
+      if (t.id !== taskId) return t
+      return { ...t, status: 'active', snoozeUntil: undefined, done: false }
+    })
+
+    writeTasksByDateKey(dk, next)
+    try {
+      track('my_day.task.unsnooze', { ok: true })
+    } catch {}
+    return { ok: true }
+  } catch {
+    try {
+      track('my_day.task.unsnooze', { ok: false })
+    } catch {}
+    return { ok: false }
+  }
+}
+
+/**
+ * Remove definitivo.
+ * Export obrigatório (MyDayGroups importa isso).
+ */
+export function removeTask(taskId: string, date?: Date): { ok: boolean } {
+  try {
+    const dk = makeDateKey(date ?? new Date())
+    const tasks = readTasksByDateKey(dk)
+
+    const next: MyDayTaskItem[] = tasks.filter((t) => t.id !== taskId)
+    writeTasksByDateKey(dk, next)
+
+    try {
+      track('my_day.task.remove', { ok: true })
+    } catch {}
+    return { ok: true }
+  } catch {
+    try {
+      track('my_day.task.remove', { ok: false })
+    } catch {}
+    return { ok: false }
+  }
+}
+
+/**
+ * Agrupamento por intenção/origin.
+ * - top3 e agenda entram em "Para hoje"
+ * - custom cai em "Outros" (lembrete livre)
+ */
+export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
+  const grouped: GroupedTasks = {
+    'para-hoje': { id: 'para-hoje', title: 'Para hoje (simples e real)', items: [] },
+    familia: { id: 'familia', title: 'Família & conexão', items: [] },
+    autocuidado: { id: 'autocuidado', title: 'Autocuidado', items: [] },
+    'rotina-casa': { id: 'rotina-casa', title: 'Rotina & casa', items: [] },
+    outros: { id: 'outros', title: 'Outros', items: [] },
+  }
+
+  for (const t of tasks) {
+    const origin = t.origin ?? 'other'
+    if (origin === 'today' || origin === 'top3' || origin === 'agenda') grouped['para-hoje'].items.push(t)
+    else if (origin === 'family') grouped.familia.items.push(t)
+    else if (origin === 'selfcare') grouped.autocuidado.items.push(t)
+    else if (origin === 'home') grouped['rotina-casa'].items.push(t)
+    else grouped.outros.items.push(t)
+  }
+
+  return grouped
+}
