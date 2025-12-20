@@ -169,6 +169,36 @@ function StepPill({
 
 /**
  * =========================================================
+ * API payload (compatível com useProfile)
+ * =========================================================
+ */
+function buildProfileApiPayload(form: ProfileFormState) {
+  // Mantemos compatibilidade máxima com o que o useProfile tenta ler:
+  // - motherName
+  // - nomeMae
+  // - name
+  // - children
+  // - figurinha
+  return {
+    motherName: form.nomeMae?.trim() ?? '',
+    nomeMae: form.nomeMae?.trim() ?? '',
+    name: form.nomeMae?.trim() ?? '',
+    figurinha: form.figurinha,
+    children: Array.isArray(form.filhos)
+      ? form.filhos
+          .map((c) => (c?.nome ?? '').trim())
+          .filter((n) => Boolean(n))
+      : [],
+    // Extra: guardamos o formulário completo para usos futuros sem quebrar nada
+    eu360: {
+      profile: form,
+      updatedAtISO: new Date().toISOString(),
+    },
+  }
+}
+
+/**
+ * =========================================================
  * COMPONENT
  * =========================================================
  */
@@ -304,7 +334,12 @@ export default function ProfileForm() {
     setStep(s => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
   }
 
-  function saveAndContinue() {
+  async function saveAndContinue() {
+    // Mantém o comportamento atual + “liga” o salvamento real
+    // Sem mudar UI, sem mudar fluxo.
+    const ok = validateStep(1) // garante o mínimo (nome) antes de salvar
+    if (!ok) return
+
     try {
       track('eu360.profile.saved', {
         figurinha: form.figurinha ?? null,
@@ -312,6 +347,39 @@ export default function ProfileForm() {
         step,
       })
     } catch {}
+
+    // 🔗 Salvamento “de verdade” no mesmo endpoint que o useProfile lê
+    try {
+      const payload = buildProfileApiPayload(form)
+
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        // Se backend ainda não estiver pronto, não quebramos UX.
+        // O LS já salva de qualquer forma; mas o nome não vai aparecer no Meu Dia até o /api/profile persistir.
+        try {
+          track('eu360.profile.save_failed', { status: res.status })
+        } catch {}
+      } else {
+        // Notifica o app (mesmo padrão do eu360:persona-updated)
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('profile:updated'))
+          }
+        } catch {}
+      }
+    } catch {
+      // Silencioso: não altera layout, não joga alert.
+      // LS continua salvando.
+      try {
+        track('eu360.profile.save_error', {})
+      } catch {}
+    }
   }
 
   return (
