@@ -576,7 +576,7 @@ export default function WeeklyPlannerCore() {
                       promptReminder({
                         title: 'O que você quer lembrar hoje?',
                         placeholder: '',
-                        origin: 'outros',
+                        origin: 'custom',
                       })
                     }
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
