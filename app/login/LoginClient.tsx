@@ -10,6 +10,8 @@ type UiError = {
   kind: 'generic' | 'not_confirmed' | 'network' | 'rate_limit'
 }
 
+const SEEN_KEY = 'm360_seen_welcome_v1'
+
 function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
   if (!target) return fallback
   const t = target.trim()
@@ -23,7 +25,6 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/ma
 function mapAuthErrorToUi(errorMessage: string): UiError {
   const msg = (errorMessage || '').toLowerCase()
 
-  // Supabase costuma retornar "Email not confirmed"
   if (msg.includes('email not confirmed') || msg.includes('not confirmed')) {
     return {
       title: 'Falta só confirmar seu e-mail',
@@ -33,7 +34,6 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
     }
   }
 
-  // Credenciais
   if (msg.includes('invalid login credentials') || msg.includes('invalid') || msg.includes('credentials')) {
     return {
       title: 'E-mail ou senha não conferem',
@@ -42,7 +42,6 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
     }
   }
 
-  // Rede / instabilidade
   if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('fetch')) {
     return {
       title: 'Parece que a conexão oscilou',
@@ -51,7 +50,6 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
     }
   }
 
-  // Rate limit / muitas tentativas (varia conforme resposta)
   if (msg.includes('too many') || msg.includes('rate') || msg.includes('limit')) {
     return {
       title: 'Vamos com calma',
@@ -84,9 +82,24 @@ export default function LoginClient() {
   const [resendMsg, setResendMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    // Se já estiver logada, não faz sentido ficar no /login
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace(redirectTo)
+      if (!data.session) return
+
+      // Se já logada, aplica regra P25:
+      // - se não viu onboarding ainda -> /bem-vinda
+      // - senão -> redirectTo (comportamento atual)
+      let seen = false
+      try {
+        seen = localStorage.getItem(SEEN_KEY) === '1'
+      } catch {
+        seen = false
+      }
+
+      if (!seen) {
+        router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
+      } else {
+        router.replace(redirectTo)
+      }
     })
   }, [supabase, router, redirectTo])
 
@@ -110,13 +123,24 @@ export default function LoginClient() {
       return
     }
 
+    // P25: primeira vez -> /bem-vinda
+    let seen = false
+    try {
+      seen = localStorage.getItem(SEEN_KEY) === '1'
+    } catch {
+      seen = false
+    }
+
+    if (!seen) {
+      router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
+      return
+    }
+
     router.replace(redirectTo)
   }
 
   async function onResendConfirmation() {
     const cleanEmail = email.trim()
-
-    // UX: não expor “erro técnico”; pedir o mínimo
     if (!cleanEmail) {
       setResendMsg('Me diga seu e-mail acima para eu reenviar o link de confirmação.')
       return
@@ -152,9 +176,7 @@ export default function LoginClient() {
     <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center px-4">
       <div className="w-full max-w-[420px] rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <h1 className="text-lg font-semibold text-[var(--color-text-main)]">Entrar</h1>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          Acesse sua conta para continuar sua jornada.
-        </p>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Acesse sua conta para continuar sua jornada.</p>
 
         <form className="mt-5 space-y-3" onSubmit={onSubmit}>
           <div className="space-y-1">
@@ -197,9 +219,7 @@ export default function LoginClient() {
                     {resendLoading ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
                   </button>
 
-                  {resendMsg ? (
-                    <div className="text-[11px] text-[var(--color-text-muted)]">{resendMsg}</div>
-                  ) : null}
+                  {resendMsg ? <div className="text-[11px] text-[var(--color-text-muted)]">{resendMsg}</div> : null}
                 </div>
               ) : null}
             </div>
