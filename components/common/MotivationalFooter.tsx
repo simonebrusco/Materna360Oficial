@@ -26,10 +26,9 @@ export function MotivationalFooter({ routeKey = 'meu-dia' }: MotivationalFooterP
   const phrase = MOTIVATIONAL_PHRASES[routeKey] || MOTIVATIONAL_PHRASES['meu-dia']
   const displayName = name && name.trim() ? name.split(' ')[0] : null
 
-  if (isLoading || !displayName) {
-    return null
-  }
-
+  if (isLoading || !displayName || routeKey === 'meu-dia') {
+  return null
+}
   return (
     <div className="mt-10 text-center">
       <div className="flex items-center justify-center gap-2">
