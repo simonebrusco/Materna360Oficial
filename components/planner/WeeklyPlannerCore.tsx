@@ -175,6 +175,191 @@ function normalizeText(s: string) {
   return (s ?? '').trim().replace(/\s+/g, ' ')
 }
 
+/* ======================================================
+   ONBOARDING — trilha contextual (desktop: mini-card; mobile: bottom sheet)
+====================================================== */
+type CoachStep = 'planner' | 'reminders' | 'appointments'
+const COACH_KEY = 'm360_meudia_coach_v1'
+
+function getIsMobileNow() {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.matchMedia('(max-width: 768px)').matches
+  } catch {
+    return false
+  }
+}
+
+function InfoDot({
+  onClick,
+  hidden,
+  label = 'Ajuda',
+}: {
+  onClick: () => void
+  hidden?: boolean
+  label?: string
+}) {
+  if (hidden) return null
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-soft-strong)] bg-white/85 hover:bg-[var(--color-soft-bg)] transition-colors"
+      aria-label={label}
+      title={label}
+    >
+      <span className="text-[12px] font-semibold text-[var(--color-brand)]">ⓘ</span>
+    </button>
+  )
+}
+
+function CoachMiniCard({
+  title,
+  lines,
+  primaryLabel,
+  secondaryLabel,
+  onPrimary,
+  onSecondary,
+}: {
+  title: string
+  lines: string[]
+  primaryLabel: string
+  secondaryLabel?: string
+  onPrimary: () => void
+  onSecondary?: () => void
+}) {
+  return (
+    <div className="absolute left-4 right-4 top-[68px] z-[55]">
+      <div className="rounded-3xl border border-[var(--color-soft-strong)] bg-white shadow-[0_18px_60px_rgba(0,0,0,0.18)] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+              Primeiros passos
+            </p>
+            <h4 className="text-sm font-semibold text-[var(--color-text-main)] mt-1">{title}</h4>
+          </div>
+
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-bg)] border border-[var(--color-soft-strong)]">
+            <span className="text-[12px] font-semibold text-[var(--color-brand)]">✨</span>
+          </span>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {lines.map((t, idx) => (
+            <p key={idx} className="text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+              {t}
+            </p>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-2">
+          {secondaryLabel && onSecondary ? (
+            <button
+              type="button"
+              onClick={onSecondary}
+              className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+            >
+              {secondaryLabel}
+            </button>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={onPrimary}
+            className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
+          >
+            {primaryLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CoachBottomSheet({
+  open,
+  title,
+  lines,
+  primaryLabel,
+  secondaryLabel,
+  onPrimary,
+  onSecondary,
+  onClose,
+}: {
+  open: boolean
+  title: string
+  lines: string[]
+  primaryLabel: string
+  secondaryLabel?: string
+  onPrimary: () => void
+  onSecondary?: () => void
+  onClose: () => void
+}) {
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Ajuda do Meu Dia">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-label="Fechar"
+      />
+
+      <div className="absolute left-1/2 bottom-4 w-[92%] max-w-md -translate-x-1/2">
+        <div className="rounded-3xl border border-[var(--color-soft-strong)] bg-white shadow-[0_18px_70px_rgba(0,0,0,0.22)] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                Primeiros passos
+              </p>
+              <h4 className="text-sm font-semibold text-[var(--color-text-main)] mt-1">{title}</h4>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-2">
+            {lines.map((t, idx) => (
+              <p key={idx} className="text-[12px] leading-relaxed text-[var(--color-text-muted)]">
+                {t}
+              </p>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-end gap-2">
+            {secondaryLabel && onSecondary ? (
+              <button
+                type="button"
+                onClick={onSecondary}
+                className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+              >
+                {secondaryLabel}
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={onPrimary}
+              className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
+            >
+              {primaryLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // =======================================================
 // COMPONENTE PRINCIPAL
 // =======================================================
@@ -207,34 +392,6 @@ export default function WeeklyPlannerCore() {
   const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
-
-  // ======================================================
-  // Onboarding (cardzinhos externos) — 1ª vez no Meu Dia
-  // ======================================================
-  const ONBOARDING_KEY = 'onboarding.meu-dia.v1'
-  const [showOnboarding, setShowOnboarding] = useState(false)
-  const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3>(1)
-
-  useEffect(() => {
-    if (!isHydrated) return
-    try {
-      const seen = localStorage.getItem(ONBOARDING_KEY)
-      setShowOnboarding(!seen)
-    } catch {
-      setShowOnboarding(false)
-    }
-  }, [isHydrated])
-
-  const dismissOnboarding = () => {
-    try {
-      localStorage.setItem(ONBOARDING_KEY, '1')
-    } catch {}
-    setShowOnboarding(false)
-  }
-
-  const nextOnboarding = () => {
-    setOnboardingStep((s) => (s === 3 ? 3 : ((s + 1) as 1 | 2 | 3)))
-  }
 
   // Atualiza signal quando persona mudar
   useEffect(() => {
@@ -282,6 +439,38 @@ export default function WeeklyPlannerCore() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [editingDraft, setEditingDraft] = useState('')
 
+  // ---------- Onboarding contextual (NEW) ----------
+  const [coachStep, setCoachStep] = useState<CoachStep | null>(null)
+  const [coachEnabled, setCoachEnabled] = useState(false)
+  const [isMobileCoach, setIsMobileCoach] = useState(false)
+
+  const markCoachDone = useCallback(() => {
+    try {
+      localStorage.setItem(COACH_KEY, '1')
+    } catch {}
+    setCoachEnabled(false)
+    setCoachStep(null)
+  }, [])
+
+  const openCoach = useCallback((step: CoachStep) => {
+    setCoachStep(step)
+    setCoachEnabled(true)
+  }, [])
+
+  const nextCoach = useCallback(() => {
+    setCoachStep((prev) => {
+      if (prev === 'planner') return 'reminders'
+      if (prev === 'reminders') return 'appointments'
+      if (prev === 'appointments') return null
+      return 'planner'
+    })
+  }, [])
+
+  const closeCoach = useCallback(() => {
+    setCoachEnabled(false)
+    setCoachStep(null)
+  }, [])
+
   // ======================================================
   // HYDRATION
   // ======================================================
@@ -298,6 +487,31 @@ export default function WeeklyPlannerCore() {
     try {
       track('planner.opened', { tab: 'meu-dia', dateKey })
     } catch {}
+
+    // onboarding: apenas 1ª vez
+    try {
+      const seen = localStorage.getItem(COACH_KEY)
+      if (!seen) {
+        setCoachEnabled(true)
+        setCoachStep('planner')
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    setIsMobileCoach(getIsMobileNow())
+    if (typeof window === 'undefined') return
+
+    const onResize = () => setIsMobileCoach(getIsMobileNow())
+    try {
+      window.addEventListener('resize', onResize)
+    } catch {}
+
+    return () => {
+      try {
+        window.removeEventListener('resize', onResize)
+      } catch {}
+    }
   }, [])
 
   // ======================================================
@@ -563,6 +777,67 @@ export default function WeeklyPlannerCore() {
   }
 
   // ======================================================
+  // COACH CONTENT
+  // ======================================================
+  const coachContent = useMemo(() => {
+    const common = {
+      planner: {
+        title: 'Calendário do Planner',
+        lines: [
+          'Aqui você escolhe um dia e já cria um compromisso — sem precisar “planejar tudo”.',
+          'Se quiser, comece só registrando um combinado. Isso já organiza seu dia.',
+        ],
+      },
+      reminders: {
+        title: 'Lembretes do dia',
+        lines: [
+          'Registre pequenas coisas que importam hoje. Uma frase curta já é suficiente.',
+          'Você pode marcar como feito e usar o menu “⋮” para editar ou excluir.',
+        ],
+      },
+      appointments: {
+        title: 'Compromissos',
+        lines: [
+          'Aqui ficam seus combinados e horários do Materna360.',
+          'Toque em um compromisso para editar, ajustar horário ou excluir.',
+        ],
+      },
+    }
+
+    if (!coachStep) return null
+    if (coachStep === 'planner') return common.planner
+    if (coachStep === 'reminders') return common.reminders
+    return common.appointments
+  }, [coachStep])
+
+  const coachPrimaryLabel = useMemo(() => {
+    if (!coachStep) return 'Entendi'
+    if (coachStep === 'appointments') return 'Entendi'
+    return 'Próximo'
+  }, [coachStep])
+
+  const coachSecondaryLabel = useMemo(() => {
+    if (!coachStep) return undefined
+    return 'Fechar'
+  }, [coachStep])
+
+  const onCoachPrimary = useCallback(() => {
+    if (!coachStep) return
+    if (coachStep === 'appointments') {
+      markCoachDone()
+      return
+    }
+    nextCoach()
+  }, [coachStep, markCoachDone, nextCoach])
+
+  const onCoachSecondary = useCallback(() => {
+    // fechar (sem marcar como done): caso a mãe feche, não some pra sempre.
+    closeCoach()
+  }, [closeCoach])
+
+  const shouldRenderCoach = coachEnabled && !!coachStep && !!coachContent
+
+  // ======================================================
   // RENDER
   // ======================================================
   return (
@@ -570,7 +845,7 @@ export default function WeeklyPlannerCore() {
       <Reveal>
         <div className="space-y-6 md:space-y-8">
           {/* HEADER / CONTROLES */}
-          <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
+          <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 relative">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -591,112 +866,60 @@ export default function WeeklyPlannerCore() {
                 </div>
               </button>
 
-              <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('day')}
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all outline-none focus:outline-none focus-visible:outline-none ${
-                    viewMode === 'day'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                >
-                  Dia
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('week')}
-                  className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all outline-none focus:outline-none focus-visible:outline-none ${
-                    viewMode === 'week'
-                      ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
-                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
-                  }`}
-                >
-                  Semana
-                </button>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-2 bg-[var(--color-soft-bg)]/80 p-1 rounded-full">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('day')}
+                    className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all outline-none focus:outline-none focus-visible:outline-none ${
+                      viewMode === 'day'
+                        ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+                    }`}
+                  >
+                    Dia
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('week')}
+                    className={`px-4 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all outline-none focus:outline-none focus-visible:outline-none ${
+                      viewMode === 'week'
+                        ? 'bg-white text-[var(--color-brand)] shadow-[0_2px_8px_rgba(253,37,151,0.2)]'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-brand)]'
+                    }`}
+                  >
+                    Semana
+                  </button>
+                </div>
+
+                {/* ⓘ do calendário (apenas na 1ª vez / enquanto onboarding ativo) */}
+                <InfoDot
+                  hidden={!shouldRenderCoach || coachStep !== 'planner' ? true : false}
+                  onClick={() => openCoach('planner')}
+                  label="Como usar o calendário"
+                />
               </div>
             </div>
+
+            {/* MINI-CARD (desktop) — Planner */}
+            {shouldRenderCoach && coachStep === 'planner' && !isMobileCoach && coachContent ? (
+              <CoachMiniCard
+                title={coachContent.title}
+                lines={coachContent.lines}
+                primaryLabel={coachPrimaryLabel}
+                secondaryLabel={coachSecondaryLabel}
+                onPrimary={onCoachPrimary}
+                onSecondary={onCoachSecondary}
+              />
+            ) : null}
           </SoftCard>
 
           {viewMode === 'week' && <WeekView weekData={weekData} />}
 
           {viewMode === 'day' && (
             <div className="space-y-6">
-              {/* ======================================================
-                  ONBOARDING (cardzinhos externos) — só 1ª vez
-                 ====================================================== */}
-              {showOnboarding && (
-                <div className="space-y-3">
-                  {onboardingStep === 1 && (
-                    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-5">
-                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        PRIMEIRO ACESSO
-                      </p>
-                      <p className="mt-2 text-sm text-[var(--color-text-main)]">
-                        Aqui você não precisa “dar conta de tudo”. A ideia é só organizar o que fizer sentido hoje.
-                      </p>
-
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={nextOnboarding}
-                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e00070]"
-                        >
-                          Entendi
-                        </button>
-                      </div>
-                    </SoftCard>
-                  )}
-
-                  {onboardingStep === 2 && (
-                    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-5">
-                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        DICA RÁPIDA
-                      </p>
-                      <p className="mt-2 text-sm text-[var(--color-text-main)]">
-                        Comece pelos <strong>Lembretes do dia</strong>: um lembrete curto já muda o ritmo.
-                      </p>
-                      <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-                        Use o <strong>+</strong> para registrar, e o <strong>⋮</strong> para editar ou excluir.
-                      </p>
-
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={nextOnboarding}
-                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e00070]"
-                        >
-                          Entendi
-                        </button>
-                      </div>
-                    </SoftCard>
-                  )}
-
-                  {onboardingStep === 3 && (
-                    <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-5">
-                      <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        ORGANIZAÇÃO DO TEMPO
-                      </p>
-                      <p className="mt-2 text-sm text-[var(--color-text-main)]">
-                        Quando quiser, use o card do final da página para abrir o calendário do planner e se organizar com calma.
-                      </p>
-
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={dismissOnboarding}
-                          className="rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e00070]"
-                        >
-                          Entendi
-                        </button>
-                      </div>
-                    </SoftCard>
-                  )}
-                </div>
-              )}
-
               {/* LEMBRETES */}
-              <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 space-y-4">
+              <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 space-y-4 relative">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
@@ -716,16 +939,35 @@ export default function WeeklyPlannerCore() {
                     )}
                   </div>
 
-                  {/* + abre modal interno (sem prompt do browser) */}
-                  <button
-                    type="button"
-                    onClick={() => openReminderModal('other')}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
-                    aria-label="Adicionar lembrete"
-                  >
-                    +
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* ⓘ do card Lembretes (apenas na 1ª vez / enquanto onboarding ativo) */}
+                    {shouldRenderCoach && (
+                      <InfoDot onClick={() => openCoach('reminders')} label="Como usar lembretes" />
+                    )}
+
+                    {/* + abre modal interno (sem prompt do browser) */}
+                    <button
+                      type="button"
+                      onClick={() => openReminderModal('other')}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
+                      aria-label="Adicionar lembrete"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
+
+                {/* MINI-CARD (desktop) — Lembretes */}
+                {shouldRenderCoach && coachStep === 'reminders' && !isMobileCoach && coachContent ? (
+                  <CoachMiniCard
+                    title={coachContent.title}
+                    lines={coachContent.lines}
+                    primaryLabel={coachPrimaryLabel}
+                    secondaryLabel={coachSecondaryLabel}
+                    onPrimary={onCoachPrimary}
+                    onSecondary={onCoachSecondary}
+                  />
+                ) : null}
 
                 <div className="space-y-2">
                   {plannerData.tasks.length === 0 ? (
@@ -927,7 +1169,7 @@ export default function WeeklyPlannerCore() {
               </SoftCard>
 
               {/* AGENDA & COMPROMISSOS */}
-              <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
+              <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 relative">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="space-y-1">
                     <p className="text-[10px] md:text-[11px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
@@ -939,15 +1181,34 @@ export default function WeeklyPlannerCore() {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => openCreateAppointmentModal(selectedDateKey)}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
-                    aria-label="Adicionar compromisso"
-                  >
-                    +
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* ⓘ do card Compromissos (apenas na 1ª vez / enquanto onboarding ativo) */}
+                    {shouldRenderCoach && (
+                      <InfoDot onClick={() => openCoach('appointments')} label="Como usar compromissos" />
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => openCreateAppointmentModal(selectedDateKey)}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
+                      aria-label="Adicionar compromisso"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
+
+                {/* MINI-CARD (desktop) — Compromissos */}
+                {shouldRenderCoach && coachStep === 'appointments' && !isMobileCoach && coachContent ? (
+                  <CoachMiniCard
+                    title={coachContent.title}
+                    lines={coachContent.lines}
+                    primaryLabel={coachPrimaryLabel}
+                    secondaryLabel={coachSecondaryLabel}
+                    onPrimary={onCoachPrimary}
+                    onSecondary={onCoachSecondary}
+                  />
+                ) : null}
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {sortedAppointments.length === 0 ? (
@@ -1015,7 +1276,7 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* CARD FINAL — abre calendário do planner (ÚNICO clicável para calendário) */}
+          {/* CARD FINAL — abre calendário do planner */}
           <SoftCard
             className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
             onClick={openMonthSheet}
@@ -1028,7 +1289,7 @@ export default function WeeklyPlannerCore() {
             </p>
           </SoftCard>
 
-          {/* Card de navegação dia anterior/próximo (mantém sentido, SEM competir com o card do calendário) */}
+          {/* Card de navegação dia anterior/próximo (mantém sentido) */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -1063,11 +1324,25 @@ export default function WeeklyPlannerCore() {
             </div>
 
             <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
-              Use as setas para navegar entre dias.
+              Se fizer sentido, você pode revisar um dia anterior ou se organizar para o próximo.
             </p>
           </SoftCard>
         </div>
       </Reveal>
+
+      {/* COACH — mobile bottom sheet */}
+      {shouldRenderCoach && isMobileCoach && coachContent ? (
+        <CoachBottomSheet
+          open={true}
+          title={coachContent.title}
+          lines={coachContent.lines}
+          primaryLabel={coachPrimaryLabel}
+          secondaryLabel={coachSecondaryLabel}
+          onPrimary={onCoachPrimary}
+          onSecondary={onCoachSecondary}
+          onClose={closeCoach}
+        />
+      ) : null}
 
       {/* MODAL: adicionar lembrete (substitui prompt azul) */}
       {reminderModalOpen && (
