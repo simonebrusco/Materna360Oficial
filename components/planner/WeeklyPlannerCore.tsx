@@ -411,7 +411,7 @@ export default function WeeklyPlannerCore() {
     (opts?: { title?: string; placeholder?: string; origin?: TaskOrigin }) => {
       const message = opts?.title ?? 'O que você quer lembrar hoje?'
       const placeholder = opts?.placeholder ?? ''
-      const origin = opts?.origin ?? 'custom'
+      const origin = (opts?.origin ?? 'outros') as TaskOrigin
 
       const text = window.prompt(message, placeholder)
       const normalized = (text ?? '').trim()
@@ -576,7 +576,7 @@ export default function WeeklyPlannerCore() {
                       promptReminder({
                         title: 'O que você quer lembrar hoje?',
                         placeholder: '',
-                        origin: 'custom',
+                        origin: 'outros',
                       })
                     }
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
