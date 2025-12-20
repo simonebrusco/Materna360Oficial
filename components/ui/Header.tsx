@@ -5,6 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import { DEFAULT_STICKER_ID, isProfileStickerId, resolveSticker } from '@/app/lib/stickers'
+import { useProfile } from '@/app/hooks/useProfile'
+import { getTimeGreeting } from '@/app/lib/getTimeGreeting'
 
 interface HeaderProps {
   title: string
@@ -17,6 +19,14 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
   const [isLoadingSticker, setIsLoadingSticker] = useState(false)
+
+  // ✅ Nome da mãe (vem do /api/profile via hook já existente)
+  const { name, isLoading: isLoadingProfile } = useProfile()
+
+  const greeting = useMemo(() => {
+    if (isLoadingProfile) return 'Olá'
+    return getTimeGreeting(name)
+  }, [name, isLoadingProfile])
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12)
@@ -50,9 +60,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
         const data = await response.json()
         if (!isMounted) return
 
-        const nextStickerId = isProfileStickerId(data?.figurinha)
-          ? data.figurinha
-          : DEFAULT_STICKER_ID
+        const nextStickerId = isProfileStickerId(data?.figurinha) ? data.figurinha : DEFAULT_STICKER_ID
 
         setStickerId(nextStickerId)
       } catch (error) {
@@ -88,12 +96,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
       }`}
     >
       <div className="relative mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link
-          href="/"
-          aria-label="Ir para a página inicial"
-          className="flex shrink-0 items-center"
-          prefetch={false}
-        >
+        <Link href="/" aria-label="Ir para a página inicial" className="flex shrink-0 items-center" prefetch={false}>
           <Image
             src="https://cdn.builder.io/api/v1/image/assets/7d9c3331dcd74ab1a9d29c625c41f24c/9c5c687deb494038abfe036af2f531dc"
             alt="Materna360"
@@ -110,31 +113,36 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           {title}
         </h1>
 
-        {showNotification && (
-          <div className="flex items-center gap-3">
-            <Link
-              href="/eu360"
-              prefetch={false}
-              className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
-              aria-label={`Vibe de perfil: ${sticker.label}`}
-            >
-              <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-              <span className="absolute inset-0 rounded-full border border-white/60" aria-hidden />
+        {/* ✅ Direita: Saudação + (opcional) notificação/vibe */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-support-2/80 whitespace-nowrap">{greeting}</span>
 
-              {isLoadingSticker ? (
-                <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
-              ) : (
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-bg-pinksoft)]">
-                  <Icon className="h-4.5 w-4.5 text-[var(--color-plum)]" />
-                </span>
-              )}
-            </Link>
+          {showNotification && (
+            <>
+              <Link
+                href="/eu360"
+                prefetch={false}
+                className="group relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/70 text-primary shadow-soft transition-all duration-300 ease-gentle hover:-translate-y-0.5 hover:shadow-elevated"
+                aria-label={`Vibe de perfil: ${sticker.label}`}
+              >
+                <span className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <span className="absolute inset-0 rounded-full border border-white/60" aria-hidden />
 
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary shadow-soft">
-              {sticker.label}
-            </span>
-          </div>
-        )}
+                {isLoadingSticker ? (
+                  <span className="h-5 w-5 animate-pulse rounded-full bg-primary/30" aria-hidden />
+                ) : (
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-bg-pinksoft)]">
+                    <Icon className="h-4.5 w-4.5 text-[var(--color-plum)]" />
+                  </span>
+                )}
+              </Link>
+
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary shadow-soft">
+                {sticker.label}
+              </span>
+            </>
+          )}
+        </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
       </div>
