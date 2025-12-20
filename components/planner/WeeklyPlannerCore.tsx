@@ -411,7 +411,9 @@ export default function WeeklyPlannerCore() {
     (opts?: { title?: string; placeholder?: string; origin?: TaskOrigin }) => {
       const message = opts?.title ?? 'O que você quer lembrar hoje?'
       const placeholder = opts?.placeholder ?? ''
-      const origin = (opts?.origin ?? 'outros') as TaskOrigin
+      // ✅ TaskOrigin NÃO aceita "outros" e, no seu arquivo atual, também não aceita "custom".
+      // Para lembrete livre (mãe cria), usamos "other".
+      const origin: TaskOrigin = opts?.origin ?? 'other'
 
       const text = window.prompt(message, placeholder)
       const normalized = (text ?? '').trim()
@@ -569,14 +571,14 @@ export default function WeeklyPlannerCore() {
                     )}
                   </div>
 
-                  {/* ✅ Agora é lembrete (não agenda) */}
+                  {/* ✅ Agora é lembrete livre (não agenda) */}
                   <button
                     type="button"
                     onClick={() =>
                       promptReminder({
                         title: 'O que você quer lembrar hoje?',
                         placeholder: '',
-                        origin: 'custom',
+                        origin: 'other',
                       })
                     }
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
