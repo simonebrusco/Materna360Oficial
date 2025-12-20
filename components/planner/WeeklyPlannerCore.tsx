@@ -749,8 +749,6 @@ export default function WeeklyPlannerCore() {
 
   const monthMatrix = useMemo(() => generateMonthMatrix(monthCursor), [monthCursor])
 
-  if (!isHydrated) return null
-
   // ======================================================
   // REMINDER MODAL ACTIONS
   // ======================================================
@@ -840,6 +838,8 @@ export default function WeeklyPlannerCore() {
   // ======================================================
   // RENDER
   // ======================================================
+  if (!isHydrated) return null
+  
   return (
     <>
       <Reveal>
