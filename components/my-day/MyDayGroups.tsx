@@ -3,22 +3,14 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { track } from '@/app/lib/telemetry'
 import {
   groupTasks,
   listMyDayTasks,
-  removeTask,
-  snoozeTask,
-  toggleDone,
-  unsnoozeTask,
   type GroupedTasks,
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
-import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
-import { getRecentMyDaySignal } from '@/app/lib/myDayMemory.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 
@@ -27,10 +19,6 @@ type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'e
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
-
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(' ')
-}
 
 /* =========================
    Helpers base
@@ -64,10 +52,7 @@ function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
    Ordenação contextual (mantida)
 ========================= */
 
-function sortForGroup(
-  items: MyDayTaskItem[],
-  opts: { premium: boolean; persona?: PersonaId },
-) {
+function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?: PersonaId }) {
   const { premium, persona } = opts
 
   const statusRank = (t: MyDayTaskItem) => {
@@ -98,23 +83,16 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
-  const [continuityLine, setContinuityLine] = useState<string | null>(null)
 
   const experienceTier = getExperienceTier()
   const densityLevel = getDensityLevel()
   const isPremiumExperience = experienceTier === 'premium'
 
-  const dateKey = useMemo(() => getBrazilDateKey(new Date()), [])
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const personaId = getPersonaId(aiContext)
 
   const totalCount = tasks.length
   const hasAny = totalCount > 0
-
-  const recentSignal = useMemo(() => {
-    if (!isPremiumExperience) return null
-    return getRecentMyDaySignal(dateKey)
-  }, [isPremiumExperience, dateKey])
 
   const effectiveLimit = useMemo(() => {
     const raw = Number(euSignal?.listLimit)
@@ -148,11 +126,14 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       {!hasAny ? (
         <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">
-            Tudo certo por aqui.
-          </h4>
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
+
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-            Quando você salvar algo no Maternar, ele aparece aqui automaticamente.
+            Quando você registrar algo no Materna360 — no Maternar ou no Meu Dia — ele aparece aqui automaticamente.
+          </p>
+
+          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
+            Comece pequeno, se fizer sentido. Um lembrete simples já ajuda.
           </p>
         </div>
       ) : (
@@ -188,9 +169,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                       key={t.id}
                       className="flex items-start justify-between gap-3 rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]"
                     >
-                      <p className="text-[14px] text-[var(--color-text-main)]">
-                        {t.title}
-                      </p>
+                      <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
                     </div>
                   ))}
                 </div>
