@@ -6,7 +6,6 @@ import Link from 'next/link'
 
 import { DEFAULT_STICKER_ID, isProfileStickerId, resolveSticker } from '@/app/lib/stickers'
 import { useProfile } from '@/app/hooks/useProfile'
-import { getTimeGreeting } from '@/app/lib/getTimeGreeting'
 
 interface HeaderProps {
   title: string
@@ -14,6 +13,36 @@ interface HeaderProps {
 }
 
 const PROFILE_UPDATED_EVENT = 'materna:profile-updated'
+
+/**
+ * Get time-based greeting in Portuguese
+ * Bom dia: until 11:59
+ * Boa tarde: 12:00-17:59
+ * Boa noite: 18:00+
+ */
+function getTimeGreetingLocal(name?: string): string {
+  if (typeof window === 'undefined') {
+    return 'Olá'
+  }
+
+  const hour = new Date().getHours()
+  let greeting: string
+
+  if (hour < 12) {
+    greeting = 'Bom dia'
+  } else if (hour < 18) {
+    greeting = 'Boa tarde'
+  } else {
+    greeting = 'Boa noite'
+  }
+
+  if (name && name.trim()) {
+    const firstName = name.split(' ')[0]
+    return `${greeting}, ${firstName}`
+  }
+
+  return greeting
+}
 
 export function Header({ title, showNotification = false }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -25,7 +54,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
 
   const greeting = useMemo(() => {
     if (isLoadingProfile) return 'Olá'
-    return getTimeGreeting(name)
+    return getTimeGreetingLocal(name)
   }, [name, isLoadingProfile])
 
   useEffect(() => {
