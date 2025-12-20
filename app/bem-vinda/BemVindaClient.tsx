@@ -1,27 +1,45 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+
+function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
+  if (!target) return fallback
+  const t = target.trim()
+  if (!t) return fallback
+  if (!t.startsWith('/')) return fallback
+  if (t.startsWith('//')) return fallback
+  if (t.includes('\\')) return fallback
+  return t
+}
+
+const SEEN_KEY = 'm360_seen_welcome_v1'
 
 export default function BemVindaClient() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const nextRaw = searchParams.get('next')
+  const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
 
   function onStart() {
-    // Por enquanto, só navega.
-    // O controle "já viu onboarding" entra no próximo passo.
-    router.push('/meu-dia')
+    try {
+      localStorage.setItem(SEEN_KEY, '1')
+    } catch {
+      // silencioso
+    }
+    router.push(nextDest)
   }
 
   return (
     <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center px-4">
       <div className="w-full max-w-[520px] rounded-3xl border border-black/10 bg-white p-8 shadow-sm">
-        {/* BLOCO 1 — FRASE ÂNCORA */}
         <h1 className="text-2xl font-semibold leading-tight text-[var(--color-text-main)]">
           Você não está falhando.
           <br />
           Você está cansada.
         </h1>
 
-        {/* BLOCO 2 — ESPELHAMENTO */}
         <p className="mt-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
           Entre trabalho, casa, filhos e expectativas,
           <br />
@@ -30,7 +48,6 @@ export default function BemVindaClient() {
           parece que nunca é suficiente.
         </p>
 
-        {/* BLOCO 3 — VIRADA EMOCIONAL */}
         <p className="mt-5 text-sm leading-relaxed text-[var(--color-text-main)]">
           O <strong>Materna360</strong> não existe para te ensinar
           <br />
@@ -45,18 +62,14 @@ export default function BemVindaClient() {
           com menos culpa e mais leveza.
         </p>
 
-        {/* BLOCO 4 — PROMESSA CONCRETA */}
         <div className="mt-6 space-y-2 text-sm text-[var(--color-text-muted)]">
           <p>• Um jeito mais gentil de organizar o dia</p>
           <p>• Um espaço que também é seu</p>
           <p>• Pequenos apoios pensados para a vida real</p>
         </div>
 
-        <p className="mt-4 text-xs text-[var(--color-text-muted)]">
-          Nada de cobranças. Nada de perfeição.
-        </p>
+        <p className="mt-4 text-xs text-[var(--color-text-muted)]">Nada de cobranças. Nada de perfeição.</p>
 
-        {/* CTA */}
         <button
           onClick={onStart}
           className="mt-8 w-full rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
