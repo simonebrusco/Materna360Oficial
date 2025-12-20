@@ -4,6 +4,20 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 
+// --- Helpers de segurança ---
+// Impede open redirect: só permite paths internos
+function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
+  if (!target) return fallback
+  const t = target.trim()
+  if (!t) return fallback
+
+  // Só aceitamos caminhos internos. Nada de http(s)://, //, ou \\
+  if (!t.startsWith('/')) return fallback
+  if (t.startsWith('//')) return fallback
+  if (t.includes('\\')) return fallback
+  return t
+}
+
 // Rotas públicas (sem login)
 function isPublicPath(pathname: string) {
   if (pathname === '/') return true
@@ -14,6 +28,10 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith('/legal')) return true
   if (pathname.startsWith('/waitlist')) return true
   if (pathname.startsWith('/builder-embed')) return true
+
+  // Callbacks de autenticação (confirm/reset, etc.) devem ser públicos
+  if (pathname.startsWith('/auth')) return true
+
   return false
 }
 
@@ -48,11 +66,6 @@ export async function middleware(request: NextRequest) {
     ? pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
     : pathname
 
-  // Se for rota pública, ainda podemos redirecionar "/" para "/maternar" somente se estiver logada
-  // ("/" continua público como landing, conforme P24)
-  // A verificação de sessão vem abaixo.
-
-  const url = request.nextUrl.clone()
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
   // Fallback seguro: se env do Supabase não existir no ambiente, não bloqueia (para dev/build não quebrar)
@@ -62,7 +75,7 @@ export async function middleware(request: NextRequest) {
 
   let hasSession = false
 
-  // Só cria client se houver env
+  // Sempre criamos um response base para permitir set-cookie/refresh quando necessário
   const response = NextResponse.next()
 
   if (canAuth) {
@@ -80,7 +93,8 @@ export async function middleware(request: NextRequest) {
 
   // Se está logada e visita /login ou /signup, redireciona para destino (ou /maternar)
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
-    const nextDest = request.nextUrl.searchParams.get('redirectTo') || '/maternar'
+    const rawNext = request.nextUrl.searchParams.get('redirectTo')
+    const nextDest = safeInternalRedirect(rawNext, '/maternar')
     return NextResponse.redirect(new URL(nextDest, request.url))
   }
 
@@ -100,22 +114,25 @@ export async function middleware(request: NextRequest) {
   if (isPublicPath(normalizedPath)) {
     // Se o pathname original tinha /(tabs), mantém rewrite para normalizado
     if (TABS_PREFIX_PATTERN.test(pathname)) {
-      const redirectUrl = new URL(normalizedPath, request.url)
-      return NextResponse.rewrite(redirectUrl)
+      const rewriteUrl = new URL(normalizedPath, request.url)
+      return NextResponse.rewrite(rewriteUrl)
     }
     return response
   }
 
   // Demais rotas: mantém comportamento existente de rewrite se vier com /(tabs)
   if (TABS_PREFIX_PATTERN.test(pathname)) {
-    const redirectUrl = new URL(normalizedPath, request.url)
-    return NextResponse.rewrite(redirectUrl)
+    const rewriteUrl = new URL(normalizedPath, request.url)
+    return NextResponse.rewrite(rewriteUrl)
   }
 
   return response
 }
 
 export const config = {
-  // Mantém a exclusão de _next, api e arquivos estáticos (como estava a intenção original)
-  matcher: ['/((?!_next|api|.*\\..*|builder-embed).*)'],
+  // Exclui: _next (assets internos), api, arquivos estáticos (.*\..*),
+  // e arquivos/páginas comuns de SEO/infra. Mantém builder-embed fora do middleware.
+  matcher: [
+    '/((?!_next/|api/|.*\\..*|builder-embed|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest).*)',
+  ],
 }

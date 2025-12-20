@@ -4,18 +4,84 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
+type UiError = {
+  title: string
+  message: string
+  kind: 'generic' | 'not_confirmed' | 'network' | 'rate_limit'
+}
+
+function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
+  if (!target) return fallback
+  const t = target.trim()
+  if (!t) return fallback
+  if (!t.startsWith('/')) return fallback
+  if (t.startsWith('//')) return fallback
+  if (t.includes('\\')) return fallback
+  return t
+}
+
+function mapAuthErrorToUi(errorMessage: string): UiError {
+  const msg = (errorMessage || '').toLowerCase()
+
+  // Supabase costuma retornar "Email not confirmed"
+  if (msg.includes('email not confirmed') || msg.includes('not confirmed')) {
+    return {
+      title: 'Falta só confirmar seu e-mail',
+      message:
+        'Para proteger sua conta, precisamos que você confirme seu e-mail. Se quiser, eu posso reenviar o link agora.',
+      kind: 'not_confirmed',
+    }
+  }
+
+  // Credenciais
+  if (msg.includes('invalid login credentials') || msg.includes('invalid') || msg.includes('credentials')) {
+    return {
+      title: 'E-mail ou senha não conferem',
+      message: 'Sem problema. Confira os dados e tente mais uma vez, no seu ritmo.',
+      kind: 'generic',
+    }
+  }
+
+  // Rede / instabilidade
+  if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('fetch')) {
+    return {
+      title: 'Parece que a conexão oscilou',
+      message: 'Respira. Tente novamente — às vezes é só um instante de instabilidade.',
+      kind: 'network',
+    }
+  }
+
+  // Rate limit / muitas tentativas (varia conforme resposta)
+  if (msg.includes('too many') || msg.includes('rate') || msg.includes('limit')) {
+    return {
+      title: 'Vamos com calma',
+      message: 'Foram muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.',
+      kind: 'rate_limit',
+    }
+  }
+
+  return {
+    title: 'Não consegui te conectar agora',
+    message: 'Tente novamente em instantes. Se continuar, a gente resolve com calma.',
+    kind: 'generic',
+  }
+}
+
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
-
   const supabase = useMemo(() => createClientComponentClient(), [])
 
-  const redirectTo = searchParams.get('redirectTo') || '/maternar'
+  const redirectToRaw = searchParams.get('redirectTo')
+  const redirectTo = safeInternalRedirect(redirectToRaw, '/maternar')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const [uiError, setUiError] = useState<UiError | null>(null)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMsg, setResendMsg] = useState<string | null>(null)
 
   useEffect(() => {
     // Se já estiver logada, não faz sentido ficar no /login
@@ -27,21 +93,59 @@ export default function LoginClient() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setErrorMsg(null)
+    setUiError(null)
+    setResendMsg(null)
+
+    const cleanEmail = email.trim()
 
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email: cleanEmail,
       password,
     })
 
     setLoading(false)
 
     if (error) {
-      setErrorMsg(error.message)
+      setUiError(mapAuthErrorToUi(error.message))
       return
     }
 
     router.replace(redirectTo)
+  }
+
+  async function onResendConfirmation() {
+    const cleanEmail = email.trim()
+
+    // UX: não expor “erro técnico”; pedir o mínimo
+    if (!cleanEmail) {
+      setResendMsg('Me diga seu e-mail acima para eu reenviar o link de confirmação.')
+      return
+    }
+
+    setResendLoading(true)
+    setResendMsg(null)
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: cleanEmail,
+      })
+
+      if (error) {
+        const lower = (error.message || '').toLowerCase()
+        if (lower.includes('rate') || lower.includes('too many')) {
+          setResendMsg('Eu já enviei há pouco. Aguarde alguns minutos e tente novamente.')
+        } else {
+          setResendMsg('Não consegui reenviar agora. Tente novamente em instantes.')
+        }
+      } else {
+        setResendMsg('Pronto. Reenviei o link. Veja também sua caixa de spam e promoções.')
+      }
+    } catch {
+      setResendMsg('Não consegui reenviar agora. Tente novamente em instantes.')
+    } finally {
+      setResendLoading(false)
+    }
   }
 
   return (
@@ -77,9 +181,27 @@ export default function LoginClient() {
             />
           </div>
 
-          {errorMsg ? (
+          {uiError ? (
             <div className="rounded-xl border border-black/10 bg-black/5 px-3 py-2 text-xs text-[var(--color-text-main)]">
-              {errorMsg}
+              <div className="font-semibold">{uiError.title}</div>
+              <div className="mt-1 text-[var(--color-text-muted)]">{uiError.message}</div>
+
+              {uiError.kind === 'not_confirmed' ? (
+                <div className="mt-2 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={onResendConfirmation}
+                    disabled={resendLoading}
+                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-[var(--color-text-main)] disabled:opacity-60"
+                  >
+                    {resendLoading ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
+                  </button>
+
+                  {resendMsg ? (
+                    <div className="text-[11px] text-[var(--color-text-muted)]">{resendMsg}</div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -91,6 +213,12 @@ export default function LoginClient() {
             {loading ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
+
+        <div className="mt-3 text-xs text-[var(--color-text-muted)]">
+          <a className="underline" href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}>
+            Esqueci minha senha
+          </a>
+        </div>
 
         <div className="mt-4 text-xs text-[var(--color-text-muted)]">
           Ainda não tem conta?{' '}
