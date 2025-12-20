@@ -82,8 +82,7 @@ function buildWeekData(baseDate: Date, plannerData: PlannerData): WeekDaySummary
     agendaCountByKey[a.dateKey] = (agendaCountByKey[a.dateKey] ?? 0) + 1
   }
 
-  // Nota: as tasks atuais são carregadas por dia (selectedDateKey), então estes counts
-  // representam o dia selecionado (não a semana inteira). Mantido assim por ora.
+  // Nota: tasks são carregadas por dia (selectedDateKey), então estes counts representam o dia selecionado.
   const selectedKey = getBrazilDateKey(baseDate)
   const counts = { top3: 0, selfcare: 0, family: 0 }
   for (const t of plannerData.tasks) {
@@ -170,6 +169,78 @@ function generateMonthMatrix(monthBase: Date): MonthCell[][] {
 }
 
 // =======================================================
+// MODAL DE LEMBRETE (substitui window.prompt)
+// =======================================================
+function ReminderModal(props: {
+  open: boolean
+  title: string
+  placeholder?: string
+  onClose: () => void
+  onSubmit: (text: string) => void
+}) {
+  const { open, title, placeholder, onClose, onSubmit } = props
+  const [value, setValue] = useState('')
+
+  useEffect(() => {
+    if (open) setValue('')
+  }, [open])
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Adicionar lembrete">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-label="Fechar"
+      />
+
+      <div className="absolute left-1/2 top-[18%] w-[92%] max-w-md -translate-x-1/2">
+        <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
+          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+            Lembrete
+          </p>
+
+          <h3 className="mt-1 text-base font-semibold text-[var(--color-text-main)]">{title}</h3>
+
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder ?? ''}
+            className="mt-3 w-full rounded-2xl border border-[var(--color-soft-strong)] bg-white px-4 py-3 text-sm outline-none focus:border-[var(--color-brand)]"
+            autoFocus
+          />
+
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const normalized = (value ?? '').trim()
+                if (!normalized) return
+                onSubmit(normalized)
+                onClose()
+              }}
+              className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
+            >
+              Salvar
+            </button>
+          </div>
+        </SoftCard>
+      </div>
+    </div>
+  )
+}
+
+// =======================================================
 // COMPONENTE PRINCIPAL
 // =======================================================
 export default function WeeklyPlannerCore() {
@@ -207,18 +278,11 @@ export default function WeeklyPlannerCore() {
     const refresh = () => {
       try {
         setEuSignal(getEu360Signal())
-      } catch {
-        // nunca quebra render
-      }
+      } catch {}
     }
 
-    const onStorage = (_e: StorageEvent) => {
-      refresh()
-    }
-
-    const onCustom = () => {
-      refresh()
-    }
+    const onStorage = (_e: StorageEvent) => refresh()
+    const onCustom = () => refresh()
 
     try {
       window.addEventListener('storage', onStorage)
@@ -233,7 +297,7 @@ export default function WeeklyPlannerCore() {
     }
   }, [])
 
-  // Reset do "mostrar tudo" quando troca o dia (ritmo não empurra excesso)
+  // Reset do "mostrar tudo" quando troca o dia
   useEffect(() => {
     setShowAllReminders(false)
     setShowAllAppointments(false)
@@ -247,6 +311,23 @@ export default function WeeklyPlannerCore() {
   // Sheet premium: calendário mensal
   const [monthSheetOpen, setMonthSheetOpen] = useState(false)
   const [monthCursor, setMonthCursor] = useState<Date>(toFirstOfMonth(new Date()))
+
+  // Modal lembretes (substitui prompt nativo)
+  const [reminderModalOpen, setReminderModalOpen] = useState(false)
+  const [reminderModalTitle, setReminderModalTitle] = useState('O que você quer lembrar hoje?')
+  const [reminderModalPlaceholder, setReminderModalPlaceholder] = useState('')
+  const [reminderModalOrigin, setReminderModalOrigin] = useState<TaskOrigin>('today')
+
+  const openReminderModal = useCallback((opts?: { title?: string; placeholder?: string; origin?: TaskOrigin }) => {
+    setReminderModalTitle(opts?.title ?? 'O que você quer lembrar hoje?')
+    setReminderModalPlaceholder(opts?.placeholder ?? '')
+    setReminderModalOrigin(opts?.origin ?? 'today')
+    setReminderModalOpen(true)
+
+    try {
+      track('planner.reminder_modal_opened', { tab: 'meu-dia', origin: opts?.origin ?? 'today' })
+    } catch {}
+  }, [])
 
   // ======================================================
   // HYDRATION
@@ -309,7 +390,6 @@ export default function WeeklyPlannerCore() {
   useEffect(() => {
     if (!isHydrated) return
 
-    // Só mostra continuidade no dia atual (centro operacional do "agora")
     if (!selectedDateKey || selectedDateKey !== todayKey) {
       setContinuityLine('')
       return
@@ -403,26 +483,6 @@ export default function WeeklyPlannerCore() {
       tasks: prev.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
     }))
   }, [])
-
-  // ======================================================
-  // LEMBRETES (livre arbítrio)
-  // ======================================================
-  const promptReminder = useCallback(
-    (opts?: { title?: string; placeholder?: string; origin?: TaskOrigin }) => {
-      const message = opts?.title ?? 'O que você quer lembrar hoje?'
-      const placeholder = opts?.placeholder ?? ''
-      // ✅ TaskOrigin NÃO aceita "outros" e, no seu arquivo atual, também não aceita "custom".
-      // Para lembrete livre (mãe cria), usamos "other".
-      const origin: TaskOrigin = opts?.origin ?? 'other'
-
-      const text = window.prompt(message, placeholder)
-      const normalized = (text ?? '').trim()
-      if (!normalized) return
-
-      addTask(normalized, origin)
-    },
-    [addTask],
-  )
 
   // ======================================================
   // MODAL OPENERS
@@ -565,20 +625,19 @@ export default function WeeklyPlannerCore() {
                       <p className="text-[11px] text-[var(--color-text-muted)] mt-2">{lessLine}</p>
                     )}
 
-                    {/* P13 — continuidade (discreta, 1x/dia, só hoje) */}
                     {!!continuityLine && (
                       <p className="text-[11px] text-[var(--color-text-muted)] mt-2">{continuityLine}</p>
                     )}
                   </div>
 
-                  {/* ✅ Agora é lembrete livre (não agenda) */}
+                  {/* ✅ Agora abre modal do app (não prompt do navegador) */}
                   <button
                     type="button"
                     onClick={() =>
-                      promptReminder({
+                      openReminderModal({
                         title: 'O que você quer lembrar hoje?',
                         placeholder: '',
-                        origin: 'other',
+                        origin: 'today',
                       })
                     }
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070] transition-all"
@@ -651,12 +710,12 @@ export default function WeeklyPlannerCore() {
                   )}
                 </div>
 
-                {/* ✅ Atalhos viram sugestões editáveis */}
+                {/* ✅ Atalhos viram sugestões editáveis (via modal) */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() =>
-                      promptReminder({
+                      openReminderModal({
                         title: 'O que realmente importa agora?',
                         placeholder: isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial',
                         origin: 'top3',
@@ -678,7 +737,7 @@ export default function WeeklyPlannerCore() {
                   <button
                     type="button"
                     onClick={() =>
-                      promptReminder({
+                      openReminderModal({
                         title: 'Qual respiro pequeno cabe hoje?',
                         placeholder: 'Ex.: água, banho com calma, alongar 2 min…',
                         origin: 'selfcare',
@@ -692,7 +751,7 @@ export default function WeeklyPlannerCore() {
                   <button
                     type="button"
                     onClick={() =>
-                      promptReminder({
+                      openReminderModal({
                         title: 'Que cuidado importante você quer registrar?',
                         placeholder: 'Ex.: recado da escola, remédio, conversa…',
                         origin: 'family',
@@ -794,7 +853,7 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-          {/* Card de navegação (agora com sentido) */}
+          {/* ✅ Card final agora tem ação clara: abrir calendário */}
           <SoftCard className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -829,10 +888,21 @@ export default function WeeklyPlannerCore() {
             <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
               Se fizer sentido, você pode revisar um dia anterior ou se organizar para o próximo.
             </p>
+
+            <div className="mt-3 flex justify-center">
+              <button
+                type="button"
+                onClick={openMonthSheet}
+                className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+              >
+                Abrir calendário
+              </button>
+            </div>
           </SoftCard>
         </div>
       </Reveal>
 
+      {/* Month sheet */}
       {monthSheetOpen && (
         <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Calendário do mês">
           <button
@@ -953,6 +1023,20 @@ export default function WeeklyPlannerCore() {
         </div>
       )}
 
+      {/* Reminder modal (substitui prompt azul) */}
+      <ReminderModal
+        open={reminderModalOpen}
+        title={reminderModalTitle}
+        placeholder={reminderModalPlaceholder}
+        onClose={() => setReminderModalOpen(false)}
+        onSubmit={(text) => {
+          addTask(text, reminderModalOrigin)
+          try {
+            track('planner.reminder_created', { tab: 'meu-dia', origin: reminderModalOrigin })
+          } catch {}
+        }}
+      />
+
       <AppointmentModal
         open={appointmentModalOpen}
         mode={appointmentModalMode}
@@ -970,9 +1054,6 @@ export default function WeeklyPlannerCore() {
               title: data.title,
               time: data.time,
             })
-
-            // ✅ Mantemos agenda como compromisso. Não duplicamos em lembretes automaticamente aqui.
-            // Se no futuro quisermos espelhar, isso vira regra configurável/premium invisível.
           } else if (editingAppointment) {
             const updated: Appointment = {
               ...editingAppointment,
