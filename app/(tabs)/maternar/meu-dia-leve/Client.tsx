@@ -24,9 +24,6 @@ type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
-// P26 — regras por idade
-const MIN_MONTHS_FOR_ANY_RECIPE = 12
-
 type RecentSavePayload = {
   ts: number
   origin: TaskOrigin
@@ -86,10 +83,58 @@ function monthsBetween(from: Date, to: Date) {
 }
 
 /**
- * P26 — Eu360 como fonte de verdade (sem pedir idade aqui)
- * Tenta várias chaves para casar com o que já existe no projeto.
+ * P26 — Eu360 como fonte de verdade (com múltiplos filhos)
+ *
+ * Regra:
+ * - Preferir um filho elegível (>=12m) => pega o MENOR >= 12 (mais restritivo, mais seguro)
+ * - Se não houver >=12, mas houver >=6 => pega o MENOR >= 6
+ * - Senão => pega o menor que existir (<6) para bloquear corretamente
+ * - Se não tiver idade nenhuma => null (trava e pede Eu360)
  */
-function inferChildAgeMonthsFromEu360(): number | null {
+function inferRecipeEligibleChildAgeMonthsFromEu360(): number | null {
+  // 1) tentar objetos “perfil/form/state” (mais prováveis)
+  const profileCandidates = ['eu360_profile', 'eu360_profile_v1', 'eu360_state', 'eu360_data', 'eu360_form', 'eu360_form_v1']
+  for (const k of profileCandidates) {
+    const obj = safeParseJSON(safeGetLS(k))
+    if (!obj) continue
+
+    // a) lista de filhos
+    const children = obj?.children
+    if (Array.isArray(children)) {
+      const ages = children
+        .map((c: any) => {
+          // ageMonths direto
+          const n = safeParseInt(c?.ageMonths ?? c?.childAgeMonths ?? c?.babyAgeMonths ?? c?.months)
+          if (n !== null) return Math.max(0, Math.min(240, n))
+
+          // ou birthdate
+          const d = safeParseDate(c?.birthdate ?? c?.dob ?? c?.childBirthdate ?? c?.babyBirthdate)
+          if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
+
+          return null
+        })
+        .filter((n: any): n is number => typeof n === 'number')
+
+      if (ages.length) {
+        const over12 = ages.filter((n) => n >= 12)
+        if (over12.length) return Math.min(...over12)
+
+        const over6 = ages.filter((n) => n >= 6)
+        if (over6.length) return Math.min(...over6)
+
+        return Math.min(...ages)
+      }
+    }
+
+    // b) fallback: um campo único (caso exista em versões antigas)
+    const single = safeParseInt(obj?.childAgeMonths ?? obj?.babyAgeMonths ?? obj?.ageMonths ?? obj?.months)
+    if (single !== null) return Math.max(0, Math.min(240, single))
+
+    const d = safeParseDate(obj?.childBirthdate ?? obj?.babyBirthdate ?? obj?.birthdate ?? obj?.dob)
+    if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
+  }
+
+  // 2) tentar chaves diretas (compatibilidade)
   const directCandidates = [
     'eu360_child_age_months',
     'eu360_childAgeMonths',
@@ -97,66 +142,20 @@ function inferChildAgeMonthsFromEu360(): number | null {
     'eu360_babyAgeMonths',
     'eu360_age_months',
     'eu360_ageMonths',
-    'eu360_child_months',
-    'eu360_baby_months',
-    'child_age_months',
     'childAgeMonths',
-    'babyAgeMonths',
-    'age_months',
     'ageMonths',
-    'eu360_months',
-    'months',
   ]
-
   for (const k of directCandidates) {
     const raw = safeGetLS(k)
     const n = safeParseInt(raw)
     if (n !== null) return Math.max(0, Math.min(240, n))
   }
 
-  const birthCandidates = [
-    'eu360_child_birthdate',
-    'eu360_childBirthdate',
-    'eu360_baby_birthdate',
-    'eu360_babyBirthdate',
-    'child_birthdate',
-    'childBirthdate',
-    'eu360_child_dob',
-    'child_dob',
-    'dob',
-  ]
+  // 3) birthdate direta
+  const birthCandidates = ['eu360_child_birthdate', 'eu360_childBirthdate', 'eu360_baby_birthdate', 'eu360_babyBirthdate', 'dob']
   for (const k of birthCandidates) {
     const raw = safeGetLS(k)
     const d = safeParseDate(raw)
-    if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
-  }
-
-  const profileCandidates = ['eu360_profile', 'eu360_profile_v1', 'eu360_state', 'eu360_data', 'eu360_form', 'eu360_form_v1']
-  for (const k of profileCandidates) {
-    const obj = safeParseJSON(safeGetLS(k))
-    if (!obj) continue
-
-    const n1 = safeParseInt(
-      obj?.childAgeMonths ??
-        obj?.babyAgeMonths ??
-        obj?.ageMonths ??
-        obj?.child_age_months ??
-        obj?.baby_age_months ??
-        obj?.months,
-    )
-    if (n1 !== null) return Math.max(0, Math.min(240, n1))
-
-    const d =
-      safeParseDate(
-        obj?.childBirthdate ??
-          obj?.babyBirthdate ??
-          obj?.birthdate ??
-          obj?.child_birthdate ??
-          obj?.dob ??
-          obj?.childDob ??
-          obj?.babyDob,
-      ) || null
-
     if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
   }
 
@@ -228,14 +227,14 @@ const IDEIAS: QuickIdea[] = [
   { tag: '5 min', title: 'Organizar um ponto só', how: 'Uma bancada ou mesa. Não a casa toda.', slot: '5', focus: 'casa' },
   { tag: '10 min', title: 'Música + tarefa que já existe', how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.', slot: '10', focus: 'voce' },
   { tag: '10 min', title: 'Banho/escova em modo leve', how: 'Transforme a rotina em “missão” rápida e sem discussão.', slot: '10', focus: 'filho' },
-  { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo pronto. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
+  { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo simples. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
 ]
 
 const RECEITAS: QuickRecipe[] = [
-  { tag: '3 min', title: 'Iogurte + fruta + um crocante', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
-  { tag: '5 min', title: 'Ovo mexido + arroz pronto', how: 'Arroz já pronto + ovo mexido. Legume se der.', slot: '5' },
-  { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Simples e suficiente para uma rotina corrida.', slot: '5' },
-  { tag: '10 min', title: 'Sopa/caldo pronto + final leve', how: 'Esquentar + montar bem. Resolve sem esticar o dia.', slot: '10' },
+  { tag: '3 min', title: 'Iogurte + fruta', how: 'Montagem rápida e simples.', slot: '3' },
+  { tag: '5 min', title: 'Ovo mexido + arroz pronto', how: 'Opção rápida com comida de verdade.', slot: '5' },
+  { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Lanche simples para manter a rotina.', slot: '5' },
+  { tag: '10 min', title: 'Caldo/sopa + ajuste de textura', how: 'Esquentar e servir com calma.', slot: '10' },
 ]
 
 const PASSO_LEVE: DayLine[] = [
@@ -306,24 +305,7 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
-function extractRecipeTitle(text: string) {
-  const t = String(text || '').trim()
-  if (!t) return 'Receita'
-  const firstLine = t.split('\n')[0]?.trim()
-  return firstLine && firstLine.length <= 80 ? firstLine : 'Receita'
-}
-
-/** Resposta do novo endpoint (P26) */
-type AIRecipeResponse =
-  | { ok: true; blocked: false; text: string }
-  | {
-      ok: false
-      blocked: true
-      reason: 'missing_age' | 'lt_6m' | '6_to_11m' | 'fallback'
-      title: string
-      text: string
-    }
-  | { ok: false; blocked: false; error: string }
+type AIRecipeResponse = { ok: boolean; text?: string; error?: string }
 
 async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string; childAgeMonths: number | null }): Promise<AIRecipeResponse> {
   const res = await fetch('/api/ai/meu-dia-leve/receita', {
@@ -336,8 +318,7 @@ async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string; 
       childAgeMonths: input.childAgeMonths,
     }),
   })
-
-  if (!res.ok) return { ok: false, blocked: false, error: `http_${res.status}` }
+  if (!res.ok) return { ok: false, error: `http_${res.status}` }
   return (await res.json()) as AIRecipeResponse
 }
 
@@ -373,11 +354,11 @@ export default function MeuDiaLeveClient() {
     setFocus(inferred.focus)
     setStep('inspiracao')
 
-    const months = inferChildAgeMonthsFromEu360()
+    const months = inferRecipeEligibleChildAgeMonthsFromEu360()
     setChildAgeMonths(months)
 
     try {
-      track('meu_dia_leve.open', { slot: inferred.slot, mood: inferred.mood, focus: inferred.focus, ageKnown: months !== null })
+      track('meu_dia_leve.open', { slot: inferred.slot, mood: inferred.mood, focus: inferred.focus, ageKnown: months !== null, months })
     } catch {}
   }, [])
 
@@ -485,71 +466,72 @@ export default function MeuDiaLeveClient() {
     window.setTimeout(() => setSaveFeedback(''), 2200)
   }
 
-  // Gate P26 (client)
   const ageKnown = childAgeMonths !== null
-  const gateReason: 'missing_age' | 'lt_6m' | '6_to_11m' | 'lt_12m' | null = useMemo(() => {
-    if (childAgeMonths === null) return 'missing_age'
-    if (childAgeMonths < 6) return 'lt_6m'
-    if (childAgeMonths >= 6 && childAgeMonths < 12) return '6_to_11m'
-    return null
-  }, [childAgeMonths])
-
-  const recipeGateBlocked = gateReason !== null
+  const recipeBlockedUnder6 = ageKnown && childAgeMonths! < 6
+  const recipeIntroPhase = ageKnown && childAgeMonths! >= 6 && childAgeMonths! < 12
+  const recipeAllowed = ageKnown && childAgeMonths! >= 12
 
   async function onGenerateAIRecipe() {
     setAiRecipeError('')
     setAiRecipeText('')
 
-    // Gate local: não chama endpoint se estiver bloqueado
-    if (recipeGateBlocked) {
+    if (!ageKnown) {
+      toast.info('Para sugerir receitas com segurança, complete a idade do(s) filho(s) no Eu360.')
       try {
-        track('meu_dia_leve.recipe.blocked', { reason: gateReason, months: childAgeMonths ?? 'unknown' })
+        track('meu_dia_leve.recipe.blocked', { reason: 'age_unknown' })
+      } catch {}
+      return
+    }
+
+    if (recipeBlockedUnder6) {
+      try {
+        track('meu_dia_leve.recipe.blocked', { reason: 'child_under_6_months', months: childAgeMonths })
+      } catch {}
+      return
+    }
+
+    if (recipeIntroPhase) {
+      try {
+        track('meu_dia_leve.recipe.blocked', { reason: 'intro_feeding_phase_6_12', months: childAgeMonths })
       } catch {}
       return
     }
 
     const trimmed = pantry.trim()
     if (!trimmed) {
-      toast.info('Escreva, em poucas palavras, o que você tem disponível.')
+      toast.info('Escreva curto o que você tem em casa (ex.: “banana, iogurte, aveia”).')
       return
     }
 
     setAiRecipeLoading(true)
     try {
       try {
-        track('meu_dia_leve.recipe.ai.request', {
-          slot,
-          mood,
-          pantryLen: trimmed.length,
-          childAgeMonths,
-        })
+        track('meu_dia_leve.recipe.ai.request', { slot, mood, pantryLen: trimmed.length, months: childAgeMonths })
       } catch {}
 
       const data = await requestAIRecipe({ slot, mood, pantry: trimmed, childAgeMonths })
 
-      // Se o servidor bloquear por algum motivo, respeita e mostra mensagem
-      if ((data as any)?.blocked) {
-        const d = data as any
-        setAiRecipeError(d?.reason || 'blocked')
-        setAiRecipeText(`${d?.title}\n\n${d?.text}`)
+      if (!data?.ok || !data.text) {
+        setAiRecipeError(data?.error || 'erro')
+        if (data?.error === 'age_required') {
+          toast.info('Complete a idade do(s) filho(s) no Eu360 para receitas seguras.')
+        } else if (data?.error === 'child_under_6_months') {
+          toast.info('Para bebês com menos de 6 meses, o Materna não sugere receitas.')
+        } else if (data?.error === 'intro_feeding_phase_6_12') {
+          toast.info('Entre 6 e 12 meses, siga a orientação do pediatra para introdução alimentar.')
+        } else {
+          toast.info('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
+        }
+
         try {
-          track('meu_dia_leve.recipe.ai.blocked', { reason: d?.reason || 'blocked_server' })
+          track('meu_dia_leve.recipe.ai.fail', { error: data?.error || 'no_text' })
         } catch {}
         return
       }
 
-      if (!(data as any)?.ok || !(data as any)?.text) {
-        setAiRecipeError((data as any)?.error || 'erro_ia')
-        toast.info('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
-        try {
-          track('meu_dia_leve.recipe.ai.fail', { error: (data as any)?.error || 'no_text' })
-        } catch {}
-        return
-      }
-
-      setAiRecipeText((data as any).text)
+      setAiRecipeText(data.text)
       try {
-        track('meu_dia_leve.recipe.ai.ok', { slot, mood })
+        track('meu_dia_leve.recipe.ai.ok', { slot, mood, months: childAgeMonths })
       } catch {}
     } catch {
       setAiRecipeError('erro_rede')
@@ -824,55 +806,41 @@ export default function MeuDiaLeveClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Receitas
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Uma receita simples, com cuidado</h2>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Receitas simples, seguras e do dia a dia</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Você escreve o que tem. O Materna devolve uma receita curta, com ingredientes e modo de preparo.
+                            Para sugerir com responsabilidade, o Materna usa a idade do Eu360.
                           </p>
                         </div>
                       </div>
 
-                      {/* BLOQUEIOS POR IDADE */}
-                      {gateReason === 'missing_age' ? (
-                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">antes de sugerir receitas</div>
+                      {/* BLOQUEIOS */}
+                      {!ageKnown ? (
+                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">preciso de um dado</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Para sugerir receitas com segurança, o Materna usa a idade registrada no Eu360.
+                            Para sugerir receitas com segurança, complete a idade do(s) filho(s) no Eu360.
                           </div>
-
                           <div className="mt-4 flex flex-wrap gap-2">
                             <Link
                               href="/eu360"
                               className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                             >
-                              Completar no Eu360
+                              Ir para Eu360
                             </Link>
-
                             <button
                               onClick={() => go('ideias')}
                               className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                             >
-                              Voltar para ideias rápidas
-                            </button>
-
-                            <button
-                              onClick={() => go('passo')}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Fechar com o passo leve
+                              Usar ideias rápidas
                             </button>
                           </div>
                         </div>
-                      ) : null}
-
-                      {gateReason === 'lt_6m' ? (
-                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para bebês com menos de 6 meses</div>
+                      ) : recipeBlockedUnder6 ? (
+                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">por enquanto, não</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Aqui o Materna não sugere receitas. Nessa fase, a base costuma ser o leite (materno ou fórmula).
-                            <br />
-                            Se você estiver em dúvida, vale alinhar com o pediatra.
+                            Para bebês com menos de 6 meses, o Materna não sugere receitas aqui. A orientação principal é aleitamento (conforme acompanhamento médico).
                           </div>
-
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               onClick={() => go('ideias')}
@@ -880,33 +848,20 @@ export default function MeuDiaLeveClient() {
                             >
                               Voltar para ideias rápidas
                             </button>
-
                             <button
                               onClick={() => go('passo')}
                               className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                             >
-                              Fechar com o passo leve
+                              Fechar com passo leve
                             </button>
-
-                            <Link
-                              href="/meu-dia"
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Ir para Meu Dia
-                            </Link>
                           </div>
                         </div>
-                      ) : null}
-
-                      {gateReason === '6_to_11m' ? (
-                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para a fase de 6 a 11 meses</div>
+                      ) : recipeIntroPhase ? (
+                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">introdução alimentar</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Aqui o Materna não gera receitas prontas. Essa é a fase de introdução alimentar, que costuma ser individual.
-                            <br />
-                            O mais seguro é alinhar com o pediatra (ou nutricionista infantil) sobre o que entra e como entra.
+                            Entre 6 e 12 meses, a introdução alimentar precisa seguir a orientação do pediatra. Por isso, o Materna não gera receitas automáticas aqui.
                           </div>
-
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               onClick={() => go('ideias')}
@@ -914,38 +869,28 @@ export default function MeuDiaLeveClient() {
                             >
                               Voltar para ideias rápidas
                             </button>
-
-                            <button
-                              onClick={() => go('passo')}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Fechar com o passo leve
-                            </button>
-
                             <Link
-                              href="/meu-dia"
+                              href="/eu360"
                               className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                             >
-                              Ir para Meu Dia
+                              Revisar Eu360
                             </Link>
                           </div>
                         </div>
-                      ) : null}
-
-                      {/* LIBERADO (>= 12 meses) */}
-                      {!recipeGateBlocked ? (
+                      ) : (
                         <>
+                          {/* GERADOR */}
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem disponível</div>
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Escreva curto. Ex.: “ovo, pão, queijo” ou “banana, aveia, iogurte”.
+                              Escreva curto (2–3 itens ajudam bastante). Ex.: “banana, iogurte, aveia”.
                             </div>
 
                             <textarea
                               value={pantry}
                               onChange={(e) => setPantry(e.target.value)}
                               rows={3}
-                              placeholder="Escreva aqui…"
+                              placeholder="Ex.: banana, iogurte, aveia"
                               className="mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
                             />
 
@@ -953,17 +898,19 @@ export default function MeuDiaLeveClient() {
                               <button
                                 type="button"
                                 onClick={onGenerateAIRecipe}
-                                disabled={aiRecipeLoading}
+                                disabled={aiRecipeLoading || !recipeAllowed}
                                 className={[
                                   'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                  aiRecipeLoading ? 'bg-[#fd2597]/70 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+                                  aiRecipeLoading || !recipeAllowed
+                                    ? 'bg-[#fd2597]/60 text-white cursor-not-allowed'
+                                    : 'bg-[#fd2597] text-white hover:opacity-95',
                                 ].join(' ')}
                               >
                                 {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                               </button>
 
                               {aiRecipeError ? (
-                                <span className="text-[12px] text-[#6a6a6a]">Se não der agora, você pode usar uma opção pronta abaixo.</span>
+                                <span className="text-[12px] text-[#6a6a6a]">Não deu certo agora. Você ainda pode usar uma opção pronta abaixo.</span>
                               ) : null}
                             </div>
 
@@ -974,7 +921,7 @@ export default function MeuDiaLeveClient() {
 
                                 <div className="mt-4 flex flex-wrap gap-2">
                                   <button
-                                    onClick={() => saveCurrentToMyDay(extractRecipeTitle(aiRecipeText))}
+                                    onClick={() => saveCurrentToMyDay('Receita para criança')}
                                     className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                                   >
                                     Salvar no Meu Dia
@@ -984,13 +931,14 @@ export default function MeuDiaLeveClient() {
                                     onClick={() => go('passo')}
                                     className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                                   >
-                                    Fechar com o passo leve
+                                    Fechar com passo leve
                                   </button>
                                 </div>
                               </div>
                             ) : null}
                           </div>
 
+                          {/* OPÇÕES PRONTAS */}
                           <div className="mt-4 space-y-2">
                             {recipesForNow.map((r, idx) => {
                               const active = pickedRecipe === idx
@@ -1036,7 +984,7 @@ export default function MeuDiaLeveClient() {
                                 onClick={() => go('passo')}
                                 className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                               >
-                                Fechar com o passo leve
+                                Fechar com passo leve
                               </button>
 
                               <button
@@ -1048,7 +996,7 @@ export default function MeuDiaLeveClient() {
                             </div>
                           </div>
                         </>
-                      ) : null}
+                      )}
                     </SoftCard>
                   </div>
                 ) : null}
