@@ -5,7 +5,12 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
-import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import {
+  addTaskToMyDay,
+  listMyDayTasks,
+  MY_DAY_SOURCES,
+  type MyDayTaskItem,
+} from '@/app/lib/myDayTasks.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -91,6 +96,46 @@ function inferContext(): { time: TimeMode; age: AgeBand } {
 
   return { time, age }
 }
+
+/* =========================
+   P26 — Guardrails + Jornada
+========================= */
+
+function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
+  const s = (t as any).status
+  if (s === 'active' || s === 'snoozed' || s === 'done') return s
+  if ((t as any).done === true) return 'done'
+  return 'active'
+}
+
+function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
+  return tasks.filter((t) => {
+    const isFamily = t.origin === 'family'
+    const isFromMeuFilho = (t as any).source === MY_DAY_SOURCES.MATERNAR_MEU_FILHO
+    const isActive = statusOf(t) === 'active'
+    return isFamily && isFromMeuFilho && isActive
+  }).length
+}
+
+function markFamilyDoneForJourney() {
+  try {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const dk = `${y}-${m}-${day}`
+
+    window.localStorage.setItem('journey/family/doneOn', dk)
+    const raw = window.localStorage.getItem('journey/family/doneCount')
+    const n = raw ? Number(raw) : 0
+    const next = Number.isFinite(n) ? n + 1 : 1
+    window.localStorage.setItem('journey/family/doneCount', String(next))
+  } catch {}
+}
+
+/* =========================
+   KITS
+========================= */
 
 const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
   '0-2': {
@@ -329,6 +374,49 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
+  function saveSelectedToMyDay() {
+    const ORIGIN = 'family' as const
+    const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
+
+    // Guardrail P26: no máximo 3 tarefas ativas do Meu Filho no dia
+    const today = listMyDayTasks()
+    const activeCount = countActiveFamilyFromMeuFilhoToday(today)
+    if (activeCount >= 3) {
+      toast.info('Você já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
+      try {
+        track('my_day.task.add.blocked', { source: SOURCE, origin: ORIGIN, reason: 'limit_reached', limit: 3 })
+      } catch {}
+      return
+    }
+
+    const res = addTaskToMyDay({
+      title: selected.title,
+      origin: ORIGIN,
+      source: SOURCE,
+    })
+
+    if (res.created) toast.success('Salvo no Meu Dia')
+    else toast.info('Já estava no Meu Dia')
+
+    try {
+      track('my_day.task.add', {
+        ok: !!res.ok,
+        created: !!res.created,
+        origin: ORIGIN,
+        source: SOURCE,
+        dateKey: res.dateKey,
+      })
+    } catch {}
+  }
+
+  function registerFamilyJourney() {
+    markFamilyDoneForJourney()
+    toast.success('Registrado na sua Jornada')
+    try {
+      track('journey.family.done', { source: MY_DAY_SOURCES.MATERNAR_MEU_FILHO })
+    } catch {}
+  }
+
   return (
     <main
       data-layout="page-template-v1"
@@ -555,27 +643,7 @@ export default function MeuFilhoClient() {
 
                           <button
                             type="button"
-                            onClick={() => {
-                              const ORIGIN = 'family' as const
-                              const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
-
-                              const res = addTaskToMyDay({
-                                title: selected.title,
-                                origin: ORIGIN,
-                              })
-
-                              if (res.created) toast.success('Salvo no Meu Dia')
-                              else toast.info('Já estava no Meu Dia')
-
-                              try {
-                                track('my_day.add_task', {
-                                  source: SOURCE,
-                                  origin: ORIGIN,
-                                  dateKey: res.dateKey,
-                                  created: res.created,
-                                })
-                              } catch {}
-                            }}
+                            onClick={saveSelectedToMyDay}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                             title="Salvar esta sugestão no Meu Dia"
                           >
@@ -744,11 +812,20 @@ export default function MeuFilhoClient() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => go('brincadeiras')}
+                            onClick={registerFamilyJourney}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            title="Conta para a sua Jornada"
+                          >
+                            Registrar na Minha Jornada
+                          </button>
+
+                          <button
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Escolher outra brincadeira
                           </button>
+
                           <Link
                             href="/maternar"
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
