@@ -9,7 +9,6 @@ import {
   listMyDayTasks,
   type GroupedTasks,
   type MyDayTaskItem,
-  toggleDone,
   removeTask,
   snoozeTask,
   unsnoozeTask,
@@ -104,11 +103,6 @@ function getReturnLink(t: MyDayTaskItem): { href: string; label: string } | null
     return { href: '/maternar/meu-filho', label: 'Voltar ao Meu Filho' }
   }
 
-  // Se você tiver uma rota específica para “meu-dia-leve”, ajuste aqui.
-  // if (s === MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE) {
-  //   return { href: '/maternar/meu-dia-leve', label: 'Voltar ao Maternar' }
-  // }
-
   return null
 }
 
@@ -116,15 +110,18 @@ function getReturnLink(t: MyDayTaskItem): { href: string; label: string } | null
    Jornada mínima (P26)
 ========================= */
 
-function markSelfcareDoneForJourney() {
+function markSelfcareDoneForJourney(source: string | undefined) {
   try {
     const dk = dateKeyOfNow()
-    // Marca “feito hoje” e incrementa um contador cumulativo simples.
     window.localStorage.setItem('journey/selfcare/doneOn', dk)
+
     const raw = window.localStorage.getItem('journey/selfcare/doneCount')
     const n = raw ? Number(raw) : 0
     const next = Number.isFinite(n) ? n + 1 : 1
     window.localStorage.setItem('journey/selfcare/doneCount', String(next))
+
+    // last source (debug/telemetria)
+    if (source) window.localStorage.setItem('journey/selfcare/lastSource', source)
   } catch {}
 }
 
@@ -175,22 +172,29 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setEuSignal(getEu360Signal())
   }, [])
 
+  /**
+   * P26 — “Concluir some”
+   * Em vez de apenas marcar como done, removemos do dia.
+   * A mãe sente fechamento real e não acumula histórico aqui.
+   */
   async function onDone(t: MyDayTaskItem) {
-    const res = toggleDone(t.id)
+    const res = removeTask(t.id)
     if (res.ok) {
-      // P26: “concluir some”
       refresh()
 
-      // Jornada: conta quando for autocuidado
       if (t.origin === 'selfcare') {
-        markSelfcareDoneForJourney()
+        markSelfcareDoneForJourney((t as any).source ?? 'unknown')
         try {
           track('journey.selfcare.done', { source: (t as any).source ?? 'unknown' })
         } catch {}
       }
 
       try {
-        track('my_day.ui.done', { origin: t.origin, source: (t as any).source ?? 'unknown' })
+        track('my_day.ui.done_remove', { origin: t.origin, source: (t as any).source ?? 'unknown' })
+      } catch {}
+    } else {
+      try {
+        track('my_day.ui.done_remove', { ok: false })
       } catch {}
     }
   }
@@ -257,6 +261,9 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
             const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
             const hasMore = count > effectiveLimit
 
+            const isSelfcareGroup = groupId === 'autocuidado'
+            const selfcareTooMany = isSelfcareGroup && count >= Math.max(6, effectiveLimit + 2)
+
             return (
               <div
                 key={groupId}
@@ -277,16 +284,21 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                   ) : null}
                 </div>
 
+                {selfcareTooMany ? (
+                  <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
+                    <p className="text-[12px] text-[var(--color-text-muted)]">
+                      Dica do Materna: autocuidado funciona melhor com pouco. Escolha 1 tarefa, conclua e deixe o resto para outro dia.
+                    </p>
+                  </div>
+                ) : null}
+
                 <div className="mt-4 space-y-2">
                   {visible.map((t) => {
                     const st = statusOf(t)
                     const returnLink = getReturnLink(t)
 
                     return (
-                      <div
-                        key={t.id}
-                        className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]"
-                      >
+                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
@@ -339,15 +351,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                                 </button>
                               </>
                             ) : (
-                              // done
                               <>
-                                <button
-                                  onClick={() => onDone(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Reabrir
-                                </button>
-
                                 <button
                                   onClick={() => onRemove(t)}
                                   className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
