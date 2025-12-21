@@ -13,14 +13,11 @@ type Body = {
   pantry?: string
 }
 
-/**
- * ✅ Aceita string | undefined (para não quebrar build)
- */
 function sanitizePantry(input?: string) {
   return String(input ?? '')
     .trim()
     .replace(/\s+/g, ' ')
-    .slice(0, 160)
+    .slice(0, 240)
 }
 
 function clampSlot(slot: unknown): Slot {
@@ -32,25 +29,44 @@ function clampMood(mood: unknown): Mood {
 }
 
 /**
- * P26 — Linguagem silenciosa
- * - Sem explicar
- * - Sem ensinar
- * - Sem narrar decisão
- * - Só ação possível
+ * P26 — Receitas para criança (sem discurso nutricional)
+ * Saída: receita curta, completa, com modo de fazer.
+ * - Sem “modo corrida”, sem narrar estado, sem justificar.
+ * - Sem cardápio ideal.
+ * - Linguagem gentil e objetiva.
  */
-function buildSilentRecipeText(input: { slot: Slot; pantry: string }) {
-  const base = `Com ${input.pantry}, faz assim:`
+function buildRecipeText(input: { slot: Slot; pantry: string }) {
+  const pantry = input.pantry
 
-  if (input.slot === '3') {
-    return [base, '', '• Combine com algo que já esteja pronto.', '• Monte e sirva.'].join('\n')
-  }
+  // Ajuste de densidade pelo tempo (não é “nutrição”, é execução)
+  const steps =
+    input.slot === '3'
+      ? ['1) Separe 2 itens da sua lista.', '2) Monte do jeito mais simples.', '3) Sirva e pronto.']
+      : input.slot === '10'
+        ? [
+            '1) Escolha 1 base da sua lista (ex.: arroz, pão, macarrão, iogurte).',
+            '2) Acrescente 1 complemento (ex.: ovo, queijo, frango, fruta, legumes).',
+            '3) Finalize rápido (azeite/limão/um temperinho que você já usa) e sirva.',
+            '4) Se sobrar, guarda para mais tarde.',
+          ]
+        : [
+            '1) Escolha 1 base da sua lista (ex.: pão, arroz, massa, iogurte).',
+            '2) Acrescente 1 complemento (ex.: ovo, queijo, frango, fruta, legumes).',
+            '3) Monte, aqueça OU misture — só uma coisa. Sirva.',
+          ]
 
-  if (input.slot === '10') {
-    return [base, '', '• Escolha uma base simples.', '• Acrescente o que tiver.', '• Finalize do jeito mais fácil.'].join('\n')
-  }
-
-  // default 5 min
-  return [base, '', '• Use uma base simples.', '• Acrescente o que você listou.', '• Sirva sem complicar.'].join('\n')
+  // Receita “template” que usa o que a pessoa tem em casa (sem inventar cardápio)
+  return [
+    'Receita rápida para criança',
+    '',
+    `Você vai usar: ${pantry}.`,
+    '',
+    'Modo de fazer:',
+    ...steps,
+    '',
+    'Se não der agora:',
+    'Escolha uma das receitas rápidas abaixo e encerre por aqui.',
+  ].join('\n')
 }
 
 export async function POST(req: Request) {
@@ -61,8 +77,6 @@ export async function POST(req: Request) {
 
     const slot = clampSlot(body?.slot)
     const mood = clampMood(body?.mood)
-
-    // ✅ agora pode continuar exatamente assim
     const pantry = sanitizePantry(body?.pantry)
 
     try {
@@ -79,7 +93,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'missing_pantry' }, { status: 200 })
     }
 
-    const text = buildSilentRecipeText({ slot, pantry })
+    const text = buildRecipeText({ slot, pantry })
 
     try {
       track('ai.response', {
@@ -95,7 +109,16 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         ok: true,
-        text: ['Use o que estiver pronto.', 'Acrescente algo simples.', 'Sirva e siga.'].join('\n'),
+        text: [
+          'Receita rápida para criança',
+          '',
+          'Você vai usar: o que estiver mais fácil agora.',
+          '',
+          'Modo de fazer:',
+          '1) Escolha 1 base simples.',
+          '2) Acrescente 1 complemento.',
+          '3) Sirva e pronto.',
+        ].join('\n'),
       },
       { status: 200 },
     )
