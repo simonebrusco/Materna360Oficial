@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
+import { toast } from '@/app/lib/toast'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -21,6 +22,11 @@ type Focus = 'casa' | 'voce' | 'filho' | 'comida'
 
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 
+/**
+ * P26 — Continuidade Meu Dia -> Meu Dia Leve
+ * O Meu Dia pode ler este payload e oferecer “Voltar ao Meu Dia Leve”
+ * sem expor conteúdo sensível, só contexto mínimo.
+ */
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
 type RecentSavePayload = {
@@ -164,7 +170,7 @@ function Pill({
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
       ].join(' ')}
     >
       {children}
@@ -315,32 +321,66 @@ export default function MeuDiaLeveClient() {
   const selectedRecipe = recipesForNow[clampIndex(pickedRecipe, recipesForNow.length)]
   const selectedPasso = passosForNow[clampIndex(pickedPasso, passosForNow.length)]
 
+  /**
+   * P26 — Meu Dia Leve salva no Meu Dia com:
+   * - source: MATERNAR_MEU_DIA_LEVE
+   * - origin: inferido do focus
+   * - respeita guardrail global (anti bola-de-neve)
+   * - registra payload mínimo para “Voltar ao Meu Dia Leve”
+   */
   function saveCurrentToMyDay(title: string) {
-    const origin = originFromFocus(focus)
+    const ORIGIN = originFromFocus(focus)
+    const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE
 
     const res = addTaskToMyDay({
       title,
-      origin,
-      source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
+      origin: ORIGIN,
+      source: SOURCE,
     })
 
-    // sinal para o Meu Dia abrir o bloco certo + mostrar frase (sem conteúdo sensível)
+    // ✅ guardrail global do core (anti “bola de neve”)
+    if (res.limitHit) {
+      toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
+      try {
+        track('my_day.task.add.blocked', {
+          source: SOURCE,
+          origin: ORIGIN,
+          reason: 'open_tasks_limit_hit',
+          dateKey: res.dateKey,
+        })
+      } catch {}
+      return
+    }
+
+    // Continuidade (payload mínimo; sem conteúdo sensível)
     const payload: RecentSavePayload = {
       ts: Date.now(),
-      origin,
-      source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
+      origin: ORIGIN,
+      source: SOURCE,
     }
     safeSetJSON(LS_RECENT_SAVE, payload)
 
-    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
+    if (res.created) {
+      toast.success('Salvo no Meu Dia')
+      setSaveFeedback('Salvo no Meu Dia.')
+    } else {
+      toast.info('Já estava no Meu Dia')
+      setSaveFeedback('Essa tarefa já estava no Meu Dia.')
+    }
 
     try {
+      track('my_day.task.add', {
+        ok: !!res.ok,
+        created: !!res.created,
+        origin: ORIGIN,
+        source: SOURCE,
+        dateKey: res.dateKey,
+      })
       track('meu_dia_leve.save_to_my_day', {
-        origin,
+        origin: ORIGIN,
         created: res.created,
         dateKey: res.dateKey,
-        source: MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE,
+        source: SOURCE,
       })
     } catch {}
 
@@ -514,7 +554,9 @@ export default function MeuDiaLeveClient() {
                             Inspiração do dia
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{moodTitle(mood)}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Aqui é facilitador: uma linha para organizar o próximo passo. Sem discurso longo.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Aqui é facilitador: uma linha para organizar o próximo passo. Sem discurso longo.
+                          </p>
                         </div>
                       </div>
 
@@ -630,7 +672,9 @@ export default function MeuDiaLeveClient() {
                             Receitas rápidas
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Escolha uma solução e siga</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.
+                          </p>
                         </div>
                       </div>
 
@@ -764,9 +808,7 @@ export default function MeuDiaLeveClient() {
                           </Link>
                         </div>
 
-                        <div className="mt-4 text-[12px] text-[#6a6a6a]">
-                          Fechou. Um passo leve já é progresso no Materna360.
-                        </div>
+                        <div className="mt-4 text-[12px] text-[#6a6a6a]">Fechou. Um passo leve já é progresso no Materna360.</div>
                       </div>
                     </SoftCard>
                   </div>
