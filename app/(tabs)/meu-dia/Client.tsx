@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-
+import AppIcon from '@/components/ui/AppIcon'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
