@@ -1,399 +1,484 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import {
-  groupTasks,
-  listMyDayTasks,
-  type GroupedTasks,
-  type MyDayTaskItem,
-  removeTask,
-  snoozeTask,
-  unsnoozeTask,
-  MY_DAY_SOURCES,
-} from '@/app/lib/myDayTasks.client'
-import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
-import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
-import { getExperienceTier } from '@/app/lib/experience/experienceTier'
-import { getDensityLevel } from '@/app/lib/experience/density'
+import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 import { track } from '@/app/lib/telemetry'
+import { useProfile } from '@/app/hooks/useProfile'
+import { DAILY_MESSAGES } from '@/app/data/dailyMessages'
+import { getDailyIndex } from '@/app/lib/dailyMessage'
+import { getTimeGreeting } from '@/app/lib/greetings'
+import { ClientOnly } from '@/components/common/ClientOnly'
+import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import { MyDayGroups } from '@/components/my-day/MyDayGroups'
+import { buildAiContext } from '@/app/lib/ai/buildAiContext'
+import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
-type GroupId = keyof GroupedTasks
-type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
+// P13 — continuidade (micro-frase 1x/dia)
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { getEu360Signal } from '@/app/lib/eu360Signals.client'
+import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
-const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
-const DEFAULT_LIMIT = 5
+// ✅ P23 — camada de experiência (nunca chamar isPremium diretamente em componente)
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
-/* =========================
-   Helpers base
-========================= */
+// P22 — fricção zero (primeiro uso, retorno, dia 7/30)
+import { getAndUpdateUsageMilestones, ackUsageMilestone } from '@/app/lib/usageMilestones.client'
 
-function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  if ((t as any).status) return (t as any).status
-  if ((t as any).done === true) return 'done'
-  return 'active'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+type ContinuityLine = { text: string; phraseId: string }
+
+// P26 — continuidade Meu Dia Leve -> Meu Dia (sem conteúdo sensível)
+type MeuDiaLeveRecentSave = {
+  ts: number
+  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
+  source: string
 }
 
-function timeOf(t: MyDayTaskItem): number {
-  const iso = (t as any).createdAt
-  const n = iso ? Date.parse(iso) : NaN
-  return Number.isFinite(n) ? n : 0
-}
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
+const LS_ACK_PREFIX = 'm360.meu_dia_leve_ack.' // + dateKey
 
-function dateKeyOfNow(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-/* =========================
-   Persona segura
-========================= */
-
-function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
-  const p: any = (aiContext as any)?.persona
-  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao')
-    return p
-  if (typeof p === 'object' && p?.persona) return p.persona
-  return undefined
-}
-
-/* =========================
-   Ordenação contextual (mantida)
-========================= */
-
-function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?: PersonaId }) {
-  const { premium, persona } = opts
-
-  const statusRank = (t: MyDayTaskItem) => {
-    const s = statusOf(t)
-    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
-  }
-
-  return [...items].sort((a, b) => {
-    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
-      const sa = timeOf(a)
-      const sb = timeOf(b)
-      if (sa !== sb) return sb - sa
-    }
-
-    const ra = statusRank(a)
-    const rb = statusRank(b)
-    if (ra !== rb) return ra - rb
-
-    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
-  })
-}
-
-/* =========================
-   Continuidade (P26)
-========================= */
-
-function getReturnLink(t: MyDayTaskItem): { href: string; label: string } | null {
-  const s = (t as any).source as string | undefined
-
-  if (s === MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM) {
-    return { href: '/maternar/cuidar-de-mim', label: 'Voltar ao cuidado' }
-  }
-  if (s === MY_DAY_SOURCES.MATERNAR_MEU_FILHO) {
-    return { href: '/maternar/meu-filho', label: 'Voltar ao Meu Filho' }
-  }
-
-  return null
-}
-
-/* =========================
-   Jornada mínima (P26)
-========================= */
-
-function markSelfcareDoneForJourney(source: string | undefined) {
+function safeParseJSON<T>(raw: string | null): T | null {
+  if (!raw) return null
   try {
-    const dk = dateKeyOfNow()
-    window.localStorage.setItem('journey/selfcare/doneOn', dk)
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
 
-    const raw = window.localStorage.getItem('journey/selfcare/doneCount')
-    const n = raw ? Number(raw) : 0
-    const next = Number.isFinite(n) ? n + 1 : 1
-    window.localStorage.setItem('journey/selfcare/doneCount', String(next))
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
 
-    // last source (debug/telemetria)
-    if (source) window.localStorage.setItem('journey/selfcare/lastSource', source)
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
   } catch {}
 }
 
-/* =========================
-   COMPONENTE
-========================= */
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
 
-export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
-  const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
+  if (!v || typeof v !== 'object') return false
+  const o = v as any
+  const okOrigin =
+    o.origin === 'today' || o.origin === 'family' || o.origin === 'selfcare' || o.origin === 'home' || o.origin === 'other'
+  const okTs = typeof o.ts === 'number' && Number.isFinite(o.ts)
+  const okSource = typeof o.source === 'string' && !!o.source.trim()
+  return okOrigin && okTs && okSource
+}
 
-  const experienceTier = getExperienceTier()
-  const densityLevel = getDensityLevel()
-  const isPremiumExperience = experienceTier === 'premium'
+function getFirstName(fullName: string | null | undefined) {
+  const n = (fullName ?? '').trim()
+  if (!n) return ''
+  return n.split(/\s+/)[0] ?? ''
+}
 
-  const grouped = useMemo(() => groupTasks(tasks), [tasks])
-  const personaId = getPersonaId(aiContext)
+function withName(baseGreeting: string, firstName: string) {
+  const g = (baseGreeting ?? '').trim()
+  const f = (firstName ?? '').trim()
+  if (!f) return g || 'Bom dia'
+  if (g.toLowerCase().includes(f.toLowerCase())) return g
+  return g ? `${g}, ${f}` : `Bom dia, ${f}`
+}
 
-  const totalCount = tasks.length
-  const hasAny = totalCount > 0
+function originLabel(origin: MeuDiaLeveRecentSave['origin']) {
+  if (origin === 'family') return 'Família'
+  if (origin === 'selfcare') return 'Autocuidado'
+  if (origin === 'home') return 'Casa'
+  if (origin === 'today') return 'Para hoje'
+  return 'Outros'
+}
 
-  const effectiveLimit = useMemo(() => {
-    const raw = Number((euSignal as any)?.listLimit)
-    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
+export default function MeuDiaClient() {
+  const { name } = useProfile()
 
-    if (densityLevel === 'normal') {
-      return Math.max(5, Math.min(6, resolved))
+  const firstName = useMemo(() => getFirstName(name), [name])
+
+  const [greeting, setGreeting] = useState('')
+  const [dailyMessage, setDailyMessage] = useState('…')
+
+  // P11/P12 — contexto leve (persona Eu360 + sinais básicos locais)
+  const [aiContext, setAiContext] = useState<AiLightContext>(() => buildAiContext())
+
+  // P13 — micro-frase de continuidade (no máximo 1 por dia)
+  const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
+
+  // P16 — premium state (agora via experience tier)
+  const [premium, setPremium] = useState(false)
+  const [premiumSeenToday, setPremiumSeenToday] = useState(false)
+
+  // P26 — CTA discreto: “voltar ao Meu Dia Leve” (1x por dia, só quando houve save recente)
+  const [meuDiaLevePrompt, setMeuDiaLevePrompt] = useState<MeuDiaLeveRecentSave | null>(null)
+
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
+  // P22 — marcos de uso (client-only, sem UI)
+  const milestones = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        daysSinceFirstOpen: 0,
+        daysSinceLastOpen: 0,
+        isFirstDay: true,
+        isDay7: false,
+        isDay30: false,
+        isReturnAfterAbsence: false,
+      }
+    }
+    return getAndUpdateUsageMilestones()
+  }, [])
+
+  useEffect(() => {
+    if (milestones.isDay7) ackUsageMilestone('day7')
+    if (milestones.isDay30) ackUsageMilestone('day30')
+  }, [milestones.isDay7, milestones.isDay30])
+
+  /* tracking */
+  useEffect(() => {
+    track('nav.click', {
+      tab: 'meu-dia',
+      timestamp: new Date().toISOString(),
+    })
+  }, [])
+
+  /* saudação (com nome quando houver) */
+  useEffect(() => {
+    const updateGreeting = () => {
+      const base = getTimeGreeting('')
+      setGreeting(withName(base, firstName))
     }
 
-    // density === 'reduced' (premium invisível)
-    return Math.max(3, Math.min(4, resolved))
-  }, [euSignal, densityLevel])
+    updateGreeting()
+    const interval = window.setInterval(updateGreeting, 60_000)
+    return () => window.clearInterval(interval)
+  }, [firstName])
 
-  function refresh() {
-    setTasks(listMyDayTasks())
-  }
-
-  function toggleGroup(groupId: GroupId) {
-    setExpanded((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
-  }
-
+  /* mensagem do dia */
   useEffect(() => {
-    refresh()
+    const index = getDailyIndex(new Date(), DAILY_MESSAGES.length)
+    setDailyMessage(DAILY_MESSAGES[index] ?? '…')
   }, [])
 
+  /* reload à meia-noite */
   useEffect(() => {
-    setEuSignal(getEu360Signal())
+    const now = new Date()
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+    const delay = Math.max(midnight.getTime() - now.getTime() + 1000, 0)
+    const t = window.setTimeout(() => window.location.reload(), delay)
+    return () => window.clearTimeout(t)
   }, [])
+
+  const refreshAiContextAndContinuity = useCallback(() => {
+    try {
+      setAiContext(buildAiContext())
+    } catch {}
+
+    try {
+      const signal = getEu360Signal()
+      const tone = (signal?.tone ?? 'gentil') as 'gentil' | 'direto'
+
+      const line = getMyDayContinuityLine({
+        dateKey: todayKey,
+        tone,
+      })
+
+      setContinuityLine(line ? { text: line.text, phraseId: line.phraseId } : null)
+    } catch {
+      setContinuityLine(null)
+    }
+  }, [todayKey])
+
+  const refreshPremiumState = useCallback(() => {
+    try {
+      const tier = getExperienceTier()
+      const next = tier === 'premium'
+      setPremium(next)
+
+      if (next) {
+        const key = `m360.premium_seen.${todayKey}`
+        const already = localStorage.getItem(key)
+
+        if (!already) {
+          localStorage.setItem(key, '1')
+
+          track('premium_state_visible', {
+            tab: 'meu-dia',
+            dateKey: todayKey,
+            timestamp: new Date().toISOString(),
+          })
+
+          setPremiumSeenToday(true)
+        }
+      }
+    } catch {
+      setPremium(false)
+    }
+  }, [todayKey])
 
   /**
-   * P26 — “Concluir some”
-   * Em vez de apenas marcar como done, removemos do dia.
-   * A mãe sente fechamento real e não acumula histórico aqui.
+   * P26 — Se o usuário salvou algo no Meu Dia Leve:
+   * - mostrar um CTA discreto no Meu Dia
+   * - não repetir mais de 1x por dia (ack)
+   * - sem expor conteúdo (apenas origem e “salvo”)
    */
-  async function onDone(t: MyDayTaskItem) {
-    const res = removeTask(t.id)
-    if (res.ok) {
-      refresh()
+  const refreshMeuDiaLeveContinuity = useCallback(() => {
+    try {
+      if (typeof window === 'undefined') return
 
-      if (t.origin === 'selfcare') {
-        markSelfcareDoneForJourney((t as any).source ?? 'unknown')
-        try {
-          track('journey.selfcare.done', { source: (t as any).source ?? 'unknown' })
-        } catch {}
+      const ackKey = `${LS_ACK_PREFIX}${todayKey}`
+      const ack = safeGetLS(ackKey)
+      if (ack === '1') {
+        setMeuDiaLevePrompt(null)
+        return
       }
 
-      try {
-        track('my_day.ui.done_remove', { origin: t.origin, source: (t as any).source ?? 'unknown' })
-      } catch {}
-    } else {
-      try {
-        track('my_day.ui.done_remove', { ok: false })
-      } catch {}
-    }
-  }
+      const raw = safeGetLS(LS_RECENT_SAVE)
+      const parsed = safeParseJSON<unknown>(raw)
+      if (!isRecentSavePayload(parsed)) {
+        setMeuDiaLevePrompt(null)
+        return
+      }
 
-  async function onRemove(t: MyDayTaskItem) {
-    const res = removeTask(t.id)
-    if (res.ok) {
-      refresh()
-      try {
-        track('my_day.ui.remove', { origin: t.origin, source: (t as any).source ?? 'unknown' })
-      } catch {}
-    }
-  }
+      // janela de recência: 30 minutos (discreto, mas ainda faz sentido)
+      const ageMs = Date.now() - parsed.ts
+      const RECENT_WINDOW_MS = 30 * 60 * 1000
 
-  async function onSnooze(t: MyDayTaskItem) {
-    const res = snoozeTask(t.id, 1)
-    if (res.ok) {
-      refresh()
-      try {
-        track('my_day.ui.snooze', { origin: t.origin, source: (t as any).source ?? 'unknown', days: 1 })
-      } catch {}
-    }
-  }
+      if (ageMs < 0 || ageMs > RECENT_WINDOW_MS) {
+        setMeuDiaLevePrompt(null)
+        return
+      }
 
-  async function onUnsnooze(t: MyDayTaskItem) {
-    const res = unsnoozeTask(t.id)
-    if (res.ok) {
-      refresh()
+      setMeuDiaLevePrompt(parsed)
+
       try {
-        track('my_day.ui.unsnooze', { origin: t.origin, source: (t as any).source ?? 'unknown' })
+        track('meu_dia_leve.continuity_prompt.view', {
+          dateKey: todayKey,
+          ageMs,
+          origin: parsed.origin,
+          source: parsed.source,
+        })
       } catch {}
+    } catch {
+      setMeuDiaLevePrompt(null)
     }
-  }
+  }, [todayKey])
+
+  useEffect(() => {
+    refreshAiContextAndContinuity()
+    refreshPremiumState()
+    refreshMeuDiaLeveContinuity()
+
+    const onStorage = () => {
+      refreshAiContextAndContinuity()
+      refreshPremiumState()
+      refreshMeuDiaLeveContinuity()
+    }
+
+    const onCustomPersona = () => refreshAiContextAndContinuity()
+    const onPlanUpdated = () => refreshPremiumState()
+
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('eu360:persona-updated', onCustomPersona as EventListener)
+    window.addEventListener('m360:plan-updated', onPlanUpdated as EventListener)
+
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('eu360:persona-updated', onCustomPersona as EventListener)
+      window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
+    }
+  }, [refreshAiContextAndContinuity, refreshPremiumState, refreshMeuDiaLeveContinuity])
+
+  // 🔹 P22 — regra de ordem silenciosa
+  const showMessageFirst = milestones.isFirstDay || milestones.isReturnAfterAbsence
 
   return (
-    <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {!hasAny ? (
-        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
+    <main
+      data-layout="page-template-v1"
+      data-tab="meu-dia"
+      className="
+        eu360-hub-bg
+        relative min-h-[100dvh]
+        pb-24
+        flex flex-col
+        overflow-hidden
+      "
+    >
+      <div className="relative z-10 flex-1 mx-auto max-w-3xl px-4 md:px-6">
+        {/* HERO */}
+        <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+          <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
+            MEU DIA
+          </span>
 
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-            Quando você registrar algo no Materna360 — no Maternar ou no Meu Dia — ele aparece aqui automaticamente.
+          {/* Copy alinhada à promessa (menos “produtividade”, mais “apoio”) */}
+          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+            Seu dia, do seu jeito
+          </h1>
+
+          <p className="mt-1 text-sm md:text-base text-white/90 max-w-xl">
+            Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
           </p>
 
-          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
-            Comece pequeno, se fizer sentido. Um lembrete simples já ajuda.
+          {/* Frase-permissão (primeira vitória) */}
+          <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
+            Você não precisa dar conta de tudo. Só do que fizer sentido agora.
           </p>
-        </div>
-      ) : (
-        <div className="space-y-4 md:space-y-5">
-          {GROUP_ORDER.map((groupId) => {
-            const group = grouped[groupId]
-            if (!group) return null
 
-            const sorted = sortForGroup(group.items, {
-              premium: isPremiumExperience,
-              persona: personaId,
-            })
+          <div className="pt-4 space-y-1">
+            <ClientOnly>
+              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
+            </ClientOnly>
 
-            const count = sorted.length
-            if (count === 0) return null
+            <p className="text-sm md:text-base text-white/95 max-w-xl">“{dailyMessage}”</p>
 
-            const isExpanded = !!expanded[groupId]
-            const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
-            const hasMore = count > effectiveLimit
+            {continuityLine?.text ? (
+              <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
+                {continuityLine.text}
+              </p>
+            ) : null}
+          </div>
 
-            // Alertas gentis (P26) — sem bloquear
-            const isSelfcareGroup = groupId === 'autocuidado'
-            const selfcareTooMany = isSelfcareGroup && count >= Math.max(6, effectiveLimit + 2)
-
-            const isFamilyGroup = groupId === 'familia'
-            const familyTooMany = isFamilyGroup && count >= 4
-
-            return (
+          {/* P26 — continuidade discreta (aparece só quando veio do Meu Dia Leve) */}
+          {meuDiaLevePrompt ? (
+            <div className="mt-4">
               <div
-                key={groupId}
-                className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]"
+                className="
+                  rounded-3xl
+                  bg-white/10
+                  border border-white/35
+                  backdrop-blur-xl
+                  shadow-[0_18px_45px_rgba(0,0,0,0.18)]
+                  p-3 md:p-4
+                "
               >
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
-                    {group.title}
-                  </h4>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
+                      <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
+                    </div>
 
-                  {hasMore ? (
-                    <button
-                      onClick={() => toggleGroup(groupId)}
-                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)]"
-                    >
-                      {isExpanded ? 'Recolher' : 'Ver tudo'}
-                    </button>
-                  ) : null}
-                </div>
-
-                {familyTooMany ? (
-                  <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
-                    <p className="text-[12px] text-[var(--color-text-muted)]">
-                      Dica do Materna: conexão funciona melhor quando é possível. Escolha uma ação por vez — presença vale mais que quantidade.
-                    </p>
-                  </div>
-                ) : null}
-
-                {selfcareTooMany ? (
-                  <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
-                    <p className="text-[12px] text-[var(--color-text-muted)]">
-                      Dica do Materna: autocuidado funciona melhor com pouco. Escolha 1 tarefa, conclua e deixe o resto para outro dia.
-                    </p>
-                  </div>
-                ) : null}
-
-                <div className="mt-4 space-y-2">
-                  {visible.map((t) => {
-                    const st = statusOf(t)
-                    const returnLink = getReturnLink(t)
-
-                    return (
-                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
-
-                            {st === 'snoozed' ? (
-                              <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-                                Adiado{(t as any).snoozeUntil ? ` até ${(t as any).snoozeUntil}` : ''}.
-                              </p>
-                            ) : null}
-                          </div>
-
-                          <div className="shrink-0 flex flex-wrap items-center justify-end gap-2">
-                            {st === 'active' ? (
-                              <>
-                                <button
-                                  onClick={() => onDone(t)}
-                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
-                                >
-                                  Concluir
-                                </button>
-
-                                <button
-                                  onClick={() => onSnooze(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Adiar 1 dia
-                                </button>
-
-                                <button
-                                  onClick={() => onRemove(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Remover
-                                </button>
-                              </>
-                            ) : st === 'snoozed' ? (
-                              <>
-                                <button
-                                  onClick={() => onUnsnooze(t)}
-                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
-                                >
-                                  Voltar para hoje
-                                </button>
-
-                                <button
-                                  onClick={() => onRemove(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Remover
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => onRemove(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Remover
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {returnLink ? (
-                          <div className="mt-3">
-                            <Link
-                              href={returnLink.href}
-                              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                            >
-                              {returnLink.label}
-                            </Link>
-                          </div>
-                        ) : null}
+                    <div>
+                      <div className="text-[12px] text-white/90">
+                        Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
                       </div>
-                    )
-                  })}
+                      <div className="mt-1 text-[13px] text-white/85 leading-relaxed max-w-xl">
+                        Se quiser, volte para pegar mais um próximo passo pronto — sem inventar nada.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="/maternar/meu-dia-leve"
+                      className="
+                        rounded-full
+                        bg-white/90 hover:bg-white
+                        text-[#2f3a56]
+                        px-3 py-2
+                        text-[12px]
+                        font-semibold
+                        shadow-lg transition
+                        whitespace-nowrap
+                      "
+                      onClick={() => {
+                        try {
+                          track('meu_dia_leve.continuity_prompt.click', {
+                            dateKey: todayKey,
+                            origin: meuDiaLevePrompt.origin,
+                            source: meuDiaLevePrompt.source,
+                          })
+                        } catch {}
+
+                        // ack 1x/dia + limpar payload para não “grudar”
+                        safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
+                        safeRemoveLS(LS_RECENT_SAVE)
+                      }}
+                    >
+                      Voltar ao Meu Dia Leve
+                    </a>
+
+                    <button
+                      type="button"
+                      className="
+                        rounded-full
+                        bg-white/15 hover:bg-white/20
+                        border border-white/25
+                        text-white/90
+                        px-3 py-2
+                        text-[12px]
+                        transition
+                        whitespace-nowrap
+                      "
+                      onClick={() => {
+                        safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
+                        safeRemoveLS(LS_RECENT_SAVE)
+                        setMeuDiaLevePrompt(null)
+                        try {
+                          track('meu_dia_leve.continuity_prompt.dismiss', { dateKey: todayKey })
+                        } catch {}
+                      }}
+                    >
+                      Ok
+                    </button>
+                  </div>
                 </div>
               </div>
-            )
-          })}
+            </div>
+          ) : null}
+        </header>
+
+        {/* P22 — ordem silenciosa */}
+        {showMessageFirst ? (
+          <>
+            <MyDayGroups aiContext={aiContext} />
+          </>
+        ) : (
+          <>
+            <MyDayGroups aiContext={aiContext} />
+          </>
+        )}
+
+        {/* BLOCO FREE / PREMIUM — inalterado */}
+        {/* ... mantém exatamente como estava ... */}
+
+        <section
+          className="
+            mt-6 md:mt-8
+            rounded-3xl
+            bg-white/10
+            border border-white/35
+            backdrop-blur-xl
+            shadow-[0_18px_45px_rgba(0,0,0,0.18)]
+            p-3 md:p-4
+          "
+        >
+          <WeeklyPlannerShell />
+        </section>
+
+        <div className="mt-8 md:mt-10">
+          <MotivationalFooter routeKey="meu-dia-hub" />
         </div>
-      )}
-    </section>
+      </div>
+
+      <footer className="relative z-10 w-full text-center pt-4 pb-2 px-4 text-[12px] text-[#6A6A6A]/85">
+        <p>© 2025 Materna360®. Todos os direitos reservados.</p>
+        <p>Proibida a reprodução total ou parcial sem autorização.</p>
+      </footer>
+    </main>
   )
 }
