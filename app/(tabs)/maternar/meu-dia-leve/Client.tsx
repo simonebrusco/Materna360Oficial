@@ -319,10 +319,14 @@ const IDEIAS: QuickIdea[] = [
 ]
 
 const RECEITAS: QuickRecipe[] = [
-  { tag: '3 min', title: 'Iogurte + fruta + um crocante', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
-  { tag: '5 min', title: 'Ovo mexido + arroz pronto', how: 'Arroz já pronto + ovo mexido. Legume se der.', slot: '5' },
-  { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Simples e suficiente para uma rotina corrida.', slot: '5' },
-  { tag: '10 min', title: 'Sopa/caldo pronto + final leve', how: 'Esquentar + montar bem. Resolve sem esticar o dia.', slot: '10' },
+  { tag: '3 min', title: 'Fruta do jeito simples', how: 'Amasse ou pique a fruta que você tem. Porção pequena e pronto.', slot: '3' },
+  { tag: '3 min', title: 'Iogurte + fruta (se tiver)', how: 'Montagem rápida. Se não tiver fruta, pode ser só iogurte.', slot: '3' },
+
+  { tag: '5 min', title: 'Ovo mexido macio', how: 'Fogo baixo, mexendo devagar. Se tiver legume pronto, entra no final.', slot: '5' },
+  { tag: '5 min', title: 'Arroz + feijão (se tiver pronto)', how: 'Aquece e monta. Simples, previsível e resolve.', slot: '5' },
+  { tag: '5 min', title: 'Arroz + legume (se tiver pronto)', how: 'Arroz já pronto + legume cozido em pedacinhos.', slot: '5' },
+
+  { tag: '10 min', title: 'Panquequinha de banana (se tiver ovo ou aveia)', how: 'Banana + (ovo ou aveia). Discos pequenos, fogo baixo.', slot: '10' },
 ]
 
 const PASSO_LEVE: DayLine[] = [
