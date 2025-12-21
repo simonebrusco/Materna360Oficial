@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
+import { getJourneySnapshot, type JourneySnapshot } from '@/app/lib/journey.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -14,105 +15,13 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 type Step = 'painel' | 'selos' | 'progresso'
-type MissionId = 'autocuidado' | 'conexao' | 'apoio' | 'limite'
-
-type Badge = {
-  id: string
-  title: string
-  desc: string
-  icon: React.ComponentProps<typeof AppIcon>['name']
-  minPoints: number
-}
-
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
-
-function safeParseInt(v: string | null, fallback = 0) {
-  const n = Number.parseInt(String(v ?? ''), 10)
-  return Number.isFinite(n) ? n : fallback
-}
-
-function todayKey() {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n))
-}
-
-function addDaysKey(date: Date, delta: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + delta)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function getWeekKeys(anchor = new Date()) {
-  const keys: string[] = []
-  for (let i = -6; i <= 0; i++) keys.push(addDaysKey(anchor, i))
-  return keys
-}
-
-function getMonthKeys(anchor = new Date()) {
-  const keys: string[] = []
-  for (let i = -27; i <= 0; i++) keys.push(addDaysKey(anchor, i))
-  return keys
-}
 
 function stepIndex(s: Step) {
   return s === 'painel' ? 1 : s === 'selos' ? 2 : 3
 }
 
-const LS = {
-  pointsTotal: 'mj_points_total',
-  dayPrefix: 'mj_day_',
-  donePrefix: 'mj_done_',
-  streak: 'mj_streak',
-  streakLastDay: 'mj_streak_last_day',
-}
-
-const MISSION_IDS: MissionId[] = ['autocuidado', 'conexao', 'apoio', 'limite']
-
-const BADGES: Badge[] = [
-  { id: 'b-1', title: 'Primeiro passo', desc: 'Você começou. Isso já muda tudo.', icon: 'star', minPoints: 10 },
-  { id: 'b-2', title: 'Dia possível', desc: 'Você fez o que cabia — e isso conta.', icon: 'sparkles', minPoints: 22 },
-  { id: 'b-3', title: 'Presença real', desc: 'Você criou pequenos momentos de conexão.', icon: 'heart', minPoints: 40 },
-  { id: 'b-4', title: 'Rotina mais leve', desc: 'Você ajustou o dia com decisões simples.', icon: 'sun', minPoints: 70 },
-]
-
-function readDayPoints(key: string) {
-  return safeParseInt(safeGetLS(LS.dayPrefix + key), 0)
-}
-
-function readTotalPoints() {
-  return safeParseInt(safeGetLS(LS.pointsTotal), 0)
-}
-
-function readStreak() {
-  return safeParseInt(safeGetLS(LS.streak), 0)
-}
-
-function readDone(dayKey: string, missionId: MissionId) {
-  return safeGetLS(`${LS.donePrefix}${dayKey}_${missionId}`) === '1'
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n))
 }
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -157,13 +66,41 @@ function StepPill({
   )
 }
 
+/**
+ * P26 — Selos simples (baseado em contagem real)
+ * Nada de pontos inventados; só progressão por consistência.
+ */
+type Badge = {
+  id: string
+  title: string
+  desc: string
+  icon: React.ComponentProps<typeof AppIcon>['name']
+  minCount: number
+}
+
+const BADGES: Badge[] = [
+  { id: 'b-1', title: 'Primeiro registro', desc: 'Você marcou presença. Isso já muda o dia.', icon: 'star', minCount: 1 },
+  { id: 'b-2', title: 'Trilha possível', desc: 'Você voltou mais de uma vez. Consistência sem peso.', icon: 'sparkles', minCount: 3 },
+  { id: 'b-3', title: 'Conexão real', desc: 'Você está criando rotina de presença sem perfeição.', icon: 'heart', minCount: 7 },
+  { id: 'b-4', title: 'Base firme', desc: 'Você construiu um histórico. O Materna começa a “pegar”.', icon: 'sun', minCount: 14 },
+]
+
+function totalDoneCount(s: JourneySnapshot) {
+  const selfcare = Number.isFinite(s.selfcare.count) ? s.selfcare.count : 0
+  const family = Number.isFinite(s.family.count) ? s.family.count : 0
+  return selfcare + family
+}
+
 export default function MinhaJornadaClient() {
   const [step, setStep] = useState<Step>('painel')
-  const [today, setToday] = useState<string>(todayKey())
-  const [totalPoints, setTotalPoints] = useState<number>(0)
-  const [todayPoints, setTodayPoints] = useState<number>(0)
-  const [streak, setStreak] = useState<number>(0)
-  const [completedTodayCount, setCompletedTodayCount] = useState<number>(0)
+  const [snapshot, setSnapshot] = useState<JourneySnapshot>(() => ({
+    selfcare: { doneToday: false, count: 0 },
+    family: { doneToday: false, count: 0 },
+  }))
+
+  function refresh() {
+    setSnapshot(getJourneySnapshot())
+  }
 
   useEffect(() => {
     try {
@@ -172,45 +109,42 @@ export default function MinhaJornadaClient() {
   }, [])
 
   useEffect(() => {
-    const t = todayKey()
-    setToday(t)
+    refresh()
 
-    const total = readTotalPoints()
-    const tPoints = readDayPoints(t)
-    const s = readStreak()
-    const doneCount = MISSION_IDS.filter(id => readDone(t, id)).length
+    // Atualiza quando volta do Meu Dia / muda aba / etc.
+    const onFocus = () => refresh()
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
 
-    setTotalPoints(total)
-    setTodayPoints(tPoints)
-    setStreak(s)
-    setCompletedTodayCount(doneCount)
+    // Atualiza se houver mudanças em outra aba (best effort)
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key) return
+      if (e.key.startsWith('journey/')) refresh()
+    }
 
-    try {
-      track('minha_jornada.open', { today: t, totalPoints: total })
-    } catch {}
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
 
-  const weekKeys = useMemo(() => getWeekKeys(new Date()), [])
-  const monthKeys = useMemo(() => getMonthKeys(new Date()), [])
+  const completedTodayCount = useMemo(() => {
+    let n = 0
+    if (snapshot.selfcare.doneToday) n += 1
+    if (snapshot.family.doneToday) n += 1
+    return n
+  }, [snapshot])
 
-  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
-  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
+  const totalCount = useMemo(() => totalDoneCount(snapshot), [snapshot])
 
-  const badgeUnlocked = useMemo(() => BADGES.filter(b => totalPoints >= b.minPoints), [totalPoints])
-  const nextBadge = useMemo(() => BADGES.find(b => totalPoints < b.minPoints) ?? null, [totalPoints])
-
-  const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
-
-  const monthWeeks = useMemo(() => {
-    const blocks: { label: string; total: number; activeDays: number }[] = []
-    for (let w = 0; w < 4; w++) {
-      const slice = monthKeys.slice(w * 7, w * 7 + 7)
-      const total = slice.reduce((acc, k) => acc + readDayPoints(k), 0)
-      const activeDays = slice.filter(k => readDayPoints(k) > 0).length
-      blocks.push({ label: `Semana ${w + 1}`, total, activeDays })
-    }
-    return blocks
-  }, [monthKeys])
+  const badgeUnlocked = useMemo(() => BADGES.filter((b) => totalCount >= b.minCount), [totalCount])
+  const nextBadge = useMemo(() => BADGES.find((b) => totalCount < b.minCount) ?? null, [totalCount])
 
   function go(next: Step) {
     setStep(next)
@@ -218,8 +152,6 @@ export default function MinhaJornadaClient() {
       track('minha_jornada.step', { step: next })
     } catch {}
   }
-
-  const weeklyGoal = 120
 
   return (
     <main
@@ -250,7 +182,7 @@ export default function MinhaJornadaClient() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um painel para enxergar progresso real: passos pequenos, consistência possível e selos que somam.
+                Um painel para enxergar progresso real: registros pequenos, consistência possível e selos por presença.
               </p>
             </div>
           </header>
@@ -276,13 +208,13 @@ export default function MinhaJornadaClient() {
 
                     <div>
                       <div className="text-[12px] text-white/85">
-                        Passo {stepIndex(step)}/3 • hoje: {completedTodayCount}/4 missões • sequência: {streak} dia(s)
+                        Passo {stepIndex(step)}/3 • hoje: {completedTodayCount}/2 registros • total: {totalCount}
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sua jornada em visão clara
                       </div>
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        Missões agora ficam no Meu Dia. Aqui é leitura do que já aconteceu.
+                        Aqui é leitura do que já foi registrado. As ações acontecem no Meu Dia.
                       </div>
                     </div>
                   </div>
@@ -299,7 +231,7 @@ export default function MinhaJornadaClient() {
                     "
                     onClick={() => {
                       try {
-                        track('minha_jornada.cta_meu_dia', { today })
+                        track('minha_jornada.cta_meu_dia', { from: 'topbar' })
                       } catch {}
                     }}
                   >
@@ -310,8 +242,8 @@ export default function MinhaJornadaClient() {
                 {/* Stepper */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <StepPill active={step === 'painel'} onClick={() => go('painel')} label="Painel" />
-                  <StepPill active={step === 'selos'} onClick={() => go('selos')} label="Selos & medalhas" />
-                  <StepPill active={step === 'progresso'} onClick={() => go('progresso')} label="Progresso mensal" />
+                  <StepPill active={step === 'selos'} onClick={() => go('selos')} label="Selos" />
+                  <StepPill active={step === 'progresso'} onClick={() => go('progresso')} label="Progresso" />
                 </div>
               </div>
 
@@ -329,63 +261,93 @@ export default function MinhaJornadaClient() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="star" size={22} className="text-[#fd2597]" />
+                          <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
                         </div>
                         <div className="space-y-1">
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Painel da jornada
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Visão geral (sem julgamentos)</h2>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Visão geral (sem cobrança)</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Isso aqui não é produtividade. É visibilidade: você enxerga o que já aconteceu.
+                            Você não precisa “fazer tudo”. Você só precisa enxergar o que foi possível.
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
-                          <div className="mt-1 text-[12px] text-[#6a6a6a]">missões feitas: {completedTodayCount}/4</div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">autocuidado</div>
+                              <div className="mt-1 text-[13px] text-[#6a6a6a]">feito hoje:</div>
+                              <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
+                                {snapshot.selfcare.doneToday ? 'Sim' : 'Ainda não'}
+                              </div>
+                            </div>
+                            <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                              <AppIcon name="sun" size={18} className="text-[#fd2597]" />
+                            </div>
+                          </div>
+
+                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                            total registrado: <span className="font-semibold text-[#2f3a56]">{snapshot.selfcare.count}</span>
+                          </div>
                         </div>
 
                         <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
-                          <div className="mt-1 text-[12px] text-[#6a6a6a]">dias ativos: {daysActive7}/7</div>
-                        </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">conexão</div>
+                              <div className="mt-1 text-[13px] text-[#6a6a6a]">feito hoje:</div>
+                              <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
+                                {snapshot.family.doneToday ? 'Sim' : 'Ainda não'}
+                              </div>
+                            </div>
+                            <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                              <AppIcon name="heart" size={18} className="text-[#fd2597]" />
+                            </div>
+                          </div>
 
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalPoints} pts</div>
-                          <div className="mt-1 text-[12px] text-[#6a6a6a]">dias ativos (28): {daysActive28}/28</div>
-
-                          <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
-                            <div className="text-[12px] font-semibold text-[#2f3a56]">Sequência</div>
-                            <div className="text-[12px] text-[#6a6a6a]">{streak} dia(s) seguidos com pelo menos 1 missão</div>
+                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                            total registrado: <span className="font-semibold text-[#2f3a56]">{snapshot.family.count}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Link
-                          href="/meu-dia"
-                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Marcar missões no Meu Dia
-                        </Link>
-                        <button
-                          onClick={() => go('selos')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ver selos liberados
-                        </button>
-                        <button
-                          onClick={() => go('progresso')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ver seu mês
-                        </button>
+                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">leitura rápida</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Hoje você registrou <span className="font-semibold text-[#2f3a56]">{completedTodayCount}</span> de 2 pilares.
+                          Se for só 1, ainda assim conta. O Materna é sobre o possível.
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Link
+                            href="/meu-dia"
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Fazer no Meu Dia
+                          </Link>
+
+                          <button
+                            onClick={() => {
+                              refresh()
+                              try {
+                                track('minha_jornada.refresh', { reason: 'manual' })
+                              } catch {}
+                            }}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Atualizar
+                          </button>
+
+                          <button
+                            onClick={() => go('selos')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ver selos
+                          </button>
+                        </div>
                       </div>
                     </SoftCard>
                   </div>
@@ -404,15 +366,15 @@ export default function MinhaJornadaClient() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                          <AppIcon name="star" size={22} className="text-[#fd2597]" />
                         </div>
                         <div className="space-y-1">
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Selos & medalhas
+                            Selos
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Conquistas reais (sem perfeição)</h2>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Conquistas por presença</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Você desbloqueia conforme vive. Sem “metas inalcançáveis”.
+                            Selos são um jeito de enxergar consistência. Sem “meta impossível”.
                           </p>
                         </div>
                       </div>
@@ -423,10 +385,10 @@ export default function MinhaJornadaClient() {
                           <div className="mt-3 space-y-3">
                             {badgeUnlocked.length === 0 ? (
                               <div className="text-[13px] text-[#6a6a6a]">
-                                Ainda não tem selo liberado — marque uma missão no Meu Dia e o primeiro já aparece aqui.
+                                Ainda não tem selo liberado — registre uma ação (autocuidado ou conexão) e o primeiro aparece.
                               </div>
                             ) : (
-                              badgeUnlocked.map(b => (
+                              badgeUnlocked.map((b) => (
                                 <div key={b.id} className="flex items-start gap-3 rounded-2xl bg-white border border-[#f5d7e5] p-4">
                                   <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
                                     <AppIcon name={b.icon} size={18} className="text-[#fd2597]" />
@@ -443,6 +405,7 @@ export default function MinhaJornadaClient() {
 
                         <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo selo</div>
+
                           {nextBadge ? (
                             <div className="mt-3">
                               <div className="flex items-start gap-3">
@@ -454,16 +417,22 @@ export default function MinhaJornadaClient() {
                                   <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.desc}</div>
                                 </div>
                               </div>
+
                               <div className="mt-4">
-                                <ProgressBar value={totalPoints} max={nextBadge.minPoints} />
+                                <ProgressBar value={totalCount} max={nextBadge.minCount} />
                               </div>
+
                               <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                                Falta <span className="font-semibold text-[#2f3a56]">{Math.max(0, nextBadge.minPoints - totalPoints)} pts</span>.
+                                Falta{' '}
+                                <span className="font-semibold text-[#2f3a56]">
+                                  {Math.max(0, nextBadge.minCount - totalCount)}
+                                </span>{' '}
+                                registro(s).
                               </div>
                             </div>
                           ) : (
                             <div className="mt-3 text-[13px] text-[#6a6a6a]">
-                              Você liberou todos os selos atuais. (Depois a gente expande isso com P7/P8.)
+                              Você liberou todos os selos atuais. Depois a gente expande.
                             </div>
                           )}
 
@@ -472,13 +441,13 @@ export default function MinhaJornadaClient() {
                               href="/meu-dia"
                               className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                             >
-                              Marcar missões no Meu Dia
+                              Registrar no Meu Dia
                             </Link>
                             <button
-                              onClick={() => go('progresso')}
+                              onClick={() => go('painel')}
                               className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                             >
-                              Ver mês
+                              Voltar ao painel
                             </button>
                           </div>
                         </div>
@@ -487,7 +456,7 @@ export default function MinhaJornadaClient() {
                   </div>
                 ) : null}
 
-                {/* PROGRESSO MENSAL */}
+                {/* PROGRESSO */}
                 {step === 'progresso' ? (
                   <div className="space-y-4">
                     <SoftCard
@@ -504,43 +473,44 @@ export default function MinhaJornadaClient() {
                         </div>
                         <div className="space-y-1">
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Progresso mensal
+                            Progresso
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Quatro semanas em visão clara</h2>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">O que já existe hoje</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Enxergar tendência ajuda mais do que cobrar constância perfeita.
+                            Na P26 nós registramos “feito hoje” + contagem total. Histórico por dia (calendário/streak) entra numa fase seguinte.
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-4 space-y-3">
-                        {monthWeeks.map(w => (
-                          <div
-                            key={w.label}
-                            className="rounded-3xl border border-[#f5d7e5] bg-white p-5"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="text-[12px] font-semibold text-[#2f3a56]">{w.label}</div>
-                                <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                                  {w.activeDays}/7 dias ativos • {w.total} pts
-                                </div>
-                              </div>
-                              <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                                {w.activeDays >= 5 ? 'forte' : w.activeDays >= 3 ? 'ok' : 'sobrevivência'}
-                              </span>
-                            </div>
-                            <div className="mt-3">
-                              <ProgressBar value={w.total} max={weeklyGoal} />
-                            </div>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total registros</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalCount}</div>
+                          <div className="mt-1 text-[12px] text-[#6a6a6a]">autocuidado + conexão</div>
+                        </div>
+
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">autocuidado</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{snapshot.selfcare.count}</div>
+                          <div className="mt-1 text-[12px] text-[#6a6a6a]">
+                            hoje: {snapshot.selfcare.doneToday ? 'feito' : '—'}
                           </div>
-                        ))}
+                        </div>
+
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">conexão</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{snapshot.family.count}</div>
+                          <div className="mt-1 text-[12px] text-[#6a6a6a]">
+                            hoje: {snapshot.family.doneToday ? 'feito' : '—'}
+                          </div>
+                        </div>
                       </div>
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">leitura rápida</div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo upgrade</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Semana “sobrevivência” não é falha. É dado. A próxima começa no próximo passo.
+                          Quando a gente quiser “mês/semana/streak real”, vamos precisar persistir um histórico por dia (sem pesar o app).
+                          Por agora, P26 fecha com o essencial: registro simples e leitura clara.
                         </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
@@ -548,7 +518,7 @@ export default function MinhaJornadaClient() {
                             href="/meu-dia"
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Marcar missão de hoje
+                            Registrar algo hoje
                           </Link>
                           <button
                             onClick={() => go('painel')}
