@@ -13,7 +13,10 @@ type Body = {
   pantry?: string
 }
 
-function sanitizePantry(input: string) {
+/**
+ * ✅ Aceita string | undefined (para não quebrar build)
+ */
+function sanitizePantry(input?: string) {
   return String(input ?? '')
     .trim()
     .replace(/\s+/g, ' ')
@@ -25,9 +28,7 @@ function clampSlot(slot: unknown): Slot {
 }
 
 function clampMood(mood: unknown): Mood {
-  return mood === 'no-limite' || mood === 'corrida' || mood === 'ok' || mood === 'leve'
-    ? mood
-    : 'corrida'
+  return mood === 'no-limite' || mood === 'corrida' || mood === 'ok' || mood === 'leve' ? mood : 'corrida'
 }
 
 /**
@@ -41,32 +42,15 @@ function buildSilentRecipeText(input: { slot: Slot; pantry: string }) {
   const base = `Com ${input.pantry}, faz assim:`
 
   if (input.slot === '3') {
-    return [
-      base,
-      '',
-      '• Combine com algo que já esteja pronto.',
-      '• Monte e sirva.',
-    ].join('\n')
+    return [base, '', '• Combine com algo que já esteja pronto.', '• Monte e sirva.'].join('\n')
   }
 
   if (input.slot === '10') {
-    return [
-      base,
-      '',
-      '• Escolha uma base simples.',
-      '• Acrescente o que tiver.',
-      '• Finalize do jeito mais fácil.',
-    ].join('\n')
+    return [base, '', '• Escolha uma base simples.', '• Acrescente o que tiver.', '• Finalize do jeito mais fácil.'].join('\n')
   }
 
   // default 5 min
-  return [
-    base,
-    '',
-    '• Use uma base simples.',
-    '• Acrescente o que você listou.',
-    '• Sirva sem complicar.',
-  ].join('\n')
+  return [base, '', '• Use uma base simples.', '• Acrescente o que você listou.', '• Sirva sem complicar.'].join('\n')
 }
 
 export async function POST(req: Request) {
@@ -77,6 +61,8 @@ export async function POST(req: Request) {
 
     const slot = clampSlot(body?.slot)
     const mood = clampMood(body?.mood)
+
+    // ✅ agora pode continuar exatamente assim
     const pantry = sanitizePantry(body?.pantry)
 
     try {
@@ -109,11 +95,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         ok: true,
-        text: [
-          'Use o que estiver pronto.',
-          'Acrescente algo simples.',
-          'Sirva e siga.',
-        ].join('\n'),
+        text: ['Use o que estiver pronto.', 'Acrescente algo simples.', 'Sirva e siga.'].join('\n'),
       },
       { status: 200 },
     )
