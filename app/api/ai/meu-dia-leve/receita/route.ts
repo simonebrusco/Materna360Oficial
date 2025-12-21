@@ -17,6 +17,7 @@ type ApiResponse =
   | { ok: true; text: string }
   | { ok: false; error: string; hint?: string }
 
+// Responsabilidade alimentar (alinhado ao Client)
 const MIN_MONTHS_BLOCK = 6
 const MIN_MONTHS_ALLOW_RECIPES = 12
 
@@ -102,6 +103,7 @@ function formatRecipeText(recipe: {
 }
 
 function pickSpecificRecipe(items: string[], slot: Slot) {
+  // sinal forte (1 item já pode virar receita real)
   const hasEgg = hasAny(items, ['ovo'])
   const hasBanana = hasAny(items, ['banana'])
   const hasRice = hasAny(items, ['arroz'])
@@ -113,6 +115,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
   const hasChicken = hasAny(items, ['frango'])
   const hasVeg = hasAny(items, ['legume', 'cenoura', 'abobrinha', 'batata', 'brócolis', 'brocolis', 'ervilha'])
 
+  // 3 min: montagem
   if (slot === '3') {
     if (hasBanana && (hasOats || hasYogurt)) {
       return {
@@ -145,6 +148,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
     }
   }
 
+  // 5 min: fogão rápido
   if (slot === '5') {
     if (hasEgg) {
       return {
@@ -200,6 +204,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
     }
   }
 
+  // 10 min: panquequinha (exige banana + aveia/ovo)
   if (slot === '10') {
     if (hasBanana && (hasOats || hasEgg)) {
       return {
@@ -248,7 +253,7 @@ export async function POST(req: Request) {
       })
     } catch {}
 
-    // Regra A: idade é requisito para responsabilidade do endpoint
+    // Regra A: responsabilidade do endpoint (idade precisa ser respeitada aqui também)
     if (childAgeMonths === null) {
       const out: ApiResponse = { ok: false, error: 'age_missing', hint: 'Complete a idade no Eu360 para liberar.' }
       return NextResponse.json(out, { status: 200 })
