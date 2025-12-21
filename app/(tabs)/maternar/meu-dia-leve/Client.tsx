@@ -29,6 +29,17 @@ type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
  */
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
+/**
+ * P26 — Gate de idade para Receitas (Meu Dia Leve)
+ * - Se < 6 meses: NÃO gerar receita
+ * - Se >= 6 meses: permitir “o que tenho em casa” + IA
+ *
+ * Guardrail:
+ * - Não é prescrição, não é nutrição, não é cardápio ideal.
+ * - É “solução direta para agora”.
+ */
+const LS_CHILD_AGE_MONTHS = 'eu360_child_age_months'
+
 type RecentSavePayload = {
   ts: number
   origin: TaskOrigin
@@ -55,6 +66,26 @@ function safeSetJSON(key: string, value: unknown) {
   try {
     safeSetLS(key, JSON.stringify(value))
   } catch {}
+}
+
+function safeParseInt(v: string | null): number | null {
+  if (!v) return null
+  const n = Number.parseInt(String(v).trim(), 10)
+  if (!Number.isFinite(n)) return null
+  if (Number.isNaN(n)) return null
+  return n
+}
+
+function getChildAgeMonthsFromLS(): number | null {
+  // P26: não vamos inventar perfil novo.
+  // Usamos um único key, simples, que pode ser preenchido aqui e reaproveitado pelo app.
+  const raw = safeGetLS(LS_CHILD_AGE_MONTHS)
+  const n = safeParseInt(raw)
+  if (n === null) return null
+  // sanity: evita valores absurdos por erro de digitação
+  if (n < 0) return 0
+  if (n > 240) return 240
+  return n
 }
 
 function stepIndex(s: Step) {
@@ -224,6 +255,35 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
+type AIRecipeResponse = {
+  ok: boolean
+  text?: string
+  error?: string
+}
+
+async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string }): Promise<AIRecipeResponse> {
+  // P26: endpoint mínimo e específico (um arquivo será criado depois)
+  // - Sem nutrição, sem cardápio, sem prescrição
+  // - Solução direta para agora
+  const res = await fetch('/api/ai/meu-dia-leve/receita', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      slot: input.slot,
+      mood: input.mood,
+      pantry: input.pantry,
+      intent: 'quick_meal_solution_now',
+    }),
+  })
+
+  if (!res.ok) {
+    return { ok: false, error: `http_${res.status}` }
+  }
+
+  const data = (await res.json()) as AIRecipeResponse
+  return data
+}
+
 export default function MeuDiaLeveClient() {
   const [step, setStep] = useState<Step>('inspiracao')
   const [slot, setSlot] = useState<Slot>('5')
@@ -235,6 +295,16 @@ export default function MeuDiaLeveClient() {
   const [pickedPasso, setPickedPasso] = useState<number>(0)
 
   const [saveFeedback, setSaveFeedback] = useState<string>('')
+
+  // P26 — idade para gate de receitas
+  const [childAgeMonths, setChildAgeMonths] = useState<number | null>(null)
+  const [ageDraft, setAgeDraft] = useState<string>('')
+
+  // P26 — IA receitas (>= 6 meses)
+  const [pantry, setPantry] = useState<string>('')
+  const [aiRecipeText, setAiRecipeText] = useState<string>('')
+  const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
+  const [aiRecipeError, setAiRecipeError] = useState<string>('')
 
   useEffect(() => {
     try {
@@ -248,6 +318,11 @@ export default function MeuDiaLeveClient() {
     setMood(inferred.mood)
     setFocus(inferred.focus)
     setStep('inspiracao')
+
+    // P26: ler idade salva (se existir)
+    const a = getChildAgeMonthsFromLS()
+    setChildAgeMonths(a)
+    setAgeDraft(a === null ? '' : String(a))
 
     try {
       track('meu_dia_leve.open', { slot: inferred.slot, mood: inferred.mood, focus: inferred.focus })
@@ -278,6 +353,13 @@ export default function MeuDiaLeveClient() {
 
   function go(next: Step) {
     setStep(next)
+
+    // P26: ao entrar em receitas, limpamos apenas feedback de IA (não apaga pantry)
+    if (next === 'receitas') {
+      setAiRecipeError('')
+      setAiRecipeText('')
+    }
+
     try {
       track('meu_dia_leve.step', { step: next })
     } catch {}
@@ -385,6 +467,80 @@ export default function MeuDiaLeveClient() {
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
+  }
+
+  function persistChildAgeMonths() {
+    const n = safeParseInt(ageDraft)
+    if (n === null) {
+      toast.info('Se quiser, coloque a idade em meses (ex.: 3, 6, 12).')
+      return
+    }
+    const normalized = Math.max(0, Math.min(240, n))
+    safeSetLS(LS_CHILD_AGE_MONTHS, String(normalized))
+    setChildAgeMonths(normalized)
+
+    try {
+      track('meu_dia_leve.child_age.set', { months: normalized })
+    } catch {}
+  }
+
+  const recipeGateBlocked = childAgeMonths !== null && childAgeMonths < 6
+
+  async function onGenerateAIRecipe() {
+    setAiRecipeError('')
+    setAiRecipeText('')
+
+    // Gate: se idade ainda não foi informada, pede leveza e não bloqueia o app inteiro.
+    if (childAgeMonths === null) {
+      toast.info('Se você quiser, coloque a idade do bebê em meses para liberar receitas.')
+      return
+    }
+
+    if (childAgeMonths < 6) {
+      // P26 — regra de bloqueio
+      try {
+        track('meu_dia_leve.recipe.blocked', { reason: 'child_under_6_months', months: childAgeMonths })
+      } catch {}
+      return
+    }
+
+    const trimmed = pantry.trim()
+    if (!trimmed) {
+      toast.info('Digite o que você tem em casa (bem curto) para eu montar uma solução.')
+      return
+    }
+
+    setAiRecipeLoading(true)
+    try {
+      try {
+        track('meu_dia_leve.recipe.ai.request', { slot, mood, pantryLen: trimmed.length })
+      } catch {}
+
+      const data = await requestAIRecipe({ slot, mood, pantry: trimmed })
+
+      if (!data?.ok || !data.text) {
+        setAiRecipeError(data?.error || 'erro_ia')
+        toast.info('Não consegui gerar agora. Se quiser, use uma receita rápida abaixo.')
+        try {
+          track('meu_dia_leve.recipe.ai.fail', { error: data?.error || 'no_text' })
+        } catch {}
+        return
+      }
+
+      setAiRecipeText(data.text)
+
+      try {
+        track('meu_dia_leve.recipe.ai.ok', { slot, mood })
+      } catch {}
+    } catch {
+      setAiRecipeError('erro_rede')
+      toast.info('Falhou agora. Se quiser, use uma receita rápida abaixo.')
+      try {
+        track('meu_dia_leve.recipe.ai.fail', { error: 'network_or_throw' })
+      } catch {}
+    } finally {
+      setAiRecipeLoading(false)
+    }
   }
 
   return (
@@ -671,74 +827,202 @@ export default function MeuDiaLeveClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Receitas rápidas
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Escolha uma solução e siga</h2>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Resolver comida sem drama</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
                             Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-4 space-y-2">
-                        {recipesForNow.map((r, idx) => {
-                          const active = pickedRecipe === idx
-                          return (
-                            <button
-                              key={`${r.title}-${idx}`}
-                              onClick={() => {
-                                setPickedRecipe(idx)
-                                try {
-                                  track('meu_dia_leve.recipe.pick', { idx })
-                                } catch {}
-                              }}
-                              className={[
-                                'w-full text-left rounded-2xl border p-4 transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <div className="text-[13px] font-semibold text-[#2f3a56]">{r.title}</div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{r.how}</div>
-                                </div>
-                                <span className="shrink-0 inline-flex items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                  {r.tag}
-                                </span>
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-
+                      {/* P26 — idade (gate) */}
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje resolve assim</div>
-                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{selectedRecipe?.title}</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selectedRecipe?.how}</div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para ajustar aqui</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Se você quiser, informe a idade do bebê em meses para o app decidir o que pode aparecer aqui.
+                        </div>
 
-                        <div className="mt-5 flex flex-wrap gap-2">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <input
+                            value={ageDraft}
+                            onChange={(e) => setAgeDraft(e.target.value)}
+                            inputMode="numeric"
+                            placeholder="idade em meses (ex.: 3, 6, 12)"
+                            className="w-full md:w-[320px] rounded-2xl border border-[#f5d7e5] bg-white px-4 py-2 text-[12px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+                          />
                           <button
-                            onClick={() => {
-                              if (selectedRecipe?.title) saveCurrentToMyDay(selectedRecipe.title)
-                            }}
+                            type="button"
+                            onClick={persistChildAgeMonths}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Salvar no Meu Dia
+                            Salvar idade
                           </button>
-
-                          <button
-                            onClick={() => go('passo')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Fechar com o passo leve
-                          </button>
-
-                          <button
-                            onClick={() => go('ideias')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar para ideias
-                          </button>
+                          {childAgeMonths !== null ? (
+                            <span className="text-[12px] text-[#2f3a56]">
+                              Ok: <span className="font-semibold">{childAgeMonths} meses</span>
+                            </span>
+                          ) : (
+                            <span className="text-[12px] text-[#6a6a6a]">Opcional</span>
+                          )}
                         </div>
                       </div>
+
+                      {/* P26 — bloqueio < 6 meses */}
+                      {recipeGateBlocked ? (
+                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">aqui a regra é simples</div>
+                          <div className="mt-2 text-[15px] font-semibold text-[#2f3a56]">Sem receitas por enquanto</div>
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                            Para bebês com menos de 6 meses, o Materna não sugere receitas aqui. Se a sua trava for comida, vale ir no básico que já funciona para você hoje.
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => go('ideias')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Voltar para ideias rápidas
+                            </button>
+
+                            <button
+                              onClick={() => go('passo')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Fechar com um passo leve
+                            </button>
+
+                            <Link
+                              href="/meu-dia"
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ir para Meu Dia
+                            </Link>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* P26 — IA com “o que tenho em casa” (>= 6 meses) */}
+                          <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Escreva curto. Ex.: “ovo, pão, queijo, tomate” ou “arroz pronto, frango, legumes”.
+                            </div>
+
+                            <textarea
+                              value={pantry}
+                              onChange={(e) => setPantry(e.target.value)}
+                              rows={3}
+                              placeholder="o que tenho em casa…"
+                              className="mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+                            />
+
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={onGenerateAIRecipe}
+                                disabled={aiRecipeLoading}
+                                className={[
+                                  'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+                                  aiRecipeLoading ? 'bg-[#fd2597]/70 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+                                ].join(' ')}
+                              >
+                                {aiRecipeLoading ? 'Gerando…' : 'Gerar solução'}
+                              </button>
+
+                              {aiRecipeError ? (
+                                <span className="text-[12px] text-[#6a6a6a]">Falhou agora. Você ainda pode usar uma receita rápida abaixo.</span>
+                              ) : null}
+                            </div>
+
+                            {aiRecipeText ? (
+                              <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje resolve assim</div>
+                                <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">
+                                  {aiRecipeText}
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  <button
+                                    onClick={() => saveCurrentToMyDay('Resolver comida (passo leve)')}
+                                    className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                                  >
+                                    Salvar no Meu Dia
+                                  </button>
+
+                                  <button
+                                    onClick={() => go('passo')}
+                                    className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                                  >
+                                    Fechar com o passo leve
+                                  </button>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          {/* fallback: receitas rápidas estáticas (não IA) */}
+                          <div className="mt-4 space-y-2">
+                            {recipesForNow.map((r, idx) => {
+                              const active = pickedRecipe === idx
+                              return (
+                                <button
+                                  key={`${r.title}-${idx}`}
+                                  onClick={() => {
+                                    setPickedRecipe(idx)
+                                    try {
+                                      track('meu_dia_leve.recipe.pick', { idx })
+                                    } catch {}
+                                  }}
+                                  className={[
+                                    'w-full text-left rounded-2xl border p-4 transition',
+                                    active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <div className="text-[13px] font-semibold text-[#2f3a56]">{r.title}</div>
+                                      <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{r.how}</div>
+                                    </div>
+                                    <span className="shrink-0 inline-flex items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                                      {r.tag}
+                                    </span>
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">se for pelo rápido</div>
+                            <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{selectedRecipe?.title}</div>
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selectedRecipe?.how}</div>
+
+                            <div className="mt-5 flex flex-wrap gap-2">
+                              <button
+                                onClick={() => {
+                                  if (selectedRecipe?.title) saveCurrentToMyDay(selectedRecipe.title)
+                                }}
+                                className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                              >
+                                Salvar no Meu Dia
+                              </button>
+
+                              <button
+                                onClick={() => go('passo')}
+                                className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                              >
+                                Fechar com o passo leve
+                              </button>
+
+                              <button
+                                onClick={() => go('ideias')}
+                                className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                              >
+                                Voltar para ideias
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </SoftCard>
                   </div>
                 ) : null}
