@@ -31,14 +31,12 @@ const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
 /**
  * P26 — Gate de idade para Receitas (Meu Dia Leve)
- * - Se < 6 meses: NÃO gerar receita
- * - Se >= 6 meses: permitir “o que tenho em casa” + IA
+ * Regra: se < 6 meses, NÃO gerar receitas.
  *
- * Guardrail:
- * - Não é prescrição, não é nutrição, não é cardápio ideal.
- * - É “solução direta para agora”.
+ * Importante: Eu360 é a inteligência-base.
+ * Esta tela não pede idade; ela tenta ler do estado/localStorage do Eu360.
  */
-const LS_CHILD_AGE_MONTHS = 'eu360_child_age_months'
+const MIN_MONTHS_FOR_RECIPES = 6
 
 type RecentSavePayload = {
   ts: number
@@ -68,24 +66,104 @@ function safeSetJSON(key: string, value: unknown) {
   } catch {}
 }
 
-function safeParseInt(v: string | null): number | null {
-  if (!v) return null
+function safeParseInt(v: unknown): number | null {
+  if (v === null || v === undefined) return null
   const n = Number.parseInt(String(v).trim(), 10)
   if (!Number.isFinite(n)) return null
   if (Number.isNaN(n)) return null
   return n
 }
 
-function getChildAgeMonthsFromLS(): number | null {
-  // P26: não vamos inventar perfil novo.
-  // Usamos um único key, simples, que pode ser preenchido aqui e reaproveitado pelo app.
-  const raw = safeGetLS(LS_CHILD_AGE_MONTHS)
-  const n = safeParseInt(raw)
-  if (n === null) return null
-  // sanity: evita valores absurdos por erro de digitação
-  if (n < 0) return 0
-  if (n > 240) return 240
-  return n
+function safeParseJSON(raw: string | null): any | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function safeParseDate(v: unknown): Date | null {
+  if (!v) return null
+  const d = new Date(String(v))
+  if (Number.isNaN(d.getTime())) return null
+  return d
+}
+
+function monthsBetween(from: Date, to: Date) {
+  let months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
+  if (to.getDate() < from.getDate()) months -= 1
+  return Math.max(0, months)
+}
+
+/**
+ * P26 — Eu360 como fonte de verdade
+ * Tenta inferir "idade em meses" a partir de possíveis chaves já usadas no projeto.
+ *
+ * Sem quebrar se não achar.
+ * Sem criar novas estruturas.
+ */
+function inferChildAgeMonthsFromEu360(): number | null {
+  // 1) chaves diretas (se existirem)
+  const directCandidates = [
+    'eu360_child_age_months',
+    'eu360_childAgeMonths',
+    'eu360_age_months',
+    'eu360_baby_age_months',
+    'eu360_babyAgeMonths',
+    'child_age_months',
+    'childAgeMonths',
+  ]
+
+  for (const k of directCandidates) {
+    const raw = safeGetLS(k)
+    const n = safeParseInt(raw)
+    if (n !== null) return Math.max(0, Math.min(240, n))
+  }
+
+  // 2) tentar nascer/data (direto)
+  const birthCandidates = [
+    'eu360_child_birthdate',
+    'eu360_childBirthdate',
+    'eu360_baby_birthdate',
+    'eu360_babyBirthdate',
+    'child_birthdate',
+    'childBirthdate',
+    'eu360_child_dob',
+    'child_dob',
+  ]
+  for (const k of birthCandidates) {
+    const raw = safeGetLS(k)
+    const d = safeParseDate(raw)
+    if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
+  }
+
+  // 3) tentar objeto de perfil do Eu360 (JSON)
+  const profileCandidates = ['eu360_profile', 'eu360_profile_v1', 'eu360', 'eu360_state', 'eu360_data']
+  for (const k of profileCandidates) {
+    const obj = safeParseJSON(safeGetLS(k))
+    if (!obj) continue
+
+    // idade em meses em campos comuns
+    const n1 = safeParseInt(obj?.childAgeMonths ?? obj?.babyAgeMonths ?? obj?.ageMonths ?? obj?.child_age_months)
+    if (n1 !== null) return Math.max(0, Math.min(240, n1))
+
+    // birthdate/dob dentro do perfil
+    const d =
+      safeParseDate(
+        obj?.childBirthdate ??
+          obj?.babyBirthdate ??
+          obj?.birthdate ??
+          obj?.child_birthdate ??
+          obj?.dob ??
+          obj?.childDob ??
+          obj?.babyDob,
+      ) || null
+
+    if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
+  }
+
+  return null
 }
 
 function stepIndex(s: Step) {
@@ -140,26 +218,10 @@ type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }> = {
-  'no-limite': {
-    title: 'Para agora',
-    line: 'Escolha uma coisa só. O resto pode esperar.',
-    action: 'Defina 1 prioridade mínima.',
-  },
-  corrida: {
-    title: 'Para hoje',
-    line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.',
-    action: 'Escolha o próximo passo.',
-  },
-  ok: {
-    title: 'Para manter',
-    line: 'Quando você simplifica, você ganha tempo de verdade.',
-    action: 'Corte uma exigência.',
-  },
-  leve: {
-    title: 'Para aproveitar',
-    line: 'Dia leve não é dia perfeito. É dia bem conduzido.',
-    action: 'Faça o básico bem feito.',
-  },
+  'no-limite': { title: 'Para agora', line: 'Escolha uma coisa só. O resto pode esperar.', action: 'Defina 1 prioridade mínima.' },
+  corrida: { title: 'Para hoje', line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.', action: 'Escolha o próximo passo.' },
+  ok: { title: 'Para manter', line: 'Quando você simplifica, você ganha tempo de verdade.', action: 'Corte uma exigência.' },
+  leve: { title: 'Para aproveitar', line: 'Dia leve não é dia perfeito. É dia bem conduzido.', action: 'Faça o básico bem feito.' },
 }
 
 const IDEIAS: QuickIdea[] = [
@@ -186,15 +248,7 @@ const PASSO_LEVE: DayLine[] = [
   { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
 ]
 
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active?: boolean
-  onClick?: () => void
-  children: React.ReactNode
-}) {
+function Pill({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -255,33 +309,16 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
-type AIRecipeResponse = {
-  ok: boolean
-  text?: string
-  error?: string
-}
+type AIRecipeResponse = { ok: boolean; text?: string; error?: string }
 
 async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string }): Promise<AIRecipeResponse> {
-  // P26: endpoint mínimo e específico (um arquivo será criado depois)
-  // - Sem nutrição, sem cardápio, sem prescrição
-  // - Solução direta para agora
   const res = await fetch('/api/ai/meu-dia-leve/receita', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      slot: input.slot,
-      mood: input.mood,
-      pantry: input.pantry,
-      intent: 'quick_meal_solution_now',
-    }),
+    body: JSON.stringify({ slot: input.slot, mood: input.mood, pantry: input.pantry }),
   })
-
-  if (!res.ok) {
-    return { ok: false, error: `http_${res.status}` }
-  }
-
-  const data = (await res.json()) as AIRecipeResponse
-  return data
+  if (!res.ok) return { ok: false, error: `http_${res.status}` }
+  return (await res.json()) as AIRecipeResponse
 }
 
 export default function MeuDiaLeveClient() {
@@ -296,9 +333,8 @@ export default function MeuDiaLeveClient() {
 
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
-  // P26 — idade para gate de receitas
+  // P26 — idade vem do Eu360 (sem pedir aqui)
   const [childAgeMonths, setChildAgeMonths] = useState<number | null>(null)
-  const [ageDraft, setAgeDraft] = useState<string>('')
 
   // P26 — IA receitas (>= 6 meses)
   const [pantry, setPantry] = useState<string>('')
@@ -319,13 +355,12 @@ export default function MeuDiaLeveClient() {
     setFocus(inferred.focus)
     setStep('inspiracao')
 
-    // P26: ler idade salva (se existir)
-    const a = getChildAgeMonthsFromLS()
-    setChildAgeMonths(a)
-    setAgeDraft(a === null ? '' : String(a))
+    // P26: puxa idade do Eu360 (sem UI)
+    const months = inferChildAgeMonthsFromEu360()
+    setChildAgeMonths(months)
 
     try {
-      track('meu_dia_leve.open', { slot: inferred.slot, mood: inferred.mood, focus: inferred.focus })
+      track('meu_dia_leve.open', { slot: inferred.slot, mood: inferred.mood, focus: inferred.focus, ageKnown: months !== null })
     } catch {}
   }, [])
 
@@ -334,10 +369,8 @@ export default function MeuDiaLeveClient() {
   const ideasForNow = useMemo(() => {
     const strict = IDEIAS.filter((i) => i.slot === slot && i.focus === focus)
     if (strict.length >= 2) return strict.slice(0, 3)
-
     const bySlot = IDEIAS.filter((i) => i.slot === slot)
     if (bySlot.length >= 3) return bySlot.slice(0, 4)
-
     return IDEIAS.slice(0, 4)
   }, [slot, focus])
 
@@ -353,13 +386,10 @@ export default function MeuDiaLeveClient() {
 
   function go(next: Step) {
     setStep(next)
-
-    // P26: ao entrar em receitas, limpamos apenas feedback de IA (não apaga pantry)
     if (next === 'receitas') {
       setAiRecipeError('')
       setAiRecipeText('')
     }
-
     try {
       track('meu_dia_leve.step', { step: next })
     } catch {}
@@ -403,43 +433,21 @@ export default function MeuDiaLeveClient() {
   const selectedRecipe = recipesForNow[clampIndex(pickedRecipe, recipesForNow.length)]
   const selectedPasso = passosForNow[clampIndex(pickedPasso, passosForNow.length)]
 
-  /**
-   * P26 — Meu Dia Leve salva no Meu Dia com:
-   * - source: MATERNAR_MEU_DIA_LEVE
-   * - origin: inferido do focus
-   * - respeita guardrail global (anti bola-de-neve)
-   * - registra payload mínimo para “Voltar ao Meu Dia Leve”
-   */
   function saveCurrentToMyDay(title: string) {
     const ORIGIN = originFromFocus(focus)
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE
 
-    const res = addTaskToMyDay({
-      title,
-      origin: ORIGIN,
-      source: SOURCE,
-    })
+    const res = addTaskToMyDay({ title, origin: ORIGIN, source: SOURCE })
 
-    // ✅ guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
-        track('my_day.task.add.blocked', {
-          source: SOURCE,
-          origin: ORIGIN,
-          reason: 'open_tasks_limit_hit',
-          dateKey: res.dateKey,
-        })
+        track('my_day.task.add.blocked', { source: SOURCE, origin: ORIGIN, reason: 'open_tasks_limit_hit', dateKey: res.dateKey })
       } catch {}
       return
     }
 
-    // Continuidade (payload mínimo; sem conteúdo sensível)
-    const payload: RecentSavePayload = {
-      ts: Date.now(),
-      origin: ORIGIN,
-      source: SOURCE,
-    }
+    const payload: RecentSavePayload = { ts: Date.now(), origin: ORIGIN, source: SOURCE }
     safeSetJSON(LS_RECENT_SAVE, payload)
 
     if (res.created) {
@@ -451,53 +459,22 @@ export default function MeuDiaLeveClient() {
     }
 
     try {
-      track('my_day.task.add', {
-        ok: !!res.ok,
-        created: !!res.created,
-        origin: ORIGIN,
-        source: SOURCE,
-        dateKey: res.dateKey,
-      })
-      track('meu_dia_leve.save_to_my_day', {
-        origin: ORIGIN,
-        created: res.created,
-        dateKey: res.dateKey,
-        source: SOURCE,
-      })
+      track('my_day.task.add', { ok: !!res.ok, created: !!res.created, origin: ORIGIN, source: SOURCE, dateKey: res.dateKey })
+      track('meu_dia_leve.save_to_my_day', { origin: ORIGIN, created: res.created, dateKey: res.dateKey, source: SOURCE })
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
   }
 
-  function persistChildAgeMonths() {
-    const n = safeParseInt(ageDraft)
-    if (n === null) {
-      toast.info('Se quiser, coloque a idade em meses (ex.: 3, 6, 12).')
-      return
-    }
-    const normalized = Math.max(0, Math.min(240, n))
-    safeSetLS(LS_CHILD_AGE_MONTHS, String(normalized))
-    setChildAgeMonths(normalized)
-
-    try {
-      track('meu_dia_leve.child_age.set', { months: normalized })
-    } catch {}
-  }
-
-  const recipeGateBlocked = childAgeMonths !== null && childAgeMonths < 6
+  const recipeGateBlocked = childAgeMonths !== null && childAgeMonths < MIN_MONTHS_FOR_RECIPES
+  const ageKnown = childAgeMonths !== null
 
   async function onGenerateAIRecipe() {
     setAiRecipeError('')
     setAiRecipeText('')
 
-    // Gate: se idade ainda não foi informada, pede leveza e não bloqueia o app inteiro.
-    if (childAgeMonths === null) {
-      toast.info('Se você quiser, coloque a idade do bebê em meses para liberar receitas.')
-      return
-    }
-
-    if (childAgeMonths < 6) {
-      // P26 — regra de bloqueio
+    // P26: se a idade estiver conhecida e for <6, bloqueia.
+    if (recipeGateBlocked) {
       try {
         track('meu_dia_leve.recipe.blocked', { reason: 'child_under_6_months', months: childAgeMonths })
       } catch {}
@@ -513,7 +490,7 @@ export default function MeuDiaLeveClient() {
     setAiRecipeLoading(true)
     try {
       try {
-        track('meu_dia_leve.recipe.ai.request', { slot, mood, pantryLen: trimmed.length })
+        track('meu_dia_leve.recipe.ai.request', { slot, mood, pantryLen: trimmed.length, ageKnown })
       } catch {}
 
       const data = await requestAIRecipe({ slot, mood, pantry: trimmed })
@@ -528,7 +505,6 @@ export default function MeuDiaLeveClient() {
       }
 
       setAiRecipeText(data.text)
-
       try {
         track('meu_dia_leve.recipe.ai.ok', { slot, mood })
       } catch {}
@@ -558,10 +534,7 @@ export default function MeuDiaLeveClient() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -601,21 +574,13 @@ export default function MeuDiaLeveClient() {
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sugestão pronta para o seu agora
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        {slotHint(slot)}
-                      </div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{slotHint(slot)}</div>
                     </div>
                   </div>
 
                   <button
                     onClick={() => go('ideias')}
-                    className="
-                      rounded-full
-                      bg-white/90 hover:bg-white
-                      text-[#2f3a56]
-                      px-4 py-2 text-[12px]
-                      shadow-lg transition
-                    "
+                    className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition"
                   >
                     Começar
                   </button>
@@ -672,9 +637,7 @@ export default function MeuDiaLeveClient() {
                         onClick={() => go(it.id)}
                         className={[
                           'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active
-                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-                            : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                          active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                         ].join(' ')}
                       >
                         {it.label}
@@ -710,17 +673,13 @@ export default function MeuDiaLeveClient() {
                             Inspiração do dia
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{moodTitle(mood)}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Aqui é facilitador: uma linha para organizar o próximo passo. Sem discurso longo.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Aqui é facilitador: uma linha para organizar o próximo passo. Sem discurso longo.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
-                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">
-                          {inspiration.line}
-                        </div>
+                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">{inspiration.line}</div>
                         <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
                           Ação: <span className="font-semibold text-[#2f3a56]">{inspiration.action}</span>
                         </div>
@@ -828,51 +787,26 @@ export default function MeuDiaLeveClient() {
                             Receitas rápidas
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Resolver comida sem drama</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.</p>
                         </div>
                       </div>
 
-                      {/* P26 — idade (gate) */}
-                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para ajustar aqui</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Se você quiser, informe a idade do bebê em meses para o app decidir o que pode aparecer aqui.
+                      {/* Nota silenciosa quando idade não está disponível */}
+                      {!ageKnown ? (
+                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">só um detalhe</div>
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                            Se o bebê tiver menos de 6 meses, o Materna não sugere receitas aqui.
+                          </div>
                         </div>
+                      ) : null}
 
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <input
-                            value={ageDraft}
-                            onChange={(e) => setAgeDraft(e.target.value)}
-                            inputMode="numeric"
-                            placeholder="idade em meses (ex.: 3, 6, 12)"
-                            className="w-full md:w-[320px] rounded-2xl border border-[#f5d7e5] bg-white px-4 py-2 text-[12px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
-                          />
-                          <button
-                            type="button"
-                            onClick={persistChildAgeMonths}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar idade
-                          </button>
-                          {childAgeMonths !== null ? (
-                            <span className="text-[12px] text-[#2f3a56]">
-                              Ok: <span className="font-semibold">{childAgeMonths} meses</span>
-                            </span>
-                          ) : (
-                            <span className="text-[12px] text-[#6a6a6a]">Opcional</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* P26 — bloqueio < 6 meses */}
+                      {/* Bloqueio real quando idade conhecida e <6 */}
                       {recipeGateBlocked ? (
                         <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">aqui a regra é simples</div>
-                          <div className="mt-2 text-[15px] font-semibold text-[#2f3a56]">Sem receitas por enquanto</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">sem receitas por enquanto</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Para bebês com menos de 6 meses, o Materna não sugere receitas aqui. Se a sua trava for comida, vale ir no básico que já funciona para você hoje.
+                            Para bebês com menos de 6 meses, o Materna não sugere receitas aqui.
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -887,7 +821,7 @@ export default function MeuDiaLeveClient() {
                               onClick={() => go('passo')}
                               className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                             >
-                              Fechar com um passo leve
+                              Fechar com o passo leve
                             </button>
 
                             <Link
@@ -900,11 +834,11 @@ export default function MeuDiaLeveClient() {
                         </div>
                       ) : (
                         <>
-                          {/* P26 — IA com “o que tenho em casa” (>= 6 meses) */}
+                          {/* IA com “o que tenho em casa” */}
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                             <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Escreva curto. Ex.: “ovo, pão, queijo, tomate” ou “arroz pronto, frango, legumes”.
+                              Escreva curto. Ex.: “ovo, pão, queijo” ou “arroz pronto, frango, legumes”.
                             </div>
 
                             <textarea
@@ -928,17 +862,13 @@ export default function MeuDiaLeveClient() {
                                 {aiRecipeLoading ? 'Gerando…' : 'Gerar solução'}
                               </button>
 
-                              {aiRecipeError ? (
-                                <span className="text-[12px] text-[#6a6a6a]">Falhou agora. Você ainda pode usar uma receita rápida abaixo.</span>
-                              ) : null}
+                              {aiRecipeError ? <span className="text-[12px] text-[#6a6a6a]">Falhou agora. Você ainda pode usar uma receita rápida abaixo.</span> : null}
                             </div>
 
                             {aiRecipeText ? (
                               <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                                 <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje resolve assim</div>
-                                <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">
-                                  {aiRecipeText}
-                                </div>
+                                <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
 
                                 <div className="mt-4 flex flex-wrap gap-2">
                                   <button
@@ -959,7 +889,7 @@ export default function MeuDiaLeveClient() {
                             ) : null}
                           </div>
 
-                          {/* fallback: receitas rápidas estáticas (não IA) */}
+                          {/* fallback receitas rápidas */}
                           <div className="mt-4 space-y-2">
                             {recipesForNow.map((r, idx) => {
                               const active = pickedRecipe === idx
