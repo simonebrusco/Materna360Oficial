@@ -47,6 +47,30 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
+function safeGetSS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetSS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.sessionStorage.setItem(key, value)
+  } catch {}
+}
+
+function todayKey() {
+  try {
+    return new Date().toISOString().slice(0, 10)
+  } catch {
+    return 'today'
+  }
+}
+
 function stepIndex(s: Step) {
   return s === 'ritmo' ? 1 : s === 'mini-rotina' ? 2 : s === 'pausas' ? 3 : 4
 }
@@ -64,22 +88,22 @@ function focusTitle(f: FocusMode) {
 }
 
 function focoHint(f: FocusMode) {
-  if (f === '1min') return 'Para quando você só precisa baixar o volume e seguir.'
-  if (f === '3min') return 'Para quando dá para fazer um pequeno reset e continuar.'
-  return 'Para quando você consegue se organizar por dentro com um pouco mais de calma.'
+  if (f === '1min') return 'Para baixar o volume e seguir.'
+  if (f === '3min') return 'Para retomar o controle do próximo passo.'
+  return 'Para se organizar por dentro com um pouco mais de calma.'
 }
 
 function ritmoTitle(r: Ritmo) {
-  if (r === 'leve') return 'Ok, vamos manter leve.'
+  if (r === 'leve') return 'Ok. Vamos manter leve.'
   if (r === 'animada') return 'Boa. Vamos estabilizar sem exagerar.'
   if (r === 'cansada') return 'Entendido. Vamos recuperar fôlego.'
-  return 'Entendido. Vamos reduzir pressão primeiro.'
+  return 'Entendido. Primeiro: reduzir pressão.'
 }
 
 function ritmoHint(r: Ritmo) {
   if (r === 'leve') return 'A meta é simples: seguir bem, sem inventar muito.'
   if (r === 'animada') return 'A meta é manter o ritmo bom sem virar sobrecarga.'
-  if (r === 'cansada') return 'A meta é recuperar um pouco de energia com algo curto e certeiro.'
+  if (r === 'cansada') return 'A meta é recuperar energia com algo curto e certeiro.'
   return 'A meta é destravar: um passo pequeno agora já muda o resto do dia.'
 }
 
@@ -153,13 +177,34 @@ function originForCuidarDeMim(): TaskOrigin {
   return 'selfcare'
 }
 
+function pickSessionVariantIndex(key: string, optionsLength: number): number {
+  const existing = safeGetSS(key)
+  if (existing) {
+    const n = Number(existing)
+    if (Number.isFinite(n) && n >= 0 && n < optionsLength) return n
+  }
+
+  const next = Math.floor(Math.random() * Math.max(1, optionsLength))
+  safeSetSS(key, String(next))
+  return next
+}
+
+type RoutineCopy = {
+  headerLine: string
+  subtitle: string
+  close: string
+  next: string
+}
+
 export default function Client() {
   const [step, setStep] = useState<Step>('mini-rotina')
   const [focus, setFocus] = useState<FocusMode>('3min')
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [checked, setChecked] = useState<boolean[]>([false, false, false, false])
   const [pauseIndex, setPauseIndex] = useState(0)
+
   const [saveFeedback, setSaveFeedback] = useState<string>('')
+  const [hasSavedSomething, setHasSavedSomething] = useState<boolean>(false)
 
   useEffect(() => {
     try {
@@ -167,11 +212,13 @@ export default function Client() {
     } catch {}
   }, [])
 
+  // P26: entrada com mais confiança na decisão do Eu360 (sem exigir ajuste)
   useEffect(() => {
     const inferred = inferFromEu360()
     setFocus(inferred.focus)
     setRitmo(inferred.ritmo)
     setStep('mini-rotina')
+    setHasSavedSomething(false)
 
     try {
       track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo })
@@ -242,8 +289,10 @@ export default function Client() {
       source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
     })
 
-    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
+    setHasSavedSomething(true)
+
+    if (res.created) setSaveFeedback('Levei para o Meu Dia.')
+    else setSaveFeedback('Isso já estava no Meu Dia.')
 
     try {
       track('cuidar_de_mim.save_to_my_day', {
@@ -263,6 +312,60 @@ export default function Client() {
     { id: 'pausas' as const, label: 'Pausa' },
     { id: 'para-voce' as const, label: 'Fechar' },
   ]
+
+  // P26: variações silenciosas de copy (sem mudar ação; reduz repetição percebida)
+  const routineCopy = useMemo<RoutineCopy>(() => {
+    const keyBase = `maternar_cuidar_copy_${todayKey()}_${routine.id}_${focus}_${ritmo}`
+
+    const headerOptions = [
+      'Sugestão pronta para agora',
+      'Agora: um passo que ajuda',
+      'Um ajuste pequeno (e suficiente)',
+    ]
+
+    const subtitleOptions =
+      routine.focus === '1min'
+        ? [
+            'Um minuto para reduzir o ruído e seguir melhor.',
+            'Só para baixar o volume e voltar para o próximo passo.',
+            'Um reset rápido. Sem cobrança. Só continuidade.',
+          ]
+        : routine.focus === '3min'
+        ? [
+            'Três minutos para retomar o controle do próximo passo.',
+            'Um reset curto para você voltar pro eixo.',
+            'Um ajuste simples para o resto do dia ficar mais fácil.',
+          ]
+        : [
+            'Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.',
+            'Um cuidado curto para o corpo e para a cabeça.',
+            'Um passo pequeno agora que melhora o depois.',
+          ]
+
+    const closeOptions = [
+      routine.close,
+      'Pronto. Não era para “dar conta de tudo” — era só para ajustar o agora.',
+      'Feito. Um passo leve já muda a forma de seguir.',
+    ]
+
+    const nextOptions = [
+      routine.next,
+      'Agora escolha só uma próxima coisa real. Uma só.',
+      'Se quiser, volte para o dia. Sem explicar nada.',
+    ]
+
+    const hi = pickSessionVariantIndex(`${keyBase}:h`, headerOptions.length)
+    const si = pickSessionVariantIndex(`${keyBase}:s`, subtitleOptions.length)
+    const ci = pickSessionVariantIndex(`${keyBase}:c`, closeOptions.length)
+    const ni = pickSessionVariantIndex(`${keyBase}:n`, nextOptions.length)
+
+    return {
+      headerLine: headerOptions[hi] ?? 'Sugestão pronta para agora',
+      subtitle: subtitleOptions[si] ?? routine.subtitle,
+      close: closeOptions[ci] ?? routine.close,
+      next: nextOptions[ni] ?? routine.next,
+    }
+  }, [routine.id, routine.focus, routine.subtitle, routine.close, routine.next, focus, ritmo])
 
   return (
     <main
@@ -331,10 +434,10 @@ export default function Client() {
                         </div>
 
                         <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                          Sugestão pronta para agora: {routine.title}
+                          {routineCopy.headerLine}: {routine.title}
                         </div>
 
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">{routine.subtitle}</div>
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">{routineCopy.subtitle}</div>
                       </div>
                     </div>
 
@@ -410,7 +513,9 @@ export default function Client() {
 
                   {step === 'ritmo' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido (pra eu pensar melhor por você)</div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">
+                        Ajuste rápido (pra eu pensar melhor por você)
+                      </div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
@@ -482,7 +587,7 @@ export default function Client() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-[14px] text-[#2f3a56] font-semibold">Faça isso agora</div>
+                          <div className="text-[14px] text-[#2f3a56] font-semibold">Só isso já é suficiente</div>
                           <div className="text-[12px] text-[#6a6a6a]">
                             Progresso: <span className="font-semibold text-[#2f3a56]">{progress}</span>/4
                           </div>
@@ -493,13 +598,13 @@ export default function Client() {
                             onClick={() => go('pausas')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Preciso pausar
+                            Pausar 1 min
                           </button>
                           <button
                             onClick={() => go('para-voce')}
                             className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Concluir
+                            Fechar por aqui
                           </button>
                         </div>
                       </div>
@@ -527,14 +632,16 @@ export default function Client() {
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
+                          Faça só o passo 1. Isso já ajuda.
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             onClick={() => saveToMyDay(routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Salvar no Meu Dia
+                            Levar para o Meu Dia
                           </button>
 
                           <button
@@ -548,7 +655,7 @@ export default function Client() {
                             onClick={() => go('para-voce')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Finalizar
+                            Fechar por aqui
                           </button>
                         </div>
                       </div>
@@ -573,14 +680,14 @@ export default function Client() {
                             onClick={nextPause}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Outra pausa
+                            Outra opção
                           </button>
 
                           <button
                             onClick={() => saveToMyDay(routine.pauseDeck[pauseIndex]?.label ?? routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Salvar no Meu Dia
+                            Levar para o Meu Dia
                           </button>
 
                           <button
@@ -602,22 +709,35 @@ export default function Client() {
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
                         <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">{routine.close}</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
+                          {routineCopy.close}
+                        </div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routineCopy.next}</div>
+
+                        {!hasSavedSomething ? (
+                          <div className="mt-4 rounded-2xl bg-white border border-[#f5d7e5] px-4 py-3">
+                            <div className="text-[12px] text-[#2f3a56] font-semibold">
+                              Se isso ajudou, leve para o Meu Dia (para aparecer como continuidade).
+                            </div>
+                            <div className="text-[12px] text-[#6a6a6a] mt-1">
+                              Sem compromisso. Só para você não ter que lembrar depois.
+                            </div>
+                          </div>
+                        ) : null}
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
                             onClick={() => saveToMyDay(routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Salvar no Meu Dia
+                            Levar para o Meu Dia
                           </button>
 
                           <button
                             onClick={() => go('mini-rotina')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Repetir (mesma opção)
+                            Fazer de novo (mesma opção)
                           </button>
 
                           <Link
