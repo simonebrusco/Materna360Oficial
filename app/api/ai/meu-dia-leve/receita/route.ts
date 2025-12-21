@@ -13,6 +13,13 @@ type Body = {
   childAgeMonths?: number
 }
 
+type ApiResponse =
+  | { ok: true; text: string }
+  | { ok: false; error: string; hint?: string }
+
+const MIN_MONTHS_BLOCK = 6
+const MIN_MONTHS_ALLOW_RECIPES = 12
+
 function clampSlot(v: unknown): Slot {
   const s = String(v ?? '')
   if (s === '3' || s === '5' || s === '10') return s
@@ -23,6 +30,17 @@ function clampMood(v: unknown): Mood {
   const m = String(v ?? '')
   if (m === 'no-limite' || m === 'corrida' || m === 'ok' || m === 'leve') return m
   return 'corrida'
+}
+
+function clampMonths(v: unknown): number | null {
+  if (v === null || v === undefined) return null
+  const n = Number(v)
+  if (!Number.isFinite(n)) return null
+  if (Number.isNaN(n)) return null
+  const i = Math.floor(n)
+  if (i < 0) return 0
+  if (i > 240) return 240
+  return i
 }
 
 function sanitizePantry(input: string): string {
@@ -54,6 +72,11 @@ function hasAny(items: string[], needles: string[]) {
   return needles.some((n) => items.some((it) => it.includes(n)))
 }
 
+function hasFruitWord(items: string[]) {
+  const fruits = ['banana', 'maçã', 'maca', 'mamão', 'mamao', 'pera', 'morango', 'uva', 'laranja', 'tangerina']
+  return hasAny(items, fruits)
+}
+
 function formatRecipeText(recipe: {
   title: string
   time: string
@@ -79,7 +102,6 @@ function formatRecipeText(recipe: {
 }
 
 function pickSpecificRecipe(items: string[], slot: Slot) {
-  // sinal forte (1 item já pode virar receita real)
   const hasEgg = hasAny(items, ['ovo'])
   const hasBanana = hasAny(items, ['banana'])
   const hasRice = hasAny(items, ['arroz'])
@@ -91,7 +113,6 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
   const hasChicken = hasAny(items, ['frango'])
   const hasVeg = hasAny(items, ['legume', 'cenoura', 'abobrinha', 'batata', 'brócolis', 'brocolis', 'ervilha'])
 
-  // 3 min: montagem
   if (slot === '3') {
     if (hasBanana && (hasOats || hasYogurt)) {
       return {
@@ -124,7 +145,6 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
     }
   }
 
-  // 5 min: fogão rápido
   if (slot === '5') {
     if (hasEgg) {
       return {
@@ -180,7 +200,6 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
     }
   }
 
-  // 10 min: panquequinha (exige banana + aveia/ovo)
   if (slot === '10') {
     if (hasBanana && (hasOats || hasEgg)) {
       return {
@@ -206,11 +225,6 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
   return null
 }
 
-function hasFruitWord(items: string[]) {
-  const fruits = ['banana', 'maçã', 'maca', 'mamão', 'mamao', 'pera', 'morango', 'uva', 'laranja', 'tangerina']
-  return hasAny(items, fruits)
-}
-
 export async function POST(req: Request) {
   const t0 = Date.now()
 
@@ -221,6 +235,7 @@ export async function POST(req: Request) {
     const mood = clampMood(body?.mood)
     const pantry = sanitizePantry(body?.pantry ?? '')
     const items = splitItems(pantry)
+    const childAgeMonths = clampMonths(body?.childAgeMonths)
 
     try {
       track('meu_dia_leve.recipe.request', {
@@ -228,43 +243,64 @@ export async function POST(req: Request) {
         mood,
         pantryLen: pantry.length,
         itemsCount: items.length,
+        childAgeMonths,
         mode: 'deterministic_specific_only',
       })
     } catch {}
 
-    // Regra 1: sem texto -> sem receita
-    if (!pantry) {
-      return NextResponse.json({ ok: false, error: 'empty_pantry' }, { status: 200 })
+    // Regra A: idade é requisito para responsabilidade do endpoint
+    if (childAgeMonths === null) {
+      const out: ApiResponse = { ok: false, error: 'age_missing', hint: 'Complete a idade no Eu360 para liberar.' }
+      return NextResponse.json(out, { status: 200 })
     }
 
-    // Regra 2: com 1 item, só libera se for “item forte” (ovo/arroz/banana/pão+iogurte etc.)
-    // Caso contrário, pede 2–3 itens.
+    if (childAgeMonths < MIN_MONTHS_BLOCK) {
+      const out: ApiResponse = {
+        ok: false,
+        error: 'under_6',
+        hint: 'Para essa fase, o melhor é seguir a orientação que você já usa com sua rede de saúde.',
+      }
+      return NextResponse.json(out, { status: 200 })
+    }
+
+    if (childAgeMonths < MIN_MONTHS_ALLOW_RECIPES) {
+      const out: ApiResponse = {
+        ok: false,
+        error: 'intro_6_11',
+        hint: 'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas.',
+      }
+      return NextResponse.json(out, { status: 200 })
+    }
+
+    // Regra 1: sem texto -> sem receita
+    if (!pantry) {
+      const out: ApiResponse = { ok: false, error: 'empty_pantry', hint: 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).' }
+      return NextResponse.json(out, { status: 200 })
+    }
+
+    // Regra 2: com 1 item, só libera se for “item forte”
     const strongOneItem =
       items.length === 1 &&
       (hasAny(items, ['ovo', 'arroz', 'banana', 'iogurte', 'pão', 'pao', 'feijão', 'feijao']))
 
     if (items.length < 2 && !strongOneItem) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'need_more_items',
-          hint: 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).',
-        },
-        { status: 200 },
-      )
+      const out: ApiResponse = {
+        ok: false,
+        error: 'need_more_items',
+        hint: 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).',
+      }
+      return NextResponse.json(out, { status: 200 })
     }
 
     // Regra 3: só retorna receita se for específica
     const recipe = pickSpecificRecipe(items, slot)
     if (!recipe) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'not_specific_enough',
-          hint: 'Me diga 2 ou 3 itens (ex.: “ovo, arroz, cenoura”) que eu monto uma receita bem direta.',
-        },
-        { status: 200 },
-      )
+      const out: ApiResponse = {
+        ok: false,
+        error: 'not_specific_enough',
+        hint: 'Me diga 2 ou 3 itens (ex.: “ovo, arroz, cenoura”) para eu montar uma receita bem direta.',
+      }
+      return NextResponse.json(out, { status: 200 })
     }
 
     const text = formatRecipeText(recipe)
@@ -274,13 +310,15 @@ export async function POST(req: Request) {
       track('meu_dia_leve.recipe.response', { ok: true, latencyMs, itemsCount: items.length })
     } catch {}
 
-    return NextResponse.json({ ok: true, text }, { status: 200 })
+    const out: ApiResponse = { ok: true, text }
+    return NextResponse.json(out, { status: 200 })
   } catch {
     const latencyMs = Date.now() - t0
     try {
       track('meu_dia_leve.recipe.response', { ok: false, latencyMs })
     } catch {}
 
-    return NextResponse.json({ ok: false, error: 'route_error' }, { status: 200 })
+    const out: ApiResponse = { ok: false, error: 'route_error', hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
+    return NextResponse.json(out, { status: 200 })
   }
 }
