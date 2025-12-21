@@ -395,6 +395,20 @@ export default function MeuFilhoClient() {
       source: SOURCE,
     })
 
+    // ✅ guardrail global do core (anti “bola de neve”)
+    if (res.limitHit) {
+      toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
+      try {
+        track('my_day.task.add.blocked', {
+          source: SOURCE,
+          origin: ORIGIN,
+          reason: 'open_tasks_limit_hit',
+          dateKey: res.dateKey,
+        })
+      } catch {}
+      return
+    }
+
     if (res.created) toast.success('Salvo no Meu Dia')
     else toast.info('Já estava no Meu Dia')
 
