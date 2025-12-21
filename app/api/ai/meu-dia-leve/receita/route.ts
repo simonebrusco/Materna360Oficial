@@ -102,8 +102,100 @@ function formatRecipeText(recipe: {
   return lines.join('\n')
 }
 
+/**
+ * Fallback responsável para “1 ingrediente forte”.
+ * Isso resolve o seu caso: "banana" no slot 5 não ficava específico -> agora fica.
+ */
+function pickSingleItemRecipe(items: string[], slot: Slot) {
+  const hasBanana = hasAny(items, ['banana'])
+  const hasEgg = hasAny(items, ['ovo'])
+  const hasYogurt = hasAny(items, ['iogurte', 'iogurt'])
+  const hasRice = hasAny(items, ['arroz'])
+  const hasBeans = hasAny(items, ['feijão', 'feijao'])
+  const hasBread = hasAny(items, ['pão', 'pao'])
+
+  // Regra: título e passos simples, sem promessas nutricionais.
+  // Tempo segue o slot, mas o preparo é sempre “possível”.
+  const time = slot === '3' ? '3 min' : slot === '5' ? '5 min' : '10 min'
+
+  if (hasBanana) {
+    return {
+      title: 'Banana do jeito mais simples',
+      time,
+      yield: '1 porção',
+      ingredients: ['1 banana madura'],
+      steps: [
+        'Descasque e amasse com um garfo (ou corte em pedacinhos).',
+        'Se quiser mais cremoso, amasse bem até virar “papinha”.',
+        'Sirva em porções pequenas.',
+      ],
+      note: 'Quando a casa está corrida, o simples também é cuidado.',
+    }
+  }
+
+  if (hasYogurt) {
+    return {
+      title: 'Iogurte puro (porção pequena)',
+      time,
+      yield: '1 porção',
+      ingredients: ['Iogurte natural (o que você tiver)'],
+      steps: ['Coloque uma porção pequena no potinho.', 'Sirva simples.'],
+      note: 'Se você tiver fruta, dá para complementar depois.',
+    }
+  }
+
+  if (hasEgg) {
+    return {
+      title: 'Ovo mexido básico',
+      time,
+      yield: '1 porção',
+      ingredients: ['1 ovo', '1 fio de azeite ou um pouquinho de manteiga (se você usa em casa)'],
+      steps: [
+        'Bata o ovo rapidamente com um garfo.',
+        'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
+        'Coloque o ovo e mexa devagar até ficar cozido e macio.',
+      ],
+      note: 'Fogo baixo deixa mais macio e fácil para a criança comer.',
+    }
+  }
+
+  if (hasRice) {
+    return {
+      title: 'Arroz aquecido (porção pequena)',
+      time,
+      yield: '1 porção',
+      ingredients: ['2 a 3 colheres de arroz já pronto'],
+      steps: ['Aqueça o arroz.', 'Sirva em porções pequenas.'],
+      note: 'Se você tiver feijão/legume, dá para complementar depois.',
+    }
+  }
+
+  if (hasBeans) {
+    return {
+      title: 'Feijão amassadinho (ou caldo)',
+      time,
+      yield: '1 porção',
+      ingredients: ['Feijão (amassadinho ou caldo, se você tiver pronto)'],
+      steps: ['Aqueça se necessário.', 'Amasse alguns grãos ou use o caldo.', 'Sirva em porção pequena.'],
+      note: 'Se tiver arroz, combina muito bem e vira refeição completa.',
+    }
+  }
+
+  if (hasBread) {
+    return {
+      title: 'Pão em pedaços (sem complicar)',
+      time,
+      yield: '1 porção',
+      ingredients: ['Pão (o que você tiver)'],
+      steps: ['Corte em pedaços pequenos.', 'Sirva simples.'],
+      note: 'Se tiver queijo ou fruta, você pode complementar.',
+    }
+  }
+
+  return null
+}
+
 function pickSpecificRecipe(items: string[], slot: Slot) {
-  // sinal forte (1 item já pode virar receita real)
   const hasEgg = hasAny(items, ['ovo'])
   const hasBanana = hasAny(items, ['banana'])
   const hasRice = hasAny(items, ['arroz'])
@@ -115,7 +207,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
   const hasChicken = hasAny(items, ['frango'])
   const hasVeg = hasAny(items, ['legume', 'cenoura', 'abobrinha', 'batata', 'brócolis', 'brocolis', 'ervilha'])
 
-  // 3 min: montagem
+  // 3 min
   if (slot === '3') {
     if (hasBanana && (hasOats || hasYogurt)) {
       return {
@@ -148,7 +240,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
     }
   }
 
-  // 5 min: fogão rápido
+  // 5 min
   if (slot === '5') {
     if (hasEgg) {
       return {
@@ -204,7 +296,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
     }
   }
 
-  // 10 min: panquequinha (exige banana + aveia/ovo)
+  // 10 min
   if (slot === '10') {
     if (hasBanana && (hasOats || hasEgg)) {
       return {
@@ -253,7 +345,7 @@ export async function POST(req: Request) {
       })
     } catch {}
 
-    // Regra A: responsabilidade do endpoint (idade precisa ser respeitada aqui também)
+    // Gate de idade também no servidor (consistência e segurança)
     if (childAgeMonths === null) {
       const out: ApiResponse = { ok: false, error: 'age_missing', hint: 'Complete a idade no Eu360 para liberar.' }
       return NextResponse.json(out, { status: 200 })
@@ -277,16 +369,15 @@ export async function POST(req: Request) {
       return NextResponse.json(out, { status: 200 })
     }
 
-    // Regra 1: sem texto -> sem receita
     if (!pantry) {
-      const out: ApiResponse = { ok: false, error: 'empty_pantry', hint: 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).' }
+      const out: ApiResponse = { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
       return NextResponse.json(out, { status: 200 })
     }
 
-    // Regra 2: com 1 item, só libera se for “item forte”
+    // 1 item: libera se for “forte”
     const strongOneItem =
       items.length === 1 &&
-      (hasAny(items, ['ovo', 'arroz', 'banana', 'iogurte', 'pão', 'pao', 'feijão', 'feijao']))
+      hasAny(items, ['ovo', 'arroz', 'banana', 'iogurte', 'pão', 'pao', 'feijão', 'feijao'])
 
     if (items.length < 2 && !strongOneItem) {
       const out: ApiResponse = {
@@ -297,8 +388,14 @@ export async function POST(req: Request) {
       return NextResponse.json(out, { status: 200 })
     }
 
-    // Regra 3: só retorna receita se for específica
-    const recipe = pickSpecificRecipe(items, slot)
+    // Primeiro tenta receita específica do slot.
+    let recipe = pickSpecificRecipe(items, slot)
+
+    // Se for 1 item forte e não achou receita específica do slot, aplica fallback responsável
+    if (!recipe && strongOneItem) {
+      recipe = pickSingleItemRecipe(items, slot)
+    }
+
     if (!recipe) {
       const out: ApiResponse = {
         ok: false,
