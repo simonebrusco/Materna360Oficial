@@ -1,3 +1,13 @@
+/**
+ * CONTRATO DE RECEITAS — Materna360 (P26)
+ * Regras oficiais em:
+ * /docs/product/receitas-padrao-materna360.md
+ *
+ * Não alterar comportamento, tom ou estrutura
+ * sem atualizar este documento.
+ */
+
+
 import { NextResponse } from 'next/server'
 import { track } from '@/app/lib/telemetry'
 
