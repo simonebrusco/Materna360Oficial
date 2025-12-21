@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { isAiEnabled } from '@/app/lib/ai/aiFlags'
 import { track } from '@/app/lib/telemetry'
 
 export const dynamic = 'force-dynamic'
@@ -14,314 +13,310 @@ type Body = {
   childAgeMonths?: number | null
 }
 
-function sanitizePantry(input?: string) {
-  return String(input ?? '')
-    .trim()
+function clampSlot(v: unknown): Slot {
+  const s = String(v ?? '').trim()
+  return s === '3' || s === '5' || s === '10' ? s : '5'
+}
+
+function clampMood(v: unknown): Mood {
+  const m = String(v ?? '').trim()
+  return m === 'no-limite' || m === 'corrida' || m === 'ok' || m === 'leve' ? (m as Mood) : 'corrida'
+}
+
+function clampAgeMonths(v: unknown): number | null {
+  if (v === null || v === undefined) return null
+  const n = Number.parseInt(String(v).trim(), 10)
+  if (!Number.isFinite(n) || Number.isNaN(n)) return null
+  if (n < 0) return 0
+  if (n > 240) return 240
+  return n
+}
+
+function sanitizePantry(pantryRaw: string): string {
+  const raw = String(pantryRaw ?? '')
     .replace(/\s+/g, ' ')
-    .slice(0, 240)
+    .trim()
+  if (!raw) return ''
+
+  // limita tamanho para evitar payload enorme e manter UX
+  return raw.slice(0, 180)
 }
 
-function clampSlot(slot: unknown): Slot {
-  return slot === '3' || slot === '5' || slot === '10' ? slot : '5'
-}
-
-function clampMood(mood: unknown): Mood {
-  return mood === 'no-limite' || mood === 'corrida' || mood === 'ok' || mood === 'leve' ? mood : 'corrida'
-}
-
-function clampAgeMonths(n: unknown): number | null {
-  if (n === null || n === undefined) return null
-  const v = typeof n === 'number' ? n : Number(n)
-  if (!Number.isFinite(v)) return null
-  // faixa segura; não queremos valores absurdos
-  if (v < 0) return null
-  if (v > 216) return 216
-  return Math.floor(v)
-}
-
-function normalizeList(raw: string) {
-  const parts = raw
-    .split(/[,;\n]/g)
-    .map((p) => p.trim())
+function tokenizePantry(pantry: string): string[] {
+  return pantry
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
     .filter(Boolean)
-    .slice(0, 12)
-
-  const seen = new Set<string>()
-  const out: string[] = []
-  for (const p of parts) {
-    const k = p.toLowerCase()
-    if (seen.has(k)) continue
-    seen.add(k)
-    out.push(p)
-  }
-  return out
+    .slice(0, 10)
 }
 
-type Recipe = {
-  title: string
-  time: string
-  yields: string
-  ingredients: string[]
-  steps: string[]
-  note?: string
-  tips?: string[]
+function hasAny(tokens: string[], keywords: string[]) {
+  return tokens.some((t) => keywords.some((k) => t.includes(k)))
 }
 
-function formatRecipe(r: Recipe) {
-  const lines: string[] = []
-  lines.push(r.title)
-  lines.push(`Tempo: ${r.time} • Rende: ${r.yields}`)
-  lines.push('')
-  lines.push('Ingredientes:')
-  r.ingredients.forEach((it) => lines.push(`• ${it}`))
-  lines.push('')
-  lines.push('Modo de preparo:')
-  r.steps.forEach((s, idx) => lines.push(`${idx + 1}) ${s}`))
-
-  if (r.tips && r.tips.length) {
-    lines.push('')
-    lines.push('Dicas (opcional):')
-    r.tips.forEach((t) => lines.push(`• ${t}`))
-  }
-
-  if (r.note) {
-    lines.push('')
-    lines.push(r.note)
-  }
-
-  return lines.join('\n')
+function firstMatch(tokens: string[], keywords: string[]) {
+  return tokens.find((t) => keywords.some((k) => t.includes(k))) ?? null
 }
 
 /**
- * P26 — guardrail por idade (responsabilidade)
- * - Sem idade: bloqueia
- * - < 6 meses: bloqueia + aleitamento
- * - 6–11 meses: bloqueia + orientar pediatra (introdução alimentar)
- * - >= 12 meses: libera receita simples e saudável
+ * Regras de segurança (≥ 12 meses):
+ * - sem mel (risco botulismo até 12m)
+ * - sem oleaginosas/pasta de amendoim por padrão (alergênico; só com orientação/contexto)
+ * - sem açúcar adicionado por padrão
+ * - sem “sugestões perigosas” quando a mãe não pediu
  */
-function buildAgeGate(ageMonths: number | null) {
-  if (ageMonths === null) {
-    return {
-      blocked: true as const,
-      title: 'Antes de gerar receita',
-      text:
-        'Para eu sugerir uma receita com segurança, preciso da idade da criança no Eu360.\n\n' +
-        'Assim eu só mostro o que faz sentido para a fase — sem risco e sem improviso.',
-    }
-  }
+function buildHealthyKidRecipe(params: { tokens: string[]; ageMonths: number; slot: Slot; mood: Mood }) {
+  const { tokens, ageMonths, slot, mood } = params
 
-  if (ageMonths < 6) {
-    return {
-      blocked: true as const,
-      title: 'Para bebês com menos de 6 meses',
-      text:
-        'Aqui o Materna não sugere receitas.\n\n' +
-        'Nessa fase, a orientação costuma ser manter o leite (materno ou fórmula) como base.\n' +
-        'Se você estiver em dúvida, vale alinhar com o pediatra.',
-    }
-  }
+  // Ingredientes comuns detectáveis
+  const hasBanana = hasAny(tokens, ['banana'])
+  const hasEgg = hasAny(tokens, ['ovo'])
+  const hasYogurt = hasAny(tokens, ['iogurte'])
+  const hasOats = hasAny(tokens, ['aveia'])
+  const hasRice = hasAny(tokens, ['arroz'])
+  const hasBread = hasAny(tokens, ['pão', 'pao'])
+  const hasCheese = hasAny(tokens, ['queijo'])
+  const hasTomato = hasAny(tokens, ['tomate'])
+  const hasCarrot = hasAny(tokens, ['cenoura'])
+  const hasPumpkin = hasAny(tokens, ['abóbora', 'abobora'])
+  const hasChicken = hasAny(tokens, ['frango'])
+  const hasBeans = hasAny(tokens, ['feijão', 'feijao'])
+  const hasPotato = hasAny(tokens, ['batata'])
+  const hasApple = hasAny(tokens, ['maçã', 'maca'])
+  const hasPear = hasAny(tokens, ['pera'])
 
-  if (ageMonths >= 6 && ageMonths < 12) {
-    return {
-      blocked: true as const,
-      title: 'Para a fase de 6 a 11 meses',
-      text:
-        'Aqui o Materna não gera receitas prontas.\n\n' +
-        'Essa é a fase de introdução alimentar, que costuma ser individual.\n' +
-        'O mais seguro é alinhar com o pediatra (ou nutricionista infantil) sobre o que entra e como entra.',
-    }
-  }
+  const time = slot === '3' ? '6 min' : slot === '5' ? '10 min' : '15 min'
+  const yieldTxt = '1 porção (criança)'
 
-  return { blocked: false as const }
-}
+  // Ajuste de tom (sem improviso; objetivo e cuidadoso)
+  const toneLine =
+    mood === 'no-limite'
+      ? 'Vamos manter simples e seguro, sem complicar.'
+      : mood === 'corrida'
+        ? 'Uma opção rápida, com comida de verdade.'
+        : mood === 'ok'
+          ? 'Uma opção leve e nutritiva para o dia a dia.'
+          : 'Uma opção tranquila, boa para manter a rotina leve.'
 
-/**
- * Geração determinística e “responsável”:
- * - sempre retorna uma receita concreta (não “template”),
- * - sem itens polêmicos (mel, pasta de amendoim, etc.),
- * - linguagem objetiva e cuidadosa.
- */
-function buildRecipeText(input: { slot: Slot; pantryRaw: string }) {
-  const pantryRaw = input.pantryRaw
-  const pantryList = normalizeList(pantryRaw)
-  const t = pantryRaw.toLowerCase()
-  const slot = input.slot
-
-  const hasBanana = t.includes('banana')
-  const hasEgg = t.includes('ovo') || t.includes('ovos')
-  const hasOats = t.includes('aveia')
-  const hasYogurt = t.includes('iogurte') || t.includes('yogurt')
-  const hasMilk = t.includes('leite')
-  const hasFlour = t.includes('farinha')
-  const hasCheese = t.includes('queijo')
-  const hasBread = t.includes('pão') || t.includes('pao')
-  const hasApple = t.includes('maç') || t.includes('mac')
-  const hasCinnamon = t.includes('canela')
-  const hasCocoa = t.includes('cacau')
-
-  // 1) CASO: APENAS OVO (ou ovo é o principal) → sempre entregar algo real
-  if (hasEgg && pantryList.length <= 2) {
-    const r: Recipe = {
-      title: 'Ovo mexido cremoso (para criança)',
-      time: slot === '10' ? '10 min' : slot === '3' ? '5 min' : '5 min',
-      yields: '1 porção',
-      ingredients: [
-        '1 ovo',
-        hasMilk ? '1 colher de leite (opcional)' : '1 colher de água (opcional)',
-        '1 pitadinha de sal (opcional)',
-        '1 fio de azeite ou um pouquinho de manteiga para untar',
-      ],
-      steps: [
-        'Quebre o ovo em um potinho e bata com um garfo.',
-        hasMilk ? 'Se quiser mais macio, misture 1 colher de leite.' : 'Se quiser mais macio, misture 1 colher de água.',
-        'Aqueça uma frigideira antiaderente em fogo baixo e unte bem de leve.',
-        'Coloque o ovo e mexa devagar até ficar cozido e cremoso. Sirva.',
-      ],
-      tips: [
-        'Se você tiver legumes cozidos já prontos, pode misturar um pouquinho no final.',
-        'Se a criança preferir, dá para fazer em formato de omeletinho pequeno.',
-      ],
-    }
-    return formatRecipe(r)
-  }
-
-  // 2) CASO: BANANA → receita concreta e segura (sem pasta de amendoim / sem mel)
+  // 1) Banana
   if (hasBanana) {
-    if (slot === '3') {
-      const r: Recipe = {
-        title: 'Creme de banana bem simples (para criança)',
-        time: '3 min',
-        yields: '1 porção',
-        ingredients: [
-          '1 banana madura',
-          hasYogurt ? '2 a 4 colheres de iogurte natural (opcional)' : hasMilk ? '1 a 2 colheres de leite (opcional)' : '1 a 2 colheres de água (opcional)',
-          hasOats ? '1 colher de aveia (opcional)' : '—',
-        ].filter((x) => x !== '—'),
-        steps: [
-          'Amasse a banana com um garfo até virar um creme.',
-          hasYogurt
-            ? 'Misture o iogurte e sirva.'
-            : hasMilk
-              ? 'Se quiser mais cremoso, pingue um pouco de leite e misture. Sirva.'
-              : 'Se quiser mais cremoso, pingue um pouco de água e misture. Sirva.',
-          hasOats ? 'Se tiver aveia, finalize com uma colher por cima.' : 'Pronto.',
-        ],
-        tips: [
-          hasApple ? 'Se tiver maçã bem picadinha, dá para misturar um pouco.' : 'Se você tiver outra fruta macia, pode combinar.',
-          hasCinnamon ? 'Uma pitadinha de canela pode entrar, se você já usa em casa.' : '—',
-        ].filter((x) => x !== '—'),
-      }
-      return formatRecipe(r)
+    // Preferir aveia se existir; senão, iogurte; senão, “banana + fruta” (sem açúcar)
+    if (hasOats) {
+      return [
+        `Banana com aveia (a partir de ${ageMonths >= 12 ? '12' : '12'} meses)`,
+        toneLine,
+        ``,
+        `Tempo: ${time} • Rende: ${yieldTxt}`,
+        ``,
+        `Ingredientes:`,
+        `- 1 banana madura`,
+        `- 1 a 2 colheres de sopa de aveia fina`,
+        `- Água ou leite (opcional, só para ajustar a textura)`,
+        ``,
+        `Modo de preparo:`,
+        `1) Amasse bem a banana com um garfo.`,
+        `2) Misture a aveia até ficar homogêneo.`,
+        `3) Se precisar, pingue um pouco de água/leite para ajustar a consistência.`,
+        `4) Sirva em seguida.`,
+        ``,
+        `Observação: sem açúcar e sem mel. Se a criança tiver restrições, ajuste com orientação do pediatra.`,
+      ].join('\n')
     }
 
-    // 5 min: bowl com iogurte ou banana + aveia
-    if (slot === '5') {
-      if (hasYogurt) {
-        const r: Recipe = {
-          title: 'Bowl de banana com iogurte (para criança)',
-          time: '5 min',
-          yields: '1 porção',
-          ingredients: ['1 banana madura', '3 a 5 colheres de iogurte natural', hasOats ? '1 colher de aveia (opcional)' : '—'].filter(
-            (x) => x !== '—',
-          ),
-          steps: [
-            'Amasse a banana (ou pique em rodelas).',
-            'Misture com o iogurte.',
-            hasOats ? 'Finalize com aveia e sirva.' : 'Sirva.',
-          ],
-          tips: [
-            hasApple ? 'Maçã bem picadinha funciona muito bem aqui.' : 'Se tiver fruta, pode colocar por cima.',
-            hasCinnamon ? 'Canela (bem pouquinho), se você já usa.' : '—',
-          ].filter((x) => x !== '—'),
-        }
-        return formatRecipe(r)
-      }
-
-      const r: Recipe = {
-        title: 'Banana amassada com aveia (para criança)',
-        time: '5 min',
-        yields: '1 porção',
-        ingredients: [
-          '1 banana madura',
-          hasOats ? '2 colheres de aveia' : '1 colher de algo simples para dar textura (opcional)',
-          hasMilk ? '1 a 3 colheres de leite (opcional, só para ajustar)' : '1 a 2 colheres de água (opcional, só para ajustar)',
-        ],
-        steps: [
-          'Amasse a banana com um garfo.',
-          hasOats ? 'Misture a aveia até ficar homogêneo.' : 'Misture até ficar uniforme.',
-          'Se quiser mais macio, adicione um pouquinho de líquido e misture. Sirva.',
-        ],
-        tips: [
-          hasCocoa ? 'Se você já usa cacau em casa, 1 toque pequeno pode entrar.' : '—',
-          hasCinnamon ? 'Uma pitadinha de canela (se você já usa).' : '—',
-        ].filter((x) => x !== '—'),
-      }
-      return formatRecipe(r)
+    if (hasYogurt) {
+      return [
+        `Iogurte com banana amassada (a partir de 12 meses)`,
+        toneLine,
+        ``,
+        `Tempo: ${time} • Rende: ${yieldTxt}`,
+        ``,
+        `Ingredientes:`,
+        `- 1 banana madura`,
+        `- 3 a 4 colheres de sopa de iogurte natural`,
+        `- Canela (opcional, uma pitadinha)`,
+        ``,
+        `Modo de preparo:`,
+        `1) Amasse a banana até virar um creme.`,
+        `2) Misture com o iogurte até ficar uniforme.`,
+        `3) Se quiser, finalize com uma pitadinha de canela.`,
+        `4) Sirva imediatamente.`,
+        ``,
+        `Observação: prefira iogurte natural, sem açúcar.`,
+      ].join('\n')
     }
 
-    // 10 min: panqueca de banana (se tiver ovo)
-    if (slot === '10' && hasEgg) {
-      const base = hasOats ? '2 colheres de aveia' : hasFlour ? '2 colheres de farinha' : '2 colheres de aveia ou farinha (se tiver)'
-      const r: Recipe = {
-        title: 'Panquequinha de banana (para criança)',
-        time: '10 min',
-        yields: '1 a 2 porções',
-        ingredients: ['1 banana madura amassada', '1 ovo', base, '1 fio de óleo/azeite para untar a frigideira'],
-        steps: [
-          'Misture a banana amassada com o ovo.',
-          'Adicione a aveia/farinha e mexa até virar uma massa grossinha.',
-          'Aqueça uma frigideira antiaderente e unte bem de leve.',
-          'Faça panquequinhas pequenas, doure dos dois lados e sirva.',
-        ],
-        tips: [
-          hasYogurt ? 'Se tiver iogurte, dá para servir com uma colher por cima.' : 'Sirva do jeito mais simples mesmo.',
-        ],
-      }
-      return formatRecipe(r)
-    }
-
-    // fallback banana estruturado
-    const r: Recipe = {
-      title: 'Banana bem simples (para criança)',
-      time: slot === '10' ? '10 min' : '5 min',
-      yields: '1 porção',
-      ingredients: ['1 banana madura'],
-      steps: ['Amasse a banana.', 'Sirva.'],
-      note: 'Se você escrever mais 1 ou 2 itens além de “banana”, eu monto uma receita mais completa com o que você tem.',
-    }
-    return formatRecipe(r)
+    // fallback banana “pura” bem apresentada
+    return [
+      `Banana amassada bem cremosa (a partir de 12 meses)`,
+      toneLine,
+      ``,
+      `Tempo: ${time} • Rende: ${yieldTxt}`,
+      ``,
+      `Ingredientes:`,
+      `- 1 banana madura`,
+      `- Água (opcional, só para ajustar textura)`,
+      ``,
+      `Modo de preparo:`,
+      `1) Amasse bem a banana com um garfo.`,
+      `2) Se precisar, pingue um pouco de água para deixar mais cremosa.`,
+      `3) Sirva.`,
+      ``,
+      `Observação: simples e segura. Se quiser uma receita mais completa, escreva 2–3 itens (ex.: “banana, iogurte, aveia”).`,
+    ].join('\n')
   }
 
-  // 3) CASO: pão + queijo → tostex simples
-  if (hasBread && hasCheese) {
-    const r: Recipe = {
-      title: 'Pão com queijo na frigideira (para criança)',
-      time: slot === '10' ? '10 min' : '5 min',
-      yields: '1 porção',
-      ingredients: ['1 a 2 fatias de pão', '1 fatia fina de queijo', '1 fio de azeite ou um pouquinho de manteiga para dourar'],
-      steps: ['Monte o pão com queijo.', 'Aqueça na frigideira em fogo baixo até dourar por fora e aquecer por dentro.', 'Sirva.'],
-      tips: ['Se tiver tomate bem picadinho ou fruta do lado, pode acompanhar.'],
+  // 2) Ovo
+  if (hasEgg) {
+    // Se tiver arroz: arroz + ovo mexido (bem estruturado)
+    if (hasRice) {
+      return [
+        `Arroz com ovo mexido e toque de legumes (a partir de 12 meses)`,
+        toneLine,
+        ``,
+        `Tempo: ${time} • Rende: ${yieldTxt}`,
+        ``,
+        `Ingredientes:`,
+        `- 3 a 5 colheres de sopa de arroz pronto`,
+        `- 1 ovo`,
+        `- 1 fio de azeite (opcional)`,
+        `- Legumes picadinhos (opcional: cenoura cozida, abóbora cozida, tomate bem picado)`,
+        ``,
+        `Modo de preparo:`,
+        `1) Em uma frigideira, bata o ovo com um garfo.`,
+        `2) Cozinhe mexendo até firmar (sem deixar ressecar).`,
+        `3) Misture o arroz pronto e aqueça por 1–2 minutos.`,
+        `4) Se tiver, adicione um pouco de legume já cozido/picadinho e mexa.`,
+        `5) Sirva morno.`,
+        ``,
+        `Observação: evite excesso de sal. Se a criança tiver alergias, confirme orientação médica.`,
+      ].join('\n')
     }
-    return formatRecipe(r)
+
+    // Se tiver pão e queijo: “omeletinho” / sanduíche quente infantil
+    if (hasBread && hasCheese) {
+      return [
+        `Omeletinho com queijo (a partir de 12 meses)`,
+        toneLine,
+        ``,
+        `Tempo: ${time} • Rende: ${yieldTxt}`,
+        ``,
+        `Ingredientes:`,
+        `- 1 ovo`,
+        `- 1 colher de sopa de queijo ralado ou picadinho`,
+        `- 1 fio de azeite ou manteiga (opcional)`,
+        `- Pão (opcional, para acompanhar)`,
+        ``,
+        `Modo de preparo:`,
+        `1) Bata o ovo com um garfo.`,
+        `2) Misture o queijo.`,
+        `3) Cozinhe em frigideira antiaderente em fogo baixo, até firmar.`,
+        `4) Sirva em pedaços pequenos (morno).`,
+        ``,
+        `Observação: para ficar mais macio, cozinhe em fogo baixo e não deixe secar.`,
+      ].join('\n')
+    }
+
+    // fallback ovo bem feito (não genérico demais)
+    return [
+      `Ovo mexido bem macio (a partir de 12 meses)`,
+      toneLine,
+      ``,
+      `Tempo: ${time} • Rende: ${yieldTxt}`,
+      ``,
+      `Ingredientes:`,
+      `- 1 ovo`,
+      `- 1 colher de sopa de água ou leite (opcional, para ficar mais macio)`,
+      `- 1 fio de azeite (opcional)`,
+      ``,
+      `Modo de preparo:`,
+      `1) Bata o ovo (e a água/leite, se usar) com um garfo.`,
+      `2) Cozinhe mexendo em fogo baixo até ficar cremoso (sem ressecar).`,
+      `3) Sirva morno.`,
+      ``,
+      `Se você quiser que eu combine melhor, escreva 2–3 itens (ex.: “ovo, arroz, tomate”).`,
+    ].join('\n')
   }
 
-  // 4) fallback: ainda concreto, mas pede mais itens se vier muito pouco
-  const fewItems = pantryList.length <= 1
-  const r: Recipe = {
-    title: 'Receita simples com o que você tem (para criança)',
-    time: slot === '3' ? '3 min' : slot === '10' ? '10 min' : '5 min',
-    yields: '1 porção',
-    ingredients: pantryList.length ? pantryList : ['O que estiver mais fácil agora'],
-    steps: [
-      'Escolha 1 item da sua lista como base.',
-      'Se tiver mais 1 item, use como complemento.',
-      'Monte, aqueça OU misture (uma coisa só). Sirva.',
-    ],
-    note: fewItems
-      ? 'Se você escrever 2 ou 3 itens (ex.: “ovo, arroz, legumes”), eu monto uma receita bem mais específica.'
-      : undefined,
+  // 3) Frango + legumes (se houver)
+  if (hasChicken) {
+    const veg = hasCarrot || hasPumpkin || hasPotato || hasTomato
+    return [
+      `Franguinho desfiado com legumes (a partir de 12 meses)`,
+      toneLine,
+      ``,
+      `Tempo: ${time} • Rende: ${yieldTxt}`,
+      ``,
+      `Ingredientes:`,
+      `- Frango cozido e desfiado (porção pequena)`,
+      veg ? `- Legumes (cenoura/abóbora/batata/tomate), se tiver` : `- Legumes (opcional), se tiver`,
+      `- 1 fio de azeite (opcional)`,
+      ``,
+      `Modo de preparo:`,
+      `1) Aqueça o frango já cozido/desfiado.`,
+      `2) Se tiver legumes já cozidos, amasse ou pique bem e misture.`,
+      `3) Ajuste a textura com um pouquinho de água do cozimento, se necessário.`,
+      `4) Sirva morno.`,
+      ``,
+      `Observação: evite temperos fortes e excesso de sal.`,
+    ].join('\n')
   }
-  return formatRecipe(r)
+
+  // 4) Arroz + feijão (se houver)
+  if (hasRice && hasBeans) {
+    return [
+      `Arroz com feijão bem amassadinho (a partir de 12 meses)`,
+      toneLine,
+      ``,
+      `Tempo: ${time} • Rende: ${yieldTxt}`,
+      ``,
+      `Ingredientes:`,
+      `- 3 a 5 colheres de sopa de arroz pronto`,
+      `- 2 a 3 colheres de sopa de feijão (com caldo)`,
+      `- Legume cozido (opcional: abóbora/cenoura)`,
+      ``,
+      `Modo de preparo:`,
+      `1) Aqueça o feijão com um pouco do caldo.`,
+      `2) Amasse levemente para ficar mais fácil para a criança.`,
+      `3) Misture com o arroz pronto e aqueça mais 1 minuto.`,
+      `4) Se tiver legume cozido, misture e sirva.`,
+      ``,
+      `Observação: textura e tempero sempre suaves.`,
+    ].join('\n')
+  }
+
+  // 5) Fruta (maçã/pera) + iogurte
+  if (hasYogurt && (hasApple || hasPear)) {
+    const fruit = hasApple ? 'maçã' : 'pera'
+    return [
+      `Iogurte com ${fruit} picadinha (a partir de 12 meses)`,
+      toneLine,
+      ``,
+      `Tempo: ${time} • Rende: ${yieldTxt}`,
+      ``,
+      `Ingredientes:`,
+      `- Iogurte natural (3–4 colheres de sopa)`,
+      `- ${fruit} bem picadinha ou ralada`,
+      ``,
+      `Modo de preparo:`,
+      `1) Misture a fruta no iogurte.`,
+      `2) Sirva na hora.`,
+      ``,
+      `Observação: prefira iogurte sem açúcar.`,
+    ].join('\n')
+  }
+
+  // fallback final: ainda estruturado, mas pedindo mais itens
+  const example = tokens.length ? tokens.slice(0, 3).join(', ') : 'ex.: “ovo, arroz, tomate”'
+  return [
+    `Receita simples para criança (a partir de 12 meses)`,
+    toneLine,
+    ``,
+    `Tempo: ${time} • Rende: ${yieldTxt}`,
+    ``,
+    `O que você escreveu: ${example}`,
+    ``,
+    `Para eu acertar melhor com segurança, escreva 2–3 itens (ex.: “ovo, arroz, tomate” ou “banana, iogurte, aveia”).`,
+  ].join('\n')
 }
 
 export async function POST(req: Request) {
@@ -332,61 +327,71 @@ export async function POST(req: Request) {
 
     const slot = clampSlot(body?.slot)
     const mood = clampMood(body?.mood)
-    const pantryRaw = sanitizePantry(body?.pantry)
-    const ageMonths = clampAgeMonths(body?.childAgeMonths)
+    const pantry = sanitizePantry(body?.pantry ?? '')
+    const childAgeMonths = clampAgeMonths(body?.childAgeMonths)
 
+    // Telemetria mínima (sem conteúdo sensível)
     try {
       track('ai.request', {
-        feature: 'meu_dia_leve_receita',
+        feature: 'meu-dia-leve-receita',
+        origin: 'maternar/meu-dia-leve',
         slot,
         mood,
-        pantryLen: pantryRaw.length,
-        ageMonths: ageMonths ?? 'unknown',
-        enabled: isAiEnabled(),
+        ageKnown: childAgeMonths !== null,
       })
     } catch {}
 
-    // Guardrail de idade (P26)
-    const gate = buildAgeGate(ageMonths)
-    if (gate.blocked) {
-      return NextResponse.json(
-        {
-          ok: false,
-          blocked: true,
-          reason: ageMonths === null ? 'missing_age' : ageMonths < 6 ? 'lt_6m' : '6_to_11m',
-          title: gate.title,
-          text: gate.text,
-        },
-        { status: 200 },
-      )
+    // Gates rígidos por segurança
+    if (childAgeMonths === null) {
+      return NextResponse.json({
+        ok: false,
+        error: 'age_required',
+      })
     }
 
-    if (!pantryRaw) {
-      return NextResponse.json({ ok: false, blocked: false, error: 'missing_pantry' }, { status: 200 })
+    if (childAgeMonths < 6) {
+      return NextResponse.json({
+        ok: false,
+        error: 'child_under_6_months',
+      })
     }
 
-    const text = buildRecipeText({ slot, pantryRaw })
+    if (childAgeMonths >= 6 && childAgeMonths < 12) {
+      return NextResponse.json({
+        ok: false,
+        error: 'intro_feeding_phase_6_12',
+      })
+    }
 
+    // >= 12 meses
+    if (!pantry) {
+      return NextResponse.json({
+        ok: false,
+        error: 'pantry_required',
+      })
+    }
+
+    const tokens = tokenizePantry(pantry)
+    const text = buildHealthyKidRecipe({ tokens, ageMonths: childAgeMonths, slot, mood })
+
+    const latencyMs = Date.now() - t0
     try {
       track('ai.response', {
-        feature: 'meu_dia_leve_receita',
+        feature: 'meu-dia-leve-receita',
+        origin: 'maternar/meu-dia-leve',
+        latencyMs,
         ok: true,
-        latencyMs: Date.now() - t0,
-        mode: isAiEnabled() ? 'progressive' : 'fallback',
       })
     } catch {}
 
-    return NextResponse.json({ ok: true, blocked: false, text }, { status: 200 })
-  } catch {
-    return NextResponse.json(
-      {
-        ok: false,
-        blocked: true,
-        reason: 'fallback',
-        title: 'Não deu certo agora',
-        text: 'Se quiser, tente de novo em alguns instantes.',
-      },
-      { status: 200 },
-    )
+    return NextResponse.json({ ok: true, text })
+  } catch (e) {
+    const latencyMs = Date.now() - t0
+    try {
+      track('ai.response', { feature: 'meu-dia-leve-receita', latencyMs, ok: false })
+    } catch {}
+
+    // fallback de emergência: nunca quebrar UI
+    return NextResponse.json({ ok: false, error: 'unexpected' }, { status: 200 })
   }
 }
