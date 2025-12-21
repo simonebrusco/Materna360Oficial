@@ -261,8 +261,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
             const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
             const hasMore = count > effectiveLimit
 
+            // Alertas gentis (P26) — sem bloquear
             const isSelfcareGroup = groupId === 'autocuidado'
             const selfcareTooMany = isSelfcareGroup && count >= Math.max(6, effectiveLimit + 2)
+
+            const isFamilyGroup = groupId === 'familia'
+            const familyTooMany = isFamilyGroup && count >= 4
 
             return (
               <div
@@ -283,6 +287,14 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                     </button>
                   ) : null}
                 </div>
+
+                {familyTooMany ? (
+                  <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
+                    <p className="text-[12px] text-[var(--color-text-muted)]">
+                      Dica do Materna: conexão funciona melhor quando é possível. Escolha uma ação por vez — presença vale mais que quantidade.
+                    </p>
+                  </div>
+                ) : null}
 
                 {selfcareTooMany ? (
                   <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
