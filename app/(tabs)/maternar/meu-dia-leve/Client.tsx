@@ -84,18 +84,29 @@ function monthsBetween(from: Date, to: Date) {
 }
 
 /**
- * P26 — Eu360 como fonte de verdade
- * (Sem criar novas estruturas.)
+ * P26 — Eu360 como fonte de verdade (sem pedir idade aqui)
+ * Tenta várias chaves para casar com o que já existe no projeto.
  */
 function inferChildAgeMonthsFromEu360(): number | null {
   const directCandidates = [
+    // mais prováveis
     'eu360_child_age_months',
     'eu360_childAgeMonths',
-    'eu360_age_months',
     'eu360_baby_age_months',
     'eu360_babyAgeMonths',
+    'eu360_age_months',
+    'eu360_ageMonths',
+    // variações comuns
+    'eu360_child_months',
+    'eu360_baby_months',
     'child_age_months',
     'childAgeMonths',
+    'babyAgeMonths',
+    'age_months',
+    'ageMonths',
+    // caso Eu360 salve como “months”
+    'eu360_months',
+    'months',
   ]
 
   for (const k of directCandidates) {
@@ -113,6 +124,7 @@ function inferChildAgeMonthsFromEu360(): number | null {
     'childBirthdate',
     'eu360_child_dob',
     'child_dob',
+    'dob',
   ]
   for (const k of birthCandidates) {
     const raw = safeGetLS(k)
@@ -120,12 +132,26 @@ function inferChildAgeMonthsFromEu360(): number | null {
     if (d) return Math.max(0, Math.min(240, monthsBetween(d, new Date())))
   }
 
-  const profileCandidates = ['eu360_profile', 'eu360_profile_v1', 'eu360', 'eu360_state', 'eu360_data']
+  const profileCandidates = [
+    'eu360_profile',
+    'eu360_profile_v1',
+    'eu360_state',
+    'eu360_data',
+    'eu360_form',
+    'eu360_form_v1',
+  ]
   for (const k of profileCandidates) {
     const obj = safeParseJSON(safeGetLS(k))
     if (!obj) continue
 
-    const n1 = safeParseInt(obj?.childAgeMonths ?? obj?.babyAgeMonths ?? obj?.ageMonths ?? obj?.child_age_months)
+    const n1 = safeParseInt(
+      obj?.childAgeMonths ??
+        obj?.babyAgeMonths ??
+        obj?.ageMonths ??
+        obj?.child_age_months ??
+        obj?.baby_age_months ??
+        obj?.months,
+    )
     if (n1 !== null) return Math.max(0, Math.min(240, n1))
 
     const d =
@@ -214,10 +240,10 @@ const IDEIAS: QuickIdea[] = [
 ]
 
 const RECEITAS: QuickRecipe[] = [
-  { tag: '3 min', title: 'Iogurte + fruta + granola', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
+  { tag: '3 min', title: 'Iogurte + fruta + um crocante', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
   { tag: '5 min', title: 'Ovo mexido + arroz pronto', how: 'Arroz já pronto + ovo mexido. Legume se der.', slot: '5' },
-  { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Simples e suficiente para um dia corrido.', slot: '5' },
-  { tag: '10 min', title: 'Sopa/caldo pronto + final bonito', how: 'Esquentar + montar prato decente. Resolve sem drama.', slot: '10' },
+  { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Simples e suficiente para uma rotina corrida.', slot: '5' },
+  { tag: '10 min', title: 'Sopa/caldo pronto + final leve', how: 'Esquentar + montar bem. Resolve sem esticar o dia.', slot: '10' },
 ]
 
 const PASSO_LEVE: DayLine[] = [
@@ -300,9 +326,6 @@ async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string }
   return (await res.json()) as AIRecipeResponse
 }
 
-/**
- * ✅ DEFAULT EXPORT obrigatório (o page.tsx importa default)
- */
 export default function MeuDiaLeveClient() {
   const [step, setStep] = useState<Step>('inspiracao')
   const [slot, setSlot] = useState<Slot>('5')
@@ -477,7 +500,7 @@ export default function MeuDiaLeveClient() {
 
       if (!data?.ok || !data.text) {
         setAiRecipeError(data?.error || 'erro_ia')
-        toast.info('Não consegui gerar agora. Se quiser, use uma receita rápida abaixo.')
+        toast.info('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
         try {
           track('meu_dia_leve.recipe.ai.fail', { error: data?.error || 'no_text' })
         } catch {}
@@ -490,7 +513,7 @@ export default function MeuDiaLeveClient() {
       } catch {}
     } catch {
       setAiRecipeError('erro_rede')
-      toast.info('Falhou agora. Se quiser, use uma receita rápida abaixo.')
+      toast.info('Falhou agora. Se quiser, use uma opção pronta abaixo.')
       try {
         track('meu_dia_leve.recipe.ai.fail', { error: 'network_or_throw' })
       } catch {}
@@ -529,7 +552,6 @@ export default function MeuDiaLeveClient() {
             </div>
           </header>
 
-          {/* Conteúdo principal */}
           <Reveal>
             <section
               className="
@@ -541,7 +563,6 @@ export default function MeuDiaLeveClient() {
                 overflow-hidden
               "
             >
-              {/* Header interno */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -629,9 +650,129 @@ export default function MeuDiaLeveClient() {
                 </div>
               </div>
 
-              {/* Body */}
               <div className="p-4 md:p-6">
-                {/* Receitas (parte que importa para P26) */}
+                {saveFeedback ? (
+                  <div className="mb-4 rounded-2xl bg-white/80 border border-white/50 px-4 py-3 text-[12px] text-[#2f3a56] flex items-center justify-between gap-3">
+                    <span>{saveFeedback}</span>
+                    <Link
+                      href="/meu-dia"
+                      className="rounded-full bg-[#fd2597] text-white px-3 py-1.5 text-[12px] font-semibold shadow-lg hover:opacity-95 transition"
+                    >
+                      Ir para Meu Dia
+                    </Link>
+                  </div>
+                ) : null}
+
+                {/* INSPIRACAO */}
+                {step === 'inspiracao' ? (
+                  <div id="inspiracao" className="space-y-4">
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Inspiração do dia
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">{moodTitle(mood)}</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">Uma linha para organizar o próximo passo. Sem alongar.</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
+                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">{inspiration.line}</div>
+                        <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Ação: <span className="font-semibold text-[#2f3a56]">{inspiration.action}</span>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => go('ideias')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Ver ideia pronta
+                          </button>
+                          <button
+                            onClick={() => go('passo')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ir direto ao passo leve
+                          </button>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
+
+                {/* IDEIAS */}
+                {step === 'ideias' ? (
+                  <div id="ideias" className="space-y-4">
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="sun" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Ideias rápidas
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Escolha uma (e pronto)</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Aqui é para te dar <span className="font-semibold">uma</span> coisa possível agora.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {ideasForNow.map((i, idx) => (
+                          <CardChoice
+                            key={`${i.title}-${idx}`}
+                            tag={`${i.tag} • ${focusTitle(i.focus)}`}
+                            title={i.title}
+                            subtitle={i.how}
+                            active={pickedIdea === idx}
+                            onClick={() => setPickedIdea(idx)}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
+                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{selectedIdea?.title}</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selectedIdea?.how}</div>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              if (selectedIdea?.title) saveCurrentToMyDay(selectedIdea.title)
+                            }}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+
+                          <button
+                            onClick={() => go('passo')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Fechar com um passo leve
+                          </button>
+
+                          <button
+                            onClick={() => go('receitas')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ver receitas rápidas
+                          </button>
+                        </div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
+
+                {/* RECEITAS */}
                 {step === 'receitas' ? (
                   <div id="receitas" className="space-y-4">
                     <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
@@ -643,19 +784,10 @@ export default function MeuDiaLeveClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Receitas rápidas
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Resolver comida sem drama</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Sem cardápio perfeito. Aqui é “resolver com dignidade” e liberar sua cabeça.</p>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Uma receita simples para agora</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer.</p>
                         </div>
                       </div>
-
-                      {!ageKnown ? (
-                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">só um detalhe</div>
-                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Se o bebê tiver menos de 6 meses, o Materna não sugere receitas aqui.
-                          </div>
-                        </div>
-                      ) : null}
 
                       {recipeGateBlocked ? (
                         <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
@@ -689,6 +821,16 @@ export default function MeuDiaLeveClient() {
                         </div>
                       ) : (
                         <>
+                          {/* Se a idade não for lida do Eu360, só avisamos a regra sem pedir input */}
+                          {!ageKnown ? (
+                            <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">observação</div>
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                Se o bebê tiver menos de 6 meses, o Materna não sugere receitas aqui.
+                              </div>
+                            </div>
+                          ) : null}
+
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                             <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Escreva curto. Ex.: “ovo, pão, queijo”.</div>
@@ -711,20 +853,22 @@ export default function MeuDiaLeveClient() {
                                   aiRecipeLoading ? 'bg-[#fd2597]/70 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
                                 ].join(' ')}
                               >
-                                {aiRecipeLoading ? 'Gerando…' : 'Gerar solução'}
+                                {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                               </button>
 
-                              {aiRecipeError ? <span className="text-[12px] text-[#6a6a6a]">Falhou agora. Você ainda pode usar uma receita rápida abaixo.</span> : null}
+                              {aiRecipeError ? (
+                                <span className="text-[12px] text-[#6a6a6a]">Falhou agora. Você ainda pode usar uma opção pronta abaixo.</span>
+                              ) : null}
                             </div>
 
                             {aiRecipeText ? (
                               <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje resolve assim</div>
+                                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
                                 <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
 
                                 <div className="mt-4 flex flex-wrap gap-2">
                                   <button
-                                    onClick={() => saveCurrentToMyDay('Resolver comida (passo leve)')}
+                                    onClick={() => saveCurrentToMyDay('Receita rápida para criança')}
                                     className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                                   >
                                     Salvar no Meu Dia
@@ -768,7 +912,7 @@ export default function MeuDiaLeveClient() {
                           </div>
 
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">se for pelo rápido</div>
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">opção pronta</div>
                             <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{selectedRecipe?.title}</div>
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selectedRecipe?.how}</div>
 
@@ -788,15 +932,86 @@ export default function MeuDiaLeveClient() {
                               >
                                 Fechar com o passo leve
                               </button>
+
+                              <button
+                                onClick={() => go('ideias')}
+                                className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                              >
+                                Voltar para ideias
+                              </button>
                             </div>
                           </div>
                         </>
                       )}
                     </SoftCard>
                   </div>
-                ) : (
-                  <div className="text-[12px] text-white/85">Continue navegando pelos passos acima.</div>
-                )}
+                ) : null}
+
+                {/* PASSO */}
+                {step === 'passo' ? (
+                  <div id="passo" className="space-y-4">
+                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                          <AppIcon name="star" size={22} className="text-[#fd2597]" />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            Passo leve do dia
+                          </span>
+                          <h2 className="text-lg font-semibold text-[#2f3a56]">Escolha um (e encerre)</h2>
+                          <p className="text-[13px] text-[#6a6a6a]">Um passo pequeno já muda o clima do dia.</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {passosForNow.map((p, idx) => (
+                          <CardChoice
+                            key={`${p.title}-${idx}`}
+                            tag={`${slotLabel(p.slot)} • ${focusTitle(p.focus)}`}
+                            title={p.title}
+                            subtitle={p.why}
+                            active={pickedPasso === idx}
+                            onClick={() => setPickedPasso(idx)}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-6">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">seu passo de hoje</div>
+                        <div className="mt-2 text-[15px] font-semibold text-[#2f3a56]">{selectedPasso?.title}</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selectedPasso?.why}</div>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => {
+                              if (selectedPasso?.title) saveCurrentToMyDay(selectedPasso.title)
+                            }}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+
+                          <Link
+                            href="/meu-dia"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ir para Meu Dia
+                          </Link>
+
+                          <Link
+                            href="/maternar"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Voltar ao Maternar
+                          </Link>
+                        </div>
+
+                        <div className="mt-4 text-[12px] text-[#6a6a6a]">Fechou. Um passo leve já é suficiente por hoje.</div>
+                      </div>
+                    </SoftCard>
+                  </div>
+                ) : null}
               </div>
             </section>
           </Reveal>
