@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import * as React from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -10,6 +11,7 @@ import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import { getProfileSnapshot, getActiveChildOrNull } from '@/app/lib/profile.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -57,187 +59,6 @@ function safeSetJSON(key: string, value: unknown) {
   try {
     safeSetLS(key, JSON.stringify(value))
   } catch {}
-}
-
-function safeParseInt(v: unknown): number | null {
-  if (v === null || v === undefined) return null
-  const n = Number.parseInt(String(v).trim(), 10)
-  if (!Number.isFinite(n)) return null
-  if (Number.isNaN(n)) return null
-  return n
-}
-
-function safeParseJSON(raw: string | null): any | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
-}
-
-function safeParseDate(v: unknown): Date | null {
-  if (!v) return null
-  const d = new Date(String(v))
-  if (Number.isNaN(d.getTime())) return null
-  return d
-}
-
-function monthsBetween(from: Date, to: Date) {
-  let months = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth())
-  if (to.getDate() < from.getDate()) months -= 1
-  return Math.max(0, months)
-}
-
-type ChildProfile = {
-  id: string
-  label: string
-  months: number | null
-}
-
-function coerceMonthsFromUnknown(v: unknown): number | null {
-  if (v === null || v === undefined) return null
-
-  if (typeof v === 'number') {
-    return Number.isFinite(v) ? Math.max(0, Math.min(240, Math.floor(v))) : null
-  }
-
-  const s = String(v).trim().toLowerCase()
-  if (!s) return null
-
-  const direct = safeParseInt(s)
-  if (direct !== null) return Math.max(0, Math.min(240, direct))
-
-  const mYears = s.match(/(\d+)\s*ano/)
-  if (mYears?.[1]) return Math.max(0, Math.min(240, Number(mYears[1]) * 12))
-
-  const mMonths = s.match(/(\d+)\s*mes/)
-  if (mMonths?.[1]) return Math.max(0, Math.min(240, Number(mMonths[1])))
-
-  const mRangeYears = s.match(/(\d+)\s*(a|-|–)\s*(\d+)\s*ano/)
-  if (mRangeYears?.[1] && mRangeYears?.[3]) {
-    const upper = Number(mRangeYears[3])
-    if (Number.isFinite(upper)) return Math.max(0, Math.min(240, upper * 12))
-  }
-
-  const mRangeMonths = s.match(/(\d+)\s*(a|-|–)\s*(\d+)\s*mes/)
-  if (mRangeMonths?.[1] && mRangeMonths?.[3]) {
-    const upper = Number(mRangeMonths[3])
-    if (Number.isFinite(upper)) return Math.max(0, Math.min(240, upper))
-  }
-
-  return null
-}
-
-function inferChildrenFromEu360(): ChildProfile[] {
-  if (typeof window === 'undefined') return []
-
-  const candidates = [
-    'eu360_children',
-    'eu360_children_v1',
-    'eu360_kids',
-    'eu360_kids_v1',
-    'eu360_filhos',
-    'eu360_filhos_v1',
-    'eu360_profile',
-    'eu360_profile_v1',
-    'eu360_state',
-    'eu360_data',
-    'eu360_form',
-    'eu360_form_v1',
-  ]
-
-  const collected: any[] = []
-
-  for (const k of candidates) {
-    const obj = safeParseJSON(safeGetLS(k))
-    if (!obj) continue
-
-    if (Array.isArray(obj)) {
-      collected.push(...obj)
-      continue
-    }
-
-    const arr =
-      obj?.children ??
-      obj?.kids ??
-      obj?.filhos ??
-      obj?.childs ??
-      obj?.seusFilhos ??
-      obj?.seus_filhos ??
-      obj?.data?.children ??
-      obj?.data?.kids ??
-      obj?.data?.filhos
-
-    if (Array.isArray(arr)) collected.push(...arr)
-  }
-
-  if (collected.length === 0) {
-    try {
-      for (let i = 0; i < window.localStorage.length; i++) {
-        const k = window.localStorage.key(i)
-        if (!k) continue
-        if (!k.startsWith(`${LS_PREFIX}eu360`)) continue
-
-        const raw = window.localStorage.getItem(k)
-        const obj = safeParseJSON(raw)
-        if (!obj) continue
-
-        if (Array.isArray(obj)) {
-          collected.push(...obj)
-          continue
-        }
-
-        const arr =
-          obj?.children ??
-          obj?.kids ??
-          obj?.filhos ??
-          obj?.data?.children ??
-          obj?.data?.kids ??
-          obj?.data?.filhos
-
-        if (Array.isArray(arr)) collected.push(...arr)
-      }
-    } catch {}
-  }
-
-  const out: ChildProfile[] = []
-  const seenKey = new Set<string>()
-  let idx = 1
-
-  for (const c of collected) {
-    const id = String(c?.id ?? c?.key ?? c?.uuid ?? `child_${idx++}`)
-    const name = String(c?.name ?? c?.nome ?? '').trim()
-
-    const explicitMonths =
-      coerceMonthsFromUnknown(
-        c?.ageMonths ?? c?.age_months ?? c?.months ?? c?.idadeMeses ?? c?.idade_meses
-      ) ?? coerceMonthsFromUnknown(c?.idade ?? c?.age)
-
-    const derivedFromBirth = (() => {
-      const d =
-        safeParseDate(
-          c?.birthdate ??
-            c?.birthDate ??
-            c?.dob ??
-            c?.dataNascimento ??
-            c?.data_nascimento ??
-            c?.nascimento
-        ) || null
-      return d ? Math.max(0, Math.min(240, monthsBetween(d, new Date()))) : null
-    })()
-
-    const months = explicitMonths ?? derivedFromBirth
-    const label = name ? name : `Filho ${out.length + 1}`
-
-    const key = `${id}::${label.toLowerCase()}::${months ?? 'null'}`
-    if (seenKey.has(key)) continue
-    seenKey.add(key)
-
-    out.push({ id, label, months })
-  }
-
-  return out
 }
 
 function stepIndex(s: Step) {
@@ -378,30 +199,10 @@ const RECEITAS: QuickRecipe[] = [
 ]
 
 const PASSO_LEVE: DayLine[] = [
-  {
-    title: 'Resolver 1 coisa que está travando',
-    why: 'O resto fica mais fácil quando algo destrava o agora.',
-    focus: 'casa',
-    slot: '5',
-  },
-  {
-    title: 'Fazer 5 min de conexão com o filho',
-    why: 'Curto e intencional funciona melhor do que “tentar muito”.',
-    focus: 'filho',
-    slot: '5',
-  },
-  {
-    title: 'Proteger 10 min só seus',
-    why: 'Sem tela e sem tarefa. É recarregar para continuar.',
-    focus: 'voce',
-    slot: '10',
-  },
-  {
-    title: 'Simplificar a refeição',
-    why: 'Comida simples também é cuidado — e libera energia mental.',
-    focus: 'comida',
-    slot: '5',
-  },
+  { title: 'Resolver 1 coisa que está travando', why: 'O resto fica mais fácil quando algo destrava', focus: 'casa', slot: '5' },
+  { title: 'Fazer 5 min de conexão com o filho', why: 'Curto e intencional funciona melhor do que “tentar muito”.', focus: 'filho', slot: '5' },
+  { title: 'Proteger 10 min só seus', why: 'Sem tela e sem tarefa. É recarregar para continuar.', focus: 'voce', slot: '10' },
+  { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
 ]
 
 function Pill({
@@ -475,8 +276,6 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
-type ChildProfileUI = ChildProfile
-
 type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
 
 async function requestAIRecipe(input: {
@@ -507,14 +306,14 @@ function plural(n: number, one: string, many: string) {
   return n === 1 ? one : many
 }
 
-function formatChildLabelExact(c: ChildProfileUI) {
-  if (c.months === null) return `${c.label} • idade não preenchida`
+function formatChildLabelExact(input: { label: string; ageMonths: number | null }) {
+  if (input.ageMonths === null) return `${input.label} • idade não preenchida`
 
-  const m = c.months
-  if (m < 24) return `${c.label} • ${m} ${plural(m, 'mês', 'meses')}`
+  const m = input.ageMonths
+  if (m < 24) return `${input.label} • ${m} ${plural(m, 'mês', 'meses')}`
 
   const years = Math.floor(m / 12)
-  return `${c.label} • ${m} meses (${years} ${plural(years, 'ano', 'anos')})`
+  return `${input.label} • ${m} meses (${years} ${plural(years, 'ano', 'anos')})`
 }
 
 function childAgeTier(months: number) {
@@ -536,7 +335,8 @@ export default function MeuDiaLeveClient() {
 
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
-  const [children, setChildren] = useState<ChildProfileUI[]>([])
+  // Agora vem do core único do perfil
+  const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
   const [activeChildId, setActiveChildId] = useState<string>('')
 
   const [pantry, setPantry] = useState<string>('')
@@ -558,26 +358,21 @@ export default function MeuDiaLeveClient() {
     setFocus(inferred.focus)
     setStep('inspiracao')
 
-    const kids = inferChildrenFromEu360()
-    setChildren(kids)
+    // Snapshot único (Eu360 → hubs)
+    const snap = getProfileSnapshot()
+    setChildren(snap.children)
 
-    const withAge = kids.filter((k) => k.months !== null) as Array<ChildProfileUI & { months: number }>
-    if (withAge.length) {
-      const sorted = [...withAge].sort((a, b) => b.months - a.months)
-      setActiveChildId(sorted[0].id)
-    } else if (kids.length) {
-      setActiveChildId(kids[0].id)
-    } else {
-      setActiveChildId('')
-    }
+    const active = getActiveChildOrNull(null)
+    setActiveChildId(active?.id ?? '')
 
     try {
       track('meu_dia_leve.open', {
         slot: inferred.slot,
         mood: inferred.mood,
         focus: inferred.focus,
-        kidsCount: kids.length,
-        kidsWithAge: withAge.length,
+        profileSource: snap.source,
+        kidsCount: snap.children.length,
+        kidsWithAge: snap.children.filter((k) => typeof k.ageMonths === 'number').length,
       })
     } catch {}
   }, [])
@@ -698,7 +493,7 @@ export default function MeuDiaLeveClient() {
       })
     } catch {}
 
-    setTimeout(() => setSaveFeedback(''), 2200)
+    window.setTimeout(() => setSaveFeedback(''), 2200)
   }
 
   const activeChild = useMemo(() => {
@@ -707,7 +502,7 @@ export default function MeuDiaLeveClient() {
     return found ?? children[0]
   }, [children, activeChildId])
 
-  const activeMonths = activeChild?.months ?? null
+  const activeMonths = activeChild?.ageMonths ?? null
   const activeYears = useMemo(() => {
     if (activeMonths === null) return null
     if (!Number.isFinite(activeMonths)) return null
@@ -716,8 +511,8 @@ export default function MeuDiaLeveClient() {
 
   const activeAgeLabel = useMemo(() => {
     if (!activeChild) return null
-    if (activeChild.months === null) return null
-    return formatChildLabelExact(activeChild)
+    if (activeChild.ageMonths === null) return null
+    return formatChildLabelExact({ label: activeChild.label, ageMonths: activeChild.ageMonths })
   }, [activeChild])
 
   const ageTier = useMemo(() => {
@@ -825,7 +620,6 @@ export default function MeuDiaLeveClient() {
 
   const helperCopy = useMemo(() => {
     if (gate.blocked) return ''
-
     if (aiRecipeHint) return aiRecipeHint
 
     if (ageTier === 'toddler_12_23') return 'Pode ser só 1 item. Se der, diga também se é para lanche ou refeição (rapidinho).'
@@ -1121,7 +915,7 @@ export default function MeuDiaLeveClient() {
                                     : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                               >
-                                {formatChildLabelExact(c)}
+                                {formatChildLabelExact({ label: c.label, ageMonths: c.ageMonths })}
                               </button>
                             ))}
                           </div>
@@ -1137,7 +931,7 @@ export default function MeuDiaLeveClient() {
                         </div>
                       ) : null}
 
-                      {/* GATE ÚNICO (sem duplicação) */}
+                      {/* GATE ÚNICO */}
                       {gate.blocked ? (
                         <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
