@@ -100,13 +100,9 @@ function inferContext(): { slot: Slot; mood: Mood; focus: Focus } {
 
   const slot: Slot = slotRaw === '3' || slotRaw === '5' || slotRaw === '10' ? slotRaw : '5'
   const mood: Mood =
-    moodRaw === 'no-limite' || moodRaw === 'corrida' || moodRaw === 'ok' || moodRaw === 'leve'
-      ? moodRaw
-      : 'corrida'
+    moodRaw === 'no-limite' || moodRaw === 'corrida' || moodRaw === 'ok' || moodRaw === 'leve' ? moodRaw : 'corrida'
   const focus: Focus =
-    focusRaw === 'casa' || focusRaw === 'voce' || focusRaw === 'filho' || focusRaw === 'comida'
-      ? focusRaw
-      : 'filho'
+    focusRaw === 'casa' || focusRaw === 'voce' || focusRaw === 'filho' || focusRaw === 'comida' ? focusRaw : 'filho'
 
   if (mood === 'no-limite') return { slot: '3', mood, focus }
   return { slot, mood, focus }
@@ -117,78 +113,20 @@ type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }> = {
-  'no-limite': {
-    title: 'Para agora',
-    line: 'Escolha uma coisa só. O resto pode esperar.',
-    action: 'Defina 1 prioridade mínima.',
-  },
-  corrida: {
-    title: 'Para hoje',
-    line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.',
-    action: 'Escolha o próximo passo.',
-  },
-  ok: {
-    title: 'Para manter',
-    line: 'Quando você simplifica, você ganha tempo de verdade.',
-    action: 'Corte uma exigência.',
-  },
-  leve: {
-    title: 'Para aproveitar',
-    line: 'Dia leve não é dia perfeito. É dia bem conduzido.',
-    action: 'Faça o básico bem feito.',
-  },
+  'no-limite': { title: 'Para agora', line: 'Escolha uma coisa só. O resto pode esperar.', action: 'Defina 1 prioridade mínima.' },
+  corrida: { title: 'Para hoje', line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.', action: 'Escolha o próximo passo.' },
+  ok: { title: 'Para manter', line: 'Quando você simplifica, você ganha tempo de verdade.', action: 'Corte uma exigência.' },
+  leve: { title: 'Para aproveitar', line: 'Dia leve não é dia perfeito. É dia bem conduzido.', action: 'Faça o básico bem feito.' },
 }
 
 const IDEIAS: QuickIdea[] = [
-  {
-    tag: '3 min',
-    title: 'Respirar + ombros para baixo',
-    how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.',
-    slot: '3',
-    focus: 'voce',
-  },
-  {
-    tag: '3 min',
-    title: 'Mensagem curta que resolve',
-    how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.',
-    slot: '3',
-    focus: 'casa',
-  },
-  {
-    tag: '5 min',
-    title: 'Conexão com o filho (sem inventar)',
-    how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.',
-    slot: '5',
-    focus: 'filho',
-  },
-  {
-    tag: '5 min',
-    title: 'Organizar um ponto só',
-    how: 'Uma bancada ou mesa. Não a casa toda.',
-    slot: '5',
-    focus: 'casa',
-  },
-  {
-    tag: '10 min',
-    title: 'Música + tarefa que já existe',
-    how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.',
-    slot: '10',
-    focus: 'voce',
-  },
-  {
-    tag: '10 min',
-    title: 'Banho/escova em modo leve',
-    how: 'Transforme a rotina em “missão” rápida e sem discussão.',
-    slot: '10',
-    focus: 'filho',
-  },
-  {
-    tag: '5 min',
-    title: 'Água + lanche simples',
-    how: 'Água + algo pronto. Resolve energia sem complicar.',
-    slot: '5',
-    focus: 'comida',
-  },
+  { tag: '3 min', title: 'Respirar + ombros para baixo', how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.', slot: '3', focus: 'voce' },
+  { tag: '3 min', title: 'Mensagem curta que resolve', how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.', slot: '3', focus: 'casa' },
+  { tag: '5 min', title: 'Conexão com o filho (sem inventar)', how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.', slot: '5', focus: 'filho' },
+  { tag: '5 min', title: 'Organizar um ponto só', how: 'Uma bancada ou mesa. Não a casa toda.', slot: '5', focus: 'casa' },
+  { tag: '10 min', title: 'Música + tarefa que já existe', how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.', slot: '10', focus: 'voce' },
+  { tag: '10 min', title: 'Banho/escova em modo leve', how: 'Transforme a rotina em “missão” rápida e sem discussão.', slot: '10', focus: 'filho' },
+  { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo pronto. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
 ]
 
 const RECEITAS: QuickRecipe[] = [
@@ -220,9 +158,7 @@ function Pill({
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active
-          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-          : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
+        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
       ].join(' ')}
     >
       {children}
@@ -335,7 +271,6 @@ export default function MeuDiaLeveClient() {
 
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
-  // Agora vem do core único do perfil
   const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
   const [activeChildId, setActiveChildId] = useState<string>('')
 
@@ -358,7 +293,6 @@ export default function MeuDiaLeveClient() {
     setFocus(inferred.focus)
     setStep('inspiracao')
 
-    // Snapshot único (Eu360 → hubs)
     const snap = getProfileSnapshot()
     setChildren(snap.children)
 
@@ -456,12 +390,7 @@ export default function MeuDiaLeveClient() {
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
-        track('my_day.task.add.blocked', {
-          source: SOURCE,
-          origin: ORIGIN,
-          reason: 'open_tasks_limit_hit',
-          dateKey: res.dateKey,
-        })
+        track('my_day.task.add.blocked', { source: SOURCE, origin: ORIGIN, reason: 'open_tasks_limit_hit', dateKey: res.dateKey })
       } catch {}
       return
     }
@@ -478,19 +407,8 @@ export default function MeuDiaLeveClient() {
     }
 
     try {
-      track('my_day.task.add', {
-        ok: !!res.ok,
-        created: !!res.created,
-        origin: ORIGIN,
-        source: SOURCE,
-        dateKey: res.dateKey,
-      })
-      track('meu_dia_leve.save_to_my_day', {
-        origin: ORIGIN,
-        created: res.created,
-        dateKey: res.dateKey,
-        source: SOURCE,
-      })
+      track('my_day.task.add', { ok: !!res.ok, created: !!res.created, origin: ORIGIN, source: SOURCE, dateKey: res.dateKey })
+      track('meu_dia_leve.save_to_my_day', { origin: ORIGIN, created: res.created, dateKey: res.dateKey, source: SOURCE })
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
@@ -657,10 +575,7 @@ export default function MeuDiaLeveClient() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -765,9 +680,7 @@ export default function MeuDiaLeveClient() {
                         onClick={() => go(it.id)}
                         className={[
                           'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active
-                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-                            : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
+                          active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
                         ].join(' ')}
                       >
                         {it.label}
@@ -795,10 +708,10 @@ export default function MeuDiaLeveClient() {
                         {step === 'inspiracao'
                           ? 'Uma frase simples para agora'
                           : step === 'ideias'
-                            ? 'Uma ideia pequena e possível'
-                            : step === 'receitas'
-                              ? 'Uma receita simples para agora'
-                              : 'Um passo leve para fechar o agora'}
+                          ? 'Uma ideia pequena e possível'
+                          : step === 'receitas'
+                          ? 'Uma receita simples para agora'
+                          : 'Um passo leve para fechar o agora'}
                       </h2>
                       <p className="text-[13px] text-[#6a6a6a]">{stepSubtitle}</p>
                     </div>
@@ -807,12 +720,8 @@ export default function MeuDiaLeveClient() {
                   {/* INSPIRAÇÃO */}
                   {step === 'inspiracao' ? (
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        {inspiration.title}
-                      </div>
-                      <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">
-                        {inspiration.line}
-                      </div>
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
+                      <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">{inspiration.line}</div>
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{moodTitle(mood)}</div>
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -830,9 +739,7 @@ export default function MeuDiaLeveClient() {
                         >
                           Ir para Ideias rápidas
                         </button>
-                        {saveFeedback ? (
-                          <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
-                        ) : null}
+                        {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                       </div>
                     </div>
                   ) : null}
@@ -841,12 +748,8 @@ export default function MeuDiaLeveClient() {
                   {step === 'ideias' ? (
                     <div className="mt-4 space-y-3">
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          escolha 1 ideia
-                        </div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Pequeno e possível. Só para destravar o agora.
-                        </div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">escolha 1 ideia</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Pequeno e possível. Só para destravar o agora.</div>
 
                         <div className="mt-4 space-y-2">
                           {ideasForNow.map((i, idx) => (
@@ -876,9 +779,7 @@ export default function MeuDiaLeveClient() {
                           >
                             Ir para Receitas rápidas
                           </button>
-                          {saveFeedback ? (
-                            <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
-                          ) : null}
+                          {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                         </div>
                       </div>
                     </div>
@@ -890,9 +791,7 @@ export default function MeuDiaLeveClient() {
                       {/* Seletor de filho */}
                       {children.length ? (
                         <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            para qual filho?
-                          </div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para qual filho?</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
                             Para sugerir com segurança, o Materna usa a idade do Eu360.
                           </div>
@@ -931,12 +830,10 @@ export default function MeuDiaLeveClient() {
                         </div>
                       ) : null}
 
-                      {/* GATE ÚNICO */}
+                      {/* GATE ÚNICO (e BLOQUEIA TUDO DE RECEITA DO APP) */}
                       {gate.blocked ? (
                         <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            {gate.title}
-                          </div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{gate.title}</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{gate.message}</div>
                           <div className="mt-3">
                             <Link
@@ -947,113 +844,108 @@ export default function MeuDiaLeveClient() {
                             </Link>
                           </div>
                         </div>
-                      ) : null}
+                      ) : (
+                        <>
+                          {/* IA (só quando liberado) */}
+                          <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
 
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          o que você tem em casa
-                        </div>
+                            {helperCopy ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
+                            ) : null}
 
-                        {!gate.blocked && helperCopy ? (
-                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
-                        ) : null}
+                            <textarea
+                              value={pantry}
+                              onChange={(e) => setPantry(e.target.value)}
+                              rows={3}
+                              placeholder="o que tenho em casa…"
+                              className="mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+                            />
 
-                        <textarea
-                          value={pantry}
-                          onChange={(e) => setPantry(e.target.value)}
-                          rows={3}
-                          placeholder="o que tenho em casa…"
-                          disabled={gate.blocked}
-                          className={[
-                            'mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]',
-                            gate.blocked ? 'opacity-70 cursor-not-allowed' : '',
-                          ].join(' ')}
-                        />
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={onGenerateAIRecipe}
-                            disabled={aiRecipeLoading || gate.blocked}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              aiRecipeLoading || gate.blocked
-                                ? 'bg-[#fd2597]/50 text-white cursor-not-allowed'
-                                : 'bg-[#fd2597] text-white hover:opacity-95',
-                            ].join(' ')}
-                          >
-                            {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
-                          </button>
-
-                          {aiRecipeError ? (
-                            <span className="text-[12px] text-[#6a6a6a]">
-                              {aiRecipeHint || 'Se quiser, use uma opção pronta abaixo.'}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {aiRecipeText ? (
-                          <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                              receita pronta
-                            </div>
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">
-                              {aiRecipeText}
-                            </div>
-
-                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => saveCurrentToMyDay('Receita rápida')}
-                                className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                                onClick={onGenerateAIRecipe}
+                                disabled={aiRecipeLoading}
+                                className={[
+                                  'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+                                  aiRecipeLoading ? 'bg-[#fd2597]/50 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+                                ].join(' ')}
                               >
-                                Salvar no Meu Dia
+                                {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                               </button>
-                              {saveFeedback ? (
-                                <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+
+                              {aiRecipeError ? (
+                                <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint || 'Se quiser, use uma opção pronta abaixo.'}</span>
                               ) : null}
                             </div>
-                          </div>
-                        ) : null}
-                      </div>
 
-                      <div className="space-y-2">
-                        {recipesForNow.map((r, idx) => {
-                          const active = pickedRecipe === idx
-                          return (
-                            <button
-                              key={`${r.title}-${idx}`}
-                              onClick={() => setPickedRecipe(idx)}
-                              className={[
-                                'w-full text-left rounded-2xl border p-4 transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <div className="text-[13px] font-semibold text-[#2f3a56]">{r.title}</div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{r.how}</div>
+                            {aiRecipeText ? (
+                              <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
+                                <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
+
+                                <div className="mt-4 flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveCurrentToMyDay(`Receita rápida: ${slotLabel(slot)}`)}
+                                    className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                                  >
+                                    Salvar no Meu Dia
+                                  </button>
+                                  {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                                 </div>
-                                <span className="shrink-0 inline-flex items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                  {r.tag}
-                                </span>
                               </div>
+                            ) : null}
+                          </div>
+
+                          {/* RECEITAS PRONTAS (só quando liberado) */}
+                          <div className="space-y-2">
+                            {recipesForNow.map((r, idx) => {
+                              const active = pickedRecipe === idx
+                              return (
+                                <button
+                                  key={`${r.title}-${idx}`}
+                                  onClick={() => setPickedRecipe(idx)}
+                                  className={[
+                                    'w-full text-left rounded-2xl border p-4 transition',
+                                    active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <div className="text-[13px] font-semibold text-[#2f3a56]">{r.title}</div>
+                                      <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{r.how}</div>
+                                    </div>
+                                    <span className="shrink-0 inline-flex items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                                      {r.tag}
+                                    </span>
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveCurrentToMyDay(selectedRecipe?.title || 'Receita rápida')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Salvar no Meu Dia
                             </button>
-                          )
-                        })}
-                      </div>
+                            {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : null}
 
                   {/* PASSO LEVE */}
                   {step === 'passo' ? (
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        escolha 1 passo
-                      </div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Um passo único que fecha o agora. O resto pode esperar.
-                      </div>
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">escolha 1 passo</div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Um passo único que fecha o agora. O resto pode esperar.</div>
 
                       <div className="mt-4 space-y-2">
                         {passosForNow.map((p, idx) => (
