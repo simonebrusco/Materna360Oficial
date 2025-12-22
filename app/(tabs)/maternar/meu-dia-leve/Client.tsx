@@ -230,8 +230,9 @@ function inferChildrenFromEu360(): ChildProfile[] {
 
     // Preferência: meses explícitos (se existirem) > idade “solta” > birthdate
     const explicitMonths =
-      coerceMonthsFromUnknown(c?.ageMonths ?? c?.age_months ?? c?.months ?? c?.idadeMeses ?? c?.idade_meses) ??
-      coerceMonthsFromUnknown(c?.idade ?? c?.age)
+      coerceMonthsFromUnknown(
+        c?.ageMonths ?? c?.age_months ?? c?.months ?? c?.idadeMeses ?? c?.idade_meses
+      ) ?? coerceMonthsFromUnknown(c?.idade ?? c?.age)
 
     const derivedFromBirth = (() => {
       const d =
@@ -241,7 +242,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
             c?.dob ??
             c?.dataNascimento ??
             c?.data_nascimento ??
-            c?.nascimento,
+            c?.nascimento
         ) || null
       return d ? Math.max(0, Math.min(240, monthsBetween(d, new Date()))) : null
     })()
@@ -317,20 +318,78 @@ type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }> = {
-  'no-limite': { title: 'Para agora', line: 'Escolha uma coisa só. O resto pode esperar.', action: 'Defina 1 prioridade mínima.' },
-  corrida: { title: 'Para hoje', line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.', action: 'Escolha o próximo passo.' },
-  ok: { title: 'Para manter', line: 'Quando você simplifica, você ganha tempo de verdade.', action: 'Corte uma exigência.' },
-  leve: { title: 'Para aproveitar', line: 'Dia leve não é dia perfeito. É dia bem conduzido.', action: 'Faça o básico bem feito.' },
+  'no-limite': {
+    title: 'Para agora',
+    line: 'Escolha uma coisa só. O resto pode esperar.',
+    action: 'Defina 1 prioridade mínima.',
+  },
+  corrida: {
+    title: 'Para hoje',
+    line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.',
+    action: 'Escolha o próximo passo.',
+  },
+  ok: {
+    title: 'Para manter',
+    line: 'Quando você simplifica, você ganha tempo de verdade.',
+    action: 'Corte uma exigência.',
+  },
+  leve: {
+    title: 'Para aproveitar',
+    line: 'Dia leve não é dia perfeito. É dia bem conduzido.',
+    action: 'Faça o básico bem feito.',
+  },
 }
 
 const IDEIAS: QuickIdea[] = [
-  { tag: '3 min', title: 'Respirar + ombros para baixo', how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.', slot: '3', focus: 'voce' },
-  { tag: '3 min', title: 'Mensagem curta que resolve', how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.', slot: '3', focus: 'casa' },
-  { tag: '5 min', title: 'Conexão com o filho (sem inventar)', how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.', slot: '5', focus: 'filho' },
-  { tag: '5 min', title: 'Organizar um ponto só', how: 'Uma bancada ou mesa. Não a casa toda.', slot: '5', focus: 'casa' },
-  { tag: '10 min', title: 'Música + tarefa que já existe', how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.', slot: '10', focus: 'voce' },
-  { tag: '10 min', title: 'Banho/escova em modo leve', how: 'Transforme a rotina em “missão” rápida e sem discussão.', slot: '10', focus: 'filho' },
-  { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo pronto. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
+  {
+    tag: '3 min',
+    title: 'Respirar + ombros para baixo',
+    how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.',
+    slot: '3',
+    focus: 'voce',
+  },
+  {
+    tag: '3 min',
+    title: 'Mensagem curta que resolve',
+    how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.',
+    slot: '3',
+    focus: 'casa',
+  },
+  {
+    tag: '5 min',
+    title: 'Conexão com o filho (sem inventar)',
+    how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.',
+    slot: '5',
+    focus: 'filho',
+  },
+  {
+    tag: '5 min',
+    title: 'Organizar um ponto só',
+    how: 'Uma bancada ou mesa. Não a casa toda.',
+    slot: '5',
+    focus: 'casa',
+  },
+  {
+    tag: '10 min',
+    title: 'Música + tarefa que já existe',
+    how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.',
+    slot: '10',
+    focus: 'voce',
+  },
+  {
+    tag: '10 min',
+    title: 'Banho/escova em modo leve',
+    how: 'Transforme a rotina em “missão” rápida e sem discussão.',
+    slot: '10',
+    focus: 'filho',
+  },
+  {
+    tag: '5 min',
+    title: 'Água + lanche simples',
+    how: 'Água + algo pronto. Resolve energia sem complicar.',
+    slot: '5',
+    focus: 'comida',
+  },
 ]
 
 const RECEITAS: QuickRecipe[] = [
@@ -347,14 +406,24 @@ const PASSO_LEVE: DayLine[] = [
   { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
 ]
 
-function Pill({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) {
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean
+  onClick?: () => void
+  children: React.ReactNode
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
+        active
+          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+          : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
       ].join(' ')}
     >
       {children}
@@ -410,11 +479,26 @@ function originFromFocus(f: Focus): TaskOrigin {
 
 type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
 
-async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string; childAgeMonths: number }): Promise<AIRecipeResponse> {
+async function requestAIRecipe(input: {
+  slot: Slot
+  mood: Mood
+  pantry: string
+  childAgeMonths: number
+  childAgeYears?: number
+  childAgeLabel?: string
+}): Promise<AIRecipeResponse> {
   const res = await fetch('/api/ai/meu-dia-leve/receita', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ slot: input.slot, mood: input.mood, pantry: input.pantry, childAgeMonths: input.childAgeMonths }),
+    // mantém compat: a rota pode ignorar os novos campos
+    body: JSON.stringify({
+      slot: input.slot,
+      mood: input.mood,
+      pantry: input.pantry,
+      childAgeMonths: input.childAgeMonths,
+      childAgeYears: input.childAgeYears,
+      childAgeLabel: input.childAgeLabel,
+    }),
   })
   if (!res.ok) return { ok: false, error: `http_${res.status}`, hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
   return (await res.json()) as AIRecipeResponse
@@ -424,16 +508,26 @@ function plural(n: number, one: string, many: string) {
   return n === 1 ? one : many
 }
 
-function formatChildLabel(c: ChildProfile) {
+function formatChildLabelExact(c: ChildProfile) {
   if (c.months === null) return `${c.label} • idade não preenchida`
 
-  if (c.months < 24) {
-    const m = c.months
+  const m = c.months
+
+  // Até 23 meses: mostra apenas meses (exato e útil)
+  if (m < 24) {
     return `${c.label} • ${m} ${plural(m, 'mês', 'meses')}`
   }
 
-  const years = Math.floor(c.months / 12)
-  return `${c.label} • ${years} ${plural(years, 'ano', 'anos')}`
+  // 24+ meses: mostra meses + anos (ex.: 36 meses (3 anos))
+  const years = Math.floor(m / 12)
+  return `${c.label} • ${m} meses (${years} ${plural(years, 'ano', 'anos')})`
+}
+
+function childAgeTier(months: number) {
+  if (months < 6) return 'under_6' as const
+  if (months < 12) return 'intro_6_11' as const
+  if (months < 24) return 'toddler_12_23' as const
+  return 'kid_24_plus' as const
 }
 
 export default function MeuDiaLeveClient() {
@@ -575,7 +669,12 @@ export default function MeuDiaLeveClient() {
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
-        track('my_day.task.add.blocked', { source: SOURCE, origin: ORIGIN, reason: 'open_tasks_limit_hit', dateKey: res.dateKey })
+        track('my_day.task.add.blocked', {
+          source: SOURCE,
+          origin: ORIGIN,
+          reason: 'open_tasks_limit_hit',
+          dateKey: res.dateKey,
+        })
       } catch {}
       return
     }
@@ -592,8 +691,19 @@ export default function MeuDiaLeveClient() {
     }
 
     try {
-      track('my_day.task.add', { ok: !!res.ok, created: !!res.created, origin: ORIGIN, source: SOURCE, dateKey: res.dateKey })
-      track('meu_dia_leve.save_to_my_day', { origin: ORIGIN, created: res.created, dateKey: res.dateKey, source: SOURCE })
+      track('my_day.task.add', {
+        ok: !!res.ok,
+        created: !!res.created,
+        origin: ORIGIN,
+        source: SOURCE,
+        dateKey: res.dateKey,
+      })
+      track('meu_dia_leve.save_to_my_day', {
+        origin: ORIGIN,
+        created: res.created,
+        dateKey: res.dateKey,
+        source: SOURCE,
+      })
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
@@ -606,6 +716,22 @@ export default function MeuDiaLeveClient() {
   }, [children, activeChildId])
 
   const activeMonths = activeChild?.months ?? null
+  const activeYears = useMemo(() => {
+    if (activeMonths === null) return null
+    if (!Number.isFinite(activeMonths)) return null
+    return Math.floor(activeMonths / 12)
+  }, [activeMonths])
+
+  const activeAgeLabel = useMemo(() => {
+    if (!activeChild) return null
+    if (activeChild.months === null) return null
+    return formatChildLabelExact(activeChild)
+  }, [activeChild])
+
+  const ageTier = useMemo(() => {
+    if (activeMonths === null) return null
+    return childAgeTier(activeMonths)
+  }, [activeMonths])
 
   // Gate central
   const gate = useMemo(() => {
@@ -641,7 +767,8 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'under_6' as const,
         title: 'Sem receitas por enquanto',
-        message: 'Para bebês com menos de 6 meses, a orientação principal é aleitamento (conforme sua rede de saúde).',
+        message:
+          'Para bebês com menos de 6 meses, a orientação principal é aleitamento (conforme sua rede de saúde).',
       }
     }
 
@@ -650,7 +777,8 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'intro_6_11' as const,
         title: 'Introdução alimentar',
-        message: 'Entre 6 e 11 meses, as recomendações variam. O ideal é seguir a orientação do pediatra / rede de saúde.',
+        message:
+          'Entre 6 e 11 meses, as recomendações variam. O ideal é seguir a orientação do pediatra / rede de saúde.',
       }
     }
 
@@ -679,20 +807,32 @@ export default function MeuDiaLeveClient() {
     setAiRecipeLoading(true)
     try {
       try {
-        track('meu_dia_leve.recipe.request', { slot, mood, pantryLen: trimmed.length, activeMonths })
+        track('meu_dia_leve.recipe.request', {
+          slot,
+          mood,
+          pantryLen: trimmed.length,
+          activeMonths,
+          ageTier,
+        })
       } catch {}
 
-      const data = await requestAIRecipe({ slot, mood, pantry: trimmed, childAgeMonths: activeMonths as number })
+      const data = await requestAIRecipe({
+        slot,
+        mood,
+        pantry: trimmed,
+        childAgeMonths: activeMonths as number, // mantém o contrato existente
+        childAgeYears: typeof activeYears === 'number' ? activeYears : undefined,
+        childAgeLabel: activeAgeLabel ?? undefined,
+      })
 
       if (!data?.ok || !data.text) {
         setAiRecipeError(data?.error || 'erro_receita')
         setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item — ou use uma opção pronta abaixo.')
 
-        // UX: hint gentil, sem “cobrança”
         toast.info(data?.hint || 'Se quiser, a gente ajuda com mais um item — ou você usa uma opção pronta abaixo.')
 
         try {
-          track('meu_dia_leve.recipe.fail', { error: data?.error || 'no_text' })
+          track('meu_dia_leve.recipe.fail', { error: data?.error || 'no_text', ageTier })
         } catch {}
         return
       }
@@ -701,14 +841,14 @@ export default function MeuDiaLeveClient() {
       setAiRecipeHint('')
 
       try {
-        track('meu_dia_leve.recipe.ok', { slot, mood })
+        track('meu_dia_leve.recipe.ok', { slot, mood, ageTier })
       } catch {}
     } catch {
       setAiRecipeError('erro_rede')
       setAiRecipeHint('Falhou agora. Se quiser, use uma opção pronta abaixo.')
       toast.info('Falhou agora. Se quiser, use uma opção pronta abaixo.')
       try {
-        track('meu_dia_leve.recipe.fail', { error: 'network_or_throw' })
+        track('meu_dia_leve.recipe.fail', { error: 'network_or_throw', ageTier })
       } catch {}
     } finally {
       setAiRecipeLoading(false)
@@ -720,9 +860,17 @@ export default function MeuDiaLeveClient() {
     if (gate.blocked) return 'Complete a idade no Eu360 para liberar.'
     if (aiRecipeHint) return aiRecipeHint
 
-    // padrão neutro e verdadeiro: 1 item pode funcionar se for “principal”
+    // Personalização silenciosa por idade (sem mudar layout)
+    if (ageTier === 'toddler_12_23') {
+      return 'Pode ser só 1 item. Se der, diga também se é para lanche ou refeição (rapidinho).'
+    }
+    if (ageTier === 'kid_24_plus') {
+      return 'Pode ser só 1 item. Se quiser, diga também o tipo de refeição (lanche/almoço/janta).'
+    }
+
+    // fallback neutro e verdadeiro
     return 'Pode ser só 1 item. Se for pouco específico, eu te peço mais 1 (sem complicar).'
-  }, [gate.blocked, aiRecipeHint])
+  }, [gate.blocked, aiRecipeHint, ageTier])
 
   return (
     <main
@@ -739,7 +887,10 @@ export default function MeuDiaLeveClient() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -779,7 +930,9 @@ export default function MeuDiaLeveClient() {
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sugestão pronta para o seu agora
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{slotHint(slot)}</div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
+                        {slotHint(slot)}
+                      </div>
                     </div>
                   </div>
 
@@ -842,7 +995,9 @@ export default function MeuDiaLeveClient() {
                         onClick={() => go(it.id)}
                         className={[
                           'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                          active
+                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                            : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                         ].join(' ')}
                       >
                         {it.label}
@@ -884,7 +1039,9 @@ export default function MeuDiaLeveClient() {
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
-                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">{inspiration.line}</div>
+                        <div className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#2f3a56] leading-relaxed">
+                          {inspiration.line}
+                        </div>
                         <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
                           Ação: <span className="font-semibold text-[#2f3a56]">{inspiration.action}</span>
                         </div>
@@ -1020,7 +1177,7 @@ export default function MeuDiaLeveClient() {
                                     : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                               >
-                                {formatChildLabel(c)}
+                                {formatChildLabelExact(c)}
                               </button>
                             ))}
                           </div>
