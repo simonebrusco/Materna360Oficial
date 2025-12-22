@@ -1,4 +1,3 @@
-// app/(tabs)/maternar/meu-dia-leve/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -100,10 +99,13 @@ type ChildProfile = {
   months: number | null
 }
 
-// normaliza "3 anos" / "36 meses" etc, quando vier “solto”
+// normaliza "3 anos" / "36 meses" / "1 a 2 anos" etc, quando vier “solto”
 function coerceMonthsFromUnknown(v: unknown): number | null {
   if (v === null || v === undefined) return null
-  if (typeof v === 'number') return Number.isFinite(v) ? Math.max(0, Math.min(240, Math.floor(v))) : null
+
+  if (typeof v === 'number') {
+    return Number.isFinite(v) ? Math.max(0, Math.min(240, Math.floor(v))) : null
+  }
 
   const s = String(v).trim().toLowerCase()
   if (!s) return null
@@ -119,6 +121,20 @@ function coerceMonthsFromUnknown(v: unknown): number | null {
   // exemplo: "8 meses"
   const mMonths = s.match(/(\d+)\s*mes/)
   if (mMonths?.[1]) return Math.max(0, Math.min(240, Number(mMonths[1])))
+
+  // exemplo: "1 a 2 anos" / "1-2 anos"
+  const mRangeYears = s.match(/(\d+)\s*(a|-|–)\s*(\d+)\s*ano/)
+  if (mRangeYears?.[1] && mRangeYears?.[3]) {
+    const upper = Number(mRangeYears[3])
+    if (Number.isFinite(upper)) return Math.max(0, Math.min(240, upper * 12))
+  }
+
+  // exemplo: "12 a 18 meses" / "12-18 meses"
+  const mRangeMonths = s.match(/(\d+)\s*(a|-|–)\s*(\d+)\s*mes/)
+  if (mRangeMonths?.[1] && mRangeMonths?.[3]) {
+    const upper = Number(mRangeMonths[3])
+    if (Number.isFinite(upper)) return Math.max(0, Math.min(240, upper))
+  }
 
   return null
 }
@@ -204,46 +220,44 @@ function inferChildrenFromEu360(): ChildProfile[] {
     } catch {}
   }
 
-  // 3) normaliza children
   const out: ChildProfile[] = []
+  const seenKey = new Set<string>() // dedupe mais forte (id + name + months)
   let idx = 1
 
   for (const c of collected) {
     const id = String(c?.id ?? c?.key ?? c?.uuid ?? `child_${idx++}`)
     const name = String(c?.name ?? c?.nome ?? '').trim()
 
-    // Possíveis formatos
-    const months =
-      coerceMonthsFromUnknown(
-        c?.ageMonths ??
-          c?.age_months ??
-          c?.months ??
-          c?.idadeMeses ??
-          c?.idade_meses ??
-          c?.idade ??
-          c?.age,
-      ) ??
-      (() => {
-        const d =
-          safeParseDate(
-            c?.birthdate ??
-              c?.birthDate ??
-              c?.dob ??
-              c?.dataNascimento ??
-              c?.data_nascimento ??
-              c?.nascimento,
-          ) || null
-        return d ? Math.max(0, Math.min(240, monthsBetween(d, new Date()))) : null
-      })()
+    // Preferência: meses explícitos (se existirem) > idade “solta” > birthdate
+    const explicitMonths =
+      coerceMonthsFromUnknown(c?.ageMonths ?? c?.age_months ?? c?.months ?? c?.idadeMeses ?? c?.idade_meses) ??
+      coerceMonthsFromUnknown(c?.idade ?? c?.age)
+
+    const derivedFromBirth = (() => {
+      const d =
+        safeParseDate(
+          c?.birthdate ??
+            c?.birthDate ??
+            c?.dob ??
+            c?.dataNascimento ??
+            c?.data_nascimento ??
+            c?.nascimento,
+        ) || null
+      return d ? Math.max(0, Math.min(240, monthsBetween(d, new Date()))) : null
+    })()
+
+    const months = explicitMonths ?? derivedFromBirth
 
     const label = name ? name : `Filho ${out.length + 1}`
 
-    // evita duplicados por id
-    if (out.some((x) => x.id === id)) continue
+    // dedupe forte: id + label + months (resolve “duplicatas” do Eu360 em chaves diferentes)
+    const key = `${id}::${label.toLowerCase()}::${months ?? 'null'}`
+    if (seenKey.has(key)) continue
+    seenKey.add(key)
+
     out.push({ id, label, months })
   }
 
-  // se vier vazio, devolve []
   return out
 }
 
@@ -402,26 +416,24 @@ async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string; 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ slot: input.slot, mood: input.mood, pantry: input.pantry, childAgeMonths: input.childAgeMonths }),
   })
-  if (!res.ok) return { ok: false, error: `http_${res.status}` }
+  if (!res.ok) return { ok: false, error: `http_${res.status}`, hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
   return (await res.json()) as AIRecipeResponse
 }
 
-function formatChildLabel(c: ChildProfile) {
-  const age =
-    c.months === null ? 'idade não preenchida' : c.months < 24 ? `${c.months} meses` : `${Math.floor(c.months / 12)} anos`
-  return `${c.label} • ${age}`
+function plural(n: number, one: string, many: string) {
+  return n === 1 ? one : many
 }
 
-function friendlyHintFromError(err: string, serverHint?: string) {
-  if (serverHint) return serverHint
-  if (err === 'empty_pantry') return 'Escreva 1 a 3 itens. Pode ser só “banana” ou “ovo”.'
-  if (err === 'need_more_items')
-    return 'Com esse item sozinho, eu não consigo montar uma receita segura. Me diga só mais 1 item (ex.: “sal + ovo” ou “sal + arroz”).'
-  if (err === 'not_specific_enough') return 'Me diga 2 ou 3 itens (ex.: “ovo, arroz, cenoura”) para eu montar uma receita bem direta.'
-  if (err === 'age_missing') return 'Complete a idade no Eu360 para liberar.'
-  if (err === 'under_6') return 'Para essa fase, o melhor é seguir a orientação que você já usa com sua rede de saúde.'
-  if (err === 'intro_6_11') return 'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas.'
-  return 'Não consegui montar agora. Se quiser, use uma opção pronta abaixo.'
+function formatChildLabel(c: ChildProfile) {
+  if (c.months === null) return `${c.label} • idade não preenchida`
+
+  if (c.months < 24) {
+    const m = c.months
+    return `${c.label} • ${m} ${plural(m, 'mês', 'meses')}`
+  }
+
+  const years = Math.floor(c.months / 12)
+  return `${c.label} • ${years} ${plural(years, 'ano', 'anos')}`
 }
 
 export default function MeuDiaLeveClient() {
@@ -441,11 +453,10 @@ export default function MeuDiaLeveClient() {
   const [activeChildId, setActiveChildId] = useState<string>('')
 
   const [pantry, setPantry] = useState<string>('')
-
   const [aiRecipeText, setAiRecipeText] = useState<string>('')
   const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
   const [aiRecipeError, setAiRecipeError] = useState<string>('')
-  const [aiRecipeHint, setAiRecipeHint] = useState<string>('')
+  const [aiRecipeHint, setAiRecipeHint] = useState<string>('') // <- hint dinâmico (alinha com o servidor)
 
   useEffect(() => {
     try {
@@ -661,9 +672,7 @@ export default function MeuDiaLeveClient() {
 
     const trimmed = pantry.trim()
     if (!trimmed) {
-      toast.info('Escreva 1 a 3 itens. Pode ser só “banana” ou “ovo”.')
-      setAiRecipeError('empty_pantry')
-      setAiRecipeHint('Escreva 1 a 3 itens. Pode ser só “banana” ou “ovo”.')
+      toast.info('Escreva curto o que você tem em casa.')
       return
     }
 
@@ -676,26 +685,28 @@ export default function MeuDiaLeveClient() {
       const data = await requestAIRecipe({ slot, mood, pantry: trimmed, childAgeMonths: activeMonths as number })
 
       if (!data?.ok || !data.text) {
-        const err = data?.error || 'erro_receita'
-        const hint = friendlyHintFromError(err, data?.hint)
+        setAiRecipeError(data?.error || 'erro_receita')
+        setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item — ou use uma opção pronta abaixo.')
 
-        setAiRecipeError(err)
-        setAiRecipeHint(hint)
+        // UX: hint gentil, sem “cobrança”
+        toast.info(data?.hint || 'Se quiser, a gente ajuda com mais um item — ou você usa uma opção pronta abaixo.')
 
         try {
-          track('meu_dia_leve.recipe.fail', { error: err })
+          track('meu_dia_leve.recipe.fail', { error: data?.error || 'no_text' })
         } catch {}
         return
       }
 
       setAiRecipeText(data.text)
+      setAiRecipeHint('')
+
       try {
         track('meu_dia_leve.recipe.ok', { slot, mood })
       } catch {}
     } catch {
-      const err = 'erro_rede'
-      setAiRecipeError(err)
-      setAiRecipeHint(friendlyHintFromError(err))
+      setAiRecipeError('erro_rede')
+      setAiRecipeHint('Falhou agora. Se quiser, use uma opção pronta abaixo.')
+      toast.info('Falhou agora. Se quiser, use uma opção pronta abaixo.')
       try {
         track('meu_dia_leve.recipe.fail', { error: 'network_or_throw' })
       } catch {}
@@ -703,6 +714,15 @@ export default function MeuDiaLeveClient() {
       setAiRecipeLoading(false)
     }
   }
+
+  // copy do helper abaixo do botão: sempre consistente com o contrato do servidor
+  const helperCopy = useMemo(() => {
+    if (gate.blocked) return 'Complete a idade no Eu360 para liberar.'
+    if (aiRecipeHint) return aiRecipeHint
+
+    // padrão neutro e verdadeiro: 1 item pode funcionar se for “principal”
+    return 'Pode ser só 1 item. Se for pouco específico, eu te peço mais 1 (sem complicar).'
+  }, [gate.blocked, aiRecipeHint])
 
   return (
     <main
@@ -1041,7 +1061,7 @@ export default function MeuDiaLeveClient() {
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Pode ser só um item. A gente resolve com o que tiver.</div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
 
                         <textarea
                           value={pantry}
@@ -1069,14 +1089,11 @@ export default function MeuDiaLeveClient() {
                           {gate.blocked ? (
                             <span className="text-[12px] text-[#6a6a6a]">Complete a idade no Eu360 para liberar.</span>
                           ) : null}
-                        </div>
 
-                        {/* Hint inline (sem toast concorrente) */}
-                        {aiRecipeError && !aiRecipeText ? (
-                          <div className="mt-3 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[12px] text-[#6a6a6a]">
-                            {aiRecipeHint || 'Falhou agora. Você ainda pode usar uma opção pronta abaixo.'}
-                          </div>
-                        ) : null}
+                          {aiRecipeError ? (
+                            <span className="text-[12px] text-[#6a6a6a]">Se quiser, você usa uma opção pronta abaixo.</span>
+                          ) : null}
+                        </div>
 
                         {aiRecipeText ? (
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
