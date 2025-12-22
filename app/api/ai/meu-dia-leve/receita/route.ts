@@ -7,7 +7,6 @@
  * sem atualizar este documento.
  */
 
-
 import { NextResponse } from 'next/server'
 import { track } from '@/app/lib/telemetry'
 
@@ -30,6 +29,30 @@ type ApiResponse =
 // Responsabilidade alimentar (alinhado ao Client)
 const MIN_MONTHS_BLOCK = 6
 const MIN_MONTHS_ALLOW_RECIPES = 12
+
+/**
+ * Ingredientes “fortes” (1 item já pode virar receita responsável).
+ * Fonte única para Client/Server decidirem “libera com 1 item”.
+ */
+const STRONG_ONE_ITEM_NEEDLES = ['ovo', 'arroz', 'banana', 'iogurte', 'iogurt', 'pão', 'pao', 'feijão', 'feijao']
+
+/**
+ * Encerramento padrão (blindagem de tom).
+ * - Sem promessas
+ * - Sem discurso nutricional
+ * - Sem prescrição
+ * - Sempre “suficiente por agora”
+ */
+function closeNote(input?: string) {
+  const base = String(input ?? '').trim()
+  // Se vier vazio, aplica o padrão do produto
+  if (!base) return 'Se hoje der só isso, já está bom por agora.'
+  // Evita notas longas / dramáticas
+  const clipped = base.length > 110 ? `${base.slice(0, 107)}…` : base
+  // Garante fechamento padrão no final
+  const suffix = ' Se hoje der só isso, já está bom por agora.'
+  return clipped.endsWith('por agora.') ? clipped : `${clipped}${suffix}`
+}
 
 function clampSlot(v: unknown): Slot {
   const s = String(v ?? '')
@@ -105,16 +128,16 @@ function formatRecipeText(recipe: {
   lines.push('')
   lines.push('Modo de preparo:')
   recipe.steps.forEach((s, idx) => lines.push(`${idx + 1}) ${s}`))
-  if (recipe.note) {
-    lines.push('')
-    lines.push(`Observação: ${recipe.note}`)
-  }
+  lines.push('')
+  lines.push(`Observação: ${closeNote(recipe.note)}`)
   return lines.join('\n')
 }
 
 /**
  * Fallback responsável para “1 ingrediente forte”.
- * Isso resolve o seu caso: "banana" no slot 5 não ficava específico -> agora fica.
+ * - Sempre mantém estrutura padrão
+ * - Sempre fecha com note padrão (blindada)
+ * - Nunca “orienta”, “recomenda”, “idealiza”
  */
 function pickSingleItemRecipe(items: string[], slot: Slot) {
   const hasBanana = hasAny(items, ['banana'])
@@ -124,8 +147,6 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
   const hasBeans = hasAny(items, ['feijão', 'feijao'])
   const hasBread = hasAny(items, ['pão', 'pao'])
 
-  // Regra: título e passos simples, sem promessas nutricionais.
-  // Tempo segue o slot, mas o preparo é sempre “possível”.
   const time = slot === '3' ? '3 min' : slot === '5' ? '5 min' : '10 min'
 
   if (hasBanana) {
@@ -139,24 +160,24 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
         'Se quiser mais cremoso, amasse bem até virar “papinha”.',
         'Sirva em porções pequenas.',
       ],
-      note: 'Quando a casa está corrida, o simples também é cuidado.',
+      note: 'Sem complicar: resolve a fome e segue.',
     }
   }
 
   if (hasYogurt) {
     return {
-      title: 'Iogurte puro (porção pequena)',
+      title: 'Iogurte simples (porção pequena)',
       time,
       yield: '1 porção',
       ingredients: ['Iogurte natural (o que você tiver)'],
       steps: ['Coloque uma porção pequena no potinho.', 'Sirva simples.'],
-      note: 'Se você tiver fruta, dá para complementar depois.',
+      note: 'Se tiver fruta, dá para complementar depois.',
     }
   }
 
   if (hasEgg) {
     return {
-      title: 'Ovo mexido básico',
+      title: 'Ovo mexido básico e macio',
       time,
       yield: '1 porção',
       ingredients: ['1 ovo', '1 fio de azeite ou um pouquinho de manteiga (se você usa em casa)'],
@@ -165,7 +186,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
         'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
         'Coloque o ovo e mexa devagar até ficar cozido e macio.',
       ],
-      note: 'Fogo baixo deixa mais macio e fácil para a criança comer.',
+      note: 'Fogo baixo costuma deixar mais macio.',
     }
   }
 
@@ -176,7 +197,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       yield: '1 porção',
       ingredients: ['2 a 3 colheres de arroz já pronto'],
       steps: ['Aqueça o arroz.', 'Sirva em porções pequenas.'],
-      note: 'Se você tiver feijão/legume, dá para complementar depois.',
+      note: 'Se tiver feijão/legume, você pode complementar depois.',
     }
   }
 
@@ -185,9 +206,9 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       title: 'Feijão amassadinho (ou caldo)',
       time,
       yield: '1 porção',
-      ingredients: ['Feijão (amassadinho ou caldo, se você tiver pronto)'],
+      ingredients: ['Feijão pronto (amassadinho ou caldo, como você já usa em casa)'],
       steps: ['Aqueça se necessário.', 'Amasse alguns grãos ou use o caldo.', 'Sirva em porção pequena.'],
-      note: 'Se tiver arroz, combina muito bem e vira refeição completa.',
+      note: 'Se tiver arroz, combina fácil e sem esforço.',
     }
   }
 
@@ -198,7 +219,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       yield: '1 porção',
       ingredients: ['Pão (o que você tiver)'],
       steps: ['Corte em pedaços pequenos.', 'Sirva simples.'],
-      note: 'Se tiver queijo ou fruta, você pode complementar.',
+      note: 'Se tiver queijo ou fruta, dá para completar sem virar tarefa.',
     }
   }
 
@@ -234,7 +255,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
           hasYogurt ? 'Misture o iogurte para deixar mais macio.' : 'Se quiser mais macio, adicione 1 a 2 colheres de água e misture.',
           hasOats ? 'Finalize com a aveia por cima.' : 'Sirva assim mesmo: simples e suficiente.',
         ],
-        note: 'Se a banana estiver bem madura, ela já adoça naturalmente.',
+        note: 'É uma montagem pequena que ajuda a atravessar o agora.',
       }
     }
 
@@ -245,7 +266,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
         yield: '1 porção',
         ingredients: ['Iogurte natural', 'Fruta picada/amassada (a que você escreveu)'],
         steps: ['Coloque o iogurte no potinho.', 'Some a fruta por cima.', 'Sirva em porções pequenas.'],
-        note: 'Quando o dia está corrido, montagem é o melhor tipo de receita.',
+        note: 'Montagem é o melhor tipo de receita quando o dia está curto.',
       }
     }
   }
@@ -270,7 +291,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
           hasVeg ? 'Se tiver legume pronto, misture por 30 segundos no final.' : 'Sirva em seguida.',
           hasCheese ? 'Se tiver queijo, coloque no final e misture rapidamente.' : '',
         ].filter(Boolean),
-        note: 'Fogo baixo deixa mais macio e fácil para a criança comer.',
+        note: 'Curto, direto e sem virar projeto.',
       }
     }
 
@@ -290,7 +311,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
           'Monte: arroz + 1 complemento.',
           hasVeg ? 'Finalize com legume em pedacinhos pequenos.' : 'Sirva em porções pequenas.',
         ],
-        note: 'O foco aqui é “resolver” sem virar projeto.',
+        note: 'Resolve sem esticar o dia.',
       }
     }
 
@@ -301,7 +322,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
         yield: '1 porção',
         ingredients: ['Pão', 'Queijo (o que você tiver)'],
         steps: ['Monte o sanduíche.', 'Se quiser, aqueça rapidamente para ficar mais macio.', 'Corte em tirinhas e sirva.'],
-        note: 'Cortar em tirinhas costuma ajudar quando a criança está seletiva.',
+        note: 'Quando estiver tudo corrido, macio e simples ajuda.',
       }
     }
   }
@@ -320,11 +341,11 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
         ].filter(Boolean) as string[],
         steps: [
           'Amasse a banana até virar um creme.',
-          hasEgg ? 'Misture o ovo.' : 'Se não tiver ovo, prefira usar outra opção pronta do dia.',
-          hasOats ? 'Misture a aveia até virar massa grossinha.' : 'Se não tiver aveia, prefira usar outra opção pronta do dia.',
+          hasEgg ? 'Misture o ovo.' : 'Se não tiver ovo, use uma opção pronta do dia.',
+          hasOats ? 'Misture a aveia até virar massa grossinha.' : 'Se não tiver aveia, use uma opção pronta do dia.',
           'Em fogo baixo, faça discos pequenos e doure dos dois lados.',
         ],
-        note: 'Discos pequenos: mais fácil, mais rápido, menos bagunça.',
+        note: 'Discos pequenos deixam tudo mais rápido e com menos bagunça.',
       }
     }
   }
@@ -351,7 +372,7 @@ export async function POST(req: Request) {
         pantryLen: pantry.length,
         itemsCount: items.length,
         childAgeMonths,
-        mode: 'deterministic_specific_only',
+        mode: 'deterministic_contract_guarded',
       })
     } catch {}
 
@@ -385,9 +406,7 @@ export async function POST(req: Request) {
     }
 
     // 1 item: libera se for “forte”
-    const strongOneItem =
-      items.length === 1 &&
-      hasAny(items, ['ovo', 'arroz', 'banana', 'iogurte', 'pão', 'pao', 'feijão', 'feijao'])
+    const strongOneItem = items.length === 1 && hasAny(items, STRONG_ONE_ITEM_NEEDLES)
 
     if (items.length < 2 && !strongOneItem) {
       const out: ApiResponse = {
