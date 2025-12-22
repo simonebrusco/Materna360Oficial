@@ -1,3 +1,4 @@
+// app/api/ai/meu-dia-leve/receita/route.ts
 /**
  * CONTRATO DE RECEITAS — Materna360 (P26)
  * Regras oficiais em:
@@ -37,24 +38,57 @@ const MIN_MONTHS_ALLOW_RECIPES = 12
  * Ingredientes “fortes” (1 item já pode virar receita responsável).
  * Fonte única para Client/Server decidirem “libera com 1 item”.
  */
-const STRONG_ONE_ITEM_NEEDLES = ['ovo', 'arroz', 'banana', 'iogurte', 'iogurt', 'pão', 'pao', 'feijão', 'feijao']
+const STRONG_ONE_ITEM_NEEDLES = [
+  'ovo',
+  'arroz',
+  'banana',
+  'iogurte',
+  'iogurt',
+  'pão',
+  'pao',
+  'feijão',
+  'feijao',
+]
 
 /**
- * Encerramento padrão (blindagem de tom).
- * - Sem promessas
- * - Sem discurso nutricional
- * - Sem prescrição
- * - Sempre “suficiente por agora”
+ * Lista oficial de nomes (imutável) — fonte única para títulos.
+ * Não criar nomes fora destes.
  */
-function closeNote(input?: string) {
-  const base = String(input ?? '').trim()
-  // Se vier vazio, aplica o padrão do produto
-  if (!base) return 'Se hoje der só isso, já está bom por agora.'
-  // Evita notas longas / dramáticas
-  const clipped = base.length > 110 ? `${base.slice(0, 107)}…` : base
-  // Garante fechamento padrão no final
-  const suffix = ' Se hoje der só isso, já está bom por agora.'
-  return clipped.endsWith('por agora.') ? clipped : `${clipped}${suffix}`
+const OFFICIAL_TITLES = {
+  bananaSimples: 'Banana do jeito mais simples',
+  frutaAmassada: 'Fruta amassada simples',
+  frutaPedacos: 'Fruta em pedaços para agora',
+  iogurteComFruta: 'Iogurte com fruta (montagem simples)',
+  iogurteSimples: 'Iogurte simples do dia',
+
+  ovoMacio: 'Ovo mexido macio',
+  ovoBasico: 'Ovo mexido básico',
+  ovoFrigideira: 'Ovo simples da frigideira',
+
+  arrozAquecido: 'Arroz aquecido do dia',
+  arrozComplemento: 'Arroz com complemento simples',
+  arrozBasico: 'Arroz básico para agora',
+
+  arrozFeijao: 'Arroz e feijão simples',
+  arrozLegume: 'Arroz com legume do dia',
+  refeicaoComOQueTem: 'Refeição simples com o que tem',
+
+  panquequinhaBanana: 'Panquequinha de banana simples',
+  preparinhoBanana: 'Preparinho de banana na frigideira',
+
+  preparinhoAgora: 'Preparinho simples para agora',
+  comidaSemComplicar: 'Comida do dia sem complicar',
+} as const
+
+/**
+ * Observação (encerramento emocional) — frase aprovada.
+ * - presente
+ * - permissiva
+ * - sem futuro
+ * - sem “melhor”, “ideal”, “recomendado”
+ */
+function closeNote() {
+  return 'Simples assim também conta.'
 }
 
 function clampSlot(v: unknown): Slot {
@@ -110,7 +144,18 @@ function hasAny(items: string[], needles: string[]) {
 }
 
 function hasFruitWord(items: string[]) {
-  const fruits = ['banana', 'maçã', 'maca', 'mamão', 'mamao', 'pera', 'morango', 'uva', 'laranja', 'tangerina']
+  const fruits = [
+    'banana',
+    'maçã',
+    'maca',
+    'mamão',
+    'mamao',
+    'pera',
+    'morango',
+    'uva',
+    'laranja',
+    'tangerina',
+  ]
   return hasAny(items, fruits)
 }
 
@@ -120,7 +165,6 @@ function formatRecipeText(recipe: {
   yield: string
   ingredients: string[]
   steps: string[]
-  note?: string
 }) {
   const lines: string[] = []
   lines.push(`${recipe.title}`)
@@ -132,7 +176,7 @@ function formatRecipeText(recipe: {
   lines.push('Modo de preparo:')
   recipe.steps.forEach((s, idx) => lines.push(`${idx + 1}) ${s}`))
   lines.push('')
-  lines.push(`Observação: ${closeNote(recipe.note)}`)
+  lines.push(`Observação: ${closeNote()}`)
   return lines.join('\n')
 }
 
@@ -148,7 +192,7 @@ function getAgeTier(months: number): AgeTier {
 
 /**
  * Ajustes micro de preparo por idade — SEM prescrição, só “forma de servir”.
- * Mantém tom, mantém estrutura e mantém o “suficiente por agora”.
+ * Mantém tom, mantém estrutura e mantém o encerramento fixo.
  */
 function stepServeStyle(tier: AgeTier) {
   if (tier === 'toddler_12_23') {
@@ -168,8 +212,9 @@ function stepServeStyle(tier: AgeTier) {
 /**
  * Fallback responsável para “1 ingrediente forte”.
  * - Sempre mantém estrutura padrão
- * - Sempre fecha com note padrão (blindada)
- * - Nunca “orienta”, “recomenda”, “idealiza”
+ * - Título sempre oficial
+ * - Observação sempre fixa (blindada)
+ * - Sem “depois”, “melhor”, “por enquanto”
  */
 function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
   const hasBanana = hasAny(items, ['banana'])
@@ -184,33 +229,36 @@ function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
 
   if (hasBanana) {
     return {
-      title: 'Banana do jeito mais simples',
+      title: OFFICIAL_TITLES.bananaSimples,
       time,
       yield: '1 porção',
       ingredients: ['1 banana madura'],
       steps: [
         'Descasque e amasse com um garfo (ou corte em pedacinhos).',
-        tier === 'toddler_12_23' ? 'Amasse bem até ficar mais macio.' : 'Amasse até ficar do jeito que funciona aí.',
+        tier === 'toddler_12_23'
+          ? 'Amasse bem até ficar mais macio.'
+          : 'Amasse até ficar do jeito que funciona aí.',
         style.serveSmall,
       ],
-      note: 'Sem complicar: resolve a fome e segue.',
     }
   }
 
   if (hasYogurt) {
     return {
-      title: 'Iogurte simples (porção pequena)',
+      title: OFFICIAL_TITLES.iogurteSimples,
       time,
       yield: '1 porção',
       ingredients: ['Iogurte natural (o que você tiver)'],
-      steps: ['Coloque uma porção pequena no potinho.', tier === 'toddler_12_23' ? 'Sirva mais simples e macio.' : 'Sirva simples.'],
-      note: 'Se tiver fruta, dá para complementar depois.',
+      steps: [
+        'Coloque uma porção pequena no potinho.',
+        tier === 'toddler_12_23' ? 'Sirva mais simples e macio.' : 'Sirva simples.',
+      ],
     }
   }
 
   if (hasEgg) {
     return {
-      title: 'Ovo mexido básico e macio',
+      title: OFFICIAL_TITLES.ovoMacio,
       time,
       yield: '1 porção',
       ingredients: ['1 ovo', '1 fio de azeite ou um pouquinho de manteiga (se você usa em casa)'],
@@ -218,45 +266,46 @@ function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
         'Bata o ovo rapidamente com um garfo.',
         'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
         'Coloque o ovo e mexa devagar até ficar cozido e macio.',
-        tier === 'toddler_12_23' ? 'Se quiser, amasse um pouco no prato para ficar mais macio.' : 'Sirva em seguida.',
+        tier === 'toddler_12_23'
+          ? 'Se quiser, amasse um pouco no prato para ficar mais macio.'
+          : 'Sirva em seguida.',
       ],
-      note: 'Fogo baixo costuma deixar mais macio.',
     }
   }
 
   if (hasRice) {
     return {
-      title: 'Arroz aquecido (porção pequena)',
+      title: OFFICIAL_TITLES.arrozAquecido,
       time,
       yield: '1 porção',
       ingredients: ['2 a 3 colheres de arroz já pronto'],
-      steps: ['Aqueça o arroz.', tier === 'toddler_12_23' ? 'Sirva em porções pequenas, mais macio se precisar.' : 'Sirva em porções pequenas.'],
-      note: 'Se tiver feijão/legume, você pode complementar depois.',
+      steps: ['Aqueça o arroz.', style.serveSmall],
     }
   }
 
+  // Feijão e pão: não há nomes específicos na lista — usar opção neutra oficial
   if (hasBeans) {
     return {
-      title: 'Feijão amassadinho (ou caldo)',
+      title: OFFICIAL_TITLES.comidaSemComplicar,
       time,
       yield: '1 porção',
-      ingredients: ['Feijão pronto (amassadinho ou caldo, como você já usa em casa)'],
-      steps: ['Aqueça se necessário.', 'Amasse alguns grãos ou use o caldo.', style.serveSmall],
-      note: 'Se tiver arroz, combina fácil e sem esforço.',
+      ingredients: ['Feijão pronto (o que você já usa em casa)'],
+      steps: ['Aqueça se necessário.', 'Sirva em porções pequenas.', style.serveSmall],
     }
   }
 
   if (hasBread) {
     return {
-      title: 'Pão em pedaços (sem complicar)',
+      title: OFFICIAL_TITLES.comidaSemComplicar,
       time,
       yield: '1 porção',
       ingredients: ['Pão (o que você tiver)'],
       steps: [
-        tier === 'toddler_12_23' ? 'Rasgue em pedaços bem pequenos e deixe mais macio se quiser.' : 'Corte em pedaços pequenos.',
+        tier === 'toddler_12_23'
+          ? 'Rasgue em pedaços bem pequenos, como for mais fácil agora.'
+          : 'Corte em pedaços pequenos e sirva.',
         'Sirva simples.',
       ],
-      note: 'Se tiver queijo ou fruta, dá para completar sem virar tarefa.',
     }
   }
 
@@ -273,15 +322,24 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
   const hasCheese = hasAny(items, ['queijo'])
   const hasBeans = hasAny(items, ['feijão', 'feijao'])
   const hasChicken = hasAny(items, ['frango'])
-  const hasVeg = hasAny(items, ['legume', 'cenoura', 'abobrinha', 'batata', 'brócolis', 'brocolis', 'ervilha'])
+  const hasVeg = hasAny(items, [
+    'legume',
+    'cenoura',
+    'abobrinha',
+    'batata',
+    'brócolis',
+    'brocolis',
+    'ervilha',
+  ])
 
   const style = stepServeStyle(tier)
 
   // 3 min
   if (slot === '3') {
+    // banana + (aveia ou iogurte) => Fruta amassada simples
     if (hasBanana && (hasOats || hasYogurt)) {
       return {
-        title: 'Creme rápido de banana',
+        title: OFFICIAL_TITLES.frutaAmassada,
         time: '3 min',
         yield: '1 porção',
         ingredients: [
@@ -291,25 +349,28 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
         ].filter(Boolean) as string[],
         steps: [
           'Amasse a banana com um garfo até ficar cremosa.',
-          hasYogurt ? 'Misture o iogurte para deixar mais macio.' : 'Se quiser mais macio, adicione 1 a 2 colheres de água e misture.',
-          hasOats ? 'Finalize com a aveia por cima.' : 'Sirva assim mesmo: simples e suficiente.',
+          hasYogurt
+            ? 'Misture o iogurte rapidamente, sem se preocupar com textura perfeita.'
+            : 'Misture com 1 a 2 colheres de água, só até ficar bom para servir.',
+          hasOats ? 'Coloque a aveia por cima (se você tiver).' : style.serveSmall,
         ],
-        note: 'É uma montagem pequena que ajuda a atravessar o agora.',
       }
     }
 
+    // iogurte + fruta => Iogurte com fruta (montagem simples)
     if (hasYogurt && hasFruitWord(items)) {
       return {
-        title: 'Iogurte com fruta (montagem)',
+        title: OFFICIAL_TITLES.iogurteComFruta,
         time: '3 min',
         yield: '1 porção',
-        ingredients: ['Iogurte natural', 'Fruta picada/amassada (a que você escreveu)'],
+        ingredients: ['Iogurte natural', 'Fruta (a que você escreveu)'],
         steps: [
           'Coloque o iogurte no potinho.',
-          tier === 'toddler_12_23' ? 'Amasse a fruta e misture por cima.' : 'Some a fruta por cima.',
+          tier === 'toddler_12_23'
+            ? 'Amasse a fruta e coloque por cima, como for mais fácil agora.'
+            : 'Pique a fruta e coloque por cima.',
           style.serveSmall,
         ],
-        note: 'Montagem é o melhor tipo de receita quando o dia está curto.',
       }
     }
   }
@@ -318,7 +379,7 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
   if (slot === '5') {
     if (hasEgg) {
       return {
-        title: 'Ovo mexido macio',
+        title: OFFICIAL_TITLES.ovoMacio,
         time: '5 min',
         yield: '1 porção',
         ingredients: [
@@ -333,44 +394,47 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
           'Coloque o ovo e mexa devagar até ficar cozido e macio.',
           hasVeg ? 'Se tiver legume pronto, misture por 30 segundos no final.' : 'Sirva em seguida.',
           hasCheese ? 'Se tiver queijo, coloque no final e misture rapidamente.' : '',
-          tier === 'toddler_12_23' ? 'Se quiser, deixe mais macio no prato (amassando de leve).' : '',
+          tier === 'toddler_12_23' ? 'Se quiser, amasse um pouco no prato para ficar mais macio.' : '',
         ].filter(Boolean),
-        note: 'Curto, direto e sem virar projeto.',
       }
     }
 
+    // arroz + (feijão/frango/legume) => Arroz com complemento simples
     if (hasRice && (hasBeans || hasChicken || hasVeg)) {
       return {
-        title: 'Arroz rápido com complemento',
+        title: OFFICIAL_TITLES.arrozComplemento,
         time: '5 min',
         yield: '1 porção',
         ingredients: [
           '2 a 3 colheres de arroz já pronto',
-          hasBeans ? 'Feijão (amassadinho ou caldo, se você tiver)' : null,
+          hasBeans ? 'Feijão (se você tiver)' : null,
           hasChicken ? 'Frango desfiado/pronto (se você tiver)' : null,
           hasVeg ? 'Legume cozido picado (se você tiver)' : null,
         ].filter(Boolean) as string[],
         steps: [
           'Aqueça o arroz (e o complemento, se for quente).',
           'Monte: arroz + 1 complemento.',
-          hasVeg ? (tier === 'toddler_12_23' ? 'Finalize com legume bem picado/amassado.' : 'Finalize com legume em pedacinhos pequenos.') : style.serveSmall,
+          hasVeg
+            ? tier === 'toddler_12_23'
+              ? 'Finalize com legume bem picado/amassado, como for mais fácil agora.'
+              : 'Finalize com legume em pedacinhos pequenos.'
+            : style.serveSmall,
         ],
-        note: 'Resolve sem esticar o dia.',
       }
     }
 
+    // pão + queijo => Refeição simples com o que tem
     if (hasBread && hasCheese) {
       return {
-        title: 'Sanduíche rápido e macio',
+        title: OFFICIAL_TITLES.refeicaoComOQueTem,
         time: '5 min',
         yield: '1 porção',
         ingredients: ['Pão', 'Queijo (o que você tiver)'],
         steps: [
-          'Monte o sanduíche.',
-          'Se quiser, aqueça rapidamente para ficar mais macio.',
-          tier === 'toddler_12_23' ? 'Rasgue em pedaços pequenos e sirva.' : 'Corte em tirinhas e sirva.',
+          'Monte com o que você tem.',
+          'Se quiser, aqueça rapidamente, só até ficar bom para servir.',
+          tier === 'toddler_12_23' ? 'Rasgue em pedaços pequenos e sirva.' : 'Corte em pedaços pequenos e sirva.',
         ],
-        note: 'Quando estiver tudo corrido, macio e simples ajuda.',
       }
     }
   }
@@ -379,7 +443,7 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
   if (slot === '10') {
     if (hasBanana && (hasOats || hasEgg)) {
       return {
-        title: 'Panquequinha de banana (sem açúcar)',
+        title: OFFICIAL_TITLES.panquequinhaBanana,
         time: '10 min',
         yield: '1 porção',
         ingredients: [
@@ -389,12 +453,17 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
         ].filter(Boolean) as string[],
         steps: [
           'Amasse a banana até virar um creme.',
-          hasEgg ? 'Misture o ovo.' : 'Se não tiver ovo, use uma opção pronta do dia.',
-          hasOats ? 'Misture a aveia até virar massa grossinha.' : 'Se não tiver aveia, use uma opção pronta do dia.',
+          hasEgg
+            ? 'Misture o ovo rapidamente.'
+            : 'Se não tiver ovo, use uma opção pronta do dia.',
+          hasOats
+            ? 'Misture a aveia até virar massa grossinha.'
+            : 'Se não tiver aveia, use uma opção pronta do dia.',
           'Em fogo baixo, faça discos pequenos e doure dos dois lados.',
-          tier === 'toddler_12_23' ? 'Depois, rasgue em pedacinhos e deixe mais macio se quiser.' : 'Depois, corte em pedaços pequenos e sirva.',
+          tier === 'toddler_12_23'
+            ? 'Rasgue em pedacinhos e sirva.'
+            : 'Corte em pedaços pequenos e sirva.',
         ],
-        note: 'Discos pequenos deixam tudo mais rápido e com menos bagunça.',
       }
     }
   }
@@ -427,7 +496,11 @@ export async function POST(req: Request) {
 
     // Gate de idade também no servidor (consistência e segurança)
     if (childAgeMonths === null) {
-      const out: ApiResponse = { ok: false, error: 'age_missing', hint: 'Complete a idade no Eu360 para liberar.' }
+      const out: ApiResponse = {
+        ok: false,
+        error: 'age_missing',
+        hint: 'Complete a idade no Eu360 para liberar.',
+      }
       return NextResponse.json(out, { status: 200 })
     }
 
@@ -435,7 +508,7 @@ export async function POST(req: Request) {
       const out: ApiResponse = {
         ok: false,
         error: 'under_6',
-        hint: 'Para essa fase, o melhor é seguir a orientação que você já usa com sua rede de saúde.',
+        hint: 'Para essa fase, siga a orientação que você já usa com sua rede de saúde.',
       }
       return NextResponse.json(out, { status: 200 })
     }
@@ -444,18 +517,17 @@ export async function POST(req: Request) {
       const out: ApiResponse = {
         ok: false,
         error: 'intro_6_11',
-        hint: 'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas.',
+        hint: 'Entre 6 e 11 meses, as orientações variam. Aqui a gente não sugere receitas.',
       }
       return NextResponse.json(out, { status: 200 })
     }
 
     if (!pantry) {
-      // hint levemente mais “contextual” por idade, sem mudar comportamento
-      const tier = getAgeTier(childAgeMonths)
-      const out: ApiResponse =
-        tier === 'toddler_12_23'
-          ? { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
-          : { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
+      const out: ApiResponse = {
+        ok: false,
+        error: 'empty_pantry',
+        hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).',
+      }
       return NextResponse.json(out, { status: 200 })
     }
 
@@ -468,8 +540,7 @@ export async function POST(req: Request) {
       const out: ApiResponse = {
         ok: false,
         error: 'need_more_items',
-        // sem mudar a regra: só o texto do hint pode ser um pouco mais “prático”
-        hint: tier === 'toddler_12_23' ? 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).' : 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).',
+        hint: 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).',
       }
       return NextResponse.json(out, { status: 200 })
     }
@@ -506,7 +577,11 @@ export async function POST(req: Request) {
       track('meu_dia_leve.recipe.response', { ok: false, latencyMs })
     } catch {}
 
-    const out: ApiResponse = { ok: false, error: 'route_error', hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
+    const out: ApiResponse = {
+      ok: false,
+      error: 'route_error',
+      hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.',
+    }
     return NextResponse.json(out, { status: 200 })
   }
 }
