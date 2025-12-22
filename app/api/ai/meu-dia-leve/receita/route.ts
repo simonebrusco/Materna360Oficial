@@ -81,6 +81,20 @@ const OFFICIAL_TITLES = {
 } as const
 
 /**
+ * Tipo interno único para “receita do contrato”.
+ * IMPORTANTÍSSIMO:
+ * - title é string para evitar unions literais incompatíveis entre pickers.
+ * - estrutura é fixa e corresponde ao formatRecipeText (não muda UI/contrato).
+ */
+type Recipe = {
+  title: string
+  time: string
+  yield: string
+  ingredients: string[]
+  steps: string[]
+}
+
+/**
  * Observação (encerramento emocional) — frase aprovada.
  * - presente
  * - permissiva
@@ -159,13 +173,7 @@ function hasFruitWord(items: string[]) {
   return hasAny(items, fruits)
 }
 
-function formatRecipeText(recipe: {
-  title: string
-  time: string
-  yield: string
-  ingredients: string[]
-  steps: string[]
-}) {
+function formatRecipeText(recipe: Recipe) {
   const lines: string[] = []
   lines.push(`${recipe.title}`)
   lines.push(`Tempo: ${recipe.time} • Rende: ${recipe.yield}`)
@@ -198,14 +206,10 @@ function stepServeStyle(tier: AgeTier) {
   if (tier === 'toddler_12_23') {
     return {
       serveSmall: 'Sirva em porções pequenas, mais amassado/macio se precisar.',
-      serveMash: 'Amasse bem para ficar mais macio.',
-      servePieces: 'Se preferir, sirva mais amassado/macio.',
     }
   }
   return {
     serveSmall: 'Sirva em porções pequenas.',
-    serveMash: 'Amasse só o suficiente para ficar confortável.',
-    servePieces: 'Corte em pedaços pequenos e sirva.',
   }
 }
 
@@ -216,7 +220,7 @@ function stepServeStyle(tier: AgeTier) {
  * - Observação sempre fixa (blindada)
  * - Sem “depois”, “melhor”, “por enquanto”
  */
-function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
+function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier): Recipe | null {
   const hasBanana = hasAny(items, ['banana'])
   const hasEgg = hasAny(items, ['ovo'])
   const hasYogurt = hasAny(items, ['iogurte', 'iogurt'])
@@ -249,10 +253,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
       time,
       yield: '1 porção',
       ingredients: ['Iogurte natural (o que você tiver)'],
-      steps: [
-        'Coloque uma porção pequena no potinho.',
-        tier === 'toddler_12_23' ? 'Sirva mais simples e macio.' : 'Sirva simples.',
-      ],
+      steps: ['Coloque uma porção pequena no potinho.', 'Sirva simples.'],
     }
   }
 
@@ -266,9 +267,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
         'Bata o ovo rapidamente com um garfo.',
         'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
         'Coloque o ovo e mexa devagar até ficar cozido e macio.',
-        tier === 'toddler_12_23'
-          ? 'Se quiser, amasse um pouco no prato para ficar mais macio.'
-          : 'Sirva em seguida.',
+        'Sirva em seguida.',
       ],
     }
   }
@@ -283,14 +282,14 @@ function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
     }
   }
 
-  // Feijão e pão: não há nomes específicos na lista — usar opção neutra oficial
+  // Para feijão e pão, usar opção neutra oficial (sem inventar nome novo)
   if (hasBeans) {
     return {
       title: OFFICIAL_TITLES.comidaSemComplicar,
       time,
       yield: '1 porção',
       ingredients: ['Feijão pronto (o que você já usa em casa)'],
-      steps: ['Aqueça se necessário.', 'Sirva em porções pequenas.', style.serveSmall],
+      steps: ['Aqueça se necessário.', style.serveSmall],
     }
   }
 
@@ -312,7 +311,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
   return null
 }
 
-function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
+function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier): Recipe | null {
   const hasEgg = hasAny(items, ['ovo'])
   const hasBanana = hasAny(items, ['banana'])
   const hasRice = hasAny(items, ['arroz'])
@@ -336,7 +335,6 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
 
   // 3 min
   if (slot === '3') {
-    // banana + (aveia ou iogurte) => Fruta amassada simples
     if (hasBanana && (hasOats || hasYogurt)) {
       return {
         title: OFFICIAL_TITLES.frutaAmassada,
@@ -357,7 +355,6 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
       }
     }
 
-    // iogurte + fruta => Iogurte com fruta (montagem simples)
     if (hasYogurt && hasFruitWord(items)) {
       return {
         title: OFFICIAL_TITLES.iogurteComFruta,
@@ -399,7 +396,6 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
       }
     }
 
-    // arroz + (feijão/frango/legume) => Arroz com complemento simples
     if (hasRice && (hasBeans || hasChicken || hasVeg)) {
       return {
         title: OFFICIAL_TITLES.arrozComplemento,
@@ -423,7 +419,6 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
       }
     }
 
-    // pão + queijo => Refeição simples com o que tem
     if (hasBread && hasCheese) {
       return {
         title: OFFICIAL_TITLES.refeicaoComOQueTem,
@@ -453,16 +448,10 @@ function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
         ].filter(Boolean) as string[],
         steps: [
           'Amasse a banana até virar um creme.',
-          hasEgg
-            ? 'Misture o ovo rapidamente.'
-            : 'Se não tiver ovo, use uma opção pronta do dia.',
-          hasOats
-            ? 'Misture a aveia até virar massa grossinha.'
-            : 'Se não tiver aveia, use uma opção pronta do dia.',
+          hasEgg ? 'Misture o ovo rapidamente.' : 'Se não tiver ovo, use uma opção pronta do dia.',
+          hasOats ? 'Misture a aveia até virar massa grossinha.' : 'Se não tiver aveia, use uma opção pronta do dia.',
           'Em fogo baixo, faça discos pequenos e doure dos dois lados.',
-          tier === 'toddler_12_23'
-            ? 'Rasgue em pedacinhos e sirva.'
-            : 'Corte em pedaços pequenos e sirva.',
+          tier === 'toddler_12_23' ? 'Rasgue em pedacinhos e sirva.' : 'Corte em pedaços pequenos e sirva.',
         ],
       }
     }
@@ -496,11 +485,7 @@ export async function POST(req: Request) {
 
     // Gate de idade também no servidor (consistência e segurança)
     if (childAgeMonths === null) {
-      const out: ApiResponse = {
-        ok: false,
-        error: 'age_missing',
-        hint: 'Complete a idade no Eu360 para liberar.',
-      }
+      const out: ApiResponse = { ok: false, error: 'age_missing', hint: 'Complete a idade no Eu360 para liberar.' }
       return NextResponse.json(out, { status: 200 })
     }
 
@@ -523,11 +508,7 @@ export async function POST(req: Request) {
     }
 
     if (!pantry) {
-      const out: ApiResponse = {
-        ok: false,
-        error: 'empty_pantry',
-        hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).',
-      }
+      const out: ApiResponse = { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
       return NextResponse.json(out, { status: 200 })
     }
 
@@ -545,10 +526,9 @@ export async function POST(req: Request) {
       return NextResponse.json(out, { status: 200 })
     }
 
-    // Primeiro tenta receita específica do slot (com variação interna por idade).
-    let recipe = pickSpecificRecipe(items, slot, tier)
+    // FIX TS: tipo explícito único
+    let recipe: Recipe | null = pickSpecificRecipe(items, slot, tier)
 
-    // Se for 1 item forte e não achou receita específica do slot, aplica fallback responsável (com variação interna por idade).
     if (!recipe && strongOneItem) {
       recipe = pickSingleItemRecipe(items, slot, tier)
     }
@@ -577,11 +557,7 @@ export async function POST(req: Request) {
       track('meu_dia_leve.recipe.response', { ok: false, latencyMs })
     } catch {}
 
-    const out: ApiResponse = {
-      ok: false,
-      error: 'route_error',
-      hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.',
-    }
+    const out: ApiResponse = { ok: false, error: 'route_error', hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
     return NextResponse.json(out, { status: 200 })
   }
 }
