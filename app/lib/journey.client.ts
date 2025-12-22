@@ -11,6 +11,19 @@ import { track } from '@/app/lib/telemetry'
  * - helpers de mark (para padronizar escrita futura)
  * - nenhum “if premium”, nenhum UI coupling
  */
+/**
+ * P26 — PRINCÍPIO DA JORNADA (ANTI-CULPA)
+ *
+ * A Jornada é acompanhamento silencioso, não produtividade.
+ * Regras inegociáveis:
+ * - A Jornada registra apenas o que ACONTECEU (conclusões/salvamentos/ações).
+ * - Ausência não é registrada como “falha”.
+ * - Não existe “dias perdidos”, “streak quebrado” ou qualquer penalidade.
+ * - Repetição conta como continuidade (não como insistência / cobrança).
+ *
+ * Se uma mudança futura introduzir sensação de cobrança,
+ * ela viola diretamente a P26 e deve ser revertida.
+ */
 
 export type JourneySnapshot = {
   selfcare: {
