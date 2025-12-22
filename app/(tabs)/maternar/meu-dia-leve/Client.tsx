@@ -393,10 +393,10 @@ const IDEIAS: QuickIdea[] = [
 ]
 
 const RECEITAS: QuickRecipe[] = [
-  { tag: '3 min', title: 'Iogurte + fruta + um crocante', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
-  { tag: '5 min', title: 'Ovo mexido + arroz pronto', how: 'Arroz já pronto + ovo mexido. Legume se der.', slot: '5' },
-  { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Simples e suficiente para uma rotina corrida.', slot: '5' },
-  { tag: '10 min', title: 'Sopa/caldo pronto + final leve', how: 'Esquentar + montar bem. Resolve sem esticar o dia.', slot: '10' },
+  { tag: '3 min', title: 'Iogurte com fruta (montagem simples)', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
+  { tag: '5 min', title: 'Ovo mexido macio', how: 'Fogo baixo e pronto. Sem se preocupar com ponto perfeito.', slot: '5' },
+  { tag: '5 min', title: 'Refeição simples com o que tem', how: 'Uma base + um complemento, como for mais fácil agora.', slot: '5' },
+  { tag: '10 min', title: 'Comida do dia sem complicar', how: 'Esquentar e servir. Só até ficar bom para servir.', slot: '10' },
 ]
 
 const PASSO_LEVE: DayLine[] = [
@@ -761,26 +761,25 @@ export default function MeuDiaLeveClient() {
         message: 'Complete a idade do(s) filho(s) no Eu360.',
       }
     }
+if (activeMonths < MIN_MONTHS_BLOCK) {
+  return {
+    blocked: true,
+    reason: 'under_6' as const,
+    title: 'Sem receitas por enquanto',
+    message: 'Para essa fase, aqui a gente não sugere receitas. Siga a orientação que você já usa com sua rede de saúde.',
+  }
+}
 
-    if (activeMonths < MIN_MONTHS_BLOCK) {
-      return {
-        blocked: true,
-        reason: 'under_6' as const,
-        title: 'Sem receitas por enquanto',
-        message:
-          'Para bebês com menos de 6 meses, a orientação principal é aleitamento (conforme sua rede de saúde).',
-      }
-    }
-
-    if (activeMonths >= MIN_MONTHS_INTRO_START && activeMonths < MIN_MONTHS_ALLOW_RECIPES) {
-      return {
-        blocked: true,
-        reason: 'intro_6_11' as const,
-        title: 'Introdução alimentar',
-        message:
-          'Entre 6 e 11 meses, as recomendações variam. O ideal é seguir a orientação do pediatra / rede de saúde.',
-      }
-    }
+if (activeMonths >= MIN_MONTHS_INTRO_START && activeMonths < MIN_MONTHS_ALLOW_RECIPES) {
+  return {
+    blocked: true,
+    reason: 'intro_6_11' as const,
+    title: 'Introdução alimentar',
+    message: 'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas — siga a orientação que você já usa com sua rede de saúde.',
+  }
+}
+    
+    
 
     return { blocked: false, reason: 'ok' as const, title: '', message: '' }
   }, [children.length, activeChild, activeMonths])
@@ -1303,9 +1302,9 @@ export default function MeuDiaLeveClient() {
                       </div>
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">opção pronta</div>
-                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{selectedRecipe?.title}</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selectedRecipe?.how}</div>
+                        <div className="text-[11px] ...">opção pronta</div>
+<div className="mt-2 text-[14px] ...">{selectedRecipe?.title}</div>
+<div className="mt-2 text-[13px] ...">{selectedRecipe?.how}</div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
