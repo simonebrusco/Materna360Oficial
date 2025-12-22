@@ -72,8 +72,16 @@ function monthsBetween(from: Date, to: Date) {
 
 function clampMonths(n: number) {
   if (!Number.isFinite(n)) return null
-  const m = Math.max(0, Math.min(240, Math.floor(n)))
-  return m
+  return Math.max(0, Math.min(240, Math.floor(n)))
+}
+
+function stripDiacritics(s: string) {
+  try {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  } catch {
+    // fallback seguro
+    return s
+  }
 }
 
 /**
@@ -87,11 +95,12 @@ function clampMonths(n: number) {
  */
 function coerceMonthsFromUnknown(v: unknown): number | null {
   if (v === null || v === undefined) return null
-
   if (typeof v === 'number') return clampMonths(v)
 
-  const s = String(v).trim().toLowerCase()
-  if (!s) return null
+  const raw = String(v).trim().toLowerCase()
+  if (!raw) return null
+
+  const s = stripDiacritics(raw) // pega "mês" como "mes"
 
   const direct = safeParseInt(s)
   if (direct !== null) return clampMonths(direct)
@@ -241,15 +250,20 @@ function scanEu360Prefixed(): Array<{ key: string; obj: any }> {
     if (typeof window === 'undefined') return out
 
     for (let i = 0; i < window.localStorage.length; i++) {
-      const k = window.localStorage.key(i)
-      if (!k) continue
-      const plain = k.startsWith(LS_PREFIX) ? k.slice(LS_PREFIX.length) : k
-      if (!plain.startsWith('eu360')) continue
+      const storedKey = window.localStorage.key(i)
+      if (!storedKey) continue
 
-      const raw = window.localStorage.getItem(k)
+      const plainKey = storedKey.startsWith(LS_PREFIX)
+        ? storedKey.slice(LS_PREFIX.length)
+        : storedKey
+
+      if (!plainKey.startsWith('eu360')) continue
+
+      const raw = window.localStorage.getItem(storedKey)
       const obj = safeParseJSON<any>(raw)
       if (!obj) continue
-      out.push({ key: plain, obj })
+
+      out.push({ key: plainKey, obj })
     }
   } catch {}
 
@@ -257,17 +271,11 @@ function scanEu360Prefixed(): Array<{ key: string; obj: any }> {
 }
 
 function buildSnapshot(source: ProfileSource, obj: any): ProfileSnapshot {
-  const children = normalizeChildrenFromAny(obj)
-  const motherName = normalizeMotherNameFromAny(obj)
-  const updatedAtISO = normalizeUpdatedAtFromAny(obj)
-
-  // Garantia mínima: se obj for exatamente o LS_PRIMARY (ProfileFormState),
-  // filhos estarão em obj.filhos, nome em obj.nomeMae
   return {
     source,
-    motherName,
-    children,
-    updatedAtISO,
+    motherName: normalizeMotherNameFromAny(obj),
+    children: normalizeChildrenFromAny(obj),
+    updatedAtISO: normalizeUpdatedAtFromAny(obj),
   }
 }
 
@@ -290,8 +298,7 @@ export function getProfileSnapshot(): ProfileSnapshot {
     if (!obj) continue
 
     // Se for uma lista pura (ex.: eu360_children), embrulha para normalizar
-    const wrapped =
-      Array.isArray(obj) ? { children: obj, updatedAtISO: null, name: null } : obj
+    const wrapped = Array.isArray(obj) ? { children: obj } : obj
 
     const snap = buildSnapshot('ls_secondary', wrapped)
     if (snap.motherName || snap.children.length) return snap
@@ -300,8 +307,7 @@ export function getProfileSnapshot(): ProfileSnapshot {
   // 3) scan por prefixo eu360 (último recurso)
   const scanned = scanEu360Prefixed()
   for (const it of scanned) {
-    const wrapped =
-      Array.isArray(it.obj) ? { children: it.obj, updatedAtISO: null, name: null } : it.obj
+    const wrapped = Array.isArray(it.obj) ? { children: it.obj } : it.obj
     const snap = buildSnapshot('ls_scan', wrapped)
     if (snap.motherName || snap.children.length) return snap
   }
