@@ -11,7 +11,12 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
-import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import {
+  addTaskToMyDay,
+  listMyDayTasks,
+  MY_DAY_SOURCES,
+  type MyDayTaskItem,
+} from '@/app/lib/myDayTasks.client'
 import { getProfileSnapshot, getActiveChildOrNull } from '@/app/lib/profile.client'
 
 export const dynamic = 'force-dynamic'
@@ -31,6 +36,20 @@ const MIN_MONTHS_INTRO_START = 6 // 6 a 11: bloqueia receitas do app
 const MIN_MONTHS_ALLOW_RECIPES = 12 // >= 12: libera receitas do app
 
 const LS_PREFIX = 'm360:'
+
+/**
+ * Preferências “silenciosas” do hub Meu Dia Leve (P26)
+ * - slot: tempo
+ * - mood: estado do dia
+ * - focus: foco de agora
+ * - preferredChildId: filho selecionado no hub (para receitas)
+ */
+const HUB_PREF = {
+  slot: 'maternar/meu-dia-leve/pref/slot',
+  mood: 'maternar/meu-dia-leve/pref/mood',
+  focus: 'maternar/meu-dia-leve/pref/focus',
+  preferredChildId: 'maternar/meu-dia-leve/pref/childId',
+}
 
 type RecentSavePayload = {
   ts: number
@@ -94,22 +113,47 @@ function focusTitle(f: Focus) {
   return 'Comida'
 }
 
+function normalizeSlot(v: unknown): Slot | null {
+  const s = String(v ?? '').trim()
+  if (s === '3' || s === '5' || s === '10') return s
+  return null
+}
+
+function normalizeMood(v: unknown): Mood | null {
+  const s = String(v ?? '').trim()
+  if (s === 'no-limite' || s === 'corrida' || s === 'ok' || s === 'leve') return s
+  return null
+}
+
+function normalizeFocus(v: unknown): Focus | null {
+  const s = String(v ?? '').trim()
+  if (s === 'casa' || s === 'voce' || s === 'filho' || s === 'comida') return s
+  return null
+}
+
+/**
+ * Inferência “best effort” (P26)
+ * Prioridade:
+ * 1) Pref do hub (slot/mood/focus)
+ * 2) Legado eu360_*
+ * 3) Defaults seguros
+ */
 function inferContext(): { slot: Slot; mood: Mood; focus: Focus } {
-  const slotRaw = safeGetLS('eu360_day_slot')
-  const moodRaw = safeGetLS('eu360_mood')
-  const focusRaw = safeGetLS('eu360_focus_today')
+  const prefSlot = normalizeSlot(safeGetLS(HUB_PREF.slot))
+  const prefMood = normalizeMood(safeGetLS(HUB_PREF.mood))
+  const prefFocus = normalizeFocus(safeGetLS(HUB_PREF.focus))
 
-  const slot: Slot = slotRaw === '3' || slotRaw === '5' || slotRaw === '10' ? slotRaw : '5'
-  const mood: Mood =
-    moodRaw === 'no-limite' || moodRaw === 'corrida' || moodRaw === 'ok' || moodRaw === 'leve'
-      ? moodRaw
-      : 'corrida'
-  const focus: Focus =
-    focusRaw === 'casa' || focusRaw === 'voce' || focusRaw === 'filho' || focusRaw === 'comida'
-      ? focusRaw
-      : 'filho'
+  const legacySlot = normalizeSlot(safeGetLS('eu360_day_slot'))
+  const legacyMood = normalizeMood(safeGetLS('eu360_mood'))
+  const legacyFocus = normalizeFocus(safeGetLS('eu360_focus_today'))
 
+  const mood: Mood = prefMood ?? legacyMood ?? 'corrida'
+  const focus: Focus = prefFocus ?? legacyFocus ?? 'filho'
+
+  // regra antiga preservada: no-limite força 3 min
   if (mood === 'no-limite') return { slot: '3', mood, focus }
+
+  const slot: Slot = prefSlot ?? legacySlot ?? '5'
   return { slot, mood, focus }
 }
 
@@ -324,6 +368,25 @@ function childAgeTier(months: number) {
   return 'kid_24_plus' as const
 }
 
+/* =========================
+   P26 — Guardrails (local)
+========================= */
+
+function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
+  const s = (t as any).status
+  if (s === 'active' || s === 'snoozed' || s === 'done') return s
+  if ((t as any).done === true) return 'done'
+  return 'active'
+}
+
+function countActiveFromMeuDiaLeveToday(tasks: MyDayTaskItem[]) {
+  return tasks.filter((t) => {
+    const isFromMeuDiaLeve = (t as any).source === MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE
+    const isActive = statusOf(t) === 'active'
+    return isFromMeuDiaLeve && isActive
+  }).length
+}
+
 export default function MeuDiaLeveClient() {
   const [step, setStep] = useState<Step>('inspiracao')
   const [slot, setSlot] = useState<Slot>('5')
@@ -363,8 +426,11 @@ export default function MeuDiaLeveClient() {
     const snap = getProfileSnapshot()
     setChildren(snap.children)
 
-    // FIX P26: não passar null; escolher o melhor candidato do snapshot
-    const active = getActiveChildOrNull()
+    // Pref silenciosa do hub (filho para receitas)
+    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+
+    // FIX P26: escolher o melhor candidato do snapshot, respeitando pref se houver
+    const active = getActiveChildOrNull(prefChildId)
     setActiveChildId(active?.id ?? '')
 
     try {
@@ -384,7 +450,8 @@ export default function MeuDiaLeveClient() {
     if (!children.length) return
     if (activeChildId) return
 
-    const best = getActiveChildOrNull()
+    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+    const best = getActiveChildOrNull(prefChildId)
     if (best?.id) setActiveChildId(best.id)
   }, [children.length, activeChildId])
 
@@ -422,7 +489,11 @@ export default function MeuDiaLeveClient() {
 
   function onSelectSlot(next: Slot) {
     setSlot(next)
+
+    // Persistência silenciosa: pref do hub + compat legado
+    safeSetLS(HUB_PREF.slot, next)
     safeSetLS('eu360_day_slot', next)
+
     setPickedIdea(0)
     setPickedRecipe(0)
     setPickedPasso(0)
@@ -433,9 +504,14 @@ export default function MeuDiaLeveClient() {
 
   function onSelectMood(next: Mood) {
     setMood(next)
+
+    // Persistência silenciosa: pref do hub + compat legado
+    safeSetLS(HUB_PREF.mood, next)
     safeSetLS('eu360_mood', next)
+
     if (next === 'no-limite') {
       setSlot('3')
+      safeSetLS(HUB_PREF.slot, '3')
       safeSetLS('eu360_day_slot', '3')
     }
     try {
@@ -445,7 +521,11 @@ export default function MeuDiaLeveClient() {
 
   function onSelectFocus(next: Focus) {
     setFocus(next)
+
+    // Persistência silenciosa: pref do hub + compat legado
+    safeSetLS(HUB_PREF.focus, next)
     safeSetLS('eu360_focus_today', next)
+
     setPickedIdea(0)
     setPickedRecipe(0)
     setPickedPasso(0)
@@ -462,8 +542,25 @@ export default function MeuDiaLeveClient() {
     const ORIGIN = originFromFocus(focus)
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE
 
+    // Guardrail local P26: no máximo 3 tarefas ativas do Meu Dia Leve no dia
+    const today = listMyDayTasks()
+    const activeCount = countActiveFromMeuDiaLeveToday(today)
+    if (activeCount >= 3) {
+      toast.info('Você já salvou 3 ações do Meu Dia Leve hoje. Conclua uma ou escolha só 1 para agora.')
+      try {
+        track('my_day.task.add.blocked', {
+          source: SOURCE,
+          origin: ORIGIN,
+          reason: 'limit_reached',
+          limit: 3,
+        })
+      } catch {}
+      return
+    }
+
     const res = addTaskToMyDay({ title, origin: ORIGIN, source: SOURCE })
 
+    // ✅ guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
@@ -915,6 +1012,10 @@ export default function MeuDiaLeveClient() {
                                 type="button"
                                 onClick={() => {
                                   setActiveChildId(c.id)
+
+                                  // Persistência silenciosa: prefer do hub
+                                  safeSetLS(HUB_PREF.preferredChildId, c.id)
+
                                   setAiRecipeText('')
                                   setAiRecipeError('')
                                   setAiRecipeHint('')
