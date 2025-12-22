@@ -38,17 +38,7 @@ const MIN_MONTHS_ALLOW_RECIPES = 12
  * Ingredientes “fortes” (1 item já pode virar receita responsável).
  * Fonte única para Client/Server decidirem “libera com 1 item”.
  */
-const STRONG_ONE_ITEM_NEEDLES = [
-  'ovo',
-  'arroz',
-  'banana',
-  'iogurte',
-  'iogurt',
-  'pão',
-  'pao',
-  'feijão',
-  'feijao',
-]
+const STRONG_ONE_ITEM_NEEDLES = ['ovo', 'arroz', 'banana', 'iogurte', 'iogurt', 'pão', 'pao', 'feijão', 'feijao']
 
 /**
  * Lista oficial de nomes (imutável) — fonte única para títulos.
@@ -82,9 +72,12 @@ const OFFICIAL_TITLES = {
 
 /**
  * Tipo interno único para “receita do contrato”.
- * IMPORTANTÍSSIMO:
- * - title é string para evitar unions literais incompatíveis entre pickers.
- * - estrutura é fixa e corresponde ao formatRecipeText (não muda UI/contrato).
+ * Estrutura fixa:
+ * - Nome
+ * - Tempo • Rende
+ * - Ingredientes
+ * - Modo de preparo
+ * - Observação
  */
 type Recipe = {
   title: string
@@ -96,10 +89,7 @@ type Recipe = {
 
 /**
  * Observação (encerramento emocional) — frase aprovada.
- * - presente
- * - permissiva
- * - sem futuro
- * - sem “melhor”, “ideal”, “recomendado”
+ * Sem dicas extras. Sem futuro. Sem “melhor”, “ideal”, “recomendado”.
  */
 function closeNote() {
   return 'Simples assim também conta.'
@@ -137,39 +127,49 @@ function sanitizePantry(input: string): string {
   return raw.slice(0, 140)
 }
 
-function splitItems(pantry: string): string[] {
+/**
+ * Split preservando o "raw" (para ingredientes),
+ * e criando um "norm" (para match).
+ * ✅ CONTRATO: ingredientes devem ser apenas o que a mãe informou.
+ */
+type PantryItem = { raw: string; norm: string }
+
+function splitItems(pantry: string): PantryItem[] {
   const parts = pantry
     .split(/[,;.\n]/g)
-    .map((s) => s.trim().toLowerCase())
+    .map((s) => s.trim())
     .filter(Boolean)
 
   const seen = new Set<string>()
-  const out: string[] = []
+  const out: PantryItem[] = []
+
   for (const p of parts) {
-    if (seen.has(p)) continue
-    seen.add(p)
-    out.push(p)
+    const norm = p.toLowerCase()
+    if (seen.has(norm)) continue
+    seen.add(norm)
+    out.push({ raw: p, norm })
   }
+
   return out.slice(0, 8)
 }
 
-function hasAny(items: string[], needles: string[]) {
-  return needles.some((n) => items.some((it) => it.includes(n)))
+function hasAny(items: PantryItem[], needles: string[]) {
+  return needles.some((n) => items.some((it) => it.norm.includes(n)))
 }
 
-function hasFruitWord(items: string[]) {
-  const fruits = [
-    'banana',
-    'maçã',
-    'maca',
-    'mamão',
-    'mamao',
-    'pera',
-    'morango',
-    'uva',
-    'laranja',
-    'tangerina',
-  ]
+function pickFirstRaw(items: PantryItem[], needles: string[]) {
+  for (const it of items) {
+    if (needles.some((n) => it.norm.includes(n))) return it.raw
+  }
+  return null
+}
+
+function pickAllRaw(items: PantryItem[], needles: string[]) {
+  return items.filter((it) => needles.some((n) => it.norm.includes(n))).map((it) => it.raw)
+}
+
+function hasFruitWord(items: PantryItem[]) {
+  const fruits = ['banana', 'maçã', 'maca', 'mamão', 'mamao', 'pera', 'morango', 'uva', 'laranja', 'tangerina']
   return hasAny(items, fruits)
 }
 
@@ -190,8 +190,6 @@ function formatRecipeText(recipe: Recipe) {
 
 /**
  * Faixa interna (sem mudar layout/estrutura; só decisão).
- * - 12–23: prioridade em textura mais amassada/cremosa
- * - 24+: prioridade em “pedaços pequenos” e rotina mais “normal”
  */
 type AgeTier = 'toddler_12_23' | 'kid_24_plus'
 function getAgeTier(months: number): AgeTier {
@@ -205,259 +203,263 @@ function getAgeTier(months: number): AgeTier {
 function stepServeStyle(tier: AgeTier) {
   if (tier === 'toddler_12_23') {
     return {
-      serveSmall: 'Sirva em porções pequenas, mais amassado/macio se precisar.',
+      fruitStep: 'Amasse com um garfo, como for mais fácil agora.',
+      piecesStep: 'Se preferir, deixe mais amassado/macio, como for mais fácil agora.',
+      serveSmall: 'Sirva em porção pequena.',
     }
   }
   return {
-    serveSmall: 'Sirva em porções pequenas.',
+    fruitStep: 'Corte em pedacinhos, como for mais fácil agora.',
+    piecesStep: 'Corte em pedacinhos, como for mais fácil agora.',
+    serveSmall: 'Sirva em porção pequena.',
   }
 }
 
 /**
- * Fallback responsável para “1 ingrediente forte”.
- * - Sempre mantém estrutura padrão
- * - Título sempre oficial
- * - Observação sempre fixa (blindada)
- * - Sem “depois”, “melhor”, “por enquanto”
+ * 1 ITEM forte — fallback responsável.
+ * ✅ CONTRATO: ingredientes = somente o que a mãe informou (raw).
+ * ✅ Título = somente da lista oficial.
+ * ✅ Sem inventar azeite, água, “já pronto”, quantidades.
  */
-function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier): Recipe | null {
+function pickSingleItemRecipe(items: PantryItem[], slot: Slot, tier: AgeTier): Recipe | null {
+  const time = slot === '3' ? '3 min' : slot === '5' ? '5 min' : '10 min'
+  const style = stepServeStyle(tier)
+
   const hasBanana = hasAny(items, ['banana'])
-  const hasEgg = hasAny(items, ['ovo'])
   const hasYogurt = hasAny(items, ['iogurte', 'iogurt'])
+  const hasEgg = hasAny(items, ['ovo'])
   const hasRice = hasAny(items, ['arroz'])
   const hasBeans = hasAny(items, ['feijão', 'feijao'])
   const hasBread = hasAny(items, ['pão', 'pao'])
 
-  const time = slot === '3' ? '3 min' : slot === '5' ? '5 min' : '10 min'
-  const style = stepServeStyle(tier)
-
   if (hasBanana) {
+    const bananaRaw = pickFirstRaw(items, ['banana']) ?? items[0]?.raw
+    if (!bananaRaw) return null
     return {
       title: OFFICIAL_TITLES.bananaSimples,
       time,
       yield: '1 porção',
-      ingredients: ['1 banana madura'],
-      steps: [
-        'Descasque e amasse com um garfo (ou corte em pedacinhos).',
-        tier === 'toddler_12_23'
-          ? 'Amasse bem até ficar mais macio.'
-          : 'Amasse até ficar do jeito que funciona aí.',
-        style.serveSmall,
-      ],
+      ingredients: [bananaRaw],
+      steps: [style.fruitStep, style.serveSmall],
     }
   }
 
   if (hasYogurt) {
+    const yogurtRaw = pickFirstRaw(items, ['iogurte', 'iogurt']) ?? items[0]?.raw
+    if (!yogurtRaw) return null
     return {
       title: OFFICIAL_TITLES.iogurteSimples,
       time,
       yield: '1 porção',
-      ingredients: ['Iogurte natural (o que você tiver)'],
-      steps: ['Coloque uma porção pequena no potinho.', 'Sirva simples.'],
+      ingredients: [yogurtRaw],
+      steps: ['Coloque no potinho, como for mais fácil agora.', style.serveSmall],
     }
   }
 
   if (hasEgg) {
+    const eggRaw = pickFirstRaw(items, ['ovo']) ?? items[0]?.raw
+    if (!eggRaw) return null
     return {
       title: OFFICIAL_TITLES.ovoMacio,
       time,
       yield: '1 porção',
-      ingredients: ['1 ovo', '1 fio de azeite ou um pouquinho de manteiga (se você usa em casa)'],
+      ingredients: [eggRaw],
       steps: [
-        'Bata o ovo rapidamente com um garfo.',
-        'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
-        'Coloque o ovo e mexa devagar até ficar cozido e macio.',
-        'Sirva em seguida.',
+        'Bata rapidamente com um garfo, sem se preocupar com ponto perfeito.',
+        'Aqueça em fogo baixo, só até ficar bom para servir.',
+        'Mexa até ficar pronto, sem se preocupar com textura perfeita.',
       ],
     }
   }
 
   if (hasRice) {
+    const riceRaw = pickFirstRaw(items, ['arroz']) ?? items[0]?.raw
+    if (!riceRaw) return null
     return {
       title: OFFICIAL_TITLES.arrozAquecido,
       time,
       yield: '1 porção',
-      ingredients: ['2 a 3 colheres de arroz já pronto'],
-      steps: ['Aqueça o arroz.', style.serveSmall],
+      ingredients: [riceRaw],
+      steps: ['Aqueça, só até ficar bom para servir.', style.serveSmall],
     }
   }
 
-  // Para feijão e pão, usar opção neutra oficial (sem inventar nome novo)
+  // Para feijão e pão: opção neutra oficial (sem inventar ingrediente).
   if (hasBeans) {
+    const beansRaw = pickFirstRaw(items, ['feijão', 'feijao']) ?? items[0]?.raw
+    if (!beansRaw) return null
     return {
       title: OFFICIAL_TITLES.comidaSemComplicar,
       time,
       yield: '1 porção',
-      ingredients: ['Feijão pronto (o que você já usa em casa)'],
-      steps: ['Aqueça se necessário.', style.serveSmall],
+      ingredients: [beansRaw],
+      steps: ['Aqueça se precisar, só até ficar bom para servir.', 'Amasse com um garfo ou sirva como estiver, como for mais fácil agora.'],
     }
   }
 
   if (hasBread) {
+    const breadRaw = pickFirstRaw(items, ['pão', 'pao']) ?? items[0]?.raw
+    if (!breadRaw) return null
     return {
       title: OFFICIAL_TITLES.comidaSemComplicar,
       time,
       yield: '1 porção',
-      ingredients: ['Pão (o que você tiver)'],
-      steps: [
-        tier === 'toddler_12_23'
-          ? 'Rasgue em pedaços bem pequenos, como for mais fácil agora.'
-          : 'Corte em pedaços pequenos e sirva.',
-        'Sirva simples.',
-      ],
+      ingredients: [breadRaw],
+      steps: [style.piecesStep, style.serveSmall],
     }
   }
 
   return null
 }
 
-function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier): Recipe | null {
-  const hasEgg = hasAny(items, ['ovo'])
-  const hasBanana = hasAny(items, ['banana'])
-  const hasRice = hasAny(items, ['arroz'])
-  const hasYogurt = hasAny(items, ['iogurte', 'iogurt'])
-  const hasOats = hasAny(items, ['aveia'])
-  const hasBread = hasAny(items, ['pão', 'pao'])
-  const hasCheese = hasAny(items, ['queijo'])
-  const hasBeans = hasAny(items, ['feijão', 'feijao'])
-  const hasChicken = hasAny(items, ['frango'])
-  const hasVeg = hasAny(items, [
-    'legume',
-    'cenoura',
-    'abobrinha',
-    'batata',
-    'brócolis',
-    'brocolis',
-    'ervilha',
-  ])
-
+/**
+ * 2+ itens — tenta encaixar em receitas oficiais sem inventar ingrediente.
+ * ✅ CONTRATO: ingredientes = raws informados.
+ * ✅ Sem água, azeite, manteiga, quantidades, “já pronto”.
+ */
+function pickSpecificRecipe(items: PantryItem[], slot: Slot, tier: AgeTier): Recipe | null {
+  const time = slot === '3' ? '3 min' : slot === '5' ? '5 min' : '10 min'
   const style = stepServeStyle(tier)
 
-  // 3 min
-  if (slot === '3') {
-    if (hasBanana && (hasOats || hasYogurt)) {
-      return {
-        title: OFFICIAL_TITLES.frutaAmassada,
-        time: '3 min',
-        yield: '1 porção',
-        ingredients: [
-          '1 banana madura',
-          hasYogurt ? '2 a 3 colheres de iogurte natural (se você tiver)' : null,
-          hasOats ? '1 colher de aveia (se você tiver)' : null,
-        ].filter(Boolean) as string[],
-        steps: [
-          'Amasse a banana com um garfo até ficar cremosa.',
-          hasYogurt
-            ? 'Misture o iogurte rapidamente, sem se preocupar com textura perfeita.'
-            : 'Misture com 1 a 2 colheres de água, só até ficar bom para servir.',
-          hasOats ? 'Coloque a aveia por cima (se você tiver).' : style.serveSmall,
-        ],
-      }
-    }
+  const hasYogurt = hasAny(items, ['iogurte', 'iogurt'])
+  const hasFruit = hasFruitWord(items)
 
-    if (hasYogurt && hasFruitWord(items)) {
+  const hasEgg = hasAny(items, ['ovo'])
+  const hasRice = hasAny(items, ['arroz'])
+  const hasBeans = hasAny(items, ['feijão', 'feijao'])
+  const hasBanana = hasAny(items, ['banana'])
+
+  // Iogurte + fruta (3/5 min)
+  if ((slot === '3' || slot === '5') && hasYogurt && hasFruit) {
+    const yogurtRaw = pickFirstRaw(items, ['iogurte', 'iogurt'])
+    if (!yogurtRaw) return null
+
+    const fruitRaws = pickAllRaw(items, ['banana', 'maçã', 'maca', 'mamão', 'mamao', 'pera', 'morango', 'uva', 'laranja', 'tangerina'])
+    const fruitLabel = fruitRaws.length ? fruitRaws.join(', ') : 'Fruta'
+
+    return {
+      title: OFFICIAL_TITLES.iogurteComFruta,
+      time,
+      yield: '1 porção',
+      ingredients: [yogurtRaw, fruitLabel],
+      steps: [
+        'Coloque o iogurte no potinho, como for mais fácil agora.',
+        tier === 'toddler_12_23'
+          ? 'Amasse a fruta e coloque por cima, como for mais fácil agora.'
+          : 'Pique a fruta e coloque por cima, como for mais fácil agora.',
+        style.serveSmall,
+      ],
+    }
+  }
+
+  // Iogurte simples (3/5 min)
+  if ((slot === '3' || slot === '5') && hasYogurt) {
+    const yogurtRaw = pickFirstRaw(items, ['iogurte', 'iogurt'])
+    if (!yogurtRaw) return null
+    return {
+      title: OFFICIAL_TITLES.iogurteSimples,
+      time,
+      yield: '1 porção',
+      ingredients: [yogurtRaw],
+      steps: ['Coloque no potinho, como for mais fácil agora.', style.serveSmall],
+    }
+  }
+
+  // Ovo mexido (prioriza 5 min, mas pode cair em qualquer slot sem quebrar contrato)
+  if (hasEgg) {
+    const eggRaw = pickFirstRaw(items, ['ovo'])
+    if (!eggRaw) return null
+    return {
+      title: OFFICIAL_TITLES.ovoMacio,
+      time,
+      yield: '1 porção',
+      ingredients: [eggRaw],
+      steps: [
+        'Bata rapidamente com um garfo, sem se preocupar com ponto perfeito.',
+        'Aqueça em fogo baixo, só até ficar bom para servir.',
+        'Mexa até ficar pronto, sem se preocupar com textura perfeita.',
+      ],
+    }
+  }
+
+  // Arroz e feijão
+  if (hasRice && hasBeans) {
+    const riceRaw = pickFirstRaw(items, ['arroz'])
+    const beansRaw = pickFirstRaw(items, ['feijão', 'feijao'])
+    if (!riceRaw || !beansRaw) return null
+
+    return {
+      title: OFFICIAL_TITLES.arrozFeijao,
+      time,
+      yield: '1 porção',
+      ingredients: [riceRaw, beansRaw],
+      steps: [
+        'Aqueça o que precisar, só até ficar bom para servir.',
+        'Junte no prato, como for mais fácil agora.',
+        tier === 'toddler_12_23'
+          ? 'Se quiser, amasse com um garfo, como for mais fácil agora.'
+          : 'Misture de leve, sem se preocupar com textura perfeita.',
+      ],
+    }
+  }
+
+  // Arroz + complemento (qualquer outro item informado)
+  if (hasRice) {
+    const riceRaw = pickFirstRaw(items, ['arroz'])
+    if (!riceRaw) return null
+
+    const complement = items.find((it) => !it.norm.includes('arroz'))?.raw ?? null
+
+    if (complement) {
+      const isLegumeWord = /legume|cenoura|abobrinha|batata|brócolis|brocolis|ervilha/i.test(complement)
       return {
-        title: OFFICIAL_TITLES.iogurteComFruta,
-        time: '3 min',
+        title: isLegumeWord ? OFFICIAL_TITLES.arrozLegume : OFFICIAL_TITLES.arrozComplemento,
+        time,
         yield: '1 porção',
-        ingredients: ['Iogurte natural', 'Fruta (a que você escreveu)'],
+        ingredients: [riceRaw, complement],
         steps: [
-          'Coloque o iogurte no potinho.',
-          tier === 'toddler_12_23'
-            ? 'Amasse a fruta e coloque por cima, como for mais fácil agora.'
-            : 'Pique a fruta e coloque por cima.',
+          'Aqueça, só até ficar bom para servir.',
+          'Monte: arroz + o que você tem, como for mais fácil agora.',
           style.serveSmall,
         ],
       }
     }
-  }
 
-  // 5 min
-  if (slot === '5') {
-    if (hasEgg) {
-      return {
-        title: OFFICIAL_TITLES.ovoMacio,
-        time: '5 min',
-        yield: '1 porção',
-        ingredients: [
-          '1 ovo',
-          hasCheese ? 'Opcional: 1 colher de queijo (se você tiver)' : null,
-          hasVeg ? 'Opcional: 1 colher de legume já cozido/picado (se você tiver)' : null,
-          '1 fio de azeite ou um pouquinho de manteiga (se você usa em casa)',
-        ].filter(Boolean) as string[],
-        steps: [
-          'Bata o ovo rapidamente com um garfo.',
-          'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
-          'Coloque o ovo e mexa devagar até ficar cozido e macio.',
-          hasVeg ? 'Se tiver legume pronto, misture por 30 segundos no final.' : 'Sirva em seguida.',
-          hasCheese ? 'Se tiver queijo, coloque no final e misture rapidamente.' : '',
-          tier === 'toddler_12_23' ? 'Se quiser, amasse um pouco no prato para ficar mais macio.' : '',
-        ].filter(Boolean),
-      }
-    }
-
-    if (hasRice && (hasBeans || hasChicken || hasVeg)) {
-      return {
-        title: OFFICIAL_TITLES.arrozComplemento,
-        time: '5 min',
-        yield: '1 porção',
-        ingredients: [
-          '2 a 3 colheres de arroz já pronto',
-          hasBeans ? 'Feijão (se você tiver)' : null,
-          hasChicken ? 'Frango desfiado/pronto (se você tiver)' : null,
-          hasVeg ? 'Legume cozido picado (se você tiver)' : null,
-        ].filter(Boolean) as string[],
-        steps: [
-          'Aqueça o arroz (e o complemento, se for quente).',
-          'Monte: arroz + 1 complemento.',
-          hasVeg
-            ? tier === 'toddler_12_23'
-              ? 'Finalize com legume bem picado/amassado, como for mais fácil agora.'
-              : 'Finalize com legume em pedacinhos pequenos.'
-            : style.serveSmall,
-        ],
-      }
-    }
-
-    if (hasBread && hasCheese) {
-      return {
-        title: OFFICIAL_TITLES.refeicaoComOQueTem,
-        time: '5 min',
-        yield: '1 porção',
-        ingredients: ['Pão', 'Queijo (o que você tiver)'],
-        steps: [
-          'Monte com o que você tem.',
-          'Se quiser, aqueça rapidamente, só até ficar bom para servir.',
-          tier === 'toddler_12_23' ? 'Rasgue em pedaços pequenos e sirva.' : 'Corte em pedaços pequenos e sirva.',
-        ],
-      }
+    // Se cair aqui, é arroz “sozinho” (ou itens redundantes de arroz). Mantém oficial.
+    return {
+      title: OFFICIAL_TITLES.arrozAquecido,
+      time,
+      yield: '1 porção',
+      ingredients: [riceRaw],
+      steps: ['Aqueça, só até ficar bom para servir.', style.serveSmall],
     }
   }
 
-  // 10 min
-  if (slot === '10') {
-    if (hasBanana && (hasOats || hasEgg)) {
-      return {
-        title: OFFICIAL_TITLES.panquequinhaBanana,
-        time: '10 min',
-        yield: '1 porção',
-        ingredients: [
-          '1 banana madura',
-          hasEgg ? '1 ovo (se você tiver)' : null,
-          hasOats ? '2 colheres de aveia (se você tiver)' : null,
-        ].filter(Boolean) as string[],
-        steps: [
-          'Amasse a banana até virar um creme.',
-          hasEgg ? 'Misture o ovo rapidamente.' : 'Se não tiver ovo, use uma opção pronta do dia.',
-          hasOats ? 'Misture a aveia até virar massa grossinha.' : 'Se não tiver aveia, use uma opção pronta do dia.',
-          'Em fogo baixo, faça discos pequenos e doure dos dois lados.',
-          tier === 'toddler_12_23' ? 'Rasgue em pedacinhos e sirva.' : 'Corte em pedaços pequenos e sirva.',
-        ],
-      }
+  // Banana (com algo junto) — mantém oficial e não inventa complemento
+  if (hasBanana) {
+    const bananaRaw = pickFirstRaw(items, ['banana'])
+    if (!bananaRaw) return null
+    return {
+      title: OFFICIAL_TITLES.bananaSimples,
+      time,
+      yield: '1 porção',
+      ingredients: [bananaRaw],
+      steps: [style.fruitStep, style.serveSmall],
     }
   }
 
-  return null
+  // fallback oficial neutro (usa todos os itens informados, sem inventar)
+  return {
+    title: OFFICIAL_TITLES.comidaSemComplicar,
+    time,
+    yield: '1 porção',
+    ingredients: items.map((i) => i.raw),
+    steps: [
+      'Junte do jeito mais simples, como for mais fácil agora.',
+      'Aqueça se precisar, só até ficar bom para servir.',
+      style.serveSmall,
+    ],
+  }
 }
 
 export async function POST(req: Request) {
