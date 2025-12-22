@@ -1,3 +1,4 @@
+// app/(tabs)/maternar/meu-filho/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -11,12 +12,12 @@ import {
   MY_DAY_SOURCES,
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
+import { markJourneyFamilyDone } from '@/app/lib/journey.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
-import { getProfileSnapshot, getActiveChildOrNull } from '@/app/lib/profile.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -43,14 +44,10 @@ type Kit = {
   connection: { label: string; note: string }
 }
 
-const LS_PREFIX = 'm360:'
-
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
-    const direct = window.localStorage.getItem(key)
-    if (direct !== null) return direct
-    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
+    return window.localStorage.getItem(key)
   } catch {
     return null
   }
@@ -60,7 +57,6 @@ function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
-    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
   } catch {}
 }
 
@@ -86,44 +82,21 @@ function timeHint(t: TimeMode) {
   return 'Para quando você quer fechar o dia com presença de verdade.'
 }
 
-/**
- * Faixa etária (AgeBand) derivada do perfil real.
- * Regra (meses):
- * 0–35  -> 0-2
- * 36–59 -> 3-4
- * 60–83 -> 5-6
- * 84+   -> 6+
- */
-function ageBandFromMonths(months: number): AgeBand {
-  if (!Number.isFinite(months) || months < 0) return '3-4'
-  if (months <= 35) return '0-2'
-  if (months <= 59) return '3-4'
-  if (months <= 83) return '5-6'
-  return '6+'
-}
-
-function inferTimeMode(): TimeMode {
+function inferContext(): { time: TimeMode; age: AgeBand } {
+  /**
+   * Integração “best effort” com Eu360:
+   * - eu360_time_with_child: "5" | "10" | "15"
+   * - eu360_child_age_band: "0-2" | "3-4" | "5-6" | "6+"
+   *
+   * Se não houver nada: default inteligente = 15 min, 3-4
+   */
   const tRaw = safeGetLS('eu360_time_with_child')
-  const time: TimeMode = tRaw === '5' || tRaw === '10' || tRaw === '15' ? tRaw : '15'
-  return time
-}
-
-/**
- * Fallback antigo (somente se não houver idade no perfil).
- * Mantemos para não travar UX em perfis incompletos.
- */
-function inferAgeBandFallback(): AgeBand {
   const aRaw = safeGetLS('eu360_child_age_band')
-  const age: AgeBand = aRaw === '0-2' || aRaw === '3-4' || aRaw === '5-6' || aRaw === '6+' ? aRaw : '3-4'
-  return age
-}
 
-function formatChildLabel(input: { label: string; ageMonths: number | null }) {
-  if (input.ageMonths === null) return `${input.label} • idade não preenchida`
-  const m = input.ageMonths
-  if (m < 24) return `${input.label} • ${m} meses`
-  const years = Math.floor(m / 12)
-  return `${input.label} • ${years} anos`
+  const time: TimeMode = tRaw === '5' || tRaw === '10' || tRaw === '15' ? tRaw : '15'
+  const age: AgeBand = aRaw === '0-2' || aRaw === '3-4' || aRaw === '5-6' || aRaw === '6+' ? aRaw : '3-4'
+
+  return { time, age }
 }
 
 /* =========================
@@ -144,22 +117,6 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
     const isActive = statusOf(t) === 'active'
     return isFamily && isFromMeuFilho && isActive
   }).length
-}
-
-function markFamilyDoneForJourney() {
-  try {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    const dk = `${y}-${m}-${day}`
-
-    window.localStorage.setItem('journey/family/doneOn', dk)
-    const raw = window.localStorage.getItem('journey/family/doneCount')
-    const n = raw ? Number(raw) : 0
-    const next = Number.isFinite(n) ? n + 1 : 1
-    window.localStorage.setItem('journey/family/doneCount', String(next))
-  } catch {}
 }
 
 /* =========================
@@ -351,10 +308,6 @@ export default function MeuFilhoClient() {
   const [age, setAge] = useState<AgeBand>('3-4')
   const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
-  // Perfil real (core único)
-  const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
-  const [activeChildId, setActiveChildId] = useState<string>('')
-
   useEffect(() => {
     try {
       track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
@@ -362,62 +315,15 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
-    const t = inferTimeMode()
-    setTime(t)
-
-    const snap = getProfileSnapshot()
-    setChildren(snap.children)
-
-    const active = getActiveChildOrNull(null)
-    setActiveChildId(active?.id ?? '')
-
-    // idade: primeiro do perfil, senão fallback antigo
-    const months = active?.ageMonths ?? null
-    const derivedAge: AgeBand =
-      typeof months === 'number' ? ageBandFromMonths(months) : inferAgeBandFallback()
-
-    setAge(derivedAge)
+    const inferred = inferContext()
+    setTime(inferred.time)
+    setAge(inferred.age)
     setStep('brincadeiras')
 
-    // Mantém também o LS “age band” como compatibilidade, mas agora é derivado.
-    // Se idade estiver faltando, mantém o fallback existente.
-    safeSetLS('eu360_child_age_band', derivedAge)
-
     try {
-      track('meu_filho.open', {
-        time: t,
-        age: derivedAge,
-        profileSource: snap.source,
-        kidsCount: snap.children.length,
-        kidsWithAge: snap.children.filter((k) => typeof k.ageMonths === 'number').length,
-      })
+      track('meu_filho.open', { time: inferred.time, age: inferred.age })
     } catch {}
   }, [])
-
-  const activeChild = useMemo(() => {
-    if (!children.length) return null
-    const found = children.find((c) => c.id === activeChildId)
-    return found ?? children[0]
-  }, [children, activeChildId])
-
-  useEffect(() => {
-    // Sempre que trocar filho, recalcula faixa (se tiver idade).
-    const months = activeChild?.ageMonths ?? null
-    if (typeof months === 'number') {
-      const nextAge = ageBandFromMonths(months)
-      setAge(nextAge)
-      safeSetLS('eu360_child_age_band', nextAge)
-      try {
-        track('meu_filho.child.select', { childId: activeChild?.id, ageBand: nextAge, ageMonths: months })
-      } catch {}
-    } else if (activeChild) {
-      // Sem idade -> mantém o age atual (ou fallback já definido)
-      try {
-        track('meu_filho.child.select', { childId: activeChild?.id, ageBand: age, ageMonths: null })
-      } catch {}
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeChildId])
 
   const kit = useMemo(() => KITS[age][time], [age, time])
   const selected = useMemo(() => kit.plan[chosen], [kit, chosen])
@@ -435,6 +341,15 @@ export default function MeuFilhoClient() {
     setChosen('a')
     try {
       track('meu_filho.time.select', { time: next })
+    } catch {}
+  }
+
+  function onSelectAge(next: AgeBand) {
+    setAge(next)
+    safeSetLS('eu360_child_age_band', next)
+    setChosen('a')
+    try {
+      track('meu_filho.age.select', { age: next })
     } catch {}
   }
 
@@ -466,6 +381,7 @@ export default function MeuFilhoClient() {
       source: SOURCE,
     })
 
+    // ✅ guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
@@ -494,11 +410,8 @@ export default function MeuFilhoClient() {
   }
 
   function registerFamilyJourney() {
-    markFamilyDoneForJourney()
+    markJourneyFamilyDone(MY_DAY_SOURCES.MATERNAR_MEU_FILHO)
     toast.success('Registrado na sua Jornada')
-    try {
-      track('journey.family.done', { source: MY_DAY_SOURCES.MATERNAR_MEU_FILHO })
-    } catch {}
   }
 
   return (
@@ -535,6 +448,7 @@ export default function MeuFilhoClient() {
             </div>
           </header>
 
+          {/* EXPERIÊNCIA ÚNICA (um container) */}
           <Reveal>
             <section
               className="
@@ -546,6 +460,7 @@ export default function MeuFilhoClient() {
                 overflow-hidden
               "
             >
+              {/* Top bar: contexto + trilha */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -580,44 +495,7 @@ export default function MeuFilhoClient() {
                   </button>
                 </div>
 
-                {/* Seleção do filho (correlação real Eu360 → Meu Filho) */}
-                {children.length ? (
-                  <div className="mt-4 rounded-2xl bg-white/20 border border-white/25 p-3">
-                    <div className="text-[12px] text-white/85 mb-2">Para qual filho?</div>
-                    <div className="flex flex-wrap gap-2">
-                      {children.map((c) => {
-                        const active = (activeChild?.id ?? '') === c.id
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => setActiveChildId(c.id)}
-                            className={[
-                              'rounded-full px-3 py-1.5 text-[12px] border transition',
-                              active
-                                ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-                                : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
-                            ].join(' ')}
-                            title={formatChildLabel({ label: c.label, ageMonths: c.ageMonths })}
-                          >
-                            {formatChildLabel({ label: c.label, ageMonths: c.ageMonths })}
-                          </button>
-                        )
-                      })}
-                    </div>
-
-                    <div className="mt-3">
-                      <Link
-                        href="/eu360"
-                        className="inline-flex rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition"
-                      >
-                        Atualizar no Eu360
-                      </Link>
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Ajustes rápidos */}
+                {/* Ajustes rápidos (secundários) */}
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
                     <div className="text-[12px] text-white/85 mb-2">Quanto tempo você tem agora?</div>
@@ -644,39 +522,25 @@ export default function MeuFilhoClient() {
                   </div>
 
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
-                    <div className="text-[12px] text-white/85 mb-2">Faixa ajustada pelo Eu360</div>
+                    <div className="text-[12px] text-white/85 mb-2">Faixa do seu filho (para ajustar a ideia)</div>
                     <div className="grid grid-cols-4 gap-2">
                       {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
                         const active = age === a
                         return (
                           <button
                             key={a}
-                            type="button"
-                            onClick={() => {
-                              // Permite override manual (sem quebrar correlação).
-                              // Mantém compatibilidade + dá autonomia.
-                              setAge(a)
-                              safeSetLS('eu360_child_age_band', a)
-                              setChosen('a')
-                              try {
-                                track('meu_filho.age.override', { ageBand: a })
-                              } catch {}
-                            }}
+                            onClick={() => onSelectAge(a)}
                             className={[
                               'rounded-xl border px-3 py-2 text-[12px] transition',
                               active
                                 ? 'bg-white/90 border-white/60 text-[#2f3a56]'
                                 : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                             ].join(' ')}
-                            title="Ajustar manualmente (opcional)"
                           >
                             {a}
                           </button>
                         )
                       })}
-                    </div>
-                    <div className="mt-2 text-[11px] text-white/75">
-                      Ajuste automático pela idade do Eu360 (quando disponível). Você pode ajustar se quiser.
                     </div>
                   </div>
                 </div>
@@ -710,6 +574,7 @@ export default function MeuFilhoClient() {
                 </div>
               </div>
 
+              {/* Conteúdo muda dentro do mesmo container */}
               <div className="p-4 md:p-6">
                 {/* 1) BRINCADEIRAS DO DIA */}
                 {step === 'brincadeiras' ? (
@@ -735,6 +600,7 @@ export default function MeuFilhoClient() {
                         </div>
                       </div>
 
+                      {/* Escolha guiada (3 opções) */}
                       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                         {(['a', 'b', 'c'] as const).map((k) => {
                           const it = kit.plan[k]
@@ -758,6 +624,7 @@ export default function MeuFilhoClient() {
                         })}
                       </div>
 
+                      {/* “faça agora” destacado */}
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
                         <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
@@ -799,7 +666,7 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 2) DESENVOLVIMENTO */}
+                {/* 2) DESENVOLVIMENTO POR FASE (sem diagnóstico) */}
                 {step === 'desenvolvimento' ? (
                   <div id="desenvolvimento" className="space-y-4">
                     <SoftCard
@@ -852,7 +719,7 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 3) ROTINA */}
+                {/* 3) ROTINA LEVE DA CRIANÇA */}
                 {step === 'rotina' ? (
                   <div id="rotina" className="space-y-4">
                     <SoftCard
@@ -906,7 +773,7 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 4) CONEXÃO */}
+                {/* 4) GESTOS DE CONEXÃO */}
                 {step === 'conexao' ? (
                   <div id="conexao" className="space-y-4">
                     <SoftCard
