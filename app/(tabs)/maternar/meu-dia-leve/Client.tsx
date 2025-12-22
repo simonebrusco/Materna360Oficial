@@ -379,7 +379,7 @@ const RECEITAS: QuickRecipe[] = [
 ]
 
 const PASSO_LEVE: DayLine[] = [
-  { title: 'Resolver 1 coisa que está travando', why: 'O resto fica mais fácil quando algo destrava.', focus: 'casa', slot: '5' },
+  { title: 'Resolver 1 coisa que está travando', why: 'O resto fica mais fácil quando algo destravaכע', focus: 'casa', slot: '5' },
   { title: 'Fazer 5 min de conexão com o filho', why: 'Curto e intencional funciona melhor do que “tentar muito”.', focus: 'filho', slot: '5' },
   { title: 'Proteger 10 min só seus', why: 'Sem tela e sem tarefa. É recarregar para continuar.', focus: 'voce', slot: '10' },
   { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
@@ -815,6 +815,20 @@ export default function MeuDiaLeveClient() {
     return 'Pode ser só 1 item. Se for pouco específico, eu te peço mais 1 (sem complicar).'
   }, [gate.blocked, aiRecipeHint, ageTier])
 
+  const stepTitle = useMemo(() => {
+    if (step === 'inspiracao') return 'Inspiração do dia'
+    if (step === 'ideias') return 'Ideias rápidas'
+    if (step === 'receitas') return 'Receitas rápidas'
+    return 'Passo leve'
+  }, [step])
+
+  const stepSubtitle = useMemo(() => {
+    if (step === 'inspiracao') return 'Uma frase curta para organizar o agora.'
+    if (step === 'ideias') return 'Escolha uma ideia pequena e possível.'
+    if (step === 'receitas') return 'Uma receita simples sem complicar.'
+    return 'Um passo único para fechar o seu agora.'
+  }, [step])
+
   return (
     <main
       data-layout="page-template-v1"
@@ -951,26 +965,121 @@ export default function MeuDiaLeveClient() {
               </div>
 
               <div className="p-4 md:p-6">
-                {step === 'receitas' ? (
-                  <div id="receitas" className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                      <AppIcon
+                        name={step === 'receitas' ? 'heart' : step === 'passo' ? 'sparkles' : 'sparkles'}
+                        size={22}
+                        className="text-[#fd2597]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                        {stepTitle}
+                      </span>
+                      <h2 className="text-lg font-semibold text-[#2f3a56]">
+                        {step === 'inspiracao'
+                          ? 'Uma frase simples para agora'
+                          : step === 'ideias'
+                            ? 'Uma ideia pequena e possível'
+                            : step === 'receitas'
+                              ? 'Uma receita simples para agora'
+                              : 'Um passo leve para fechar o agora'}
+                      </h2>
+                      <p className="text-[13px] text-[#6a6a6a]">{stepSubtitle}</p>
+                    </div>
+                  </div>
+
+                  {/* INSPIRAÇÃO */}
+                  {step === 'inspiracao' ? (
+                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                        {inspiration.title}
+                      </div>
+                      <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">
+                        {inspiration.line}
+                      </div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{moodTitle(mood)}</div>
+
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => saveCurrentToMyDay(inspiration.action)}
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Salvar no Meu Dia
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => go('ideias')}
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ir para Ideias rápidas
+                        </button>
+                        {saveFeedback ? (
+                          <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* IDEIAS */}
+                  {step === 'ideias' ? (
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          escolha 1 ideia
                         </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Receitas rápidas
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Uma receita simples para agora</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer.</p>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Pequeno e possível. Só para destravar o agora.
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          {ideasForNow.map((i, idx) => (
+                            <CardChoice
+                              key={`${i.title}-${idx}`}
+                              title={i.title}
+                              subtitle={i.how}
+                              tag={i.tag}
+                              active={pickedIdea === idx}
+                              onClick={() => setPickedIdea(idx)}
+                            />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => saveCurrentToMyDay(selectedIdea?.title || 'Ideia rápida')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('receitas')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ir para Receitas rápidas
+                          </button>
+                          {saveFeedback ? (
+                            <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                          ) : null}
                         </div>
                       </div>
+                    </div>
+                  ) : null}
 
-                      {/* Seletor de filho (só quando há filhos) */}
+                  {/* RECEITAS */}
+                  {step === 'receitas' ? (
+                    <div className="mt-4 space-y-4">
+                      {/* Seletor de filho */}
                       {children.length ? (
-                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para qual filho?</div>
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            para qual filho?
+                          </div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
                             Para sugerir com segurança, o Materna usa a idade do Eu360.
                           </div>
@@ -1009,10 +1118,12 @@ export default function MeuDiaLeveClient() {
                         </div>
                       ) : null}
 
-                      {/* Gate: ÚNICO aviso (corrige duplicação) */}
+                      {/* GATE ÚNICO (sem duplicação) */}
                       {gate.blocked ? (
-                        <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{gate.title}</div>
+                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            {gate.title}
+                          </div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{gate.message}</div>
                           <div className="mt-3">
                             <Link
@@ -1025,8 +1136,10 @@ export default function MeuDiaLeveClient() {
                         </div>
                       ) : null}
 
-                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          o que você tem em casa
+                        </div>
 
                         {!gate.blocked && helperCopy ? (
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
@@ -1058,17 +1171,40 @@ export default function MeuDiaLeveClient() {
                           >
                             {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                           </button>
+
+                          {aiRecipeError ? (
+                            <span className="text-[12px] text-[#6a6a6a]">
+                              {aiRecipeHint || 'Se quiser, use uma opção pronta abaixo.'}
+                            </span>
+                          ) : null}
                         </div>
 
                         {aiRecipeText ? (
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                              receita pronta
+                            </div>
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">
+                              {aiRecipeText}
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => saveCurrentToMyDay('Receita rápida')}
+                                className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                              >
+                                Salvar no Meu Dia
+                              </button>
+                              {saveFeedback ? (
+                                <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                              ) : null}
+                            </div>
                           </div>
                         ) : null}
                       </div>
 
-                      <div className="mt-4 space-y-2">
+                      <div className="space-y-2">
                         {recipesForNow.map((r, idx) => {
                           const active = pickedRecipe === idx
                           return (
@@ -1093,12 +1229,45 @@ export default function MeuDiaLeveClient() {
                           )
                         })}
                       </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
+                    </div>
+                  ) : null}
 
-                {/* As outras steps ficam iguais ao seu arquivo atual (não mexi nelas aqui).
-                    Se você colar este arquivo completo no seu projeto, você terá o resto do conteúdo. */}
+                  {/* PASSO LEVE */}
+                  {step === 'passo' ? (
+                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                        escolha 1 passo
+                      </div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        Um passo único que fecha o agora. O resto pode esperar.
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        {passosForNow.map((p, idx) => (
+                          <CardChoice
+                            key={`${p.title}-${idx}`}
+                            title={p.title}
+                            subtitle={p.why}
+                            tag={`${p.slot} min`}
+                            active={pickedPasso === idx}
+                            onClick={() => setPickedPasso(idx)}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => saveCurrentToMyDay(selectedPasso?.title || 'Passo leve')}
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Salvar no Meu Dia
+                        </button>
+                        {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+                      </div>
+                    </div>
+                  ) : null}
+                </SoftCard>
               </div>
             </section>
           </Reveal>
