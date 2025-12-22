@@ -19,6 +19,27 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 /**
+ * P26 — CONTRATO DE CONTEÚDO (CUIDAR DE MIM)
+ *
+ * Este hub existe para regular a mãe o suficiente para ela seguir o dia.
+ * Não é terapia, não é psicologia, não é mindfulness profundo.
+ *
+ * Guardrail de produto:
+ * - Tudo aqui precisa ser aplicável AGORA, no caos, sem obrigação.
+ * - Linguagem curta, prática, sem “você deveria”.
+ * - Sempre com saída fácil (sair/voltar) e opção de salvar no Meu Dia.
+ *
+ * Famílias permitidas de ações (únicas):
+ * 1) Respiração simples (30–90s, sem técnica avançada)
+ * 2) Ajuste de ritmo (pausar, escolher menos, reduzir expectativa)
+ * 3) Organização mental rápida (1 lista, 1 próximo passo, fechar um ciclo pequeno)
+ * 4) Presença prática (água, alongar, mudar de ambiente)
+ * 5) Encerramento (frases de “isso basta por agora”)
+ *
+ * Qualquer sugestão fora dessas famílias é FORA do escopo da P26.
+ */
+
+/**
  * =========================================================
  * LocalStorage — padrão Materna360 (P26)
  * =========================================================
