@@ -16,6 +16,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+import { getProfileSnapshot, getActiveChildOrNull } from '@/app/lib/profile.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -42,10 +43,14 @@ type Kit = {
   connection: { label: string; note: string }
 }
 
+const LS_PREFIX = 'm360:'
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
+    const direct = window.localStorage.getItem(key)
+    if (direct !== null) return direct
+    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
   } catch {
     return null
   }
@@ -55,6 +60,7 @@ function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
   } catch {}
 }
 
@@ -80,22 +86,44 @@ function timeHint(t: TimeMode) {
   return 'Para quando você quer fechar o dia com presença de verdade.'
 }
 
-function inferContext(): { time: TimeMode; age: AgeBand } {
-  /**
-   * Integração “best effort” com Eu360:
-   * - eu360_time_with_child: "5" | "10" | "15"
-   * - eu360_child_age_band: "0-2" | "3-4" | "5-6" | "6+"
-   *
-   * Se não houver nada: default inteligente = 15 min, 3-4
-   */
+/**
+ * Faixa etária (AgeBand) derivada do perfil real.
+ * Regra (meses):
+ * 0–35  -> 0-2
+ * 36–59 -> 3-4
+ * 60–83 -> 5-6
+ * 84+   -> 6+
+ */
+function ageBandFromMonths(months: number): AgeBand {
+  if (!Number.isFinite(months) || months < 0) return '3-4'
+  if (months <= 35) return '0-2'
+  if (months <= 59) return '3-4'
+  if (months <= 83) return '5-6'
+  return '6+'
+}
+
+function inferTimeMode(): TimeMode {
   const tRaw = safeGetLS('eu360_time_with_child')
-  const aRaw = safeGetLS('eu360_child_age_band')
-
   const time: TimeMode = tRaw === '5' || tRaw === '10' || tRaw === '15' ? tRaw : '15'
-  const age: AgeBand =
-    aRaw === '0-2' || aRaw === '3-4' || aRaw === '5-6' || aRaw === '6+' ? aRaw : '3-4'
+  return time
+}
 
-  return { time, age }
+/**
+ * Fallback antigo (somente se não houver idade no perfil).
+ * Mantemos para não travar UX em perfis incompletos.
+ */
+function inferAgeBandFallback(): AgeBand {
+  const aRaw = safeGetLS('eu360_child_age_band')
+  const age: AgeBand = aRaw === '0-2' || aRaw === '3-4' || aRaw === '5-6' || aRaw === '6+' ? aRaw : '3-4'
+  return age
+}
+
+function formatChildLabel(input: { label: string; ageMonths: number | null }) {
+  if (input.ageMonths === null) return `${input.label} • idade não preenchida`
+  const m = input.ageMonths
+  if (m < 24) return `${input.label} • ${m} meses`
+  const years = Math.floor(m / 12)
+  return `${input.label} • ${years} anos`
 }
 
 /* =========================
@@ -146,30 +174,12 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: {
-          tag: 'rápido',
-          time: '5',
-          title: 'Cópia de gestos',
-          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
-        },
-        b: {
-          tag: 'calmo',
-          time: '5',
-          title: 'Música + colo',
-          how: 'Uma música curta. Balance devagar e respire junto.',
-        },
-        c: {
-          tag: 'sensório',
-          time: '5',
-          title: 'Texturas da casa',
-          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
-        },
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
+        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: {
-        label: 'Ajuste que ajuda hoje',
-        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
-      },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
       connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
@@ -178,19 +188,9 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincadeira curta + conexão no final.',
       time: '10',
       plan: {
-        a: {
-          tag: 'movimento',
-          time: '10',
-          title: 'Caminho de almofadas',
-          how: 'Monte um caminho no chão e atravessem juntos 3 vezes.',
-        },
+        a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
         b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
-        c: {
-          tag: 'calmo',
-          time: '10',
-          title: 'Livro rápido',
-          how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.',
-        },
+        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
@@ -202,24 +202,9 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: {
-          tag: 'rotina',
-          time: '15',
-          title: 'Mini ritual pré-janta',
-          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
-        },
-        b: {
-          tag: 'sensório',
-          time: '15',
-          title: 'Caixa de “coisas seguras”',
-          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
-        },
-        c: {
-          tag: 'calmo',
-          time: '15',
-          title: 'Banho de brinquedos',
-          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
-        },
+        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
@@ -233,29 +218,13 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Uma brincadeira que cabe antes da janta.',
       time: '5',
       plan: {
-        a: {
-          tag: 'rápido',
-          time: '5',
-          title: 'História de 5 frases',
-          how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.',
-        },
-        b: {
-          tag: 'conexão',
-          time: '5',
-          title: 'Desenho espelhado',
-          how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.',
-        },
+        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
+        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
         c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
-      routine: {
-        label: 'Ajuste que ajuda hoje',
-        note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).',
-      },
-      connection: {
-        label: 'Gesto de conexão',
-        note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.',
-      },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).' },
+      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.' },
     },
     '10': {
       id: 'k-3-4-10',
@@ -264,12 +233,7 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       time: '10',
       plan: {
         a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma “pista” com fita/almofadas. Ele percorre 3 vezes.' },
-        b: {
-          tag: 'faz de conta',
-          time: '10',
-          title: 'Restaurante relâmpago',
-          how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.',
-        },
+        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relâmpago', how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.' },
         c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: “eu gostei quando você…”.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
@@ -284,18 +248,10 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       plan: {
         a: { tag: 'casa', time: '15', title: 'Caça aos tesouros', how: 'Escolham 3 itens para achar. Depois guardam juntos.' },
         b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 “missões”: pular, buscar, entregar. Você narra.' },
-        c: {
-          tag: 'calmo',
-          time: '15',
-          title: 'História + abraço',
-          how: '10 min de história inventada + 5 min de abraço e guardar.',
-        },
+        c: { tag: 'calmo', time: '15', title: 'História + abraço', how: '10 min de história inventada + 5 min de abraço e guardar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Imaginação + necessidade de rotina clara.' },
-      routine: {
-        label: 'Ajuste que ajuda hoje',
-        note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.',
-      },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.' },
       connection: { label: 'Gesto de conexão', note: 'Dizer: “obrigada por brincar comigo” e sorrir.' },
     },
   },
@@ -306,24 +262,11 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Rápido e direto: presença sem esticar.',
       time: '5',
       plan: {
-        a: {
-          tag: 'fala',
-          time: '5',
-          title: '2 perguntas + 1 abraço',
-          how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.',
-        },
-        b: {
-          tag: 'rápido',
-          time: '5',
-          title: 'Desafio do minuto',
-          how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.',
-        },
+        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
+        b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
         c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “amanhã continua”.' },
       },
-      development: {
-        label: 'O que costuma aparecer',
-        note: 'Curiosidade, perguntas e vontade de participar das decisões.',
-      },
+      development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
       connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: “eu vi você se esforçando em…”.' },
     },
@@ -334,18 +277,8 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       time: '10',
       plan: {
         a: { tag: 'movimento', time: '10', title: 'Circuito rápido', how: '3 estações: pular, agachar, correr parado. 2 rodadas.' },
-        b: {
-          tag: 'mesa',
-          time: '10',
-          title: 'Desenho com tema',
-          how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.',
-        },
-        c: {
-          tag: 'casa',
-          time: '10',
-          title: 'Ajuda rápida',
-          how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.',
-        },
+        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.' },
+        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
@@ -357,26 +290,13 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Um ciclo simples: brincar → ajudar → fechar.',
       time: '15',
       plan: {
-        a: {
-          tag: 'equilíbrio',
-          time: '15',
-          title: 'Brinca 10 + ajuda 5',
-          how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.',
-        },
-        b: {
-          tag: 'criativo',
-          time: '15',
-          title: 'História com desenho',
-          how: '5 min desenha, 10 min cria história e você escreve 3 frases.',
-        },
+        a: { tag: 'equilíbrio', time: '15', title: 'Brinca 10 + ajuda 5', how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.' },
+        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e você escreve 3 frases.' },
         c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (“qual animal…?”). Fecha com abraço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Vontade de participar e de ser levado a sério.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um timer visível ajuda a encerrar sem briga.' },
-      connection: {
-        label: 'Gesto de conexão',
-        note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).',
-      },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).' },
     },
   },
   '6+': {
@@ -387,12 +307,7 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       time: '5',
       plan: {
         a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: '“De 0 a 10, como foi seu dia?” e uma frase de escuta.' },
-        b: {
-          tag: 'corpo',
-          time: '5',
-          title: 'Descompressão',
-          how: '2 min alongar + 2 min respirar + 1 min combinado do dia.',
-        },
+        b: { tag: 'corpo', time: '5', title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado do dia.' },
         c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Você agradece e reconhece.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia, mais opinião, mais sensibilidade a respeito.' },
@@ -406,18 +321,8 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       time: '10',
       plan: {
         a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
-        b: {
-          tag: 'jogo',
-          time: '10',
-          title: 'Mini competição',
-          how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).',
-        },
-        c: {
-          tag: 'casa',
-          time: '10',
-          title: 'Função + elogio',
-          how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.',
-        },
+        b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
+        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
@@ -429,24 +334,9 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Conexão + rotina leve do jeito que cabe.',
       time: '15',
       plan: {
-        a: {
-          tag: 'equilíbrio',
-          time: '15',
-          title: '10 min + 5 min',
-          how: '10 min de escolha dele + 5 min de organização simples.',
-        },
-        b: {
-          tag: 'casa',
-          time: '15',
-          title: 'Arrumar junto',
-          how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.',
-        },
-        c: {
-          tag: 'fala',
-          time: '15',
-          title: 'Plano de amanhã',
-          how: '2 min check-in + 10 min atividade + 3 min combinados.',
-        },
+        a: { tag: 'equilíbrio', time: '15', title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.' },
+        b: { tag: 'casa', time: '15', title: 'Arrumar junto', how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.' },
+        c: { tag: 'fala', time: '15', title: 'Plano de amanhã', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },
@@ -461,6 +351,10 @@ export default function MeuFilhoClient() {
   const [age, setAge] = useState<AgeBand>('3-4')
   const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
+  // Perfil real (core único)
+  const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
+  const [activeChildId, setActiveChildId] = useState<string>('')
+
   useEffect(() => {
     try {
       track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
@@ -468,15 +362,62 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
-    const inferred = inferContext()
-    setTime(inferred.time)
-    setAge(inferred.age)
+    const t = inferTimeMode()
+    setTime(t)
+
+    const snap = getProfileSnapshot()
+    setChildren(snap.children)
+
+    const active = getActiveChildOrNull(null)
+    setActiveChildId(active?.id ?? '')
+
+    // idade: primeiro do perfil, senão fallback antigo
+    const months = active?.ageMonths ?? null
+    const derivedAge: AgeBand =
+      typeof months === 'number' ? ageBandFromMonths(months) : inferAgeBandFallback()
+
+    setAge(derivedAge)
     setStep('brincadeiras')
 
+    // Mantém também o LS “age band” como compatibilidade, mas agora é derivado.
+    // Se idade estiver faltando, mantém o fallback existente.
+    safeSetLS('eu360_child_age_band', derivedAge)
+
     try {
-      track('meu_filho.open', { time: inferred.time, age: inferred.age })
+      track('meu_filho.open', {
+        time: t,
+        age: derivedAge,
+        profileSource: snap.source,
+        kidsCount: snap.children.length,
+        kidsWithAge: snap.children.filter((k) => typeof k.ageMonths === 'number').length,
+      })
     } catch {}
   }, [])
+
+  const activeChild = useMemo(() => {
+    if (!children.length) return null
+    const found = children.find((c) => c.id === activeChildId)
+    return found ?? children[0]
+  }, [children, activeChildId])
+
+  useEffect(() => {
+    // Sempre que trocar filho, recalcula faixa (se tiver idade).
+    const months = activeChild?.ageMonths ?? null
+    if (typeof months === 'number') {
+      const nextAge = ageBandFromMonths(months)
+      setAge(nextAge)
+      safeSetLS('eu360_child_age_band', nextAge)
+      try {
+        track('meu_filho.child.select', { childId: activeChild?.id, ageBand: nextAge, ageMonths: months })
+      } catch {}
+    } else if (activeChild) {
+      // Sem idade -> mantém o age atual (ou fallback já definido)
+      try {
+        track('meu_filho.child.select', { childId: activeChild?.id, ageBand: age, ageMonths: null })
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChildId])
 
   const kit = useMemo(() => KITS[age][time], [age, time])
   const selected = useMemo(() => kit.plan[chosen], [kit, chosen])
@@ -494,15 +435,6 @@ export default function MeuFilhoClient() {
     setChosen('a')
     try {
       track('meu_filho.time.select', { time: next })
-    } catch {}
-  }
-
-  function onSelectAge(next: AgeBand) {
-    setAge(next)
-    safeSetLS('eu360_child_age_band', next)
-    setChosen('a')
-    try {
-      track('meu_filho.age.select', { age: next })
     } catch {}
   }
 
@@ -534,7 +466,6 @@ export default function MeuFilhoClient() {
       source: SOURCE,
     })
 
-    // ✅ guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
@@ -604,7 +535,6 @@ export default function MeuFilhoClient() {
             </div>
           </header>
 
-          {/* EXPERIÊNCIA ÚNICA (um container) */}
           <Reveal>
             <section
               className="
@@ -616,7 +546,6 @@ export default function MeuFilhoClient() {
                 overflow-hidden
               "
             >
-              {/* Top bar: contexto + trilha */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -651,7 +580,44 @@ export default function MeuFilhoClient() {
                   </button>
                 </div>
 
-                {/* Ajustes rápidos (secundários) */}
+                {/* Seleção do filho (correlação real Eu360 → Meu Filho) */}
+                {children.length ? (
+                  <div className="mt-4 rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Para qual filho?</div>
+                    <div className="flex flex-wrap gap-2">
+                      {children.map((c) => {
+                        const active = (activeChild?.id ?? '') === c.id
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => setActiveChildId(c.id)}
+                            className={[
+                              'rounded-full px-3 py-1.5 text-[12px] border transition',
+                              active
+                                ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                                : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                            title={formatChildLabel({ label: c.label, ageMonths: c.ageMonths })}
+                          >
+                            {formatChildLabel({ label: c.label, ageMonths: c.ageMonths })}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    <div className="mt-3">
+                      <Link
+                        href="/eu360"
+                        className="inline-flex rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition"
+                      >
+                        Atualizar no Eu360
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Ajustes rápidos */}
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
                     <div className="text-[12px] text-white/85 mb-2">Quanto tempo você tem agora?</div>
@@ -678,25 +644,39 @@ export default function MeuFilhoClient() {
                   </div>
 
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
-                    <div className="text-[12px] text-white/85 mb-2">Faixa do seu filho (para ajustar a ideia)</div>
+                    <div className="text-[12px] text-white/85 mb-2">Faixa ajustada pelo Eu360</div>
                     <div className="grid grid-cols-4 gap-2">
                       {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
                         const active = age === a
                         return (
                           <button
                             key={a}
-                            onClick={() => onSelectAge(a)}
+                            type="button"
+                            onClick={() => {
+                              // Permite override manual (sem quebrar correlação).
+                              // Mantém compatibilidade + dá autonomia.
+                              setAge(a)
+                              safeSetLS('eu360_child_age_band', a)
+                              setChosen('a')
+                              try {
+                                track('meu_filho.age.override', { ageBand: a })
+                              } catch {}
+                            }}
                             className={[
                               'rounded-xl border px-3 py-2 text-[12px] transition',
                               active
                                 ? 'bg-white/90 border-white/60 text-[#2f3a56]'
                                 : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                             ].join(' ')}
+                            title="Ajustar manualmente (opcional)"
                           >
                             {a}
                           </button>
                         )
                       })}
+                    </div>
+                    <div className="mt-2 text-[11px] text-white/75">
+                      Ajuste automático pela idade do Eu360 (quando disponível). Você pode ajustar se quiser.
                     </div>
                   </div>
                 </div>
@@ -730,7 +710,6 @@ export default function MeuFilhoClient() {
                 </div>
               </div>
 
-              {/* Conteúdo muda dentro do mesmo container */}
               <div className="p-4 md:p-6">
                 {/* 1) BRINCADEIRAS DO DIA */}
                 {step === 'brincadeiras' ? (
@@ -756,7 +735,6 @@ export default function MeuFilhoClient() {
                         </div>
                       </div>
 
-                      {/* Escolha guiada (3 opções) */}
                       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                         {(['a', 'b', 'c'] as const).map((k) => {
                           const it = kit.plan[k]
@@ -767,9 +745,7 @@ export default function MeuFilhoClient() {
                               onClick={() => onChoose(k)}
                               className={[
                                 'rounded-2xl border p-4 text-left transition',
-                                active
-                                  ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                  : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                               ].join(' ')}
                             >
                               <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
@@ -782,7 +758,6 @@ export default function MeuFilhoClient() {
                         })}
                       </div>
 
-                      {/* “faça agora” destacado */}
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
                         <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
@@ -824,7 +799,7 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 2) DESENVOLVIMENTO POR FASE (sem diagnóstico) */}
+                {/* 2) DESENVOLVIMENTO */}
                 {step === 'desenvolvimento' ? (
                   <div id="desenvolvimento" className="space-y-4">
                     <SoftCard
@@ -877,7 +852,7 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 3) ROTINA LEVE DA CRIANÇA */}
+                {/* 3) ROTINA */}
                 {step === 'rotina' ? (
                   <div id="rotina" className="space-y-4">
                     <SoftCard
@@ -897,7 +872,9 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
+                          </p>
                         </div>
                       </div>
 
@@ -929,7 +906,7 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 4) GESTOS DE CONEXÃO */}
+                {/* 4) CONEXÃO */}
                 {step === 'conexao' ? (
                   <div id="conexao" className="space-y-4">
                     <SoftCard
@@ -949,7 +926,9 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
+                          </p>
                         </div>
                       </div>
 
