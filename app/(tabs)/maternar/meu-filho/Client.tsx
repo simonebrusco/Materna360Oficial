@@ -16,7 +16,7 @@ import {
 } from '@/app/lib/myDayTasks.client'
 
 import { markJourneyFamilyDone } from '@/app/lib/journey.client'
-import { getActiveChildOrNull, getProfileSnapshot } from '@/app/lib/profile.client'
+import { getActiveChildOrNull, getProfileSnapshot, type ProfileSource } from '@/app/lib/profile.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -49,18 +49,28 @@ type Kit = {
   connection: { label: string; note: string }
 }
 
+const LS_PREFIX = 'm360:'
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
+    const direct = window.localStorage.getItem(key)
+    if (direct !== null) return direct
+    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
   } catch {
     return null
   }
 }
 
+/**
+ * P26: gravar com prefixo (padrão do projeto) e manter compat opcional sem prefixo.
+ * Isso evita “sumir” preferências quando o app lê por ambos formatos.
+ */
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
+    // compat legado (silencioso)
     window.localStorage.setItem(key, value)
   } catch {}
 }
@@ -91,7 +101,7 @@ function timeHint(t: TimeMode) {
  * Preferências “silenciosas” do hub Meu Filho.
  * - time: quanto tempo ela tem
  * - ageBand override: se ela trocar manualmente (sem exigir)
- * - preferredChildId: opcional (se você quiser plugar no futuro)
+ * - preferredChildId: opcional
  */
 const HUB_PREF = {
   time: 'maternar/meu-filho/pref/time',
@@ -366,7 +376,7 @@ export default function MeuFilhoClient() {
   const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
   const [childLabel, setChildLabel] = useState<string | undefined>(undefined)
-  const [profileSource, setProfileSource] = useState<string>('none')
+  const [profileSource, setProfileSource] = useState<ProfileSource>('none')
 
   useEffect(() => {
     try {
@@ -526,7 +536,8 @@ export default function MeuFilhoClient() {
               {childLabel ? (
                 <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
                   Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
-                  <span className="opacity-70"> • fonte: {profileSource}</span>
+                  {/* Debug only (P26: não mostrar em produção) */}
+                  {/* {process.env.NODE_ENV !== 'production' ? <span className="opacity-70"> • fonte: {profileSource}</span> : null} */}
                 </div>
               ) : null}
             </div>
