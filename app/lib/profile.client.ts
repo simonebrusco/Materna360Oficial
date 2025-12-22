@@ -1,3 +1,4 @@
+// app/lib/profile.client.ts
 'use client'
 
 /**
@@ -79,7 +80,6 @@ function stripDiacritics(s: string) {
   try {
     return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   } catch {
-    // fallback seguro
     return s
   }
 }
