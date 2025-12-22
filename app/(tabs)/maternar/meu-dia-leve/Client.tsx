@@ -1,7 +1,6 @@
 'use client'
 
-import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -379,10 +378,30 @@ const RECEITAS: QuickRecipe[] = [
 ]
 
 const PASSO_LEVE: DayLine[] = [
-  { title: 'Resolver 1 coisa que está travando', why: 'O resto fica mais fácil quando algo destravaכע', focus: 'casa', slot: '5' },
-  { title: 'Fazer 5 min de conexão com o filho', why: 'Curto e intencional funciona melhor do que “tentar muito”.', focus: 'filho', slot: '5' },
-  { title: 'Proteger 10 min só seus', why: 'Sem tela e sem tarefa. É recarregar para continuar.', focus: 'voce', slot: '10' },
-  { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
+  {
+    title: 'Resolver 1 coisa que está travando',
+    why: 'O resto fica mais fácil quando algo destrava o agora.',
+    focus: 'casa',
+    slot: '5',
+  },
+  {
+    title: 'Fazer 5 min de conexão com o filho',
+    why: 'Curto e intencional funciona melhor do que “tentar muito”.',
+    focus: 'filho',
+    slot: '5',
+  },
+  {
+    title: 'Proteger 10 min só seus',
+    why: 'Sem tela e sem tarefa. É recarregar para continuar.',
+    focus: 'voce',
+    slot: '10',
+  },
+  {
+    title: 'Simplificar a refeição',
+    why: 'Comida simples também é cuidado — e libera energia mental.',
+    focus: 'comida',
+    slot: '5',
+  },
 ]
 
 function Pill({
@@ -679,7 +698,7 @@ export default function MeuDiaLeveClient() {
       })
     } catch {}
 
-    window.setTimeout(() => setSaveFeedback(''), 2200)
+    setTimeout(() => setSaveFeedback(''), 2200)
   }
 
   const activeChild = useMemo(() => {
