@@ -138,15 +138,28 @@ export interface MaternaAIResponseMap {
 
 // ---------- Helpers de idade / faixa etária ----------
 
+/**
+ * Faixas por meses (limites corretos):
+ * - 0-1:   0..11
+ * - 1-3:   12..35
+ * - 3-6:   36..71
+ * - 6-8:   72..95
+ * - 8+:    96+
+ *
+ * Observação importante:
+ * - 36 meses = 3 anos exatos, então precisa cair em "3-6".
+ */
 export function deriveAgeRangeFromMonths(ageMonths?: number | null): MaternaAgeRange | undefined {
   if (typeof ageMonths !== 'number' || !Number.isFinite(ageMonths) || ageMonths < 0) {
     return undefined
   }
 
-  if (ageMonths <= 12) return '0-1'
-  if (ageMonths <= 36) return '1-3'
-  if (ageMonths <= 72) return '3-6'
-  if (ageMonths <= 96) return '6-8'
+  const m = Math.floor(ageMonths)
+
+  if (m < 12) return '0-1'
+  if (m < 36) return '1-3'
+  if (m < 72) return '3-6'
+  if (m < 96) return '6-8'
   return '8+'
 }
 
