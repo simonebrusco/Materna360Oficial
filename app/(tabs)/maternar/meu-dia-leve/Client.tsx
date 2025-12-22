@@ -1,3 +1,4 @@
+// app/(tabs)/maternar/meu-dia-leve/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -242,6 +243,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
     out.push({ id, label, months })
   }
 
+  // se vier vazio, devolve []
   return out
 }
 
@@ -410,18 +412,16 @@ function formatChildLabel(c: ChildProfile) {
   return `${c.label} • ${age}`
 }
 
-function friendlyHintFromError(err?: string, hint?: string) {
-  // preferimos o hint vindo do servidor (contrato), sem “cara de erro”
-  if (hint) return hint
-
-  if (err === 'need_more_items') return 'Se quiser, escreva mais um item para eu montar algo direto.'
-  if (err === 'not_specific_enough') return 'Com mais um item dá para montar algo bem direto.'
-  if (err === 'empty_pantry') return 'Escreva 1 a 3 itens. Pode ser só um.'
-  if (err === 'intro_6_11') return 'Por enquanto, aqui a gente não sugere receitas nessa fase.'
-  if (err === 'under_6') return 'Para essa fase, o melhor é seguir a orientação que você já usa com sua rede de saúde.'
+function friendlyHintFromError(err: string, serverHint?: string) {
+  if (serverHint) return serverHint
+  if (err === 'empty_pantry') return 'Escreva 1 a 3 itens. Pode ser só “banana” ou “ovo”.'
+  if (err === 'need_more_items')
+    return 'Com esse item sozinho, eu não consigo montar uma receita segura. Me diga só mais 1 item (ex.: “sal + ovo” ou “sal + arroz”).'
+  if (err === 'not_specific_enough') return 'Me diga 2 ou 3 itens (ex.: “ovo, arroz, cenoura”) para eu montar uma receita bem direta.'
   if (err === 'age_missing') return 'Complete a idade no Eu360 para liberar.'
-  if (err) return 'Se quiser, escreva mais um item e tentamos de novo.'
-  return ''
+  if (err === 'under_6') return 'Para essa fase, o melhor é seguir a orientação que você já usa com sua rede de saúde.'
+  if (err === 'intro_6_11') return 'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas.'
+  return 'Não consegui montar agora. Se quiser, use uma opção pronta abaixo.'
 }
 
 export default function MeuDiaLeveClient() {
@@ -441,6 +441,7 @@ export default function MeuDiaLeveClient() {
   const [activeChildId, setActiveChildId] = useState<string>('')
 
   const [pantry, setPantry] = useState<string>('')
+
   const [aiRecipeText, setAiRecipeText] = useState<string>('')
   const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
   const [aiRecipeError, setAiRecipeError] = useState<string>('')
@@ -660,7 +661,9 @@ export default function MeuDiaLeveClient() {
 
     const trimmed = pantry.trim()
     if (!trimmed) {
-      toast.info('Escreva 1 a 3 itens. Pode ser só um.')
+      toast.info('Escreva 1 a 3 itens. Pode ser só “banana” ou “ovo”.')
+      setAiRecipeError('empty_pantry')
+      setAiRecipeHint('Escreva 1 a 3 itens. Pode ser só “banana” ou “ovo”.')
       return
     }
 
@@ -679,8 +682,6 @@ export default function MeuDiaLeveClient() {
         setAiRecipeError(err)
         setAiRecipeHint(hint)
 
-        // não tratar como “falha”: só orientar e manter opções prontas
-        toast.info('Se quiser, a gente ajusta com mais um item — ou você usa uma opção pronta abaixo.')
         try {
           track('meu_dia_leve.recipe.fail', { error: err })
         } catch {}
@@ -688,14 +689,13 @@ export default function MeuDiaLeveClient() {
       }
 
       setAiRecipeText(data.text)
-      setAiRecipeHint('')
       try {
         track('meu_dia_leve.recipe.ok', { slot, mood })
       } catch {}
     } catch {
-      setAiRecipeError('erro_rede')
-      setAiRecipeHint('Se quiser, você pode tentar de novo — ou usar uma opção pronta abaixo.')
-      toast.info('Falhou agora. Se quiser, use uma opção pronta abaixo.')
+      const err = 'erro_rede'
+      setAiRecipeError(err)
+      setAiRecipeHint(friendlyHintFromError(err))
       try {
         track('meu_dia_leve.recipe.fail', { error: 'network_or_throw' })
       } catch {}
@@ -967,9 +967,7 @@ export default function MeuDiaLeveClient() {
                             Receitas rápidas
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Uma receita simples para agora</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer. Sem complicar.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer.</p>
                         </div>
                       </div>
 
@@ -997,7 +995,7 @@ export default function MeuDiaLeveClient() {
                                 }}
                                 className={[
                                   'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                  (activeChild?.id === c.id)
+                                  activeChild?.id === c.id
                                     ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
                                     : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
@@ -1043,15 +1041,13 @@ export default function MeuDiaLeveClient() {
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Pode ser só um item. A gente resolve com o que tiver.
-                        </div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Pode ser só um item. A gente resolve com o que tiver.</div>
 
                         <textarea
                           value={pantry}
                           onChange={(e) => setPantry(e.target.value)}
                           rows={3}
-                          placeholder="Ex.: banana • ovo • arroz"
+                          placeholder="o que tenho em casa…"
                           className="mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
                         />
 
@@ -1062,7 +1058,7 @@ export default function MeuDiaLeveClient() {
                             disabled={aiRecipeLoading || gate.blocked}
                             className={[
                               'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              (aiRecipeLoading || gate.blocked)
+                              aiRecipeLoading || gate.blocked
                                 ? 'bg-[#fd2597]/50 text-white cursor-not-allowed'
                                 : 'bg-[#fd2597] text-white hover:opacity-95',
                             ].join(' ')}
@@ -1075,10 +1071,10 @@ export default function MeuDiaLeveClient() {
                           ) : null}
                         </div>
 
-                        {/* Hint suave (sem “cara de erro”) */}
-                        {aiRecipeHint ? (
+                        {/* Hint inline (sem toast concorrente) */}
+                        {aiRecipeError && !aiRecipeText ? (
                           <div className="mt-3 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[12px] text-[#6a6a6a]">
-                            {aiRecipeHint}
+                            {aiRecipeHint || 'Falhou agora. Você ainda pode usar uma opção pronta abaixo.'}
                           </div>
                         ) : null}
 
@@ -1087,13 +1083,9 @@ export default function MeuDiaLeveClient() {
                             <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
                             <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
 
-                            <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                              Se quiser parar por aqui, já está completo.
-                            </div>
-
                             <div className="mt-4 flex flex-wrap gap-2">
                               <button
-                                onClick={() => saveCurrentToMyDay('Receita rápida')}
+                                onClick={() => saveCurrentToMyDay('Receita rápida (criança)')}
                                 className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                               >
                                 Salvar no Meu Dia
