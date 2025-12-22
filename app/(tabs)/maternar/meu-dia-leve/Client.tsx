@@ -341,13 +341,55 @@ const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }
 }
 
 const IDEIAS: QuickIdea[] = [
-  { tag: '3 min', title: 'Respirar + ombros para baixo', how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.', slot: '3', focus: 'voce' },
-  { tag: '3 min', title: 'Mensagem curta que resolve', how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.', slot: '3', focus: 'casa' },
-  { tag: '5 min', title: 'Conexão com o filho (sem inventar)', how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.', slot: '5', focus: 'filho' },
-  { tag: '5 min', title: 'Organizar um ponto só', how: 'Uma bancada ou mesa. Não a casa toda.', slot: '5', focus: 'casa' },
-  { tag: '10 min', title: 'Música + tarefa que já existe', how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.', slot: '10', focus: 'voce' },
-  { tag: '10 min', title: 'Banho/escova em modo leve', how: 'Transforme a rotina em “missão” rápida e sem discussão.', slot: '10', focus: 'filho' },
-  { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo pronto. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
+  {
+    tag: '3 min',
+    title: 'Respirar + ombros para baixo',
+    how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.',
+    slot: '3',
+    focus: 'voce',
+  },
+  {
+    tag: '3 min',
+    title: 'Mensagem curta que resolve',
+    how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.',
+    slot: '3',
+    focus: 'casa',
+  },
+  {
+    tag: '5 min',
+    title: 'Conexão com o filho (sem inventar)',
+    how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.',
+    slot: '5',
+    focus: 'filho',
+  },
+  {
+    tag: '5 min',
+    title: 'Organizar um ponto só',
+    how: 'Uma bancada ou mesa. Não a casa toda.',
+    slot: '5',
+    focus: 'casa',
+  },
+  {
+    tag: '10 min',
+    title: 'Música + tarefa que já existe',
+    how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.',
+    slot: '10',
+    focus: 'voce',
+  },
+  {
+    tag: '10 min',
+    title: 'Banho/escova em modo leve',
+    how: 'Transforme a rotina em “missão” rápida e sem discussão.',
+    slot: '10',
+    focus: 'filho',
+  },
+  {
+    tag: '5 min',
+    title: 'Água + lanche simples',
+    how: 'Água + algo pronto. Resolve energia sem complicar.',
+    slot: '5',
+    focus: 'comida',
+  },
 ]
 
 const RECEITAS: QuickRecipe[] = [
@@ -435,6 +477,8 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
+type ChildProfileUI = ChildProfile
+
 type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
 
 async function requestAIRecipe(input: {
@@ -448,6 +492,7 @@ async function requestAIRecipe(input: {
   const res = await fetch('/api/ai/meu-dia-leve/receita', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    // mantém compat: a rota pode ignorar os novos campos
     body: JSON.stringify({
       slot: input.slot,
       mood: input.mood,
@@ -465,7 +510,7 @@ function plural(n: number, one: string, many: string) {
   return n === 1 ? one : many
 }
 
-function formatChildLabelExact(c: ChildProfile) {
+function formatChildLabelExact(c: ChildProfileUI) {
   if (c.months === null) return `${c.label} • idade não preenchida`
 
   const m = c.months
@@ -500,14 +545,14 @@ export default function MeuDiaLeveClient() {
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
   // filhos / idades
-  const [children, setChildren] = useState<ChildProfile[]>([])
+  const [children, setChildren] = useState<ChildProfileUI[]>([])
   const [activeChildId, setActiveChildId] = useState<string>('')
 
   const [pantry, setPantry] = useState<string>('')
   const [aiRecipeText, setAiRecipeText] = useState<string>('')
   const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
   const [aiRecipeError, setAiRecipeError] = useState<string>('')
-  const [aiRecipeHint, setAiRecipeHint] = useState<string>('')
+  const [aiRecipeHint, setAiRecipeHint] = useState<string>('') // <- hint dinâmico (alinha com o servidor)
 
   useEffect(() => {
     try {
@@ -526,7 +571,7 @@ export default function MeuDiaLeveClient() {
     setChildren(kids)
 
     // default: seleciona o filho “mais velho com idade” (para liberar quando houver)
-    const withAge = kids.filter((k) => k.months !== null) as Array<ChildProfile & { months: number }>
+    const withAge = kids.filter((k) => k.months !== null) as Array<ChildProfileUI & { months: number }>
     if (withAge.length) {
       const sorted = [...withAge].sort((a, b) => b.months - a.months)
       setActiveChildId(sorted[0].id)
@@ -545,7 +590,6 @@ export default function MeuDiaLeveClient() {
         kidsWithAge: withAge.length,
       })
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const inspiration = useMemo(() => INSPIRATIONS[mood], [mood])
@@ -674,7 +718,6 @@ export default function MeuDiaLeveClient() {
   }, [children, activeChildId])
 
   const activeMonths = activeChild?.months ?? null
-
   const activeYears = useMemo(() => {
     if (activeMonths === null) return null
     if (!Number.isFinite(activeMonths)) return null
@@ -698,8 +741,8 @@ export default function MeuDiaLeveClient() {
       return {
         blocked: true,
         reason: 'no_children' as const,
-        title: 'Para sugerir receitas com segurança',
-        message: 'Complete o cadastro do(s) filho(s) no Eu360.',
+        title: 'Observação',
+        message: 'Para sugerir receitas com segurança, complete o cadastro do(s) filho(s) no Eu360.',
       }
     }
 
@@ -726,8 +769,7 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'under_6' as const,
         title: 'Sem receitas por enquanto',
-        message:
-          'Para essa fase, aqui a gente não sugere receitas. Siga a orientação que você já usa com sua rede de saúde.',
+        message: 'Para essa fase, aqui a gente não sugere receitas. Siga a orientação que você já usa com sua rede de saúde.',
       }
     }
 
@@ -779,7 +821,7 @@ export default function MeuDiaLeveClient() {
         slot,
         mood,
         pantry: trimmed,
-        childAgeMonths: activeMonths as number,
+        childAgeMonths: activeMonths as number, // mantém o contrato existente
         childAgeYears: typeof activeYears === 'number' ? activeYears : undefined,
         childAgeLabel: activeAgeLabel ?? undefined,
       })
@@ -787,7 +829,9 @@ export default function MeuDiaLeveClient() {
       if (!data?.ok || !data.text) {
         setAiRecipeError(data?.error || 'erro_receita')
         setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item — ou use uma opção pronta abaixo.')
+
         toast.info(data?.hint || 'Se quiser, a gente ajuda com mais um item — ou você usa uma opção pronta abaixo.')
+
         try {
           track('meu_dia_leve.recipe.fail', { error: data?.error || 'no_text', ageTier })
         } catch {}
@@ -812,9 +856,9 @@ export default function MeuDiaLeveClient() {
     }
   }
 
-  // copy do helper abaixo do botão: sempre consistente com o contrato do servidor
+  // helper do bloco: NÃO repete aviso quando gate está bloqueado
   const helperCopy = useMemo(() => {
-    if (gate.blocked) return 'Complete a idade no Eu360 para liberar.'
+    if (gate.blocked) return '' // <- remove duplicação visual (o aviso fica só no card acima)
     if (aiRecipeHint) return aiRecipeHint
 
     // Personalização silenciosa por idade (sem mudar layout)
@@ -825,6 +869,7 @@ export default function MeuDiaLeveClient() {
       return 'Pode ser só 1 item. Se quiser, diga também o tipo de refeição (lanche/almoço/janta).'
     }
 
+    // fallback neutro e verdadeiro
     return 'Pode ser só 1 item. Se for pouco específico, eu te peço mais 1 (sem complicar).'
   }, [gate.blocked, aiRecipeHint, ageTier])
 
@@ -843,7 +888,10 @@ export default function MeuDiaLeveClient() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -1097,9 +1145,7 @@ export default function MeuDiaLeveClient() {
                             Receitas rápidas
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Uma receita simples para agora</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer.</p>
                         </div>
                       </div>
 
@@ -1163,24 +1209,40 @@ export default function MeuDiaLeveClient() {
                         </div>
                       )}
 
-                      {/* Gate message (sem duplicar quando não há filhos) */}
-                      {gate.blocked && gate.reason !== 'no_children' ? (
+                      {/* Gate message (único lugar de aviso quando bloqueado) */}
+                      {gate.blocked ? (
                         <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{gate.title}</div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{gate.message}</div>
+                          <div className="mt-3">
+                            <Link
+                              href="/eu360"
+                              className="inline-flex rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ir para Eu360
+                            </Link>
+                          </div>
                         </div>
                       ) : null}
 
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
+
+                        {/* helperCopy some quando bloqueado (evita duplicação visual) */}
+                        {!gate.blocked && helperCopy ? (
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
+                        ) : null}
 
                         <textarea
                           value={pantry}
                           onChange={(e) => setPantry(e.target.value)}
                           rows={3}
                           placeholder="o que tenho em casa…"
-                          className="mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
+                          disabled={gate.blocked}
+                          className={[
+                            'mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]',
+                            gate.blocked ? 'opacity-70 cursor-not-allowed' : '',
+                          ].join(' ')}
                         />
 
                         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1198,10 +1260,7 @@ export default function MeuDiaLeveClient() {
                             {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                           </button>
 
-                          {gate.blocked ? (
-                            <span className="text-[12px] text-[#6a6a6a]">Complete a idade no Eu360 para liberar.</span>
-                          ) : null}
-
+                          {/* removido: texto repetido ao lado do botão quando bloqueado */}
                           {aiRecipeError ? (
                             <span className="text-[12px] text-[#6a6a6a]">Se quiser, você usa uma opção pronta abaixo.</span>
                           ) : null}
@@ -1210,9 +1269,7 @@ export default function MeuDiaLeveClient() {
                         {aiRecipeText ? (
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                             <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">
-                              {aiRecipeText}
-                            </div>
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
 
                             <div className="mt-4 flex flex-wrap gap-2">
                               <button
