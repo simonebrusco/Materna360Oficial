@@ -20,6 +20,9 @@ type Body = {
   mood?: Mood
   pantry?: string
   childAgeMonths?: number
+  // extras opcionais vindos do Client (compat: ignorados se não existirem)
+  childAgeYears?: number
+  childAgeLabel?: string
 }
 
 type ApiResponse =
@@ -134,12 +137,41 @@ function formatRecipeText(recipe: {
 }
 
 /**
+ * Faixa interna (sem mudar layout/estrutura; só decisão).
+ * - 12–23: prioridade em textura mais amassada/cremosa
+ * - 24+: prioridade em “pedaços pequenos” e rotina mais “normal”
+ */
+type AgeTier = 'toddler_12_23' | 'kid_24_plus'
+function getAgeTier(months: number): AgeTier {
+  return months < 24 ? 'toddler_12_23' : 'kid_24_plus'
+}
+
+/**
+ * Ajustes micro de preparo por idade — SEM prescrição, só “forma de servir”.
+ * Mantém tom, mantém estrutura e mantém o “suficiente por agora”.
+ */
+function stepServeStyle(tier: AgeTier) {
+  if (tier === 'toddler_12_23') {
+    return {
+      serveSmall: 'Sirva em porções pequenas, mais amassado/macio se precisar.',
+      serveMash: 'Amasse bem para ficar mais macio.',
+      servePieces: 'Se preferir, sirva mais amassado/macio.',
+    }
+  }
+  return {
+    serveSmall: 'Sirva em porções pequenas.',
+    serveMash: 'Amasse só o suficiente para ficar confortável.',
+    servePieces: 'Corte em pedaços pequenos e sirva.',
+  }
+}
+
+/**
  * Fallback responsável para “1 ingrediente forte”.
  * - Sempre mantém estrutura padrão
  * - Sempre fecha com note padrão (blindada)
  * - Nunca “orienta”, “recomenda”, “idealiza”
  */
-function pickSingleItemRecipe(items: string[], slot: Slot) {
+function pickSingleItemRecipe(items: string[], slot: Slot, tier: AgeTier) {
   const hasBanana = hasAny(items, ['banana'])
   const hasEgg = hasAny(items, ['ovo'])
   const hasYogurt = hasAny(items, ['iogurte', 'iogurt'])
@@ -148,6 +180,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
   const hasBread = hasAny(items, ['pão', 'pao'])
 
   const time = slot === '3' ? '3 min' : slot === '5' ? '5 min' : '10 min'
+  const style = stepServeStyle(tier)
 
   if (hasBanana) {
     return {
@@ -157,8 +190,8 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       ingredients: ['1 banana madura'],
       steps: [
         'Descasque e amasse com um garfo (ou corte em pedacinhos).',
-        'Se quiser mais cremoso, amasse bem até virar “papinha”.',
-        'Sirva em porções pequenas.',
+        tier === 'toddler_12_23' ? 'Amasse bem até ficar mais macio.' : 'Amasse até ficar do jeito que funciona aí.',
+        style.serveSmall,
       ],
       note: 'Sem complicar: resolve a fome e segue.',
     }
@@ -170,7 +203,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       time,
       yield: '1 porção',
       ingredients: ['Iogurte natural (o que você tiver)'],
-      steps: ['Coloque uma porção pequena no potinho.', 'Sirva simples.'],
+      steps: ['Coloque uma porção pequena no potinho.', tier === 'toddler_12_23' ? 'Sirva mais simples e macio.' : 'Sirva simples.'],
       note: 'Se tiver fruta, dá para complementar depois.',
     }
   }
@@ -185,6 +218,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
         'Bata o ovo rapidamente com um garfo.',
         'Aqueça a frigideira em fogo baixo com um fio de azeite/manteiga.',
         'Coloque o ovo e mexa devagar até ficar cozido e macio.',
+        tier === 'toddler_12_23' ? 'Se quiser, amasse um pouco no prato para ficar mais macio.' : 'Sirva em seguida.',
       ],
       note: 'Fogo baixo costuma deixar mais macio.',
     }
@@ -196,7 +230,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       time,
       yield: '1 porção',
       ingredients: ['2 a 3 colheres de arroz já pronto'],
-      steps: ['Aqueça o arroz.', 'Sirva em porções pequenas.'],
+      steps: ['Aqueça o arroz.', tier === 'toddler_12_23' ? 'Sirva em porções pequenas, mais macio se precisar.' : 'Sirva em porções pequenas.'],
       note: 'Se tiver feijão/legume, você pode complementar depois.',
     }
   }
@@ -207,7 +241,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       time,
       yield: '1 porção',
       ingredients: ['Feijão pronto (amassadinho ou caldo, como você já usa em casa)'],
-      steps: ['Aqueça se necessário.', 'Amasse alguns grãos ou use o caldo.', 'Sirva em porção pequena.'],
+      steps: ['Aqueça se necessário.', 'Amasse alguns grãos ou use o caldo.', style.serveSmall],
       note: 'Se tiver arroz, combina fácil e sem esforço.',
     }
   }
@@ -218,7 +252,10 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
       time,
       yield: '1 porção',
       ingredients: ['Pão (o que você tiver)'],
-      steps: ['Corte em pedaços pequenos.', 'Sirva simples.'],
+      steps: [
+        tier === 'toddler_12_23' ? 'Rasgue em pedaços bem pequenos e deixe mais macio se quiser.' : 'Corte em pedaços pequenos.',
+        'Sirva simples.',
+      ],
       note: 'Se tiver queijo ou fruta, dá para completar sem virar tarefa.',
     }
   }
@@ -226,7 +263,7 @@ function pickSingleItemRecipe(items: string[], slot: Slot) {
   return null
 }
 
-function pickSpecificRecipe(items: string[], slot: Slot) {
+function pickSpecificRecipe(items: string[], slot: Slot, tier: AgeTier) {
   const hasEgg = hasAny(items, ['ovo'])
   const hasBanana = hasAny(items, ['banana'])
   const hasRice = hasAny(items, ['arroz'])
@@ -237,6 +274,8 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
   const hasBeans = hasAny(items, ['feijão', 'feijao'])
   const hasChicken = hasAny(items, ['frango'])
   const hasVeg = hasAny(items, ['legume', 'cenoura', 'abobrinha', 'batata', 'brócolis', 'brocolis', 'ervilha'])
+
+  const style = stepServeStyle(tier)
 
   // 3 min
   if (slot === '3') {
@@ -265,7 +304,11 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
         time: '3 min',
         yield: '1 porção',
         ingredients: ['Iogurte natural', 'Fruta picada/amassada (a que você escreveu)'],
-        steps: ['Coloque o iogurte no potinho.', 'Some a fruta por cima.', 'Sirva em porções pequenas.'],
+        steps: [
+          'Coloque o iogurte no potinho.',
+          tier === 'toddler_12_23' ? 'Amasse a fruta e misture por cima.' : 'Some a fruta por cima.',
+          style.serveSmall,
+        ],
         note: 'Montagem é o melhor tipo de receita quando o dia está curto.',
       }
     }
@@ -290,6 +333,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
           'Coloque o ovo e mexa devagar até ficar cozido e macio.',
           hasVeg ? 'Se tiver legume pronto, misture por 30 segundos no final.' : 'Sirva em seguida.',
           hasCheese ? 'Se tiver queijo, coloque no final e misture rapidamente.' : '',
+          tier === 'toddler_12_23' ? 'Se quiser, deixe mais macio no prato (amassando de leve).' : '',
         ].filter(Boolean),
         note: 'Curto, direto e sem virar projeto.',
       }
@@ -309,7 +353,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
         steps: [
           'Aqueça o arroz (e o complemento, se for quente).',
           'Monte: arroz + 1 complemento.',
-          hasVeg ? 'Finalize com legume em pedacinhos pequenos.' : 'Sirva em porções pequenas.',
+          hasVeg ? (tier === 'toddler_12_23' ? 'Finalize com legume bem picado/amassado.' : 'Finalize com legume em pedacinhos pequenos.') : style.serveSmall,
         ],
         note: 'Resolve sem esticar o dia.',
       }
@@ -321,7 +365,11 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
         time: '5 min',
         yield: '1 porção',
         ingredients: ['Pão', 'Queijo (o que você tiver)'],
-        steps: ['Monte o sanduíche.', 'Se quiser, aqueça rapidamente para ficar mais macio.', 'Corte em tirinhas e sirva.'],
+        steps: [
+          'Monte o sanduíche.',
+          'Se quiser, aqueça rapidamente para ficar mais macio.',
+          tier === 'toddler_12_23' ? 'Rasgue em pedaços pequenos e sirva.' : 'Corte em tirinhas e sirva.',
+        ],
         note: 'Quando estiver tudo corrido, macio e simples ajuda.',
       }
     }
@@ -344,6 +392,7 @@ function pickSpecificRecipe(items: string[], slot: Slot) {
           hasEgg ? 'Misture o ovo.' : 'Se não tiver ovo, use uma opção pronta do dia.',
           hasOats ? 'Misture a aveia até virar massa grossinha.' : 'Se não tiver aveia, use uma opção pronta do dia.',
           'Em fogo baixo, faça discos pequenos e doure dos dois lados.',
+          tier === 'toddler_12_23' ? 'Depois, rasgue em pedacinhos e deixe mais macio se quiser.' : 'Depois, corte em pedaços pequenos e sirva.',
         ],
         note: 'Discos pequenos deixam tudo mais rápido e com menos bagunça.',
       }
@@ -401,9 +450,16 @@ export async function POST(req: Request) {
     }
 
     if (!pantry) {
-      const out: ApiResponse = { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
+      // hint levemente mais “contextual” por idade, sem mudar comportamento
+      const tier = getAgeTier(childAgeMonths)
+      const out: ApiResponse =
+        tier === 'toddler_12_23'
+          ? { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
+          : { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
       return NextResponse.json(out, { status: 200 })
     }
+
+    const tier = getAgeTier(childAgeMonths)
 
     // 1 item: libera se for “forte”
     const strongOneItem = items.length === 1 && hasAny(items, STRONG_ONE_ITEM_NEEDLES)
@@ -412,17 +468,18 @@ export async function POST(req: Request) {
       const out: ApiResponse = {
         ok: false,
         error: 'need_more_items',
-        hint: 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).',
+        // sem mudar a regra: só o texto do hint pode ser um pouco mais “prático”
+        hint: tier === 'toddler_12_23' ? 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).' : 'Escreva 2 ou 3 itens (ex.: “ovo, arroz, cenoura”).',
       }
       return NextResponse.json(out, { status: 200 })
     }
 
-    // Primeiro tenta receita específica do slot.
-    let recipe = pickSpecificRecipe(items, slot)
+    // Primeiro tenta receita específica do slot (com variação interna por idade).
+    let recipe = pickSpecificRecipe(items, slot, tier)
 
-    // Se for 1 item forte e não achou receita específica do slot, aplica fallback responsável
+    // Se for 1 item forte e não achou receita específica do slot, aplica fallback responsável (com variação interna por idade).
     if (!recipe && strongOneItem) {
-      recipe = pickSingleItemRecipe(items, slot)
+      recipe = pickSingleItemRecipe(items, slot, tier)
     }
 
     if (!recipe) {
