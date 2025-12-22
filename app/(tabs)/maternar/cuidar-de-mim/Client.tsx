@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 import { markJourneySelfcareDone } from '@/app/lib/journey.client'
+import { getProfileSnapshot } from '@/app/lib/profile.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
@@ -158,20 +159,6 @@ const ROUTINES: Routine[] = [
   },
 ]
 
-function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
-  const focusRaw = safeGetLS('eu360_focus_time')
-  const ritmoRaw = safeGetLS('eu360_ritmo')
-
-  const focus: FocusMode = focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
-  const ritmo: Ritmo =
-    ritmoRaw === 'leve' || ritmoRaw === 'cansada' || ritmoRaw === 'animada' || ritmoRaw === 'sobrecarregada'
-      ? ritmoRaw
-      : 'cansada'
-
-  if (ritmo === 'sobrecarregada') return { focus: '1min', ritmo }
-  return { focus, ritmo }
-}
-
 function pickRoutine(focus: FocusMode) {
   return ROUTINES.find((r) => r.focus === focus) ?? ROUTINES[1]
 }
@@ -199,6 +186,55 @@ type RoutineCopy = {
   next: string
 }
 
+/**
+ * Preferências do hub (silenciosas) — não substituem perfil,
+ * mas permitem manter consistência do “jeito” da mãe.
+ */
+const HUB_PREF = {
+  focus: 'maternar/cuidar-de-mim/pref/focus',
+  ritmo: 'maternar/cuidar-de-mim/pref/ritmo',
+}
+
+/**
+ * Inferência P26:
+ * 1) Pref do hub (se já existir)
+ * 2) Legado (eu360_focus_time, eu360_ritmo)
+ * 3) Defaults
+ *
+ * + Ajuste “sobrecarregada -> 1min”
+ *
+ * Observação: hoje o perfil (eu360_profile_v1) não possui foco/ritmo
+ * por definição; então aqui o profileSnapshot entra apenas como metadado
+ * (telemetry) e para consistência futura.
+ */
+function inferContext(): { focus: FocusMode; ritmo: Ritmo; profileSource: string } {
+  const snap = getProfileSnapshot()
+  const profileSource = snap.source
+
+  const prefFocusRaw = safeGetLS(HUB_PREF.focus)
+  const prefRitmoRaw = safeGetLS(HUB_PREF.ritmo)
+
+  const legacyFocusRaw = safeGetLS('eu360_focus_time')
+  const legacyRitmoRaw = safeGetLS('eu360_ritmo')
+
+  const normalizeFocus = (v: unknown): FocusMode | null => {
+    const s = String(v ?? '').trim()
+    return s === '1min' || s === '3min' || s === '5min' ? s : null
+  }
+
+  const normalizeRitmo = (v: unknown): Ritmo | null => {
+    const s = String(v ?? '').trim()
+    return s === 'leve' || s === 'cansada' || s === 'animada' || s === 'sobrecarregada' ? s : null
+  }
+
+  let ritmo: Ritmo = normalizeRitmo(prefRitmoRaw) ?? normalizeRitmo(legacyRitmoRaw) ?? 'cansada'
+  let focus: FocusMode = normalizeFocus(prefFocusRaw) ?? normalizeFocus(legacyFocusRaw) ?? '3min'
+
+  if (ritmo === 'sobrecarregada') focus = '1min'
+
+  return { focus, ritmo, profileSource }
+}
+
 export default function Client() {
   const [step, setStep] = useState<Step>('mini-rotina')
   const [focus, setFocus] = useState<FocusMode>('3min')
@@ -215,16 +251,19 @@ export default function Client() {
     } catch {}
   }, [])
 
-  // P26: entrada com mais confiança na decisão do Eu360 (sem exigir ajuste)
   useEffect(() => {
-    const inferred = inferFromEu360()
+    const inferred = inferContext()
     setFocus(inferred.focus)
     setRitmo(inferred.ritmo)
     setStep('mini-rotina')
     setHasSavedSomething(false)
 
     try {
-      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo })
+      track('cuidar_de_mim.open', {
+        focus: inferred.focus,
+        ritmo: inferred.ritmo,
+        profileSource: inferred.profileSource,
+      })
     } catch {}
   }, [])
 
@@ -246,7 +285,12 @@ export default function Client() {
 
   function onSelectFocus(next: FocusMode) {
     setFocus(next)
+
+    // Pref do hub (primário daqui pra frente)
+    safeSetLS(HUB_PREF.focus, next)
+    // Compat legado
     safeSetLS('eu360_focus_time', next)
+
     try {
       track('cuidar_de_mim.focus.select', { focus: next })
     } catch {}
@@ -254,10 +298,15 @@ export default function Client() {
 
   function onSelectRitmo(next: Ritmo) {
     setRitmo(next)
+
+    // Pref do hub (primário daqui pra frente)
+    safeSetLS(HUB_PREF.ritmo, next)
+    // Compat legado
     safeSetLS('eu360_ritmo', next)
 
     if (next === 'sobrecarregada') {
       setFocus('1min')
+      safeSetLS(HUB_PREF.focus, '1min')
       safeSetLS('eu360_focus_time', '1min')
     }
 
@@ -294,6 +343,19 @@ export default function Client() {
 
     setHasSavedSomething(true)
 
+    if (res.limitHit) {
+      toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
+      try {
+        track('my_day.task.add.blocked', {
+          source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+          origin,
+          reason: 'open_tasks_limit_hit',
+          dateKey: res.dateKey,
+        })
+      } catch {}
+      return
+    }
+
     if (res.created) setSaveFeedback('Levei para o Meu Dia.')
     else setSaveFeedback('Isso já estava no Meu Dia.')
 
@@ -321,46 +383,21 @@ export default function Client() {
     { id: 'para-voce' as const, label: 'Fechar' },
   ]
 
-  // P26: variações silenciosas de copy (sem mudar ação; reduz repetição percebida)
   const routineCopy = useMemo<RoutineCopy>(() => {
     const keyBase = `maternar_cuidar_copy_${todayKey()}_${routine.id}_${focus}_${ritmo}`
 
-    const headerOptions = [
-      'Sugestão pronta para agora',
-      'Agora: um passo que ajuda',
-      'Um ajuste pequeno (e suficiente)',
-    ]
+    const headerOptions = ['Sugestão pronta para agora', 'Agora: um passo que ajuda', 'Um ajuste pequeno (e suficiente)']
 
     const subtitleOptions =
       routine.focus === '1min'
-        ? [
-            'Um minuto para reduzir o ruído e seguir melhor.',
-            'Só para baixar o volume e voltar para o próximo passo.',
-            'Um reset rápido. Sem cobrança. Só continuidade.',
-          ]
+        ? ['Um minuto para reduzir o ruído e seguir melhor.', 'Só para baixar o volume e voltar para o próximo passo.', 'Um reset rápido. Sem cobrança. Só continuidade.']
         : routine.focus === '3min'
-        ? [
-            'Três minutos para retomar o controle do próximo passo.',
-            'Um reset curto para você voltar pro eixo.',
-            'Um ajuste simples para o resto do dia ficar mais fácil.',
-          ]
-        : [
-            'Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.',
-            'Um cuidado curto para o corpo e para a cabeça.',
-            'Um passo pequeno agora que melhora o depois.',
-          ]
+        ? ['Três minutos para retomar o controle do próximo passo.', 'Um reset curto para você voltar pro eixo.', 'Um ajuste simples para o resto do dia ficar mais fácil.']
+        : ['Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.', 'Um cuidado curto para o corpo e para a cabeça.', 'Um passo pequeno agora que melhora o depois.']
 
-    const closeOptions = [
-      routine.close,
-      'Pronto. Não era para “dar conta de tudo” — era só para ajustar o agora.',
-      'Feito. Um passo leve já muda a forma de seguir.',
-    ]
+    const closeOptions = [routine.close, 'Pronto. Não era para “dar conta de tudo” — era só para ajustar o agora.', 'Feito. Um passo leve já muda a forma de seguir.']
 
-    const nextOptions = [
-      routine.next,
-      'Agora escolha só uma próxima coisa real. Uma só.',
-      'Se quiser, volte para o dia. Sem explicar nada.',
-    ]
+    const nextOptions = [routine.next, 'Agora escolha só uma próxima coisa real. Uma só.', 'Se quiser, volte para o dia. Sem explicar nada.']
 
     const hi = pickSessionVariantIndex(`${keyBase}:h`, headerOptions.length)
     const si = pickSessionVariantIndex(`${keyBase}:s`, subtitleOptions.length)
@@ -390,10 +427,7 @@ export default function Client() {
         <div className="mx-auto max-w-3xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -491,9 +525,7 @@ export default function Client() {
                           onClick={() => go(it.id)}
                           className={[
                             'rounded-full px-3.5 py-2 text-[12px] border transition',
-                            active
-                              ? 'bg-white/95 border-white/40 text-[#2f3a56]'
-                              : 'bg-white/20 border-white/30 text-white/90 hover:bg-white/25',
+                            active ? 'bg-white/95 border-white/40 text-[#2f3a56]' : 'bg-white/20 border-white/30 text-white/90 hover:bg-white/25',
                           ].join(' ')}
                         >
                           {it.label}
@@ -521,9 +553,7 @@ export default function Client() {
 
                   {step === 'ritmo' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">
-                        Ajuste rápido (pra eu pensar melhor por você)
-                      </div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido (pra eu pensar melhor por você)</div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
@@ -534,9 +564,7 @@ export default function Client() {
                               onClick={() => onSelectRitmo(r)}
                               className={[
                                 'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
-                                active
-                                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                  : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                active ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]' : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
                               ].join(' ')}
                             >
                               {r}
@@ -559,9 +587,7 @@ export default function Client() {
                                 onClick={() => onSelectFocus(f)}
                                 className={[
                                   'rounded-2xl border p-3 text-left transition',
-                                  active
-                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                               >
                                 <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
@@ -624,14 +650,10 @@ export default function Client() {
                             onClick={() => toggleStep(i)}
                             className={[
                               'rounded-3xl border p-4 text-left transition',
-                              checked[i]
-                                ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                              checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                             ].join(' ')}
                           >
-                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                              passo {i + 1}
-                            </div>
+                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">passo {i + 1}</div>
                             <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
                             <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
                           </button>
@@ -640,9 +662,7 @@ export default function Client() {
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                          Faça só o passo 1. Isso já ajuda.
-                        </div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -679,9 +699,7 @@ export default function Client() {
                         <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
                           {routine.pauseDeck[pauseIndex]?.label}
                         </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-2">
-                          Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
-                        </div>
+                        <div className="text-[12px] text-[#6a6a6a] mt-2">Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min</div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -717,9 +735,7 @@ export default function Client() {
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
                         <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                          {routineCopy.close}
-                        </div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">{routineCopy.close}</div>
                         <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routineCopy.next}</div>
 
                         {!hasSavedSomething ? (
@@ -727,9 +743,7 @@ export default function Client() {
                             <div className="text-[12px] text-[#2f3a56] font-semibold">
                               Se isso ajudou, leve para o Meu Dia (para aparecer como continuidade).
                             </div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-1">
-                              Sem compromisso. Só para você não ter que lembrar depois.
-                            </div>
+                            <div className="text-[12px] text-[#6a6a6a] mt-1">Sem compromisso. Só para você não ter que lembrar depois.</div>
                           </div>
                         ) : null}
 
