@@ -24,7 +24,7 @@ type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
 // Regras de liberação (segurança / responsabilidade)
-const MIN_MONTHS_BLOCK = 6 // < 6: bloqueia total
+const MIN_MONTHS_BLOCK = 6 // < 6: bloqueia total (aleitamento)
 const MIN_MONTHS_INTRO_START = 6 // 6 a 11: introdução alimentar (bloqueia receitas do app)
 const MIN_MONTHS_ALLOW_RECIPES = 12 // >= 12: libera receitas do app
 
@@ -40,6 +40,7 @@ type RecentSavePayload = {
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
+    // tenta sem prefixo e com prefixo (porque o projeto já tem os dois padrões espalhados)
     const direct = window.localStorage.getItem(key)
     if (direct !== null) return direct
     return window.localStorage.getItem(`${LS_PREFIX}${key}`)
@@ -51,6 +52,7 @@ function safeGetLS(key: string): string | null {
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
+    // sempre salva no padrão atual do app (prefixed)
     window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
   } catch {}
 }
@@ -97,6 +99,7 @@ type ChildProfile = {
   months: number | null
 }
 
+// normaliza "3 anos" / "36 meses" etc, quando vier “solto”
 function coerceMonthsFromUnknown(v: unknown): number | null {
   if (v === null || v === undefined) return null
   if (typeof v === 'number') return Number.isFinite(v) ? Math.max(0, Math.min(240, Math.floor(v))) : null
@@ -104,18 +107,28 @@ function coerceMonthsFromUnknown(v: unknown): number | null {
   const s = String(v).trim().toLowerCase()
   if (!s) return null
 
+  // exemplo: "36"
   const direct = safeParseInt(s)
   if (direct !== null) return Math.max(0, Math.min(240, direct))
 
+  // exemplo: "3 anos"
   const mYears = s.match(/(\d+)\s*ano/)
   if (mYears?.[1]) return Math.max(0, Math.min(240, Number(mYears[1]) * 12))
 
+  // exemplo: "8 meses"
   const mMonths = s.match(/(\d+)\s*mes/)
   if (mMonths?.[1]) return Math.max(0, Math.min(240, Number(mMonths[1])))
 
   return null
 }
 
+/**
+ * Eu360: lê filhos e idades do localStorage (com prefixo m360:)
+ * Suporta:
+ * - chaves diretas (eu360_children, eu360_children_v1, etc)
+ * - estado “profile” com children dentro
+ * - fallback: varredura por chaves m360:eu360*
+ */
 function inferChildrenFromEu360(): ChildProfile[] {
   if (typeof window === 'undefined') return []
 
@@ -136,6 +149,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
 
   const collected: any[] = []
 
+  // 1) tenta chaves candidatas
   for (const k of candidates) {
     const obj = safeParseJSON(safeGetLS(k))
     if (!obj) continue
@@ -159,6 +173,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
     if (Array.isArray(arr)) collected.push(...arr)
   }
 
+  // 2) fallback: varre localStorage por prefixo m360:eu360
   if (collected.length === 0) {
     try {
       for (let i = 0; i < window.localStorage.length; i++) {
@@ -188,6 +203,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
     } catch {}
   }
 
+  // 3) normaliza children
   const out: ChildProfile[] = []
   let idx = 1
 
@@ -195,6 +211,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
     const id = String(c?.id ?? c?.key ?? c?.uuid ?? `child_${idx++}`)
     const name = String(c?.name ?? c?.nome ?? '').trim()
 
+    // Possíveis formatos
     const months =
       coerceMonthsFromUnknown(
         c?.ageMonths ??
@@ -220,6 +237,7 @@ function inferChildrenFromEu360(): ChildProfile[] {
 
     const label = name ? name : `Filho ${out.length + 1}`
 
+    // evita duplicados por id
     if (out.some((x) => x.id === id)) continue
     out.push({ id, label, months })
   }
@@ -300,10 +318,10 @@ const IDEIAS: QuickIdea[] = [
 ]
 
 const RECEITAS: QuickRecipe[] = [
-  { tag: '3 min', title: 'Iogurte + fruta (montagem)', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
-  { tag: '5 min', title: 'Ovo mexido + algo pronto', how: 'Ovo mexido + complemento que já existe (arroz/legume, se tiver).', slot: '5' },
+  { tag: '3 min', title: 'Iogurte + fruta + um crocante', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
+  { tag: '5 min', title: 'Ovo mexido + arroz pronto', how: 'Arroz já pronto + ovo mexido. Legume se der.', slot: '5' },
   { tag: '5 min', title: 'Pão + queijo + fruta', how: 'Simples e suficiente para uma rotina corrida.', slot: '5' },
-  { tag: '10 min', title: 'Caldo/sopa pronto + final leve', how: 'Esquentar + servir bem. Resolve sem esticar o dia.', slot: '10' },
+  { tag: '10 min', title: 'Sopa/caldo pronto + final leve', how: 'Esquentar + montar bem. Resolve sem esticar o dia.', slot: '10' },
 ]
 
 const PASSO_LEVE: DayLine[] = [
@@ -374,9 +392,7 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
-type AIRecipeResponse =
-  | { ok: true; text: string }
-  | { ok: false; error: string; hint?: string }
+type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
 
 async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string; childAgeMonths: number }): Promise<AIRecipeResponse> {
   const res = await fetch('/api/ai/meu-dia-leve/receita', {
@@ -384,7 +400,7 @@ async function requestAIRecipe(input: { slot: Slot; mood: Mood; pantry: string; 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ slot: input.slot, mood: input.mood, pantry: input.pantry, childAgeMonths: input.childAgeMonths }),
   })
-  if (!res.ok) return { ok: false, error: `http_${res.status}`, hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
+  if (!res.ok) return { ok: false, error: `http_${res.status}` }
   return (await res.json()) as AIRecipeResponse
 }
 
@@ -394,11 +410,18 @@ function formatChildLabel(c: ChildProfile) {
   return `${c.label} • ${age}`
 }
 
-function extractRecipeTitle(text: string) {
-  const firstLine = String(text ?? '').split('\n')[0]?.trim()
-  if (!firstLine) return 'Receita rápida'
-  // proteção básica contra títulos muito longos
-  return firstLine.length > 64 ? firstLine.slice(0, 64) : firstLine
+function friendlyHintFromError(err?: string, hint?: string) {
+  // preferimos o hint vindo do servidor (contrato), sem “cara de erro”
+  if (hint) return hint
+
+  if (err === 'need_more_items') return 'Se quiser, escreva mais um item para eu montar algo direto.'
+  if (err === 'not_specific_enough') return 'Com mais um item dá para montar algo bem direto.'
+  if (err === 'empty_pantry') return 'Escreva 1 a 3 itens. Pode ser só um.'
+  if (err === 'intro_6_11') return 'Por enquanto, aqui a gente não sugere receitas nessa fase.'
+  if (err === 'under_6') return 'Para essa fase, o melhor é seguir a orientação que você já usa com sua rede de saúde.'
+  if (err === 'age_missing') return 'Complete a idade no Eu360 para liberar.'
+  if (err) return 'Se quiser, escreva mais um item e tentamos de novo.'
+  return ''
 }
 
 export default function MeuDiaLeveClient() {
@@ -413,14 +436,15 @@ export default function MeuDiaLeveClient() {
 
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
+  // filhos / idades
   const [children, setChildren] = useState<ChildProfile[]>([])
   const [activeChildId, setActiveChildId] = useState<string>('')
 
   const [pantry, setPantry] = useState<string>('')
   const [aiRecipeText, setAiRecipeText] = useState<string>('')
-  const [aiRecipeTitle, setAiRecipeTitle] = useState<string>('') // <- para salvar com nome real
   const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
   const [aiRecipeError, setAiRecipeError] = useState<string>('')
+  const [aiRecipeHint, setAiRecipeHint] = useState<string>('')
 
   useEffect(() => {
     try {
@@ -438,6 +462,7 @@ export default function MeuDiaLeveClient() {
     const kids = inferChildrenFromEu360()
     setChildren(kids)
 
+    // default: seleciona o filho “mais velho com idade” (para liberar quando houver)
     const withAge = kids.filter((k) => k.months !== null) as Array<ChildProfile & { months: number }>
     if (withAge.length) {
       const sorted = [...withAge].sort((a, b) => b.months - a.months)
@@ -484,7 +509,7 @@ export default function MeuDiaLeveClient() {
     if (next === 'receitas') {
       setAiRecipeError('')
       setAiRecipeText('')
-      setAiRecipeTitle('')
+      setAiRecipeHint('')
     }
     try {
       track('meu_dia_leve.step', { step: next })
@@ -570,6 +595,7 @@ export default function MeuDiaLeveClient() {
 
   const activeMonths = activeChild?.months ?? null
 
+  // Gate central
   const gate = useMemo(() => {
     if (!children.length) {
       return {
@@ -603,7 +629,7 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'under_6' as const,
         title: 'Sem receitas por enquanto',
-        message: 'Para bebês com menos de 6 meses, a orientação principal é a que você já segue com sua rede de saúde.',
+        message: 'Para bebês com menos de 6 meses, a orientação principal é aleitamento (conforme sua rede de saúde).',
       }
     }
 
@@ -612,7 +638,7 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'intro_6_11' as const,
         title: 'Introdução alimentar',
-        message: 'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas.',
+        message: 'Entre 6 e 11 meses, as recomendações variam. O ideal é seguir a orientação do pediatra / rede de saúde.',
       }
     }
 
@@ -622,7 +648,7 @@ export default function MeuDiaLeveClient() {
   async function onGenerateAIRecipe() {
     setAiRecipeError('')
     setAiRecipeText('')
-    setAiRecipeTitle('')
+    setAiRecipeHint('')
 
     if (gate.blocked) {
       try {
@@ -634,7 +660,7 @@ export default function MeuDiaLeveClient() {
 
     const trimmed = pantry.trim()
     if (!trimmed) {
-      toast.info('Escreva 1 a 3 itens. Ex.: “banana” ou “ovo, arroz”.')
+      toast.info('Escreva 1 a 3 itens. Pode ser só um.')
       return
     }
 
@@ -646,25 +672,29 @@ export default function MeuDiaLeveClient() {
 
       const data = await requestAIRecipe({ slot, mood, pantry: trimmed, childAgeMonths: activeMonths as number })
 
-      if (!data?.ok) {
-        setAiRecipeError(data?.error || 'erro_receita')
-        // Aqui é o ponto-chave: usa o hint do contrato (leve e direto)
-        toast.info(data?.hint || 'Me diga 2 ou 3 itens para eu montar uma receita bem direta.')
+      if (!data?.ok || !data.text) {
+        const err = data?.error || 'erro_receita'
+        const hint = friendlyHintFromError(err, data?.hint)
+
+        setAiRecipeError(err)
+        setAiRecipeHint(hint)
+
+        // não tratar como “falha”: só orientar e manter opções prontas
+        toast.info('Se quiser, a gente ajusta com mais um item — ou você usa uma opção pronta abaixo.')
         try {
-          track('meu_dia_leve.recipe.fail', { error: data?.error || 'not_ok', hasHint: !!data?.hint })
+          track('meu_dia_leve.recipe.fail', { error: err })
         } catch {}
         return
       }
 
-      const text = data.text || ''
-      setAiRecipeText(text)
-      setAiRecipeTitle(extractRecipeTitle(text))
-
+      setAiRecipeText(data.text)
+      setAiRecipeHint('')
       try {
         track('meu_dia_leve.recipe.ok', { slot, mood })
       } catch {}
     } catch {
       setAiRecipeError('erro_rede')
+      setAiRecipeHint('Se quiser, você pode tentar de novo — ou usar uma opção pronta abaixo.')
       toast.info('Falhou agora. Se quiser, use uma opção pronta abaixo.')
       try {
         track('meu_dia_leve.recipe.fail', { error: 'network_or_throw' })
@@ -937,10 +967,13 @@ export default function MeuDiaLeveClient() {
                             Receitas rápidas
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">Uma receita simples para agora</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Você escreve o que tem. O Materna devolve uma receita curta, com modo de fazer. Sem complicar.
+                          </p>
                         </div>
                       </div>
 
+                      {/* Seleção do filho (quando houver mais de um) */}
                       {children.length ? (
                         <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para qual filho?</div>
@@ -956,8 +989,8 @@ export default function MeuDiaLeveClient() {
                                 onClick={() => {
                                   setActiveChildId(c.id)
                                   setAiRecipeText('')
-                                  setAiRecipeTitle('')
                                   setAiRecipeError('')
+                                  setAiRecipeHint('')
                                   try {
                                     track('meu_dia_leve.recipe.child.select', { childId: c.id, months: c.months })
                                   } catch {}
@@ -1000,6 +1033,7 @@ export default function MeuDiaLeveClient() {
                         </div>
                       )}
 
+                      {/* Gate message */}
                       {gate.blocked ? (
                         <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{gate.title}</div>
@@ -1010,14 +1044,14 @@ export default function MeuDiaLeveClient() {
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Escreva 1 a 3 itens. Ex.: “banana” ou “ovo, arroz”.
+                          Pode ser só um item. A gente resolve com o que tiver.
                         </div>
 
                         <textarea
                           value={pantry}
                           onChange={(e) => setPantry(e.target.value)}
                           rows={3}
-                          placeholder="o que tenho em casa…"
+                          placeholder="Ex.: banana • ovo • arroz"
                           className="mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]"
                         />
 
@@ -1039,20 +1073,27 @@ export default function MeuDiaLeveClient() {
                           {gate.blocked ? (
                             <span className="text-[12px] text-[#6a6a6a]">Complete a idade no Eu360 para liberar.</span>
                           ) : null}
-
-                          {aiRecipeError ? (
-                            <span className="text-[12px] text-[#6a6a6a]">Se não der agora, você ainda pode usar uma opção pronta abaixo.</span>
-                          ) : null}
                         </div>
+
+                        {/* Hint suave (sem “cara de erro”) */}
+                        {aiRecipeHint ? (
+                          <div className="mt-3 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[12px] text-[#6a6a6a]">
+                            {aiRecipeHint}
+                          </div>
+                        ) : null}
 
                         {aiRecipeText ? (
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                             <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
                             <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
 
+                            <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                              Se quiser parar por aqui, já está completo.
+                            </div>
+
                             <div className="mt-4 flex flex-wrap gap-2">
                               <button
-                                onClick={() => saveCurrentToMyDay(aiRecipeTitle || 'Receita rápida')}
+                                onClick={() => saveCurrentToMyDay('Receita rápida')}
                                 className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                               >
                                 Salvar no Meu Dia
