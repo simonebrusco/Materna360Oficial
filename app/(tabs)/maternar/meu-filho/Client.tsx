@@ -4,15 +4,20 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
+
 import {
   addTaskToMyDay,
   listMyDayTasks,
   MY_DAY_SOURCES,
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
+
 import { markJourneyFamilyDone } from '@/app/lib/journey.client'
+import { getActiveChildOrNull, getProfileSnapshot } from '@/app/lib/profile.client'
+
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -82,21 +87,73 @@ function timeHint(t: TimeMode) {
   return 'Para quando você quer fechar o dia com presença de verdade.'
 }
 
-function inferContext(): { time: TimeMode; age: AgeBand } {
-  /**
-   * Integração “best effort” com Eu360:
-   * - eu360_time_with_child: "5" | "10" | "15"
-   * - eu360_child_age_band: "0-2" | "3-4" | "5-6" | "6+"
-   *
-   * Se não houver nada: default inteligente = 15 min, 3-4
-   */
-  const tRaw = safeGetLS('eu360_time_with_child')
-  const aRaw = safeGetLS('eu360_child_age_band')
+/**
+ * Preferências “silenciosas” do hub Meu Filho.
+ * - time: quanto tempo ela tem
+ * - ageBand override: se ela trocar manualmente (sem exigir)
+ * - preferredChildId: opcional (se você quiser plugar no futuro)
+ */
+const HUB_PREF = {
+  time: 'maternar/meu-filho/pref/time',
+  ageBand: 'maternar/meu-filho/pref/ageBand',
+  preferredChildId: 'maternar/meu-filho/pref/childId',
+}
 
-  const time: TimeMode = tRaw === '5' || tRaw === '10' || tRaw === '15' ? tRaw : '15'
-  const age: AgeBand = aRaw === '0-2' || aRaw === '3-4' || aRaw === '5-6' || aRaw === '6+' ? aRaw : '3-4'
+/**
+ * Deriva AgeBand do ageMonths.
+ * 0–2: 0..35
+ * 3–4: 36..59
+ * 5–6: 60..83
+ * 6+: 84+
+ */
+function ageBandFromMonths(ageMonths: number | null | undefined): AgeBand | null {
+  if (typeof ageMonths !== 'number' || !Number.isFinite(ageMonths)) return null
+  const m = Math.max(0, Math.floor(ageMonths))
 
-  return { time, age }
+  if (m <= 35) return '0-2'
+  if (m <= 59) return '3-4'
+  if (m <= 83) return '5-6'
+  return '6+'
+}
+
+function normalizeAgeBand(v: unknown): AgeBand | null {
+  const s = String(v ?? '').trim()
+  if (s === '0-2' || s === '3-4' || s === '5-6' || s === '6+') return s
+  return null
+}
+
+function normalizeTimeMode(v: unknown): TimeMode | null {
+  const s = String(v ?? '').trim()
+  if (s === '5' || s === '10' || s === '15') return s
+  return null
+}
+
+/**
+ * Inferência “best effort”:
+ * Prioridade:
+ * 1) Pref do hub (time) + override (ageBand) se existir
+ * 2) Perfil Eu360 (child ativo -> ageMonths -> ageBand)
+ * 3) Fallback antigo (eu360_time_with_child / eu360_child_age_band)
+ * 4) Defaults seguros
+ */
+function inferContext(): { time: TimeMode; age: AgeBand; childLabel?: string } {
+  // 1) preferências do hub
+  const prefTime = normalizeTimeMode(safeGetLS(HUB_PREF.time))
+  const prefAgeBand = normalizeAgeBand(safeGetLS(HUB_PREF.ageBand))
+  const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+
+  // 2) perfil (fonte única)
+  const child = getActiveChildOrNull(prefChildId)
+  const derivedAgeBand = ageBandFromMonths(child?.ageMonths ?? null)
+
+  // 3) fallback antigo (compat)
+  const legacyTime = normalizeTimeMode(safeGetLS('eu360_time_with_child'))
+  const legacyAgeBand = normalizeAgeBand(safeGetLS('eu360_child_age_band'))
+
+  const time: TimeMode = prefTime ?? legacyTime ?? '15'
+  const age: AgeBand = prefAgeBand ?? derivedAgeBand ?? legacyAgeBand ?? '3-4'
+
+  return { time, age, childLabel: child?.label }
 }
 
 /* =========================
@@ -308,6 +365,9 @@ export default function MeuFilhoClient() {
   const [age, setAge] = useState<AgeBand>('3-4')
   const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
+  const [childLabel, setChildLabel] = useState<string | undefined>(undefined)
+  const [profileSource, setProfileSource] = useState<string>('none')
+
   useEffect(() => {
     try {
       track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
@@ -318,10 +378,19 @@ export default function MeuFilhoClient() {
     const inferred = inferContext()
     setTime(inferred.time)
     setAge(inferred.age)
+    setChildLabel(inferred.childLabel)
     setStep('brincadeiras')
 
+    const snap = getProfileSnapshot()
+    setProfileSource(snap.source)
+
     try {
-      track('meu_filho.open', { time: inferred.time, age: inferred.age })
+      track('meu_filho.open', {
+        time: inferred.time,
+        age: inferred.age,
+        childLabel: inferred.childLabel ?? null,
+        profileSource: snap.source,
+      })
     } catch {}
   }, [])
 
@@ -337,8 +406,12 @@ export default function MeuFilhoClient() {
 
   function onSelectTime(next: TimeMode) {
     setTime(next)
-    safeSetLS('eu360_time_with_child', next)
     setChosen('a')
+
+    // Persistência silenciosa: prefer do hub + compat legado
+    safeSetLS(HUB_PREF.time, next)
+    safeSetLS('eu360_time_with_child', next)
+
     try {
       track('meu_filho.time.select', { time: next })
     } catch {}
@@ -346,10 +419,14 @@ export default function MeuFilhoClient() {
 
   function onSelectAge(next: AgeBand) {
     setAge(next)
-    safeSetLS('eu360_child_age_band', next)
     setChosen('a')
+
+    // Persistência silenciosa: override do hub + compat legado
+    safeSetLS(HUB_PREF.ageBand, next)
+    safeSetLS('eu360_child_age_band', next)
+
     try {
-      track('meu_filho.age.select', { age: next })
+      track('meu_filho.age.select', { age: next, reason: 'manual_override' })
     } catch {}
   }
 
@@ -427,7 +504,6 @@ export default function MeuFilhoClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
-          {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -445,10 +521,17 @@ export default function MeuFilhoClient() {
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
                 Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
               </p>
+
+              {/* micro-sinal de personalização (sem chamar atenção) */}
+              {childLabel ? (
+                <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
+                  Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
+                  <span className="opacity-70"> • fonte: {profileSource}</span>
+                </div>
+              ) : null}
             </div>
           </header>
 
-          {/* EXPERIÊNCIA ÚNICA (um container) */}
           <Reveal>
             <section
               className="
@@ -460,7 +543,6 @@ export default function MeuFilhoClient() {
                 overflow-hidden
               "
             >
-              {/* Top bar: contexto + trilha */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -495,7 +577,6 @@ export default function MeuFilhoClient() {
                   </button>
                 </div>
 
-                {/* Ajustes rápidos (secundários) */}
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
                     <div className="text-[12px] text-white/85 mb-2">Quanto tempo você tem agora?</div>
@@ -522,7 +603,7 @@ export default function MeuFilhoClient() {
                   </div>
 
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
-                    <div className="text-[12px] text-white/85 mb-2">Faixa do seu filho (para ajustar a ideia)</div>
+                    <div className="text-[12px] text-white/85 mb-2">Faixa (ajusta a ideia)</div>
                     <div className="grid grid-cols-4 gap-2">
                       {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
                         const active = age === a
@@ -545,7 +626,6 @@ export default function MeuFilhoClient() {
                   </div>
                 </div>
 
-                {/* Stepper */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(
                     [
@@ -574,11 +654,9 @@ export default function MeuFilhoClient() {
                 </div>
               </div>
 
-              {/* Conteúdo muda dentro do mesmo container */}
               <div className="p-4 md:p-6">
-                {/* 1) BRINCADEIRAS DO DIA */}
                 {step === 'brincadeiras' ? (
-                  <div id="brincadeiras" className="space-y-4">
+                  <div className="space-y-4">
                     <SoftCard
                       className="
                         p-5 md:p-6 rounded-2xl
@@ -600,7 +678,6 @@ export default function MeuFilhoClient() {
                         </div>
                       </div>
 
-                      {/* Escolha guiada (3 opções) */}
                       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                         {(['a', 'b', 'c'] as const).map((k) => {
                           const it = kit.plan[k]
@@ -624,7 +701,6 @@ export default function MeuFilhoClient() {
                         })}
                       </div>
 
-                      {/* “faça agora” destacado */}
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
                         <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
@@ -666,9 +742,8 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 2) DESENVOLVIMENTO POR FASE (sem diagnóstico) */}
                 {step === 'desenvolvimento' ? (
-                  <div id="desenvolvimento" className="space-y-4">
+                  <div className="space-y-4">
                     <SoftCard
                       className="
                         p-5 md:p-6 rounded-2xl
@@ -695,10 +770,6 @@ export default function MeuFilhoClient() {
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
-                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Como usar isso agora:</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Escolha uma brincadeira que combine com essa fase e mantenha curta. O objetivo é conexão, não performance.
-                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -719,9 +790,8 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 3) ROTINA LEVE DA CRIANÇA */}
                 {step === 'rotina' ? (
-                  <div id="rotina" className="space-y-4">
+                  <div className="space-y-4">
                     <SoftCard
                       className="
                         p-5 md:p-6 rounded-2xl
@@ -749,11 +819,6 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
-                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Aplicação rápida:</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Combine o “final” antes de começar. Ex.: “A gente brinca {timeLabel(time)} e depois guarda juntos.”
-                        </div>
-
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             onClick={() => go('brincadeiras')}
@@ -773,9 +838,8 @@ export default function MeuFilhoClient() {
                   </div>
                 ) : null}
 
-                {/* 4) GESTOS DE CONEXÃO */}
                 {step === 'conexao' ? (
-                  <div id="conexao" className="space-y-4">
+                  <div className="space-y-4">
                     <SoftCard
                       className="
                         p-5 md:p-6 rounded-2xl
@@ -802,10 +866,6 @@ export default function MeuFilhoClient() {
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
-
-                        <div className="mt-4 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Se você fez só isso hoje, já valeu. O Materna é sobre o possível.
-                        </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
