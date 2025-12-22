@@ -245,13 +245,13 @@ export default function ProfileForm() {
   }, [form])
 
   function onChange(updates: Partial<ProfileFormState>) {
-    setForm(prev => ({ ...prev, ...updates }))
+    setForm((prev) => ({ ...prev, ...updates }))
   }
 
   function onToggleArrayField(fieldName: keyof ProfileFormState, value: string) {
     const current = (form[fieldName] as unknown as string[] | undefined) ?? []
-    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
-    setForm(prev => ({ ...prev, [fieldName]: next } as ProfileFormState))
+    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+    setForm((prev) => ({ ...prev, [fieldName]: next } as ProfileFormState))
   }
 
   const canGoNext = useMemo(() => {
@@ -326,12 +326,12 @@ export default function ProfileForm() {
 
   function goNext() {
     if (!validateStep(step)) return
-    setStep(s => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
+    setStep((s) => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
   }
 
   function goPrev() {
     setErrors({})
-    setStep(s => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
+    setStep((s) => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
   }
 
   async function saveAndContinue() {
@@ -445,7 +445,7 @@ export default function ProfileForm() {
                 form={form}
                 errors={errors}
                 onChange={onChange}
-                onToggleArrayField={onToggleArrayField as any}
+                onToggleArrayField={onToggleArrayField}
               />
             ) : null}
 
