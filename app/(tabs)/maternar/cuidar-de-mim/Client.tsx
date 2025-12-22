@@ -9,7 +9,14 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
-import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import {
+  addTaskToMyDay,
+  listMyDayTasks,
+  MY_DAY_SOURCES,
+  type MyDayTaskItem,
+} from '@/app/lib/myDayTasks.client'
+import { toast } from '@/app/lib/toast'
+import { getProfileSnapshot } from '@/app/lib/profile.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -31,10 +38,21 @@ type Routine = {
   next: string
 }
 
+type RoutineCopy = {
+  headerLine: string
+  subtitle: string
+  close: string
+  next: string
+}
+
+const LS_PREFIX = 'm360:'
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
+    const direct = window.localStorage.getItem(key)
+    if (direct !== null) return direct
+    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
   } catch {
     return null
   }
@@ -44,6 +62,7 @@ function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
   } catch {}
 }
 
@@ -128,7 +147,12 @@ const ROUTINES: Routine[] = [
     focus: '3min',
     title: 'Reset 3 min (água + pescoço + foco)',
     subtitle: 'Três minutos para retomar o controle do próximo passo.',
-    steps: ['Água: 3–5 goles', 'Pescoço: 3 giros leves', 'Respire: 4 lentas', 'Escolha 1 próxima ação pequena'],
+    steps: [
+      'Água: 3–5 goles',
+      'Pescoço: 3 giros leves',
+      'Respire: 4 lentas',
+      'Escolha 1 próxima ação pequena',
+    ],
     pauseDeck: [
       { label: 'Água + pausa', min: 1 },
       { label: 'Pescoço (30s)', min: 1 },
@@ -159,7 +183,9 @@ function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
   const focusRaw = safeGetLS('eu360_focus_time')
   const ritmoRaw = safeGetLS('eu360_ritmo')
 
-  const focus: FocusMode = focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
+  const focus: FocusMode =
+    focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
+
   const ritmo: Ritmo =
     ritmoRaw === 'leve' || ritmoRaw === 'cansada' || ritmoRaw === 'animada' || ritmoRaw === 'sobrecarregada'
       ? ritmoRaw
@@ -189,11 +215,40 @@ function pickSessionVariantIndex(key: string, optionsLength: number): number {
   return next
 }
 
-type RoutineCopy = {
-  headerLine: string
-  subtitle: string
-  close: string
-  next: string
+/* =========================
+   P26 — Guardrails + Jornada
+========================= */
+
+function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
+  const s = (t as any).status
+  if (s === 'active' || s === 'snoozed' || s === 'done') return s
+  if ((t as any).done === true) return 'done'
+  return 'active'
+}
+
+function countActiveSelfcareFromCuidarDeMimToday(tasks: MyDayTaskItem[]) {
+  return tasks.filter((t) => {
+    const isSelfcare = t.origin === 'selfcare'
+    const isFromCuidar = (t as any).source === MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM
+    const isActive = statusOf(t) === 'active'
+    return isSelfcare && isFromCuidar && isActive
+  }).length
+}
+
+function markSelfcareDoneForJourney() {
+  try {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const dk = `${y}-${m}-${day}`
+
+    window.localStorage.setItem('journey/selfcare/doneOn', dk)
+    const raw = window.localStorage.getItem('journey/selfcare/doneCount')
+    const n = raw ? Number(raw) : 0
+    const next = Number.isFinite(n) ? n + 1 : 1
+    window.localStorage.setItem('journey/selfcare/doneCount', String(next))
+  } catch {}
 }
 
 export default function Client() {
@@ -206,9 +261,11 @@ export default function Client() {
   const [saveFeedback, setSaveFeedback] = useState<string>('')
   const [hasSavedSomething, setHasSavedSomething] = useState<boolean>(false)
 
+  const [motherName, setMotherName] = useState<string | null>(null)
+
   useEffect(() => {
     try {
-      track('nav.view', { page: 'cuidar-de-mim', timestamp: new Date().toISOString() })
+      track('nav.view', { tab: 'maternar', page: 'cuidar-de-mim', timestamp: new Date().toISOString() })
     } catch {}
   }, [])
 
@@ -220,8 +277,15 @@ export default function Client() {
     setStep('mini-rotina')
     setHasSavedSomething(false)
 
+    const snap = getProfileSnapshot()
+    setMotherName(snap.motherName)
+
     try {
-      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo })
+      track('cuidar_de_mim.open', {
+        focus: inferred.focus,
+        ritmo: inferred.ritmo,
+        profileSource: snap.source,
+      })
     } catch {}
   }, [])
 
@@ -283,13 +347,34 @@ export default function Client() {
 
   function saveToMyDay(title: string) {
     const origin = originForCuidarDeMim()
+    const SOURCE = MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM
+
+    // Guardrail P26: no máximo 3 tarefas ativas do Cuidar de Mim no dia
+    const today = listMyDayTasks()
+    const activeCount = countActiveSelfcareFromCuidarDeMimToday(today)
+    if (activeCount >= 3) {
+      toast.info('Hoje já tem 3 cuidados salvos. Se quiser, conclua um ou deixe só esse por agora.')
+      try {
+        track('my_day.task.add.blocked', { source: SOURCE, origin, reason: 'limit_reached', limit: 3 })
+      } catch {}
+      return
+    }
+
     const res = addTaskToMyDay({
       title,
       origin,
-      source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+      source: SOURCE,
     })
 
     setHasSavedSomething(true)
+
+    if (res.limitHit) {
+      toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
+      try {
+        track('my_day.task.add.blocked', { source: SOURCE, origin, reason: 'open_tasks_limit_hit', dateKey: res.dateKey })
+      } catch {}
+      return
+    }
 
     if (res.created) setSaveFeedback('Levei para o Meu Dia.')
     else setSaveFeedback('Isso já estava no Meu Dia.')
@@ -299,11 +384,19 @@ export default function Client() {
         origin,
         created: res.created,
         dateKey: res.dateKey,
-        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+        source: SOURCE,
       })
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
+  }
+
+  function registerSelfcareJourney() {
+    markSelfcareDoneForJourney()
+    toast.success('Registrado na sua Jornada')
+    try {
+      track('journey.selfcare.done', { source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM })
+    } catch {}
   }
 
   const chips = [
@@ -367,6 +460,13 @@ export default function Client() {
     }
   }, [routine.id, routine.focus, routine.subtitle, routine.close, routine.next, focus, ritmo])
 
+  const motherPrefix = useMemo(() => {
+    const n = (motherName ?? '').trim()
+    if (!n) return ''
+    // leve, sem chamar atenção demais
+    return `${n}, `
+  }, [motherName])
+
   return (
     <main
       data-layout="page-template-v1"
@@ -395,7 +495,8 @@ export default function Client() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem clareza e sai com um reset curto e prático para seguir melhor — sem precisar pensar muito.
+                {motherPrefix}
+                você entra sem clareza e sai com um reset curto e prático para seguir melhor — sem precisar pensar muito.
               </p>
             </div>
           </header>
@@ -513,9 +614,7 @@ export default function Client() {
 
                   {step === 'ritmo' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">
-                        Ajuste rápido (pra eu pensar melhor por você)
-                      </div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido (pra eu pensar melhor por você)</div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
@@ -551,9 +650,7 @@ export default function Client() {
                                 onClick={() => onSelectFocus(f)}
                                 className={[
                                   'rounded-2xl border p-3 text-left transition',
-                                  active
-                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                               >
                                 <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
@@ -616,14 +713,10 @@ export default function Client() {
                             onClick={() => toggleStep(i)}
                             className={[
                               'rounded-3xl border p-4 text-left transition',
-                              checked[i]
-                                ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                              checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                             ].join(' ')}
                           >
-                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                              passo {i + 1}
-                            </div>
+                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">passo {i + 1}</div>
                             <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
                             <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
                           </button>
@@ -632,9 +725,7 @@ export default function Client() {
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                          Faça só o passo 1. Isso já ajuda.
-                        </div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -727,8 +818,16 @@ export default function Client() {
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
-                            onClick={() => saveToMyDay(routine.title)}
+                            onClick={registerSelfcareJourney}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            title="Conta para a sua Jornada"
+                          >
+                            Registrar na Minha Jornada
+                          </button>
+
+                          <button
+                            onClick={() => saveToMyDay(routine.title)}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Levar para o Meu Dia
                           </button>
