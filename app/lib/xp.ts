@@ -80,14 +80,7 @@ export function getXpSnapshot(): XpSnapshot {
  *
  * P26: NÃO calcula streak. Apenas registra o que aconteceu (today/total/history).
  */
-export function updateXP(delta: number): XpSnapshot {
-  const dateKey = getBrazilDateKey()
-
-  const stored = load<XpStoredTotals>(XP_TOTALS_KEY) ?? {
-    total: 0,
-    streak: 0,
-    lastDateKey: null,
-  }
+export function
 
   // Atualiza total (nunca deixa negativo)
   const newTotal = Math.max(0, (stored.total ?? 0) + delta)
