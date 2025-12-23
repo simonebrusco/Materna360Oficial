@@ -6,18 +6,12 @@ const XP_TOTALS_KEY = 'xp:totals'
 const XP_DAILY_PREFIX = 'xp:daily:'
 const XP_HISTORY_KEY = 'xp:history'
 
-/**
- * P26 — Anti-culpa (Jornada silenciosa)
- *
- * Importante:
- * - "streak/sequência" NÃO existe como conceito do produto em P26.
- * - Mantemos campos por compatibilidade para não quebrar UI/código legado,
- *   mas o valor fica sempre 0.
- * - Total/today/history permanecem válidos como registro do que aconteceu.
- */
 type XpStoredTotals = {
   total: number
-  // compat (não usar no produto)
+  /**
+   * P26: streak não é conceito de produto (anti-culpa).
+   * Mantido por compatibilidade com snapshots/legado, mas deve permanecer 0.
+   */
   streak: number
   lastDateKey: string | null
 }
@@ -25,13 +19,26 @@ type XpStoredTotals = {
 export type XpSnapshot = {
   today: number
   total: number
-  // compat (não usar no produto)
+  /**
+   * P26: streak não é conceito de produto (anti-culpa).
+   * Mantido por compatibilidade, mas sempre 0.
+   */
   streak: number
 }
 
 export type XpHistoryEntry = {
   dateKey: string
   xp: number
+}
+
+/**
+ * Calcula a data de ontem a partir de uma chave YYYY-MM-DD.
+ * (Mantida porque pode ser útil para históricos futuros; P26 não usa streak.)
+ */
+function getYesterdayKey(currentKey: string): string {
+  const d = new Date(currentKey + 'T00:00:00')
+  d.setDate(d.getDate() - 1)
+  return d.toISOString().slice(0, 10)
 }
 
 /**
@@ -54,7 +61,8 @@ function upsertXpHistory(dateKey: string, xpForDay: number) {
 }
 
 /**
- * Lê o estado atual de XP (hoje, total e "streak" compat).
+ * Lê o estado atual de XP (hoje, total e "streak").
+ * P26: streak é sempre 0 (anti-culpa).
  */
 export function getXpSnapshot(): XpSnapshot {
   const dateKey = getBrazilDateKey()
@@ -71,25 +79,34 @@ export function getXpSnapshot(): XpSnapshot {
   return {
     today,
     total: stored.total ?? 0,
-    streak: 0, // P26: sempre 0 (sem sequência)
+    streak: 0,
   }
 }
 
 /**
  * Aplica um delta de XP (positivo ou negativo) e devolve o snapshot atualizado.
- *
- * P26: NÃO calcula streak. Apenas registra o que aconteceu (today/total/history).
+ * P26: não calcula streak e não mantém sequência (anti-culpa).
  */
-export function
+export function updateXP(delta: number): XpSnapshot {
+  const dateKey = getBrazilDateKey()
+
+  const stored = load<XpStoredTotals>(XP_TOTALS_KEY) ?? {
+    total: 0,
+    streak: 0,
+    lastDateKey: null,
+  }
 
   // Atualiza total (nunca deixa negativo)
   const newTotal = Math.max(0, (stored.total ?? 0) + delta)
 
-  // P26: streak sempre 0 (compat)
+  // P26: streak não existe como mecânica de produto (anti-culpa).
+  // Mantemos 0 por compatibilidade e para evitar regressões.
+  const newStreak = 0
+  void getYesterdayKey // mantido (helper pode ser útil no futuro sem reintroduzir streak)
+
   const updatedTotals: XpStoredTotals = {
     total: newTotal,
     streak: 0,
-    // Mantemos lastDateKey apenas como “última atividade registrada”, sem cobrança.
     lastDateKey: delta !== 0 ? dateKey : stored.lastDateKey,
   }
 
@@ -107,7 +124,7 @@ export function
   return {
     today: newToday,
     total: newTotal,
-    streak: 0, // P26: sempre 0
+    streak: newStreak,
   }
 }
 
