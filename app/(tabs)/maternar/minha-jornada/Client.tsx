@@ -477,7 +477,8 @@ export default function MinhaJornadaClient() {
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">O que já existe hoje</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Na P26 nós registramos “feito hoje” + contagem total. Histórico por dia (calendário/streak) entra numa fase seguinte.
+                           Na P26 nós registramos “feito hoje” + contagem total. Histórico por dia (calendário de presença) entra numa fase seguinte.
+
                           </p>
                         </div>
                       </div>
@@ -509,7 +510,7 @@ export default function MinhaJornadaClient() {
                       <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo upgrade</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Quando a gente quiser “mês/semana/streak real”, vamos precisar persistir um histórico por dia (sem pesar o app).
+                          Quando a gente quiser “mês/semana/calendário de presença”, vamos precisar persistir um histórico por dia (sem pesar o app).
                           Por agora, P26 fecha com o essencial: registro simples e leitura clara.
                         </div>
 
