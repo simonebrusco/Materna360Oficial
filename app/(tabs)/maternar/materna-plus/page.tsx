@@ -302,7 +302,8 @@ export default function MaternaPlusPage() {
             >
               <div className="space-y-5">
                 <header className="space-y-2">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+  <h2 className="text-lg md:text-xl font-semibold text-white">
+  <p className="text-sm md:text-[15px] text-white/85">
                     PREMIUM
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
