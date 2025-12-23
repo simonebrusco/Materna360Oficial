@@ -1,10 +1,10 @@
+// app/(tabs)/maternar/minha-jornada/Client.tsx
 'use client'
 
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
-import { getJourneySnapshot, type JourneySnapshot } from '@/app/lib/journey.client'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -14,14 +14,79 @@ import AppIcon from '@/components/ui/AppIcon'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-type Step = 'painel' | 'selos' | 'progresso'
+/**
+ * P26 — PRINCÍPIO DA JORNADA (ANTI-CULPA)
+ *
+ * A Jornada é acompanhamento silencioso, não produtividade.
+ * Regras inegociáveis:
+ * - A Jornada registra apenas o que ACONTECEU (conclusões/salvamentos/ações).
+ * - Ausência não é registrada como “falha”.
+ * - Não existe “dias perdidos”, “streak quebrado” ou qualquer penalidade.
+ * - Repetição conta como continuidade (não como insistência / cobrança).
+ *
+ * Se uma mudança futura introduzir sensação de cobrança,
+ * ela viola diretamente a P26 e deve ser revertida.
+ */
 
-function stepIndex(s: Step) {
-  return s === 'painel' ? 1 : s === 'selos' ? 2 : 3
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeParseInt(v: string | null, fallback = 0) {
+  const n = Number.parseInt(String(v ?? ''), 10)
+  return Number.isFinite(n) ? n : fallback
 }
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
+}
+
+function todayKey() {
+  const d = new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function addDaysKey(date: Date, delta: number) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + delta)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function getRangeKeys(daysBack: number, anchor = new Date()) {
+  const keys: string[] = []
+  for (let i = -Math.max(0, daysBack - 1); i <= 0; i++) keys.push(addDaysKey(anchor, i))
+  return keys
+}
+
+/**
+ * Chaves atuais usadas no Maternar (sem backend).
+ * Mantemos compatível com o que já existe no app.
+ */
+const LS = {
+  pointsTotal: 'mj_points_total',
+  dayPrefix: 'mj_day_',
+  // OBS: mesmo que exista 'mj_streak' no storage/histórico,
+  // a Jornada P26 NÃO deve depender disso como métrica central.
+  streak: 'mj_streak',
+}
+
+function readDayPoints(key: string) {
+  return safeParseInt(safeGetLS(LS.dayPrefix + key), 0)
+}
+
+function readTotalPoints() {
+  return safeParseInt(safeGetLS(LS.pointsTotal), 0)
 }
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -41,7 +106,9 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   )
 }
 
-function StepPill({
+type View = 'hoje' | 'resumo'
+
+function ViewPill({
   active,
   onClick,
   label,
@@ -56,9 +123,7 @@ function StepPill({
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active
-          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-          : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
       ].join(' ')}
     >
       {label}
@@ -66,41 +131,12 @@ function StepPill({
   )
 }
 
-/**
- * P26 — Selos simples (baseado em contagem real)
- * Nada de pontos inventados; só progressão por consistência.
- */
-type Badge = {
-  id: string
-  title: string
-  desc: string
-  icon: React.ComponentProps<typeof AppIcon>['name']
-  minCount: number
-}
-
-const BADGES: Badge[] = [
-  { id: 'b-1', title: 'Primeiro registro', desc: 'Você marcou presença. Isso já muda o dia.', icon: 'star', minCount: 1 },
-  { id: 'b-2', title: 'Trilha possível', desc: 'Você voltou mais de uma vez. Consistência sem peso.', icon: 'sparkles', minCount: 3 },
-  { id: 'b-3', title: 'Conexão real', desc: 'Você está criando rotina de presença sem perfeição.', icon: 'heart', minCount: 7 },
-  { id: 'b-4', title: 'Base firme', desc: 'Você construiu um histórico. O Materna começa a “pegar”.', icon: 'sun', minCount: 14 },
-]
-
-function totalDoneCount(s: JourneySnapshot) {
-  const selfcare = Number.isFinite(s.selfcare.count) ? s.selfcare.count : 0
-  const family = Number.isFinite(s.family.count) ? s.family.count : 0
-  return selfcare + family
-}
-
 export default function MinhaJornadaClient() {
-  const [step, setStep] = useState<Step>('painel')
-  const [snapshot, setSnapshot] = useState<JourneySnapshot>(() => ({
-    selfcare: { doneToday: false, count: 0 },
-    family: { doneToday: false, count: 0 },
-  }))
+  const [view, setView] = useState<View>('hoje')
 
-  function refresh() {
-    setSnapshot(getJourneySnapshot())
-  }
+  const [today, setToday] = useState<string>(todayKey())
+  const [totalPoints, setTotalPoints] = useState<number>(0)
+  const [todayPoints, setTodayPoints] = useState<number>(0)
 
   useEffect(() => {
     try {
@@ -109,49 +145,39 @@ export default function MinhaJornadaClient() {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const t = todayKey()
+    setToday(t)
 
-    // Atualiza quando volta do Meu Dia / muda aba / etc.
-    const onFocus = () => refresh()
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') refresh()
-    }
+    const total = readTotalPoints()
+    const tPoints = readDayPoints(t)
 
-    // Atualiza se houver mudanças em outra aba (best effort)
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key) return
-      if (e.key.startsWith('journey/')) refresh()
-    }
+    setTotalPoints(total)
+    setTodayPoints(tPoints)
 
-    window.addEventListener('focus', onFocus)
-    document.addEventListener('visibilitychange', onVisibility)
-    window.addEventListener('storage', onStorage)
-
-    return () => {
-      window.removeEventListener('focus', onFocus)
-      document.removeEventListener('visibilitychange', onVisibility)
-      window.removeEventListener('storage', onStorage)
-    }
+    try {
+      track('minha_jornada.open', { today: t, totalPoints: total, todayPoints: tPoints })
+    } catch {}
   }, [])
 
-  const completedTodayCount = useMemo(() => {
-    let n = 0
-    if (snapshot.selfcare.doneToday) n += 1
-    if (snapshot.family.doneToday) n += 1
-    return n
-  }, [snapshot])
+  const weekKeys = useMemo(() => getRangeKeys(7, new Date()), [])
+  const monthKeys = useMemo(() => getRangeKeys(28, new Date()), [])
 
-  const totalCount = useMemo(() => totalDoneCount(snapshot), [snapshot])
+  const daysActive7 = useMemo(() => weekKeys.filter((k) => readDayPoints(k) > 0).length, [weekKeys])
+  const daysActive28 = useMemo(() => monthKeys.filter((k) => readDayPoints(k) > 0).length, [monthKeys])
 
-  const badgeUnlocked = useMemo(() => BADGES.filter((b) => totalCount >= b.minCount), [totalCount])
-  const nextBadge = useMemo(() => BADGES.find((b) => totalCount < b.minCount) ?? null, [totalCount])
+  const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
+  const monthlyTotal = useMemo(() => monthKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [monthKeys])
 
-  function go(next: Step) {
-    setStep(next)
-    try {
-      track('minha_jornada.step', { step: next })
-    } catch {}
-  }
+  // metas “internas” (não viram cobrança; só referência visual)
+  const todaySoftMax = 26
+  const weekSoftMax = 120
+
+  const presenceLabel =
+    daysActive28 === 0
+      ? 'Você pode voltar quando fizer sentido.'
+      : daysActive28 === 1
+        ? 'Você esteve aqui 1 dia nas últimas 4 semanas.'
+        : `Você esteve aqui ${daysActive28} dias nas últimas 4 semanas.`
 
   return (
     <main
@@ -182,7 +208,7 @@ export default function MinhaJornadaClient() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um painel para enxergar progresso real: registros pequenos, consistência possível e selos por presença.
+                Um registro silencioso do que aconteceu — sem cobrança, sem “tudo ou nada”.
               </p>
             </div>
           </header>
@@ -203,334 +229,218 @@ export default function MinhaJornadaClient() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
-                      <AppIcon name="star" size={20} className="text-[#fd2597]" />
+                      <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
                     </div>
 
                     <div>
                       <div className="text-[12px] text-white/85">
-                        Passo {stepIndex(step)}/3 • hoje: {completedTodayCount}/2 registros • total: {totalCount}
+                        hoje: {todayPoints} pts • total: {totalPoints} pts • {presenceLabel}
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
-                        Sua jornada em visão clara
+                        O que coube hoje já conta
                       </div>
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        Aqui é leitura do que já foi registrado. As ações acontecem no Meu Dia.
+                        A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece.
                       </div>
                     </div>
                   </div>
 
-                  <Link
-                    href="/meu-dia"
-                    className="
-                      rounded-full
-                      bg-white/90 hover:bg-white
-                      text-[#2f3a56]
-                      px-4 py-2 text-[12px]
-                      shadow-lg transition
-                      whitespace-nowrap
-                    "
-                    onClick={() => {
-                      try {
-                        track('minha_jornada.cta_meu_dia', { from: 'topbar' })
-                      } catch {}
-                    }}
-                  >
-                    Abrir Meu Dia
-                  </Link>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Link
+                      href="/maternar/minhas-conquistas"
+                      className="
+                        rounded-full
+                        bg-white/90 hover:bg-white
+                        text-[#2f3a56]
+                        px-4 py-2 text-[12px]
+                        shadow-lg transition
+                        text-center
+                      "
+                    >
+                      Conquistas & Selos
+                    </Link>
+
+                    <Link
+                      href="/meu-dia"
+                      className="
+                        rounded-full
+                        bg-white/15 hover:bg-white/25
+                        text-white
+                        px-4 py-2 text-[12px]
+                        border border-white/35
+                        transition
+                        text-center
+                      "
+                    >
+                      Meu Dia
+                    </Link>
+                  </div>
                 </div>
 
-                {/* Stepper */}
+                {/* Mini menu */}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <StepPill active={step === 'painel'} onClick={() => go('painel')} label="Painel" />
-                  <StepPill active={step === 'selos'} onClick={() => go('selos')} label="Selos" />
-                  <StepPill active={step === 'progresso'} onClick={() => go('progresso')} label="Progresso" />
+                  <ViewPill active={view === 'hoje'} onClick={() => setView('hoje')} label="Hoje" />
+                  <ViewPill active={view === 'resumo'} onClick={() => setView('resumo')} label="Resumo" />
                 </div>
               </div>
 
-              <div className="p-4 md:p-6">
-                {/* PAINEL */}
-                {step === 'painel' ? (
-                  <div className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
+              {/* CONTENT */}
+              <div className="p-4 md:p-6 space-y-4">
+                {/* HOJE */}
+                {view === 'hoje' ? (
+                  <SoftCard
+                    className="
+                      p-5 md:p-6 rounded-2xl
+                      bg-white/95
+                      border border-[#f5d7e5]
+                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    "
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                        <AppIcon name="heart" size={22} className="text-[#fd2597]" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                          Hoje
+                        </span>
+
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">Registro do dia</h2>
+
+                        <p className="text-[13px] text-[#6a6a6a]">
+                          Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">feito hoje</div>
+                        <div className="mt-2 text-[26px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
+
+                        <div className="mt-4">
+                          <ProgressBar value={todayPoints} max={todaySoftMax} />
                         </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Painel da jornada
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Visão geral (sem cobrança)</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Você não precisa “fazer tudo”. Você só precisa enxergar o que foi possível.
-                          </p>
+
+                        <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+                          Referência visual gentil — não é meta. Se não coube, não vira dívida.
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">autocuidado</div>
-                              <div className="mt-1 text-[13px] text-[#6a6a6a]">feito hoje:</div>
-                              <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
-                                {snapshot.selfcare.doneToday ? 'Sim' : 'Ainda não'}
-                              </div>
-                            </div>
-                            <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                              <AppIcon name="sun" size={18} className="text-[#fd2597]" />
-                            </div>
-                          </div>
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">presença recente</div>
 
-                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                            total registrado: <span className="font-semibold text-[#2f3a56]">{snapshot.selfcare.count}</span>
-                          </div>
-                        </div>
+                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">Últimos 7 dias</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com registro: {daysActive7}/7</div>
 
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">conexão</div>
-                              <div className="mt-1 text-[13px] text-[#6a6a6a]">feito hoje:</div>
-                              <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
-                                {snapshot.family.doneToday ? 'Sim' : 'Ainda não'}
-                              </div>
-                            </div>
-                            <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                              <AppIcon name="heart" size={18} className="text-[#fd2597]" />
-                            </div>
-                          </div>
-
-                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                            total registrado: <span className="font-semibold text-[#2f3a56]">{snapshot.family.count}</span>
+                        <div className="mt-4">
+                          <div className="text-[11px] text-[#6a6a6a]">pontos na semana</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
+                          <div className="mt-3">
+                            <ProgressBar value={weeklyTotal} max={weekSoftMax} />
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">leitura rápida</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Hoje você registrou <span className="font-semibold text-[#2f3a56]">{completedTodayCount}</span> de 2 pilares.
-                          Se for só 1, ainda assim conta. O Materna é sobre o possível.
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <Link
-                            href="/meu-dia"
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Fazer no Meu Dia
-                          </Link>
-
-                          <button
-                            onClick={() => {
-                              refresh()
-                              try {
-                                track('minha_jornada.refresh', { reason: 'manual' })
-                              } catch {}
-                            }}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Atualizar
-                          </button>
-
-                          <button
-                            onClick={() => go('selos')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ver selos
-                          </button>
-                        </div>
+                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">fechamento leve</div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo.
                       </div>
-                    </SoftCard>
-                  </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Link
+                          href="/maternar"
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Voltar para o Maternar
+                        </Link>
+                        <Link
+                          href="/meu-dia"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ir para Meu Dia
+                        </Link>
+                      </div>
+                    </div>
+                  </SoftCard>
                 ) : null}
 
-                {/* SELOS */}
-                {step === 'selos' ? (
-                  <div className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="star" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Selos
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">Conquistas por presença</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Selos são um jeito de enxergar consistência. Sem “meta impossível”.
-                          </p>
-                        </div>
+                {/* RESUMO */}
+                {view === 'resumo' ? (
+                  <SoftCard
+                    className="
+                      p-5 md:p-6 rounded-2xl
+                      bg-white/95
+                      border border-[#f5d7e5]
+                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    "
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                        <AppIcon name="star" size={22} className="text-[#fd2597]" />
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">liberados</div>
-                          <div className="mt-3 space-y-3">
-                            {badgeUnlocked.length === 0 ? (
-                              <div className="text-[13px] text-[#6a6a6a]">
-                                Ainda não tem selo liberado — registre uma ação (autocuidado ou conexão) e o primeiro aparece.
-                              </div>
-                            ) : (
-                              badgeUnlocked.map((b) => (
-                                <div key={b.id} className="flex items-start gap-3 rounded-2xl bg-white border border-[#f5d7e5] p-4">
-                                  <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                                    <AppIcon name={b.icon} size={18} className="text-[#fd2597]" />
-                                  </div>
-                                  <div>
-                                    <div className="text-[13px] font-semibold text-[#2f3a56]">{b.title}</div>
-                                    <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{b.desc}</div>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                          Resumo
+                        </span>
 
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo selo</div>
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">Leitura de continuidade</h2>
 
-                          {nextBadge ? (
-                            <div className="mt-3">
-                              <div className="flex items-start gap-3">
-                                <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                                  <AppIcon name={nextBadge.icon} size={18} className="text-[#fd2597]" />
-                                </div>
-                                <div>
-                                  <div className="text-[14px] font-semibold text-[#2f3a56]">{nextBadge.title}</div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.desc}</div>
-                                </div>
-                              </div>
-
-                              <div className="mt-4">
-                                <ProgressBar value={totalCount} max={nextBadge.minCount} />
-                              </div>
-
-                              <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                                Falta{' '}
-                                <span className="font-semibold text-[#2f3a56]">
-                                  {Math.max(0, nextBadge.minCount - totalCount)}
-                                </span>{' '}
-                                registro(s).
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-3 text-[13px] text-[#6a6a6a]">
-                              Você liberou todos os selos atuais. Depois a gente expande.
-                            </div>
-                          )}
-
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            <Link
-                              href="/meu-dia"
-                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                            >
-                              Registrar no Meu Dia
-                            </Link>
-                            <button
-                              onClick={() => go('painel')}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Voltar ao painel
-                            </button>
-                          </div>
-                        </div>
+                        <p className="text-[13px] text-[#6a6a6a]">
+                          Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui.
+                        </p>
                       </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
+                    </div>
 
-                {/* PROGRESSO */}
-                {step === 'progresso' ? (
-                  <div className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Progresso
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">O que já existe hoje</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                           Na P26 nós registramos “feito hoje” + contagem total. Histórico por dia (calendário de presença) entra numa fase seguinte.
-
-                          </p>
-                        </div>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total</div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalPoints} pts</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">somatório do que foi registrado</div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total registros</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalCount}</div>
-                          <div className="mt-1 text-[12px] text-[#6a6a6a]">autocuidado + conexão</div>
-                        </div>
-
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">autocuidado</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{snapshot.selfcare.count}</div>
-                          <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                            hoje: {snapshot.selfcare.doneToday ? 'feito' : '—'}
-                          </div>
-                        </div>
-
-                        <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">conexão</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{snapshot.family.count}</div>
-                          <div className="mt-1 text-[12px] text-[#6a6a6a]">
-                            hoje: {snapshot.family.doneToday ? 'feito' : '—'}
-                          </div>
-                        </div>
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com registro: {daysActive7}/7</div>
                       </div>
 
-                      <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo upgrade</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Quando a gente quiser “mês/semana/calendário de presença”, vamos precisar persistir um histórico por dia (sem pesar o app).
-                          Por agora, P26 fecha com o essencial: registro simples e leitura clara.
-                        </div>
-
-                        <div className="mt-5 flex flex-wrap gap-2">
-                          <Link
-                            href="/meu-dia"
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Registrar algo hoje
-                          </Link>
-                          <button
-                            onClick={() => go('painel')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar ao painel
-                          </button>
-                        </div>
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">28 dias</div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{daysActive28} dias</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">pontos no período: {monthlyTotal} pts</div>
                       </div>
-                    </SoftCard>
-                  </div>
+                    </div>
+
+                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança.
+                        A Jornada respeita silêncio e pausa. Voltar já é suficiente.
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setView('hoje')}
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Ver hoje
+                        </button>
+
+                        <Link
+                          href="/maternar/minhas-conquistas"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ir para Conquistas & Selos
+                        </Link>
+                      </div>
+                    </div>
+                  </SoftCard>
                 ) : null}
               </div>
             </section>
