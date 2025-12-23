@@ -4,6 +4,25 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 
+// ===============================
+// ACCESS GATE (SENHA DO PROJETO)
+// ===============================
+// Ajuste estes 2 valores se o seu projeto usar outros paths:
+const ACCESS_COOKIE = 'm360_gate'
+const ACCESS_GATE_PATH = '/acesso' // rota da página de senha
+const ACCESS_API_PREFIX = '/api/access' // prefixo do endpoint que valida a senha e seta cookie
+
+function hasAccessGate(request: NextRequest) {
+  return request.cookies.get(ACCESS_COOKIE)?.value === 'ok'
+}
+
+function isAccessGatePublicPath(pathname: string) {
+  // A página da senha e o endpoint dela precisam ser públicos, senão cria loop.
+  if (pathname === ACCESS_GATE_PATH) return true
+  if (pathname.startsWith(ACCESS_API_PREFIX)) return true
+  return false
+}
+
 // --- Helpers de segurança ---
 // Impede open redirect: só permite paths internos
 function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
@@ -35,6 +54,10 @@ function isPublicPath(pathname: string) {
   // Rotas públicas de recuperação (P24)
   if (pathname.startsWith('/recuperar-senha')) return true
 
+  // Access Gate (senha do projeto) também é público
+  if (pathname === ACCESS_GATE_PATH) return true
+  if (pathname.startsWith(ACCESS_API_PREFIX)) return true
+
   return false
 }
 
@@ -63,7 +86,15 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Allow Builder preview mode to pass through (both ?builder.preview=1 and /builder-embed paths)
-  if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
+  if (
+    request.nextUrl.searchParams.has('builder.preview') ||
+    pathname.startsWith('/builder-embed')
+  ) {
+    return NextResponse.next()
+  }
+
+  // Access Gate: não bloqueia a própria página/endpoint do gate
+  if (isAccessGatePublicPath(pathname)) {
     return NextResponse.next()
   }
 
@@ -74,6 +105,20 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
+  // ===============================
+  // 1) ACCESS GATE PRIMEIRO (cookie)
+  // ===============================
+  // Se é rota protegida e NÃO tem cookie do gate → manda para a página de senha.
+  // Isso evita o loop “senha → bem-vinda → senha” quando o gate não está persistindo.
+  if (isProtectedPath(normalizedPath) && !hasAccessGate(request)) {
+    const gateUrl = new URL(ACCESS_GATE_PATH, request.url)
+    gateUrl.searchParams.set('next', redirectToValue)
+    return NextResponse.redirect(gateUrl)
+  }
+
+  // ===============================
+  // 2) SUPABASE SESSION (como estava)
+  // ===============================
   // Fallback seguro: se env do Supabase não existir no ambiente, não bloqueia (para dev/build não quebrar)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
