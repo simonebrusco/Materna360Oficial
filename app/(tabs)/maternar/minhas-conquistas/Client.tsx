@@ -225,7 +225,6 @@ export default function MinhasConquistasClient() {
   const locked = useMemo(() => BADGES.filter(b => totalPoints < b.minPoints), [totalPoints])
   const nextBadge = useMemo(() => locked[0] ?? null, [locked])
 
-  // P26: metas são apenas referência visual (não cobrança). Mantém baixo e “gentil”.
   const weeklyGoal = 120
   const todayGoal = 26
 
@@ -242,7 +241,6 @@ export default function MinhasConquistasClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
-          {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -274,7 +272,6 @@ export default function MinhasConquistasClient() {
                 overflow-hidden
               "
             >
-              {/* Top bar */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -327,16 +324,13 @@ export default function MinhasConquistasClient() {
                   </div>
                 </div>
 
-                {/* Mini menu */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <ViewPill active={view === 'selos'} onClick={() => setView('selos')} label="Selos" />
                   <ViewPill active={view === 'resumo'} onClick={() => setView('resumo')} label="Resumo" />
                 </div>
               </div>
 
-              {/* CONTENT */}
               <div className="p-4 md:p-6 space-y-4">
-                {/* SELOS */}
                 {view === 'selos' ? (
                   <SoftCard
                     className="
@@ -363,7 +357,6 @@ export default function MinhasConquistasClient() {
                       </div>
                     </div>
 
-                    {/* Próximo selo em destaque */}
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -424,7 +417,6 @@ export default function MinhasConquistasClient() {
                   </SoftCard>
                 ) : null}
 
-                {/* RESUMO */}
                 {view === 'resumo' ? (
                   <SoftCard
                     className="
