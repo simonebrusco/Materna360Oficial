@@ -71,7 +71,8 @@ function getMonthKeys(anchor = new Date()) {
 const LS = {
   pointsTotal: 'mj_points_total',
   dayPrefix: 'mj_day_',
-  streak: 'mj_streak',
+  // P26: streak não é conceito de produto; não ler nem exibir.
+  // streak: 'mj_streak',
 }
 
 const BADGES: Badge[] = [
@@ -87,10 +88,6 @@ function readDayPoints(key: string) {
 
 function readTotalPoints() {
   return safeParseInt(safeGetLS(LS.pointsTotal), 0)
-}
-
-function readStreak() {
-  return safeParseInt(safeGetLS(LS.streak), 0)
 }
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -178,9 +175,7 @@ function BadgeCard({
             </span>
           </div>
 
-          <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-            {badge.desc}
-          </div>
+          <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{badge.desc}</div>
 
           <div className="mt-3 text-[11px] text-[#6a6a6a]">
             Marco: <span className="font-semibold text-[#2f3a56]">{badge.minPoints} pts</span>
@@ -196,7 +191,6 @@ export default function MinhasConquistasClient() {
   const [today, setToday] = useState<string>(todayKey())
   const [totalPoints, setTotalPoints] = useState<number>(0)
   const [todayPoints, setTodayPoints] = useState<number>(0)
-  const [streak, setStreak] = useState<number>(0)
 
   useEffect(() => {
     try {
@@ -210,11 +204,9 @@ export default function MinhasConquistasClient() {
 
     const total = readTotalPoints()
     const tPoints = readDayPoints(t)
-    const s = readStreak()
 
     setTotalPoints(total)
     setTodayPoints(tPoints)
-    setStreak(s)
 
     try {
       track('minhas_conquistas.open', { today: t, totalPoints: total })
@@ -224,12 +216,12 @@ export default function MinhasConquistasClient() {
   const weekKeys = useMemo(() => getWeekKeys(new Date()), [])
   const monthKeys = useMemo(() => getMonthKeys(new Date()), [])
 
-  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
-  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
+  const daysActive7 = useMemo(() => weekKeys.filter((k) => readDayPoints(k) > 0).length, [weekKeys])
+  const daysActive28 = useMemo(() => monthKeys.filter((k) => readDayPoints(k) > 0).length, [monthKeys])
   const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
 
-  const unlocked = useMemo(() => BADGES.filter(b => totalPoints >= b.minPoints), [totalPoints])
-  const locked = useMemo(() => BADGES.filter(b => totalPoints < b.minPoints), [totalPoints])
+  const unlocked = useMemo(() => BADGES.filter((b) => totalPoints >= b.minPoints), [totalPoints])
+  const locked = useMemo(() => BADGES.filter((b) => totalPoints < b.minPoints), [totalPoints])
   const nextBadge = useMemo(() => locked[0] ?? null, [locked])
 
   const weeklyGoal = 120
@@ -290,7 +282,7 @@ export default function MinhasConquistasClient() {
 
                     <div>
                       <div className="text-[12px] text-white/85">
-                        hoje: {todayPoints} pts • total: {totalPoints} pts • sequência: {streak} dia(s)
+                        hoje: {todayPoints} pts • total: {totalPoints} pts • dias ativos (7d): {daysActive7}/7
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Seus marcos, do seu jeito
@@ -342,7 +334,7 @@ export default function MinhasConquistasClient() {
 
               {/* CONTENT */}
               <div className="p-4 md:p-6 space-y-4">
-                {/* SEL0S */}
+                {/* SELOS */}
                 {view === 'selos' ? (
                   <SoftCard
                     className="
@@ -360,12 +352,8 @@ export default function MinhasConquistasClient() {
                         <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                           Selos
                         </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          Coleção de conquistas possíveis
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Liberados primeiro. Depois, os próximos.
-                        </p>
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">Coleção de conquistas possíveis</h2>
+                        <p className="text-[13px] text-[#6a6a6a]">Liberados primeiro. Depois, os próximos.</p>
                       </div>
                     </div>
 
@@ -373,9 +361,7 @@ export default function MinhasConquistasClient() {
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            próximo marco
-                          </div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">próximo marco</div>
                           {nextBadge ? (
                             <div className="mt-2">
                               <div className="flex items-start gap-3">
@@ -383,12 +369,8 @@ export default function MinhasConquistasClient() {
                                   <AppIcon name={nextBadge.icon} size={18} className="text-[#fd2597]" />
                                 </div>
                                 <div>
-                                  <div className="text-[14px] font-semibold text-[#2f3a56]">
-                                    {nextBadge.title}
-                                  </div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                    {nextBadge.desc}
-                                  </div>
+                                  <div className="text-[14px] font-semibold text-[#2f3a56]">{nextBadge.title}</div>
+                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.desc}</div>
                                 </div>
                               </div>
                               <div className="mt-4">
@@ -396,16 +378,11 @@ export default function MinhasConquistasClient() {
                               </div>
                               <div className="mt-2 text-[12px] text-[#6a6a6a]">
                                 Falta{' '}
-                                <span className="font-semibold text-[#2f3a56]">
-                                  {Math.max(0, nextBadge.minPoints - totalPoints)} pts
-                                </span>
-                                .
+                                <span className="font-semibold text-[#2f3a56]">{Math.max(0, nextBadge.minPoints - totalPoints)} pts</span>.
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a]">
-                              Você liberou todos os marcos atuais.
-                            </div>
+                            <div className="mt-2 text-[13px] text-[#6a6a6a]">Você liberou todos os marcos atuais.</div>
                           )}
                         </div>
 
@@ -420,10 +397,10 @@ export default function MinhasConquistasClient() {
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {unlocked.map(b => (
+                      {unlocked.map((b) => (
                         <BadgeCard key={b.id} badge={b} unlocked currentPoints={totalPoints} />
                       ))}
-                      {locked.map(b => (
+                      {locked.map((b) => (
                         <BadgeCard key={b.id} badge={b} unlocked={false} currentPoints={totalPoints} />
                       ))}
                     </div>
@@ -448,12 +425,8 @@ export default function MinhasConquistasClient() {
                         <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                           Resumo
                         </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          O que sua presença já mostra
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Sem comparação. Só leitura gentil.
-                        </p>
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">O que sua presença já mostra</h2>
+                        <p className="text-[13px] text-[#6a6a6a]">Sem comparação. Só leitura gentil.</p>
                       </div>
                     </div>
 
@@ -478,7 +451,6 @@ export default function MinhasConquistasClient() {
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">28 dias</div>
                         <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{daysActive28} dias</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">sequência: {streak} dia(s)</div>
 
                         <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
                           <div className="text-[12px] font-semibold text-[#2f3a56]">Selos liberados</div>
