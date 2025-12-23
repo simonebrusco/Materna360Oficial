@@ -142,11 +142,11 @@ export default function AjudaEParceriasPage() {
                     AJUDA & PARCERIAS
                   </p>
 
-                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                  <h2 className="text-lg md:text-xl font-semibold text-white">
                     Parcerias em primeiro plano. Ajuda quando precisar.
                   </h2>
 
-                  <p className="text-sm md:text-[15px] text-[#545454] leading-relaxed">
+                  <p className="text-sm md:text-[15px] text-white/85 leading-relaxed">
                     Se você é profissional, criadora de conteúdo ou marca alinhada ao universo materno, este é o caminho.
                     O suporte do app fica aqui também, mas de forma mais direta e enxuta.
                   </p>
