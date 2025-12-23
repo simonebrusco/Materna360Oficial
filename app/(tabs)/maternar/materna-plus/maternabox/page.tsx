@@ -95,13 +95,7 @@ export default function MaternaBoxPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const ids: HubSectionId[] = [
-      'visao',
-      'como-funciona',
-      'para-quem',
-      'faixa',
-      'planos',
-    ]
+    const ids: HubSectionId[] = ['visao', 'como-funciona', 'para-quem', 'faixa', 'planos']
     const elements = ids
       .map(id => document.getElementById(`maternabox-${id}`))
       .filter(Boolean) as HTMLElement[]
@@ -112,15 +106,10 @@ export default function MaternaBoxPage() {
       entries => {
         const visible = entries
           .filter(e => e.isIntersecting)
-          .sort(
-            (a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0),
-          )[0]
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0]
         if (!visible?.target?.id) return
 
-        const sectionId = visible.target.id.replace(
-          'maternabox-',
-          '',
-        ) as HubSectionId
+        const sectionId = visible.target.id.replace('maternabox-', '') as HubSectionId
         if (sectionId && ids.includes(sectionId)) setActiveSection(sectionId)
       },
       {
@@ -180,13 +169,12 @@ export default function MaternaBoxPage() {
                     MATERNABOX · ASSINATURA
                   </p>
 
-                  <h2 className="text-lg md:text-xl font-semibold text-white">
+                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                     Você escolhe o plano. A gente entrega o ritual pronto.
                   </h2>
 
-                  <p className="text-sm md:text-[15px] text-white/85 leading-relaxed">
-                    Todo mês: brinquedo/atividade + guia curto com “como usar” e
-                    uma surpresa.
+                  <p className="text-sm md:text-[15px] text-[#545454] leading-relaxed">
+                    Todo mês: brinquedo/atividade + guia curto com “como usar” e uma surpresa.
                   </p>
                 </div>
 
@@ -204,8 +192,7 @@ export default function MaternaBoxPage() {
 
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-[12px] text-[#545454]">
-                      Se estiver com pressa: vá direto para{' '}
-                      <span className="font-semibold">Planos</span>.
+                      Se estiver com pressa: vá direto para <span className="font-semibold">Planos</span>.
                     </p>
                     <Button
                       variant="primary"
@@ -221,27 +208,21 @@ export default function MaternaBoxPage() {
                 {/* 3 bullets objetivos */}
                 <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Pronto para usar
-                    </p>
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
                     <p className="text-[13px] text-[#545454] leading-snug">
                       Sem pesquisar atividades. Só abrir e fazer.
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Pouco tempo
-                    </p>
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Pouco tempo</p>
                     <p className="text-[13px] text-[#545454] leading-snug">
                       Ideias que cabem na rotina real.
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Por fase
-                    </p>
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Por fase</p>
                     <p className="text-[13px] text-[#545454] leading-snug">
                       Ajuste por faixa etária.
                     </p>
@@ -297,8 +278,7 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <p className="text-[12px] text-[#6A6A6A]">
-                  A MaternaBox é uma experiência de rotina e vínculo (não é
-                  terapia nem substitui acompanhamento profissional).
+                  A MaternaBox é uma experiência de rotina e vínculo (não é terapia nem substitui acompanhamento profissional).
                 </p>
               </div>
             </SoftCard>
@@ -322,30 +302,19 @@ export default function MaternaBoxPage() {
                   <ul className="space-y-2 text-[13px] text-[#545454]">
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon
-                          name="sparkles"
-                          className="h-3.5 w-3.5 text-[#fd2597]"
-                        />
+                        <AppIcon name="sparkles" className="h-3.5 w-3.5 text-[#fd2597]" />
                       </span>
                       <span>Quando você quer ideias prontas e aplicáveis.</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon
-                          name="heart"
-                          className="h-3.5 w-3.5 text-[#fd2597]"
-                        />
+                        <AppIcon name="heart" className="h-3.5 w-3.5 text-[#fd2597]" />
                       </span>
-                      <span>
-                        Quando você quer conexão (mesmo em dias corridos).
-                      </span>
+                      <span>Quando você quer conexão (mesmo em dias corridos).</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon
-                          name="calendar"
-                          className="h-3.5 w-3.5 text-[#fd2597]"
-                        />
+                        <AppIcon name="calendar" className="h-3.5 w-3.5 text-[#fd2597]" />
                       </span>
                       <span>Quando você quer rotina com leveza.</span>
                     </li>
@@ -403,15 +372,9 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <SoftCard className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                  <p className="text-[13px] font-semibold text-[#545454]">
-                    Selecionado:
-                  </p>
+                  <p className="text-[13px] font-semibold text-[#545454]">Selecionado:</p>
                   <p className="text-[13px] text-[#545454]">
-                    Faixa{' '}
-                    <span className="font-semibold">
-                      {AGE_BANDS.find(a => a.id === selectedAge)?.label}
-                    </span>{' '}
-                    — conteúdos e atividades serão adaptados para essa fase.
+                    Faixa <span className="font-semibold">{AGE_BANDS.find(a => a.id === selectedAge)?.label}</span> — conteúdos e atividades serão adaptados para essa fase.
                   </p>
                 </SoftCard>
               </div>
@@ -466,9 +429,7 @@ export default function MaternaBoxPage() {
                           {plan.price}
                         </p>
 
-                        <p className="mt-1 text-[12px] text-[#6A6A6A]">
-                          {plan.note}
-                        </p>
+                        <p className="mt-1 text-[12px] text-[#6A6A6A]">{plan.note}</p>
 
                         <ul className="mt-3 space-y-1 text-[12px] text-[#545454]">
                           {plan.bullets.map(b => (
@@ -501,21 +462,14 @@ export default function MaternaBoxPage() {
                         SEU RESUMO
                       </p>
                       <p className="text-[13px] text-[#545454]">
-                        <span className="font-semibold">
-                          {selectedPlanData.title}
-                        </span>{' '}
-                        ·{' '}
-                        <span className="font-semibold">
-                          {selectedPlanData.price}
-                        </span>{' '}
-                        · Faixa{' '}
+                        <span className="font-semibold">{selectedPlanData.title}</span> ·{' '}
+                        <span className="font-semibold">{selectedPlanData.price}</span> · Faixa{' '}
                         <span className="font-semibold">
                           {AGE_BANDS.find(a => a.id === selectedAge)?.label}
                         </span>
                       </p>
                       <p className="text-[12px] text-[#6A6A6A]">
-                        Checkout e disponibilidade serão conectados na fase de
-                        assinatura.
+                        Checkout e disponibilidade serão conectados na fase de assinatura.
                       </p>
                     </div>
 
@@ -533,10 +487,9 @@ export default function MaternaBoxPage() {
                         size="sm"
                         className="text-[13px]"
                         onClick={() => {
+                          // Placeholder: integrar com checkout/lista de espera quando estiver pronto.
                           if (typeof window !== 'undefined') {
-                            window.alert(
-                              'Fluxo de compra será conectado no checkout do Materna+.',
-                            )
+                            window.alert('Fluxo de compra será conectado no checkout do Materna+.')
                           }
                         }}
                       >
