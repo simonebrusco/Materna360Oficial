@@ -151,10 +151,11 @@ export default function MaternaBoxPage() {
 
   return (
     <PageTemplate
-      label="MATERNAR"
-      title="MaternaBox"
-      subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
-    >
+  headerTone="light"
+  label="MATERNAR"
+  title="MaternaBox"
+  subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
+>
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
           {/* HERO HUB-LIKE */}
