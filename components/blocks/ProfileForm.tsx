@@ -219,9 +219,7 @@ export default function ProfileForm() {
       nomeMae: typeof saved.nomeMae === 'string' ? saved.nomeMae : '',
       userMainChallenges: Array.isArray(saved.userMainChallenges) ? saved.userMainChallenges : [],
       filhos:
-        Array.isArray(saved.filhos) && saved.filhos.length > 0
-          ? saved.filhos
-          : defaultState().filhos,
+        Array.isArray(saved.filhos) && saved.filhos.length > 0 ? saved.filhos : defaultState().filhos,
 
       routineChaosMoments: Array.isArray(saved.routineChaosMoments) ? saved.routineChaosMoments : [],
       routineSupportNeeds: Array.isArray(saved.routineSupportNeeds) ? saved.routineSupportNeeds : [],
@@ -245,13 +243,13 @@ export default function ProfileForm() {
   }, [form])
 
   function onChange(updates: Partial<ProfileFormState>) {
-    setForm(prev => ({ ...prev, ...updates }))
+    setForm((prev) => ({ ...prev, ...updates }))
   }
 
   function onToggleArrayField(fieldName: keyof ProfileFormState, value: string) {
     const current = (form[fieldName] as unknown as string[] | undefined) ?? []
-    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
-    setForm(prev => ({ ...prev, [fieldName]: next } as ProfileFormState))
+    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+    setForm((prev) => ({ ...prev, [fieldName]: next } as ProfileFormState))
   }
 
   const canGoNext = useMemo(() => {
@@ -326,12 +324,12 @@ export default function ProfileForm() {
 
   function goNext() {
     if (!validateStep(step)) return
-    setStep(s => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
+    setStep((s) => (s === 4 ? 4 : ((s + 1) as 1 | 2 | 3 | 4)))
   }
 
   function goPrev() {
     setErrors({})
-    setStep(s => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
+    setStep((s) => (s === 1 ? 1 : ((s - 1) as 1 | 2 | 3 | 4)))
   }
 
   async function saveAndContinue() {
@@ -360,13 +358,10 @@ export default function ProfileForm() {
       })
 
       if (!res.ok) {
-        // Se backend ainda não estiver pronto, não quebramos UX.
-        // O LS já salva de qualquer forma; mas o nome não vai aparecer no Meu Dia até o /api/profile persistir.
         try {
           track('eu360.profile.save_failed', { status: res.status })
         } catch {}
       } else {
-        // Notifica o app (mesmo padrão do eu360:persona-updated)
         try {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event('profile:updated'))
@@ -374,8 +369,6 @@ export default function ProfileForm() {
         } catch {}
       }
     } catch {
-      // Silencioso: não altera layout, não joga alert.
-      // LS continua salvando.
       try {
         track('eu360.profile.save_error', {})
       } catch {}
@@ -428,18 +421,10 @@ export default function ProfileForm() {
           {/* Body */}
           <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.06)] p-4 md:p-6 space-y-4">
             {step === 1 ? <AboutYouBlock form={form} errors={errors} onChange={onChange} /> : null}
-
             {step === 2 ? <ChildrenBlock form={form} errors={errors} onChange={onChange} /> : null}
-
             {step === 3 ? (
-              <RoutineBlock
-                form={form}
-                errors={errors}
-                onChange={onChange}
-                onToggleArrayField={onToggleArrayField}
-              />
+              <RoutineBlock form={form} errors={errors} onChange={onChange} onToggleArrayField={onToggleArrayField} />
             ) : null}
-
             {step === 4 ? (
               <PreferencesBlock
                 form={form}
@@ -479,17 +464,13 @@ export default function ProfileForm() {
             >
               Salvar e continuar
             </button>
-            <p className="mt-2 text-center text-[10px] text-[#6a6a6a]">
-              Você poderá editar essas informações no seu Perfil.
-            </p>
+            <p className="mt-2 text-center text-[10px] text-[#6a6a6a]">Você poderá editar essas informações no seu Perfil.</p>
           </SoftCard>
 
           {/* Nota visual sutil */}
           <div className="flex items-start gap-2 text-[11px] text-[#6a6a6a]">
             <AppIcon name="sparkles" size={16} className="text-[#fd2597]" decorative />
-            <p>
-              Esse formulário salva automaticamente e é usado apenas para personalizar sua experiência no Materna360.
-            </p>
+            <p>Esse formulário salva automaticamente e é usado apenas para personalizar sua experiência no Materna360.</p>
           </div>
         </SoftCard>
       </Reveal>

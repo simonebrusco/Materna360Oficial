@@ -8,6 +8,10 @@ const XP_HISTORY_KEY = 'xp:history'
 
 type XpStoredTotals = {
   total: number
+  /**
+   * P26: streak não é conceito de produto (anti-culpa).
+   * Mantido por compatibilidade com snapshots/legado, mas deve permanecer 0.
+   */
   streak: number
   lastDateKey: string | null
 }
@@ -15,6 +19,10 @@ type XpStoredTotals = {
 export type XpSnapshot = {
   today: number
   total: number
+  /**
+   * P26: streak não é conceito de produto (anti-culpa).
+   * Mantido por compatibilidade, mas sempre 0.
+   */
   streak: number
 }
 
@@ -25,6 +33,7 @@ export type XpHistoryEntry = {
 
 /**
  * Calcula a data de ontem a partir de uma chave YYYY-MM-DD.
+ * (Mantida porque pode ser útil para históricos futuros; P26 não usa streak.)
  */
 function getYesterdayKey(currentKey: string): string {
   const d = new Date(currentKey + 'T00:00:00')
@@ -46,14 +55,14 @@ function upsertXpHistory(dateKey: string, xpForDay: number) {
   }
 
   // Mantém no máximo 120 dias de histórico
-  const trimmed =
-    history.length > 120 ? history.slice(history.length - 120) : history
+  const trimmed = history.length > 120 ? history.slice(history.length - 120) : history
 
   save(XP_HISTORY_KEY, trimmed)
 }
 
 /**
- * Lê o estado atual de XP (hoje, total e sequência).
+ * Lê o estado atual de XP (hoje, total e "streak").
+ * P26: streak é sempre 0 (anti-culpa).
  */
 export function getXpSnapshot(): XpSnapshot {
   const dateKey = getBrazilDateKey()
@@ -70,12 +79,13 @@ export function getXpSnapshot(): XpSnapshot {
   return {
     today,
     total: stored.total ?? 0,
-    streak: stored.streak ?? 0,
+    streak: 0,
   }
 }
 
 /**
  * Aplica um delta de XP (positivo ou negativo) e devolve o snapshot atualizado.
+ * P26: não calcula streak e não mantém sequência (anti-culpa).
  */
 export function updateXP(delta: number): XpSnapshot {
   const dateKey = getBrazilDateKey()
@@ -89,25 +99,14 @@ export function updateXP(delta: number): XpSnapshot {
   // Atualiza total (nunca deixa negativo)
   const newTotal = Math.max(0, (stored.total ?? 0) + delta)
 
-  // Calcula streak
-  let newStreak = stored.streak ?? 0
-  if (!stored.lastDateKey) {
-    // primeira vez
-    newStreak = delta > 0 ? 1 : 0
-  } else if (stored.lastDateKey === dateKey) {
-    // mesmo dia
-    newStreak = delta > 0 ? Math.max(newStreak, 1) : newStreak
-  } else if (stored.lastDateKey === getYesterdayKey(dateKey)) {
-    // dia seguido
-    newStreak = delta > 0 ? newStreak + 1 : newStreak
-  } else {
-    // teve buraco de dias
-    newStreak = delta > 0 ? 1 : 0
-  }
+  // P26: streak não existe como mecânica de produto (anti-culpa).
+  // Mantemos 0 por compatibilidade e para evitar regressões.
+  const newStreak = 0
+  void getYesterdayKey // mantido (helper pode ser útil no futuro sem reintroduzir streak)
 
   const updatedTotals: XpStoredTotals = {
     total: newTotal,
-    streak: newStreak,
+    streak: 0,
     lastDateKey: delta !== 0 ? dateKey : stored.lastDateKey,
   }
 
@@ -130,7 +129,7 @@ export function updateXP(delta: number): XpSnapshot {
 }
 
 /**
- * Histórico simples de presença: lista (dataKey, xp) dos últimos dias.
+ * Histórico simples: lista (dateKey, xp) dos últimos dias.
  */
 export function getXpHistory(): XpHistoryEntry[] {
   return load<XpHistoryEntry[]>(XP_HISTORY_KEY) ?? []

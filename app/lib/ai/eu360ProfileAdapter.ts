@@ -5,6 +5,11 @@
 //
 // Objetivo: ter um único lugar responsável por "traduzir" o que vem
 // do Eu360 para { profile, child } no formato MaternaProfile / MaternaChildProfile.
+//
+// P26:
+// Além da adaptação base, este arquivo passa a ser o "ponto oficial"
+// de derivação de presets silenciosos para trilhas do Maternar
+// (ex.: Cuidar de Mim), evitando lógica espalhada em UI/localStorage.
 
 import type {
   MaternaProfile,
@@ -164,6 +169,70 @@ function pickPrimaryChild(children: MaternaChildProfile[]): MaternaChildProfile 
     ...first,
     ageRange: first.ageRange ?? deriveAgeRangeFromMonths(first.idadeMeses ?? null),
   }
+}
+
+/**
+ * =========================
+ * P26 — PRESETS (OFICIAIS)
+ * =========================
+ * Aqui definimos regras simples para a UI consumir “pronto”,
+ * sem inventar lógica local e sem depender de localStorage.
+ *
+ * Importante:
+ * - Presets não mudam layout nem textos: só influenciam decisões internas.
+ * - São conservadores (priorizam segurança/leveza).
+ */
+
+export type CuidarDeMimFocusMode = '1min' | '3min' | '5min'
+export type CuidarDeMimRitmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
+
+export type CuidarDeMimPreset = {
+  focus: CuidarDeMimFocusMode
+  ritmo: CuidarDeMimRitmo
+  reason: 'baseline' | 'selfcare_frequency' | 'chaos' | 'default'
+}
+
+/**
+ * Deriva um preset inicial para Cuidar de Mim a partir do Eu360.
+ * Regra de ouro: se baseline = sobrecarregada -> 1min sempre.
+ */
+export function deriveCuidarDeMimPreset(profile: MaternaProfile | null): CuidarDeMimPreset {
+  // defaults seguros
+  const fallback: CuidarDeMimPreset = { focus: '3min', ritmo: 'cansada', reason: 'default' }
+  if (!profile) return fallback
+
+  // 1) baseline emocional (prioridade máxima)
+  const baseline = profile.userEmotionalBaseline
+  if (baseline === 'sobrecarregada') {
+    return { focus: '1min', ritmo: 'sobrecarregada', reason: 'baseline' }
+  }
+  if (baseline === 'cansada') {
+    // cansada -> manter 3min como padrão (mais útil que 1min, sem virar “rotina longa”)
+    return { focus: '3min', ritmo: 'cansada', reason: 'baseline' }
+  }
+  if (baseline === 'leve') {
+    return { focus: '3min', ritmo: 'leve', reason: 'baseline' }
+  }
+  if (baseline === 'equilibrada') {
+    return { focus: '3min', ritmo: 'leve', reason: 'baseline' }
+  }
+
+  // 2) frequência desejada de autocuidado (ajuste fino)
+  const selfcare = profile.userSelfcareFrequency
+  if (selfcare === 'diario') {
+    return { focus: '5min', ritmo: 'leve', reason: 'selfcare_frequency' }
+  }
+  if (selfcare === 'pedido') {
+    return { focus: '1min', ritmo: 'cansada', reason: 'selfcare_frequency' }
+  }
+
+  // 3) caos na rotina (se marcado, reduzir fricção)
+  const chaos = profile.routineChaosMoments ?? []
+  if (chaos.length >= 2) {
+    return { focus: '1min', ritmo: 'cansada', reason: 'chaos' }
+  }
+
+  return fallback
 }
 
 /**

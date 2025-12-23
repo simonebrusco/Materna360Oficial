@@ -5,7 +5,7 @@ import Client from './Client'
 export const metadata: Metadata = {
   title: 'Cuidar de Mim | Materna360',
   description:
-    'Pequenos gestos de autocuidado, leveza e serenidade para você respirar e se cuidar no seu ritmo.',
+    'Um ajuste curto e prático para aliviar o peso do momento e seguir o dia com mais clareza — sem cobrança.',
 }
 
 export default function Page() {

@@ -10,6 +10,19 @@ type Resume =
   | { kind: 'reminder'; label: string; href: string; updatedAt: number }
   | { kind: 'mood'; label: string; href: string; updatedAt: number }
 
+const LS_PREFIX = 'm360:'
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    const direct = window.localStorage.getItem(`${LS_PREFIX}${key}`)
+    if (direct !== null) return direct
+    return window.localStorage.getItem(key) // fallback legado
+  } catch {
+    return null
+  }
+}
+
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
   try {
@@ -21,13 +34,15 @@ function safeParse<T>(raw: string | null): T | null {
 
 function pickLatest(dateKey: string, now: number): Resume | null {
   const todos = safeParse<{ id: string; text: string; done: boolean }[]>(
-    localStorage.getItem(`meu-dia:${dateKey}:todos`)
+    safeGetLS(`meu-dia:${dateKey}:todos`)
   )
+
   const rems = safeParse<{ id: string; title: string; when: string }[]>(
-    localStorage.getItem(`meu-dia:${dateKey}:reminders`)
+    safeGetLS(`meu-dia:${dateKey}:reminders`)
   )
+
   const moods = safeParse<{ date: string; mood: number; energy: number }[]>(
-    localStorage.getItem('meu-dia:mood')
+    safeGetLS('meu-dia:mood')
   )
 
   const candidates: Resume[] = []
@@ -40,6 +55,7 @@ function pickLatest(dateKey: string, now: number): Resume | null {
       updatedAt: now - 1,
     })
   }
+
   if (rems && rems.length) {
     candidates.push({
       kind: 'reminder',
@@ -48,6 +64,7 @@ function pickLatest(dateKey: string, now: number): Resume | null {
       updatedAt: now - 2,
     })
   }
+
   if (moods && moods.length) {
     const today = moods.find((m) => m.date === dateKey)
     if (today) {
@@ -78,7 +95,11 @@ export function ContinueCard({ dateKey }: { dateKey: string }) {
   if (!resume) return null
 
   const Icon =
-    resume.kind === 'todos' ? ListChecks : resume.kind === 'reminder' ? Bell : Activity
+    resume.kind === 'todos'
+      ? ListChecks
+      : resume.kind === 'reminder'
+      ? Bell
+      : Activity
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
@@ -88,13 +109,18 @@ export function ContinueCard({ dateKey }: { dateKey: string }) {
         </div>
         <h3 className="text-[16px] font-semibold">Continue de onde parou</h3>
       </div>
-      <p className="text-[14px] text-[var(--color-text-main)] mb-3">{resume.label}</p>
+
+      <p className="text-[14px] text-[var(--color-text-main)] mb-3">
+        {resume.label}
+      </p>
+
       <Link
         href={resume.href}
         onClick={() => track('nav.click', { tab: 'maternar', dest: resume.href })}
         className="inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-[var(--color-brand)] text-white font-medium hover:opacity-95 active:scale-[0.99]"
       >
-        <Clock4 className="h-4 w-4" aria-hidden /> Retomar agora
+        <Clock4 className="h-4 w-4" aria-hidden />
+        Retomar agora
       </Link>
     </div>
   )

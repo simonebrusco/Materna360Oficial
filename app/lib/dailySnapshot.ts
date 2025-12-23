@@ -25,8 +25,15 @@ export type DailySnapshot = {
   mood?: string | null
   energy?: string | null
   notes?: string | null
+
   xpToday?: number
   totalXp?: number
+
+  /**
+   * P26: streak não é conceito de produto (anti-culpa).
+   * Mantido como campo opcional por compatibilidade de dados antigos,
+   * mas a aplicação não deve persistir/usar isso.
+   */
   streak?: number
 
   // Insights armazenados no snapshot
@@ -92,13 +99,18 @@ export function saveNotes(notes: string, dateKey = getBrazilDateKey()) {
   return updateDailySnapshot({ notes }, dateKey)
 }
 
+/**
+ * P26 — PRINCÍPIO ANTI-CULPA
+ * A aplicação pode salvar estado de XP (hoje/total), mas NÃO deve persistir streak.
+ * Mantemos a assinatura por compatibilidade temporária com chamadas existentes.
+ */
 export function saveXpState(
   xpToday: number,
   totalXp: number,
-  streak: number,
+  _streak: number,
   dateKey = getBrazilDateKey(),
 ) {
-  return updateDailySnapshot({ xpToday, totalXp, streak }, dateKey)
+  return updateDailySnapshot({ xpToday, totalXp, streak: 0 }, dateKey)
 }
 
 export function saveDailyInsight(
@@ -142,10 +154,7 @@ export function resetDailySnapshot(dateKey = getBrazilDateKey()) {
 // HISTORY HELPERS
 // -------------------------------------------------------
 
-export function getSnapshotsForMonth(
-  year: number,
-  month: number,
-): DailySnapshot[] {
+export function getSnapshotsForMonth(year: number, month: number): DailySnapshot[] {
   const snapshots: DailySnapshot[] = []
 
   const daysInMonth = new Date(year, month, 0).getDate()

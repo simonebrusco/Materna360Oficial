@@ -71,7 +71,7 @@ function getMonthKeys(anchor = new Date()) {
 const LS = {
   pointsTotal: 'mj_points_total',
   dayPrefix: 'mj_day_',
-  streak: 'mj_streak',
+  // P26: streak removido (anti-culpa). Mantemos o app funcional sem mecânica de sequência.
 }
 
 const BADGES: Badge[] = [
@@ -87,10 +87,6 @@ function readDayPoints(key: string) {
 
 function readTotalPoints() {
   return safeParseInt(safeGetLS(LS.pointsTotal), 0)
-}
-
-function readStreak() {
-  return safeParseInt(safeGetLS(LS.streak), 0)
 }
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -196,7 +192,6 @@ export default function MinhasConquistasClient() {
   const [today, setToday] = useState<string>(todayKey())
   const [totalPoints, setTotalPoints] = useState<number>(0)
   const [todayPoints, setTodayPoints] = useState<number>(0)
-  const [streak, setStreak] = useState<number>(0)
 
   useEffect(() => {
     try {
@@ -210,11 +205,9 @@ export default function MinhasConquistasClient() {
 
     const total = readTotalPoints()
     const tPoints = readDayPoints(t)
-    const s = readStreak()
 
     setTotalPoints(total)
     setTodayPoints(tPoints)
-    setStreak(s)
 
     try {
       track('minhas_conquistas.open', { today: t, totalPoints: total })
@@ -248,7 +241,6 @@ export default function MinhasConquistasClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-3xl px-4 md:px-6">
-          {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -280,7 +272,6 @@ export default function MinhasConquistasClient() {
                 overflow-hidden
               "
             >
-              {/* Top bar */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -290,7 +281,7 @@ export default function MinhasConquistasClient() {
 
                     <div>
                       <div className="text-[12px] text-white/85">
-                        hoje: {todayPoints} pts • total: {totalPoints} pts • sequência: {streak} dia(s)
+                        hoje: {todayPoints} pts • total: {totalPoints} pts
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Seus marcos, do seu jeito
@@ -333,16 +324,13 @@ export default function MinhasConquistasClient() {
                   </div>
                 </div>
 
-                {/* Mini menu */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <ViewPill active={view === 'selos'} onClick={() => setView('selos')} label="Selos" />
                   <ViewPill active={view === 'resumo'} onClick={() => setView('resumo')} label="Resumo" />
                 </div>
               </div>
 
-              {/* CONTENT */}
               <div className="p-4 md:p-6 space-y-4">
-                {/* SEL0S */}
                 {view === 'selos' ? (
                   <SoftCard
                     className="
@@ -369,7 +357,6 @@ export default function MinhasConquistasClient() {
                       </div>
                     </div>
 
-                    {/* Próximo selo em destaque */}
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -430,7 +417,6 @@ export default function MinhasConquistasClient() {
                   </SoftCard>
                 ) : null}
 
-                {/* RESUMO */}
                 {view === 'resumo' ? (
                   <SoftCard
                     className="
@@ -469,7 +455,7 @@ export default function MinhasConquistasClient() {
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
                         <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias ativos: {daysActive7}/7</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com presença: {daysActive7}/7</div>
                         <div className="mt-3">
                           <ProgressBar value={weeklyTotal} max={weeklyGoal} />
                         </div>
@@ -478,7 +464,7 @@ export default function MinhasConquistasClient() {
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">28 dias</div>
                         <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{daysActive28} dias</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">sequência: {streak} dia(s)</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com presença: {daysActive28}/28</div>
 
                         <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
                           <div className="text-[12px] font-semibold text-[#2f3a56]">Selos liberados</div>

@@ -88,6 +88,12 @@ export type AddToMyDayResult = {
   id?: string
   created?: boolean
   dateKey?: string
+
+  /**
+   * Guardrail: se bater limite de “tarefas abertas”, não criamos nova.
+   * Mantido como campo opcional para não quebrar callers antigos.
+   */
+  limitHit?: boolean
 }
 
 type GroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
@@ -100,6 +106,13 @@ export type GroupedTasks = Record<
     items: MyDayTaskItem[]
   }
 >
+
+/**
+ * Guardrail (P26+):
+ * Quantas tarefas “abertas” (active + snoozed) podem existir no dia.
+ * Observação: "done" não conta para o limite.
+ */
+const OPEN_TASKS_LIMIT_PER_DAY = 18
 
 /** ---------- Helpers ---------- */
 
@@ -156,6 +169,21 @@ function makeId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `t_${Math.random().toString(16).slice(2)}_${Date.now()}`
+}
+
+function statusOf(t: MyDayTaskItem): TaskStatus {
+  const s = t.status
+  if (s === 'active' || s === 'done' || s === 'snoozed') return s
+  return t.done ? 'done' : 'active'
+}
+
+function countOpenTasks(tasks: MyDayTaskItem[]): number {
+  let n = 0
+  for (const t of tasks) {
+    const s = statusOf(t)
+    if (s === 'active' || s === 'snoozed') n += 1
+  }
+  return n
 }
 
 /**
@@ -261,7 +289,6 @@ function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
 export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
   try {
     const dk = makeDateKey(input.date ?? new Date())
-    const nowISO = new Date().toISOString()
     const tasks = readTasksByDateKey(dk)
 
     const title = (input.title ?? '').trim()
@@ -269,10 +296,21 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     const source = input.source ?? MY_DAY_SOURCES.UNKNOWN
     if (!title) return { ok: false }
 
+    // anti-duplicação
     const exists = tasks.some((t) => t.title.trim().toLowerCase() === title.toLowerCase() && t.origin === origin)
     if (exists) return { ok: true, created: false, dateKey: dk }
 
+    // guardrail (bola de neve)
+    const openCount = countOpenTasks(tasks)
+    if (openCount >= OPEN_TASKS_LIMIT_PER_DAY) {
+      try {
+        track('my_day.task.limit_hit', { dateKey: dk, openCount, limit: OPEN_TASKS_LIMIT_PER_DAY, origin, source })
+      } catch {}
+      return { ok: true, created: false, dateKey: dk, limitHit: true }
+    }
+
     const id = makeId()
+    const nowISO = new Date().toISOString()
 
     const next: MyDayTaskItem[] = [
       ...tasks,
@@ -302,6 +340,7 @@ export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDayS
       origin: input.origin,
       source: input.source,
       dateKey: res.dateKey,
+      limitHit: !!res.limitHit,
     })
   } catch {}
   return res

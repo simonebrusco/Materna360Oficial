@@ -13,6 +13,19 @@ type Highlight =
   | { id: 'reminder'; title: string; subtitle: string; href: string; priority: number }
   | { id: 'mood'; title: string; subtitle: string; href: string; priority: number }
 
+const LS_PREFIX = 'm360:'
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    const prefixed = window.localStorage.getItem(`${LS_PREFIX}${key}`)
+    if (prefixed !== null) return prefixed
+    return window.localStorage.getItem(key) // fallback legado
+  } catch {
+    return null
+  }
+}
+
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
   try {
@@ -28,30 +41,35 @@ export function HighlightsSection() {
   React.useEffect(() => {
     const dateKey = getBrazilDateKey()
 
-    // Saved ideas
-    const savedA = safeParse<string[]>(localStorage.getItem('descobrir:saved')) ?? []
-    const savedB = safeParse<string[]>(localStorage.getItem('m360:saved:discover')) ?? []
-    const savedTotal = new Set([...(savedA ?? []), ...(savedB ?? [])]).size
+    // Ideias salvas (Discover)
+    const savedA = safeParse<string[]>(safeGetLS('descobrir:saved')) ?? []
+    const savedB = safeParse<string[]>(safeGetLS('saved:discover')) ?? []
+    const savedTotal = new Set([...savedA, ...savedB]).size
 
-    // Appointments
+    // Compromissos de cuidado
     type Appt = { id: string; kind: 'vaccine' | 'consult'; title: string; date: string }
-    const appts = (safeParse<Appt[]>(localStorage.getItem('cuidar:appointments')) ?? [])
+    const appts =
+      safeParse<Appt[]>(safeGetLS('cuidar:appointments')) ?? []
+
+    const nextAppt = appts
       .filter(a => a?.date)
       .sort((a, b) => a.date.localeCompare(b.date))
-    const nextAppt = appts.find(a => new Date(a.date).getTime() >= Date.now())
+      .find(a => new Date(a.date).getTime() >= Date.now())
 
-    // Reminders
+    // Lembretes do dia
     type Rem = { id: string; title: string; when: string }
     const reminders =
-      safeParse<Rem[]>(localStorage.getItem(`meu-dia:${dateKey}:reminders`)) ?? []
+      safeParse<Rem[]>(safeGetLS(`meu-dia:${dateKey}:reminders`)) ?? []
+
     const dueSoon = reminders.find(r => r?.when)
 
-    // Mood
+    // Humor / energia
     type Mood = { date: string; mood: number; energy: number }
-    const moodAll = safeParse<Mood[]>(localStorage.getItem('meu-dia:mood')) ?? []
+    const moodAll = safeParse<Mood[]>(safeGetLS('meu-dia:mood')) ?? []
     const moodToday = moodAll.find(m => m.date === dateKey)
 
     const highlights: Highlight[] = []
+
     if (savedTotal > 0) {
       highlights.push({
         id: 'saved',
@@ -61,6 +79,7 @@ export function HighlightsSection() {
         priority: 80,
       })
     }
+
     if (nextAppt) {
       const when = new Date(nextAppt.date).toLocaleDateString()
       highlights.push({
@@ -71,6 +90,7 @@ export function HighlightsSection() {
         priority: 90,
       })
     }
+
     if (dueSoon) {
       const when = dueSoon.when
         ? new Date(dueSoon.when).toLocaleTimeString([], {
@@ -78,6 +98,7 @@ export function HighlightsSection() {
             minute: '2-digit',
           })
         : 'Hoje'
+
       highlights.push({
         id: 'reminder',
         title: 'Lembretes do dia',
@@ -86,6 +107,7 @@ export function HighlightsSection() {
         priority: 85,
       })
     }
+
     if (!moodToday) {
       highlights.push({
         id: 'mood',
@@ -106,14 +128,15 @@ export function HighlightsSection() {
     id === 'saved'
       ? BookmarkCheck
       : id === 'appt'
-        ? CalendarClock
-        : id === 'reminder'
-          ? Bell
-          : Activity
+      ? CalendarClock
+      : id === 'reminder'
+      ? Bell
+      : Activity
 
   return (
     <div className="rounded-2xl border bg-white/90 backdrop-blur-sm shadow-[0_8px_28px_rgba(47,58,86,0.08)] p-4 md:p-5">
       <SectionH2 className="mb-3">Destaques do dia</SectionH2>
+
       <div className="grid gap-3 md:grid-cols-2">
         {items.map(h => {
           const Icon = IconOf(h.id)
@@ -127,9 +150,12 @@ export function HighlightsSection() {
               <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-strong)]/60">
                 <Icon className="h-4 w-4 text-[var(--color-brand)]" aria-hidden />
               </div>
+
               <div className="min-w-0">
                 <div className="text-[14px] font-semibold truncate">{h.title}</div>
-                <div className="text-[12px] text-[var(--color-text-muted)] truncate">{h.subtitle}</div>
+                <div className="text-[12px] text-[var(--color-text-muted)] truncate">
+                  {h.subtitle}
+                </div>
               </div>
             </Link>
           )
