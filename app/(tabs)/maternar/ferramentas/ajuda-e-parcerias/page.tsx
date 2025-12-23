@@ -127,10 +127,11 @@ export default function AjudaEParceriasPage() {
 
   return (
     <PageTemplate
-      label="MATERNAR"
-      title="Ajuda & Parcerias"
-      subtitle="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
-    >
+  headerTone="light"
+  label="MATERNAR"
+  title="Ajuda & Parcerias"
+  subtitle="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
+>
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
           {/* HERO HUB-LIKE: dá ênfase em Parcerias e deixa Ajuda como secundário */}
