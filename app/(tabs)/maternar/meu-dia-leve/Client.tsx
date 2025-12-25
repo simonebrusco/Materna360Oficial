@@ -18,6 +18,7 @@ import {
   type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
 import { getProfileSnapshot, getActiveChildOrNull } from '@/app/lib/profile.client'
+import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -27,8 +28,6 @@ type Slot = '3' | '5' | '10'
 type Mood = 'no-limite' | 'corrida' | 'ok' | 'leve'
 type Focus = 'casa' | 'voce' | 'filho' | 'comida'
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
-
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
 // Regras de liberação (segurança / responsabilidade)
 const MIN_MONTHS_BLOCK = 6 // < 6: bloqueia total
@@ -51,12 +50,6 @@ const HUB_PREF = {
   preferredChildId: 'maternar/meu-dia-leve/pref/childId',
 }
 
-type RecentSavePayload = {
-  ts: number
-  origin: TaskOrigin
-  source: string
-}
-
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
@@ -72,12 +65,6 @@ function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
-  } catch {}
-}
-
-function safeSetJSON(key: string, value: unknown) {
-  try {
-    safeSetLS(key, JSON.stringify(value))
   } catch {}
 }
 
@@ -574,8 +561,12 @@ export default function MeuDiaLeveClient() {
       return
     }
 
-    const payload: RecentSavePayload = { ts: Date.now(), origin: ORIGIN, source: SOURCE }
-    safeSetJSON(LS_RECENT_SAVE, payload)
+    // Continuidade P26 (persist.ts) — só aplica foco quando realmente criou algo novo
+    if (res?.ok && res?.created) {
+      try {
+        markRecentMyDaySave({ origin: ORIGIN, source: SOURCE })
+      } catch {}
+    }
 
     if (res.created) {
       toast.success('Salvo no Meu Dia')
