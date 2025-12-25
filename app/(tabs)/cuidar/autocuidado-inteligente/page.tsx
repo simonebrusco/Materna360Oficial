@@ -406,7 +406,7 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro geral ao gerar sugestão:', e)
       buildFallbackSuggestion()
       toast.info(
-        'A conexão com a IA falhou agora, mas preparei um carinho simples para você.',
+        'A conexão não respondeu agora, mas preparei um carinho simples para você.'',
       )
       try {
         track('autocuidado_sugestao_gerada', {
