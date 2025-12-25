@@ -28,21 +28,18 @@ export async function POST(req: Request) {
         ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
         : null
 
-    // Se não tiver Supabase configurado, NÃO mascara em produção.
-    if (!supabase) {
-      const vercelEnv = process.env.VERCEL_ENV
-      const nodeEnv = process.env.NODE_ENV
-      const isProd = vercelEnv === 'production' || nodeEnv === 'production'
+    const vercelEnv = process.env.VERCEL_ENV
+    const nodeEnv = process.env.NODE_ENV
+    const isProd = vercelEnv === 'production' || nodeEnv === 'production'
 
-      // Log discreto (sem PII)
-      if (!isProd) {
-        console.warn('[MaternaBox Waitlist] Supabase não configurado.', {
-          vercelEnv,
-          nodeEnv,
-          hasUrl: Boolean(SUPABASE_URL),
-          hasServiceKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
-        })
-      }
+    // Supabase ausente → resposta segura + log mínimo (sem PII)
+    if (!supabase) {
+      console.warn('[MaternaBox Waitlist] Supabase não configurado.', {
+        vercelEnv,
+        nodeEnv,
+        hasUrl: Boolean(SUPABASE_URL),
+        hasServiceKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+      })
 
       return NextResponse.json(
         {
