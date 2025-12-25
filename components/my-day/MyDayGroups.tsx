@@ -4,135 +4,31 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-
+import AppIcon from '@/components/ui/AppIcon'
+import { track } from '@/app/lib/telemetry'
+import { toast } from '@/app/lib/toast'
 import {
   groupTasks,
   listMyDayTasks,
-  type GroupedTasks,
-  type MyDayTaskItem,
-  removeTask,
+  toggleDone,
   snoozeTask,
   unsnoozeTask,
-  MY_DAY_SOURCES,
+  removeTask,
+  type GroupedTasks,
+  type MyDayTaskItem,
 } from '@/app/lib/myDayTasks.client'
+import { consumeRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
-import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
-import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
-import { getExperienceTier } from '@/app/lib/experience/experienceTier'
-import { getDensityLevel } from '@/app/lib/experience/density'
-import { track } from '@/app/lib/telemetry'
-
-import {
-  consumeRecentMyDaySave,
-  type MeuDiaContinuityOrigin,
-} from '@/app/lib/myDayContinuity.client'
-
-type GroupId = keyof GroupedTasks
-type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
-
-const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
-const DEFAULT_LIMIT = 5
-
-/* =========================
-   Helpers base
-========================= */
+type FocusGroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  if ((t as any).status) return (t as any).status
+  const s = (t as any).status
+  if (s === 'active' || s === 'snoozed' || s === 'done') return s
   if ((t as any).done === true) return 'done'
   return 'active'
 }
 
-function timeOf(t: MyDayTaskItem): number {
-  const iso = (t as any).createdAt
-  const n = iso ? Date.parse(iso) : NaN
-  return Number.isFinite(n) ? n : 0
-}
-
-// evita bug de timezone: parse manual para YYYY-MM-DD
-function formatSnoozeUntil(raw: unknown): string | null {
-  const s = typeof raw === 'string' ? raw : ''
-  if (!s) return null
-
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
-  if (m) {
-    const y = Number(m[1])
-    const mo = Number(m[2])
-    const d = Number(m[3])
-    const dt = new Date(y, mo - 1, d)
-    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-  }
-
-  const t = Date.parse(s)
-  if (!Number.isFinite(t)) return s
-
-  try {
-    const dt = new Date(t)
-    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-  } catch {
-    return s
-  }
-}
-
-/* =========================
-   Persona segura
-========================= */
-
-function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
-  const p: any = (aiContext as any)?.persona
-  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao') return p
-  if (typeof p === 'object' && p?.persona) return p.persona
-  return undefined
-}
-
-/* =========================
-   Ordenação contextual (mantida)
-========================= */
-
-function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?: PersonaId }) {
-  const { premium, persona } = opts
-
-  const statusRank = (t: MyDayTaskItem) => {
-    const s = statusOf(t)
-    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
-  }
-
-  return [...items].sort((a, b) => {
-    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
-      const sa = timeOf(a)
-      const sb = timeOf(b)
-      if (sa !== sb) return sb - sa
-    }
-
-    const ra = statusRank(a)
-    const rb = statusRank(b)
-    if (ra !== rb) return ra - rb
-
-    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
-  })
-}
-
-/* =========================
-   Continuidade (P26)
-========================= */
-
-function getReturnLink(t: MyDayTaskItem): { href: string; label: string } | null {
-  const s = (t as any).source as string | undefined
-
-  if (s === MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM) {
-    return { href: '/maternar/cuidar-de-mim', label: 'Voltar ao cuidado' }
-  }
-  if (s === MY_DAY_SOURCES.MATERNAR_MEU_FILHO) {
-    return { href: '/maternar/meu-filho', label: 'Voltar ao Meu Filho' }
-  }
-  if (s === MY_DAY_SOURCES.MATERNAR_MEU_DIA_LEVE) {
-    return { href: '/maternar/meu-dia-leve', label: 'Voltar ao Meu Dia Leve' }
-  }
-
-  return null
-}
-
-function groupIdFromContinuityOrigin(origin: MeuDiaContinuityOrigin): GroupId {
+function groupIdForOrigin(origin: string): FocusGroupId {
   if (origin === 'today') return 'para-hoje'
   if (origin === 'family') return 'familia'
   if (origin === 'selfcare') return 'autocuidado'
@@ -140,382 +36,315 @@ function groupIdFromContinuityOrigin(origin: MeuDiaContinuityOrigin): GroupId {
   return 'outros'
 }
 
-/* =========================
-   Jornada mínima (P26)
-========================= */
-
-function dateKeyOfNow(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+function labelForGroupId(id: FocusGroupId) {
+  if (id === 'para-hoje') return 'Para hoje (simples e real)'
+  if (id === 'familia') return 'Família & conexão'
+  if (id === 'autocuidado') return 'Autocuidado'
+  if (id === 'rotina-casa') return 'Rotina & casa'
+  return 'Outros'
 }
 
-function markSelfcareDoneForJourney(source: string | undefined) {
-  try {
-    const dk = dateKeyOfNow()
-    window.localStorage.setItem('journey/selfcare/doneOn', dk)
-
-    const raw = window.localStorage.getItem('journey/selfcare/doneCount')
-    const n = raw ? Number(raw) : 0
-    const next = Number.isFinite(n) ? n + 1 : 1
-    window.localStorage.setItem('journey/selfcare/doneCount', String(next))
-
-    if (source) window.localStorage.setItem('journey/selfcare/lastSource', source)
-  } catch {}
+function countOpen(items: MyDayTaskItem[]) {
+  let n = 0
+  for (const t of items) {
+    const s = statusOf(t)
+    if (s === 'active' || s === 'snoozed') n += 1
+  }
+  return n
 }
 
-function markFamilyDoneForJourney(source: string | undefined) {
-  try {
-    const dk = dateKeyOfNow()
-    window.localStorage.setItem('journey/family/doneOn', dk)
-
-    const raw = window.localStorage.getItem('journey/family/doneCount')
-    const n = raw ? Number(raw) : 0
-    const next = Number.isFinite(n) ? n + 1 : 1
-    window.localStorage.setItem('journey/family/doneCount', String(next))
-
-    if (source) window.localStorage.setItem('journey/family/lastSource', source)
-  } catch {}
+function countActive(items: MyDayTaskItem[]) {
+  let n = 0
+  for (const t of items) {
+    if (statusOf(t) === 'active') n += 1
+  }
+  return n
 }
 
-/* =========================
-   COMPONENTE
-========================= */
+function clamp(n: number, min: number, max: number) {
+  if (n < min) return min
+  if (n > max) return max
+  return n
+}
 
-export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
+function SoftButton({
+  children,
+  onClick,
+  variant = 'primary',
+  disabled,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  variant?: 'primary' | 'ghost' | 'danger'
+  disabled?: boolean
+}) {
+  const base =
+    'inline-flex items-center justify-center rounded-full px-3 py-2 text-[12px] transition border shadow-sm'
+  const cls =
+    variant === 'primary'
+      ? 'bg-white text-[#2f3a56] border-[#f5d7e5] hover:bg-[#ffe1f1]'
+      : variant === 'danger'
+        ? 'bg-white text-[#b8236b] border-[#f5d7e5] hover:bg-[#ffe1f1]'
+        : 'bg-transparent text-[#2f3a56] border-transparent hover:bg-[#ffe1f1]'
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={[base, cls, disabled ? 'opacity-60 cursor-not-allowed' : ''].join(' ')}
+    >
+      {children}
+    </button>
+  )
+}
+
+function EmptyState({ groupId }: { groupId: FocusGroupId }) {
+  const title =
+    groupId === 'para-hoje'
+      ? 'Nada aqui por enquanto.'
+      : groupId === 'familia'
+        ? 'Sem tarefas de conexão por agora.'
+        : groupId === 'autocuidado'
+          ? 'Sem autocuidado salvo por agora.'
+          : groupId === 'rotina-casa'
+            ? 'Sem rotinas salvas por agora.'
+            : 'Sem lembretes por agora.'
+
+  const hint =
+    groupId === 'para-hoje'
+      ? 'Quando você salva algo no app, ele aparece aqui.'
+      : 'Se você salvar uma ação, ela aparece aqui — sem esforço.'
+
+  return (
+    <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+      <div className="text-[13px] font-semibold text-[#2f3a56]">{title}</div>
+      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{hint}</div>
+    </div>
+  )
+}
+
+function TaskRow({
+  t,
+  onToggle,
+  onSnooze,
+  onUnsnooze,
+  onRemove,
+}: {
+  t: MyDayTaskItem
+  onToggle: () => void
+  onSnooze: () => void
+  onUnsnooze: () => void
+  onRemove: () => void
+}) {
+  const st = statusOf(t)
+  const isDone = st === 'done'
+  const isSnoozed = st === 'snoozed'
+
+  return (
+    <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex items-start gap-3 text-left w-full"
+        >
+          <div
+            className={[
+              'mt-0.5 h-6 w-6 rounded-full border flex items-center justify-center shrink-0',
+              isDone ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5]',
+            ].join(' ')}
+          >
+            {isDone ? <AppIcon name="check" size={16} className="text-[#b8236b]" /> : null}
+          </div>
+
+          <div className="min-w-0">
+            <div
+              className={[
+                'text-[13px] font-semibold leading-snug',
+                isDone ? 'text-[#6a6a6a] line-through' : 'text-[#2f3a56]',
+              ].join(' ')}
+            >
+              {t.title}
+            </div>
+
+            {isSnoozed && t.snoozeUntil ? (
+              <div className="mt-1 text-[11px] text-[#6a6a6a]">
+                Adiado até {t.snoozeUntil}
+              </div>
+            ) : null}
+          </div>
+        </button>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {isSnoozed ? (
+            <SoftButton variant="ghost" onClick={onUnsnooze}>
+              Voltar
+            </SoftButton>
+          ) : (
+            <SoftButton variant="ghost" onClick={onSnooze} disabled={isDone}>
+              Adiar
+            </SoftButton>
+          )}
+
+          <SoftButton variant="danger" onClick={onRemove}>
+            Remover
+          </SoftButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function MyDayGroups({
+  initialDate,
+}: {
+  initialDate?: Date
+}) {
+  const [date] = useState<Date>(() => initialDate ?? new Date())
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
-
-  // P28 — experiência (somente decisão interna; atualiza silenciosamente)
-  const [experienceTier, setExperienceTier] = useState(() => getExperienceTier())
-  const [densityLevel, setDensityLevel] = useState(() => getDensityLevel())
-  const isPremiumExperience = experienceTier === 'premium'
-
-  // P26 — destaque de grupo quando veio do Meu Dia Leve
-  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
-
-  const grouped = useMemo(() => groupTasks(tasks), [tasks])
-  const personaId = getPersonaId(aiContext)
-
-  const hasAny = tasks.length > 0
-
-  const effectiveLimit = useMemo(() => {
-    const raw = Number((euSignal as any)?.listLimit)
-    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
-
-    if (densityLevel === 'normal') {
-      return Math.max(5, Math.min(6, resolved))
-    }
-
-    return Math.max(3, Math.min(4, resolved))
-  }, [euSignal, densityLevel])
+  const [focusGroupId, setFocusGroupId] = useState<FocusGroupId>('para-hoje')
 
   function refresh() {
-    setTasks(listMyDayTasks())
+    const list = listMyDayTasks(date)
+    setTasks(list)
   }
 
-  function toggleGroup(groupId: GroupId) {
-    setExpanded((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
-  }
-
+  // initial load
   useEffect(() => {
     refresh()
-    setEuSignal(getEu360Signal())
-    setExperienceTier(getExperienceTier())
-    setDensityLevel(getDensityLevel())
-
-    const sync = () => {
-      setEuSignal(getEu360Signal())
-      setExperienceTier(getExperienceTier())
-      setDensityLevel(getDensityLevel())
-      refresh()
-    }
-
-    window.addEventListener('storage', sync)
-    window.addEventListener('m360:plan-updated', sync as EventListener)
-    window.addEventListener('eu360:persona-updated', sync as EventListener)
-
-    return () => {
-      window.removeEventListener('storage', sync)
-      window.removeEventListener('m360:plan-updated', sync as EventListener)
-      window.removeEventListener('eu360:persona-updated', sync as EventListener)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /**
-   * P26 — Continuidade “salvou no Meu Dia Leve -> Meu Dia abre no lugar certo”
-   * Agora usa myDayContinuity.client.ts:
-   * - consumeRecentMyDaySave() já limpa após ler (1x)
-   * - TTL padrão 30 min aplicado no helper
-   */
+  // P26 continuity: focus the intended group once, silently
   useEffect(() => {
+    const payload = consumeRecentMyDaySave({ windowMs: 30 * 60 * 1000 })
+    if (!payload) return
+
+    const gid = groupIdForOrigin(payload.origin)
+    setFocusGroupId(gid)
+
     try {
-      if (typeof window === 'undefined') return
-
-      const evt = consumeRecentMyDaySave() // TTL default 30 min
-      if (!evt) return
-
-      const gid = groupIdFromContinuityOrigin(evt.origin)
-
-      setExpanded((prev) => ({ ...prev, [gid]: true }))
-      setHighlightGroup(gid)
-
-      window.setTimeout(() => {
-        try {
-          const el = document.getElementById(`myday-group-${gid}`)
-          el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        } catch {}
-      }, 50)
-
-      window.setTimeout(() => setHighlightGroup(null), 6500)
-
-      try {
-        track('meu_dia_leve.group_focus_applied', {
-          origin: evt.origin,
-          groupId: gid,
-          ageMs: Date.now() - evt.ts,
-          source: evt.source,
-        })
-      } catch {}
+      track('my_day.continuity.consume', {
+        ok: true,
+        origin: payload.origin,
+        source: payload.source,
+        focusGroupId: gid,
+      })
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /**
-   * P26 — “Concluir some”
-   * Em vez de apenas marcar como done, removemos do dia.
-   */
-  async function onDone(t: MyDayTaskItem) {
-    const res = removeTask(t.id)
-    if (res.ok) {
-      refresh()
+  const grouped: GroupedTasks = useMemo(() => groupTasks(tasks), [tasks])
 
-      if (t.origin === 'selfcare') {
-        markSelfcareDoneForJourney((t as any).source ?? 'unknown')
-        try {
-          track('journey.selfcare.done', { source: (t as any).source ?? 'unknown' })
-        } catch {}
-      }
+  const groupOrder: FocusGroupId[] = useMemo(
+    () => ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros'],
+    []
+  )
 
-      if (t.origin === 'family') {
-        markFamilyDoneForJourney((t as any).source ?? 'unknown')
-        try {
-          track('journey.family.done', { source: (t as any).source ?? 'unknown' })
-        } catch {}
-      }
+  const tabs = useMemo(() => {
+    return groupOrder.map((id) => {
+      const items = grouped[id]?.items ?? []
+      const open = countOpen(items)
+      const active = countActive(items)
+      return { id, title: labelForGroupId(id), open, active }
+    })
+  }, [groupOrder, grouped])
 
-      try {
-        track('my_day.ui.done_remove', { origin: t.origin, source: (t as any).source ?? 'unknown' })
-      } catch {}
-    } else {
-      try {
-        track('my_day.ui.done_remove', { ok: false })
-      } catch {}
+  const focusedItems = grouped[focusGroupId]?.items ?? []
+
+  function onToggle(t: MyDayTaskItem) {
+    const res = toggleDone(t.id, date)
+    if (!res.ok) {
+      toast.info('Não deu agora. Tente de novo.')
+      return
     }
+    refresh()
   }
 
-  async function onRemove(t: MyDayTaskItem) {
-    const res = removeTask(t.id)
-    if (res.ok) {
-      refresh()
-      try {
-        track('my_day.ui.remove', { origin: t.origin, source: (t as any).source ?? 'unknown' })
-      } catch {}
+  function onSnooze(t: MyDayTaskItem) {
+    const res = snoozeTask(t.id, 1, date)
+    if (!res.ok) {
+      toast.info('Não deu agora. Tente de novo.')
+      return
     }
+    refresh()
   }
 
-  async function onSnooze(t: MyDayTaskItem) {
-    const res = snoozeTask(t.id, 1)
-    if (res.ok) {
-      refresh()
-      try {
-        track('my_day.ui.snooze', { origin: t.origin, source: (t as any).source ?? 'unknown', days: 1 })
-      } catch {}
+  function onUnsnooze(t: MyDayTaskItem) {
+    const res = unsnoozeTask(t.id, date)
+    if (!res.ok) {
+      toast.info('Não deu agora. Tente de novo.')
+      return
     }
+    refresh()
   }
 
-  async function onUnsnooze(t: MyDayTaskItem) {
-    const res = unsnoozeTask(t.id)
-    if (res.ok) {
-      refresh()
-      try {
-        track('my_day.ui.unsnooze', { origin: t.origin, source: (t as any).source ?? 'unknown' })
-      } catch {}
+  function onRemove(t: MyDayTaskItem) {
+    const res = removeTask(t.id, date)
+    if (!res.ok) {
+      toast.info('Não deu agora. Tente de novo.')
+      return
     }
+    refresh()
   }
 
   return (
-    <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
-      {!hasAny ? (
-        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
-
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-            Quando você registrar algo no Materna360 — no Maternar ou no Meu Dia — ele aparece aqui automaticamente.
-          </p>
-
-          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
-            Se fizer sentido, comece pequeno. Um lembrete simples já ajuda.
-          </p>
+    <section className="space-y-4">
+      {/* Header / Nav */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="space-y-1">
+          <div className="text-[14px] font-semibold text-[#2f3a56]">Meu Dia</div>
+          <div className="text-[12px] text-[#6a6a6a]">Sem cobrança. Só o próximo passo.</div>
         </div>
-      ) : (
-        <div className="space-y-4 md:space-y-5">
-          {GROUP_ORDER.map((groupId) => {
-            const group = grouped[groupId]
-            if (!group) return null
 
-            const sorted = sortForGroup(group.items, {
-              premium: isPremiumExperience,
-              persona: personaId,
-            })
+        <Link
+          href="/maternar"
+          className="inline-flex items-center rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+        >
+          <span className="mr-1.5 text-lg leading-none">←</span>
+          Maternar
+        </Link>
+      </div>
 
-            const count = sorted.length
-            if (count === 0) return null
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((t) => {
+          const active = focusGroupId === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setFocusGroupId(t.id)}
+              className={[
+                'rounded-full px-3 py-2 text-[12px] border transition',
+                active
+                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                  : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+              ].join(' ')}
+              aria-pressed={active}
+            >
+              <span className="font-semibold">{t.id === 'para-hoje' ? 'Para hoje' : t.id}</span>
+              <span className="ml-2 text-[11px] text-[#6a6a6a]">
+                {t.active > 0 ? `${t.active} ativas` : t.open > 0 ? `${t.open} abertas` : 'vazio'}
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
-            const isExpanded = !!expanded[groupId]
-            const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
-            const hasMore = count > effectiveLimit
+      {/* Content */}
+      <div className="space-y-3">
+        {focusedItems.length === 0 ? <EmptyState groupId={focusGroupId} /> : null}
 
-            // Alertas gentis (P26) — sem bloquear
-            const isSelfcareGroup = groupId === 'autocuidado'
-            const selfcareTooMany = isSelfcareGroup && count >= Math.max(6, effectiveLimit + 2)
-
-            const isFamilyGroup = groupId === 'familia'
-            const familyTooMany = isFamilyGroup && count >= 4
-
-            const isHighlighted = highlightGroup === groupId
-
-            return (
-              <div
-                key={groupId}
-                id={`myday-group-${groupId}`}
-                className={[
-                  'bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]',
-                  isHighlighted ? 'ring-2 ring-[#fd2597]/25 border-[#fd2597]/30 bg-[rgba(253,37,151,0.04)]' : '',
-                ].join(' ')}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">{group.title}</h4>
-
-                  {hasMore ? (
-                    <button
-                      onClick={() => toggleGroup(groupId)}
-                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                    >
-                      {isExpanded ? 'Recolher' : 'Ver tudo'}
-                    </button>
-                  ) : null}
-                </div>
-
-                {familyTooMany ? (
-                  <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
-                    <p className="text-[12px] text-[var(--color-text-muted)]">
-                      Dica do Materna: escolha uma ação por vez — presença vale mais que quantidade.
-                    </p>
-                  </div>
-                ) : null}
-
-                {selfcareTooMany ? (
-                  <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
-                    <p className="text-[12px] text-[var(--color-text-muted)]">
-                      Dica do Materna: autocuidado funciona melhor com pouco. Escolha 1 tarefa e deixe o resto para outro dia.
-                    </p>
-                  </div>
-                ) : null}
-
-                <div className="mt-4 space-y-2">
-                  {visible.map((t) => {
-                    const st = statusOf(t)
-                    const returnLink = getReturnLink(t)
-                    const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
-
-                    return (
-                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
-
-                            {st === 'snoozed' ? (
-                              <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-                                Deixado para depois{snoozeLabel ? ` • até ${snoozeLabel}` : ''}.
-                              </p>
-                            ) : null}
-                          </div>
-
-                          <div className="shrink-0 flex flex-wrap items-center justify-end gap-2">
-                            {st === 'active' ? (
-                              <>
-                                <button
-                                  onClick={() => onDone(t)}
-                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
-                                >
-                                  Concluir
-                                </button>
-
-                                <button
-                                  onClick={() => onSnooze(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Deixar para amanhã
-                                </button>
-
-                                <button
-                                  onClick={() => onRemove(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Remover
-                                </button>
-                              </>
-                            ) : st === 'snoozed' ? (
-                              <>
-                                <button
-                                  onClick={() => onUnsnooze(t)}
-                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
-                                >
-                                  Trazer para hoje
-                                </button>
-
-                                <button
-                                  onClick={() => onRemove(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Remover
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => onRemove(t)}
-                                className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                              >
-                                Remover
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {returnLink ? (
-                          <div className="mt-3">
-                            <Link
-                              href={returnLink.href}
-                              className="inline-flex rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                            >
-                              {returnLink.label}
-                            </Link>
-                          </div>
-                        ) : null}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+        {focusedItems.map((t) => (
+          <TaskRow
+            key={t.id}
+            t={t}
+            onToggle={() => onToggle(t)}
+            onSnooze={() => onSnooze(t)}
+            onUnsnooze={() => onUnsnooze(t)}
+            onRemove={() => onRemove(t)}
+          />
+        ))}
+      </div>
     </section>
   )
 }
