@@ -147,12 +147,6 @@ export default function AjudaEParceriasPage() {
                 Voltar para o Maternar
               </Link>
 
-              <div className="inline-flex items-center">
-                <span className="rounded-full bg-white/20 border border-white/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">
-                  MATERNAR
-                </span>
-              </div>
-
               <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 Ajuda & Parcerias
               </h1>
