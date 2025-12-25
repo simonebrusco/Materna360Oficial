@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
+import Link from 'next/link'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
@@ -8,7 +9,6 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-import Link from 'next/link'
 
 type PartnershipType =
   | 'profissional_saude'
@@ -164,21 +164,21 @@ export default function AjudaEParceriasPage() {
       subtitle="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
     >
       <ClientOnly>
-        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
-          {/* VOLTAR PARA O MATERNAR (seta) */}
-          <div className="px-4 md:px-0">
-            <Link
-              href="/maternar"
-              className="inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition"
-              aria-label="Voltar para o Maternar"
-            >
-              <span aria-hidden className="inline-flex items-center justify-center">
-                ←
-              </span>
-              <span>Voltar para o Maternar</span>
-            </Link>
-          </div>
+        {/* LINK NO TOPO (puxado para dentro do hero do PageTemplate) */}
+        <div className="max-w-5xl mx-auto px-4 md:px-6 -mt-10 md:-mt-12">
+          <Link
+            href="/maternar"
+            className="inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition"
+            aria-label="Voltar para o Maternar"
+          >
+            <span aria-hidden className="inline-flex items-center justify-center">
+              ←
+            </span>
+            <span>Voltar para o Maternar</span>
+          </Link>
+        </div>
 
+        <div className="pt-6 md:pt-7 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto px-4 md:px-6">
           {/* HERO HUB-LIKE: dá ênfase em Parcerias e deixa Ajuda como secundário */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
@@ -253,7 +253,7 @@ export default function AjudaEParceriasPage() {
             </SoftCard>
           </Reveal>
 
-          {/* PARCERIAS — destaque visual (mais “premium”) */}
+          {/* PARCERIAS */}
           <Reveal delay={20}>
             <SoftCard
               id="ajuda-parcerias-parcerias"
@@ -384,7 +384,7 @@ export default function AjudaEParceriasPage() {
                     </p>
                   </form>
 
-                  {/* SIDE: por que fazer parceria */}
+                  {/* SIDE */}
                   <div className="space-y-3">
                     <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1]/70 p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
@@ -430,7 +430,7 @@ export default function AjudaEParceriasPage() {
             </SoftCard>
           </Reveal>
 
-          {/* AJUDA — secundário, mais enxuto */}
+          {/* AJUDA */}
           <Reveal delay={60}>
             <SoftCard
               id="ajuda-parcerias-ajuda"
