@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { load } from '@/app/lib/persist'
 
 type UiError = {
   title: string
@@ -10,9 +11,9 @@ type UiError = {
   kind: 'generic' | 'not_confirmed' | 'network' | 'rate_limit'
 }
 
-const SEEN_KEY = 'm360_seen_welcome_v1'
+const SEEN_KEY = 'seen_welcome_v1'
 
-function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
+function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
   const t = target.trim()
   if (!t) return fallback
@@ -65,13 +66,22 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
   }
 }
 
+function hasSeenWelcome(): boolean {
+  try {
+    const v = load<string | null>(SEEN_KEY, null)
+    return v === '1'
+  } catch {
+    return false
+  }
+}
+
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = useMemo(() => createClientComponentClient(), [])
 
   const redirectToRaw = searchParams.get('redirectTo')
-  const redirectTo = safeInternalRedirect(redirectToRaw, '/maternar')
+  const redirectTo = safeInternalRedirect(redirectToRaw, '/meu-dia')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -85,15 +95,10 @@ export default function LoginClient() {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return
 
-      // Se já logada, aplica regra P25:
-      // - se não viu onboarding ainda -> /bem-vinda
-      // - senão -> redirectTo (comportamento atual)
-      let seen = false
-      try {
-        seen = localStorage.getItem(SEEN_KEY) === '1'
-      } catch {
-        seen = false
-      }
+      // Se já logada:
+      // - se não viu bem-vinda -> /bem-vinda
+      // - senão -> redirectTo
+      const seen = hasSeenWelcome()
 
       if (!seen) {
         router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
@@ -123,13 +128,10 @@ export default function LoginClient() {
       return
     }
 
-    // P25: primeira vez -> /bem-vinda
-    let seen = false
-    try {
-      seen = localStorage.getItem(SEEN_KEY) === '1'
-    } catch {
-      seen = false
-    }
+    // Pós-login:
+    // - primeira vez -> /bem-vinda (com next)
+    // - senão -> redirectTo
+    const seen = hasSeenWelcome()
 
     if (!seen) {
       router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)

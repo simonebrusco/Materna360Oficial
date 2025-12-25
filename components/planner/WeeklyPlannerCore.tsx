@@ -6,7 +6,11 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
-import type { TaskItem, TaskOrigin } from '@/app/lib/myDayTasks.client'
+
+// ✅ usar o shape evolutivo do Meu Dia (compatível com Planner)
+import type { MyDayTaskItem, TaskOrigin, TaskStatus } from '@/app/lib/myDayTasks.client'
+import { MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
@@ -29,7 +33,7 @@ type Appointment = {
 
 type PlannerData = {
   appointments: Appointment[]
-  tasks: TaskItem[]
+  tasks: MyDayTaskItem[]
   notes: string
 }
 
@@ -173,6 +177,54 @@ function generateMonthMatrix(monthBase: Date): MonthCell[][] {
 
 function normalizeText(s: string) {
   return (s ?? '').trim().replace(/\s+/g, ' ')
+}
+
+// ✅ normaliza tasks antigas (que podem vir apenas com `done`)
+function normalizeLoadedTasks(raw: any[]): MyDayTaskItem[] {
+  const nowISO = new Date().toISOString()
+
+  return (Array.isArray(raw) ? raw : [])
+    .map((t: any) => {
+      const title = typeof t?.title === 'string' ? t.title : ''
+      if (!title) return null
+
+      const origin: TaskOrigin =
+        t?.origin === 'today' ||
+        t?.origin === 'top3' ||
+        t?.origin === 'agenda' ||
+        t?.origin === 'family' ||
+        t?.origin === 'selfcare' ||
+        t?.origin === 'home' ||
+        t?.origin === 'other' ||
+        t?.origin === 'custom'
+          ? t.origin
+          : 'other'
+
+      const id = typeof t?.id === 'string' && t.id ? t.id : safeId()
+
+      const done = typeof t?.done === 'boolean' ? t.done : false
+      const status: TaskStatus =
+        t?.status === 'active' || t?.status === 'done' || t?.status === 'snoozed'
+          ? t.status
+          : done
+            ? 'done'
+            : 'active'
+
+      const createdAt = typeof t?.createdAt === 'string' && t.createdAt ? t.createdAt : nowISO
+      const source = typeof t?.source === 'string' && t.source ? t.source : MY_DAY_SOURCES.PLANNER
+
+      return {
+        id,
+        title: normalizeText(title),
+        origin,
+        done: status === 'done',
+        status,
+        createdAt,
+        source,
+        snoozeUntil: typeof t?.snoozeUntil === 'string' ? t.snoozeUntil : undefined,
+      } as MyDayTaskItem
+    })
+    .filter(Boolean) as MyDayTaskItem[]
 }
 
 /* ======================================================
@@ -521,8 +573,10 @@ export default function WeeklyPlannerCore() {
     if (!isHydrated || !selectedDateKey) return
 
     const loadedAppointments = load<Appointment[]>('planner/appointments/all', []) ?? []
-    const loadedTasks = load<TaskItem[]>(`planner/tasks/${selectedDateKey}`, []) ?? []
+    const rawTasks = load<any[]>(`planner/tasks/${selectedDateKey}`, []) ?? []
     const loadedNotes = load<string>(`planner/notes/${selectedDateKey}`, '') ?? ''
+
+    const loadedTasks = normalizeLoadedTasks(rawTasks)
 
     setPlannerData({
       appointments: loadedAppointments,
@@ -638,11 +692,22 @@ export default function WeeklyPlannerCore() {
       )
       if (exists) return
 
-      const t: TaskItem = { id: safeId(), title: normalizedTitle, done: false, origin }
+      const nowISO = new Date().toISOString()
+
+      const t: MyDayTaskItem = {
+        id: safeId(),
+        title: normalizedTitle,
+        origin,
+        done: false,
+        status: 'active',
+        createdAt: nowISO,
+        source: MY_DAY_SOURCES.PLANNER,
+      }
+
       setPlannerData((prev) => ({ ...prev, tasks: [...prev.tasks, t] }))
 
       try {
-        track('planner.task_added', { tab: 'meu-dia', origin })
+        track('planner.task_added', { tab: 'meu-dia', origin, source: MY_DAY_SOURCES.PLANNER })
       } catch {}
 
       try {
@@ -656,7 +721,12 @@ export default function WeeklyPlannerCore() {
   const toggleTask = useCallback((id: string) => {
     setPlannerData((prev) => ({
       ...prev,
-      tasks: prev.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+      tasks: prev.tasks.map((t) => {
+        if (t.id !== id) return t
+        const nextDone = !(t.done === true)
+        const nextStatus: TaskStatus = nextDone ? 'done' : 'active'
+        return { ...t, done: nextDone, status: nextStatus }
+      }),
     }))
   }, [])
 
@@ -664,7 +734,7 @@ export default function WeeklyPlannerCore() {
     setPlannerData((prev) => ({ ...prev, tasks: prev.tasks.filter((t) => t.id !== id) }))
   }, [])
 
-  const beginEditTask = useCallback((task: TaskItem) => {
+  const beginEditTask = useCallback((task: MyDayTaskItem) => {
     setEditingTaskId(task.id)
     setEditingDraft(task.title ?? '')
     setOpenMenuTaskId(null)
@@ -839,7 +909,7 @@ export default function WeeklyPlannerCore() {
   // RENDER
   // ======================================================
   if (!isHydrated) return null
-  
+
   return (
     <>
       <Reveal>
@@ -1276,50 +1346,49 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
-  
           {/* Card de navegação dia anterior/próximo (agora com propósito: abre calendário no centro) */}
-<SoftCard
-  className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
-  onClick={openMonthSheet}
->
-  <div className="flex items-center justify-between gap-2">
-    <button
-      type="button"
-      className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-      onClick={(e) => {
-        e.stopPropagation()
-        const d = new Date(selectedDate)
-        d.setDate(d.getDate() - 1)
-        handleDateSelect(d)
-      }}
-      aria-label="Dia anterior"
-    >
-      ‹
-    </button>
+          <SoftCard
+            className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
+            onClick={openMonthSheet}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const d = new Date(selectedDate)
+                  d.setDate(d.getDate() - 1)
+                  handleDateSelect(d)
+                }}
+                aria-label="Dia anterior"
+              >
+                ‹
+              </button>
 
-    <div className="text-sm font-semibold text-[var(--color-text-main)]">
-      {selectedDate.toLocaleDateString('pt-BR')}
-    </div>
+              <div className="text-sm font-semibold text-[var(--color-text-main)]">
+                {selectedDate.toLocaleDateString('pt-BR')}
+              </div>
 
-    <button
-      type="button"
-      className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-      onClick={(e) => {
-        e.stopPropagation()
-        const d = new Date(selectedDate)
-        d.setDate(d.getDate() + 1)
-        handleDateSelect(d)
-      }}
-      aria-label="Próximo dia"
-    >
-      ›
-    </button>
-  </div>
+              <button
+                type="button"
+                className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const d = new Date(selectedDate)
+                  d.setDate(d.getDate() + 1)
+                  handleDateSelect(d)
+                }}
+                aria-label="Próximo dia"
+              >
+                ›
+              </button>
+            </div>
 
-  <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
-    Toque no centro para abrir o calendário do planner.
-  </p>
-</SoftCard>
+            <p className="mt-2 text-center text-[11px] text-[var(--color-text-muted)]">
+              Toque no centro para abrir o calendário do planner.
+            </p>
+          </SoftCard>
         </div>
       </Reveal>
 

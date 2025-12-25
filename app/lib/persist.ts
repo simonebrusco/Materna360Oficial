@@ -2,9 +2,10 @@
 
 const PREFIX = 'm360:'
 
-/**
- * Safe date utilities for persistence keys
- */
+/* ======================================================
+   UTILIDADES DE DATA
+====================================================== */
+
 export function getCurrentDateKey(): string {
   return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
 }
@@ -18,28 +19,18 @@ export function getCurrentWeekKey(): string {
   return `${year}-W${String(week).padStart(2, '0')}`
 }
 
-/**
- * Save a value to localStorage with m360: prefix
- * @param key - Key name (e.g., "planner:2024-W01", "diary:2024-01-15")
- * @param value - Value to save (any JSON-serializable type)
- */
+/* ======================================================
+   CORE — SAVE / LOAD / REMOVE
+====================================================== */
+
 export function save(key: string, value: unknown): void {
   try {
     if (typeof window === 'undefined') return
     const prefixedKey = `${PREFIX}${key}`
-    const jsonValue = JSON.stringify(value)
-    window.localStorage.setItem(prefixedKey, jsonValue)
-  } catch (error) {
-    console.error(`Failed to save localStorage key "${key}":`, error)
-  }
+    window.localStorage.setItem(prefixedKey, JSON.stringify(value))
+  } catch {}
 }
 
-/**
- * Load a value from localStorage with m360: prefix
- * @param key - Key name
- * @param defaultValue - Value to return if key not found or JSON parse fails
- * @returns Parsed value or defaultValue
- */
 export function load<T = unknown>(key: string, defaultValue?: T): T | undefined {
   try {
     if (typeof window === 'undefined') return defaultValue
@@ -47,152 +38,147 @@ export function load<T = unknown>(key: string, defaultValue?: T): T | undefined 
     const item = window.localStorage.getItem(prefixedKey)
     if (!item) return defaultValue
     return JSON.parse(item) as T
-  } catch (error) {
-    console.error(`Failed to load localStorage key "${key}":`, error)
+  } catch {
     return defaultValue
   }
 }
 
-/**
- * Remove a key from localStorage with m360: prefix
- * @param key - Key name
- */
 export function remove(key: string): void {
   try {
     if (typeof window === 'undefined') return
-    const prefixedKey = `${PREFIX}${key}`
-    window.localStorage.removeItem(prefixedKey)
-  } catch (error) {
-    console.error(`Failed to remove localStorage key "${key}":`, error)
-  }
+    window.localStorage.removeItem(`${PREFIX}${key}`)
+  } catch {}
 }
 
-/**
- * Clear all m360: prefixed keys from localStorage
- */
+/* ======================================================
+   EXPORT / LIMPEZA
+====================================================== */
+
 export function clearAll(): void {
   try {
     if (typeof window === 'undefined') return
-    const keysToRemove: string[] = []
+    const keys: string[] = []
     for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i)
-      if (key?.startsWith(PREFIX)) {
-        keysToRemove.push(key)
-      }
+      const k = window.localStorage.key(i)
+      if (k?.startsWith(PREFIX)) keys.push(k)
     }
-    keysToRemove.forEach((key) => window.localStorage.removeItem(key))
-  } catch (error) {
-    console.error('Failed to clear localStorage:', error)
-  }
+    keys.forEach((k) => window.localStorage.removeItem(k))
+  } catch {}
 }
 
-/**
- * Export all m360: prefixed data as an object
- * Useful for debugging or data export
- */
 export function exportData(): Record<string, unknown> {
   try {
     if (typeof window === 'undefined') return {}
-    const data: Record<string, unknown> = {}
+    const out: Record<string, unknown> = {}
     for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i)
-      if (key?.startsWith(PREFIX)) {
-        const cleanKey = key.slice(PREFIX.length)
+      const k = window.localStorage.key(i)
+      if (k?.startsWith(PREFIX)) {
+        const clean = k.slice(PREFIX.length)
         try {
-          data[cleanKey] = JSON.parse(window.localStorage.getItem(key) || '{}')
+          out[clean] = JSON.parse(window.localStorage.getItem(k) || '{}')
         } catch {
-          // Keep invalid JSON as string
-          data[cleanKey] = window.localStorage.getItem(key)
+          out[clean] = window.localStorage.getItem(k)
         }
       }
     }
-    return data
-  } catch (error) {
-    console.error('Failed to export localStorage data:', error)
+    return out
+  } catch {
     return {}
   }
 }
 
-/**
- * Convenience: Save an array item (append to list)
- * @param key - List key
- * @param item - Item to append
- */
+/* ======================================================
+   CONVENIÊNCIA — LISTAS
+====================================================== */
+
 export function appendItem<T>(key: string, item: T): void {
   try {
     const list = load<T[]>(key, []) ?? []
     list.push(item)
     save(key, list)
-  } catch (error) {
-    console.error(`Failed to append item to "${key}":`, error)
-  }
+  } catch {}
 }
 
-/**
- * Convenience: Load an array of items
- * @param key - List key
- * @returns Array of items or empty array
- */
 export function loadItems<T>(key: string): T[] {
   return load<T[]>(key, []) ?? []
 }
 
-/**
- * Convenience: Save a timestamped entry (e.g., diary entries)
- * @param key - Key prefix
- * @param entry - Entry object (will add timestamp if not present)
- */
-export function saveEntry<T extends Record<string, unknown>>(
-  key: string,
-  entry: T
-): void {
+/* ======================================================
+   CONTINUIDADE — MEU DIA LEVE → MEU DIA (P26)
+   👉 Fonte oficial: m360:
+   👉 Fallback automático para legado
+====================================================== */
+
+export type MeuDiaLeveRecentSave = {
+  ts: number
+  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
+  source: string
+}
+
+const RECENT_SAVE_KEY = 'my_day_recent_save_v1'
+const LAST_HANDLED_TS_KEY = 'meu_dia_leve_last_handled_ts_v1'
+
+// chaves antigas que podem existir no localStorage cru
+const LEGACY_RECENT_SAVE_KEYS = [
+  'my_day_recent_save_v1',
+  'm360:my_day_recent_save_v1',
+  'm360.my_day_recent_save_v1',
+] as const
+
+const LEGACY_LAST_HANDLED_KEYS = [
+  'meu_dia_leve_last_handled_ts_v1',
+  'm360.meu_dia_leve_last_handled_ts_v1',
+  'm360:meu_dia_leve_last_handled_ts_v1',
+] as const
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  if (!raw) return null
   try {
-    const withTimestamp = {
-      ...entry,
-      ts: entry.ts || Date.now(),
-    }
-    save(key, withTimestamp)
-  } catch (error) {
-    console.error(`Failed to save entry to "${key}":`, error)
+    return JSON.parse(raw) as T
+  } catch {
+    return null
   }
 }
 
-/**
- * Convenience: Get entries for a date range
- * @param prefix - Key prefix (e.g., "diary" for keys like "diary:2024-01-15")
- * @param startDate - Start date (YYYY-MM-DD)
- * @param endDate - End date (YYYY-MM-DD)
- * @returns Object mapping dates to entries
- */
-export function getEntriesByDateRange(
-  prefix: string,
-  startDate: string,
-  endDate: string
-): Record<string, unknown> {
+function readLegacyFirst(keys: readonly string[]): string | null {
   try {
-    if (typeof window === 'undefined') return {}
-    const result: Record<string, unknown> = {}
-    const fullPrefix = `${PREFIX}${prefix}:`
-    const startTime = new Date(startDate).getTime()
-    const endTime = new Date(endDate).getTime()
-
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i)
-      if (key?.startsWith(fullPrefix)) {
-        const dateStr = key.slice(fullPrefix.length)
-        const dateTime = new Date(dateStr).getTime()
-        if (dateTime >= startTime && dateTime <= endTime) {
-          try {
-            result[dateStr] = JSON.parse(window.localStorage.getItem(key) || '{}')
-          } catch {
-            result[dateStr] = window.localStorage.getItem(key)
-          }
-        }
-      }
+    if (typeof window === 'undefined') return null
+    for (const k of keys) {
+      const v = window.localStorage.getItem(k)
+      if (v) return v
     }
-    return result
-  } catch (error) {
-    console.error('Failed to get entries by date range:', error)
-    return {}
+    return null
+  } catch {
+    return null
   }
+}
+
+export function loadMyDayRecentSave(): MeuDiaLeveRecentSave | null {
+  // 1) novo padrão
+  const v = load<MeuDiaLeveRecentSave | null>(RECENT_SAVE_KEY, null)
+  if (v && typeof v.ts === 'number') return v
+
+  // 2) legado
+  const raw = readLegacyFirst(LEGACY_RECENT_SAVE_KEYS)
+  const parsed = safeParseJSON<MeuDiaLeveRecentSave>(raw)
+  if (parsed && typeof parsed.ts === 'number') return parsed
+
+  return null
+}
+
+export function loadMeuDiaLeveLastHandledTs(): number {
+  // 1) novo padrão
+  const v = load<number | string | null>(LAST_HANDLED_TS_KEY, null)
+  const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0
+  if (Number.isFinite(n)) return n
+
+  // 2) legado
+  const raw = readLegacyFirst(LEGACY_LAST_HANDLED_KEYS)
+  const ln = raw ? Number(raw) : 0
+  return Number.isFinite(ln) ? ln : 0
+}
+
+export function saveMeuDiaLeveLastHandledTs(ts: number): void {
+  if (!Number.isFinite(ts)) return
+  save(LAST_HANDLED_TS_KEY, ts)
 }

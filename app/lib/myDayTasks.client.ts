@@ -1,19 +1,20 @@
 'use client'
 
 import { track } from '@/app/lib/telemetry'
+import { load, save } from '@/app/lib/persist'
 
 /**
  * P7/P8/P12 — Meu Dia Tasks (client-only)
- * Fonte única: LocalStorage (key: planner/tasks/YYYY-MM-DD)
+ * Fonte: LocalStorage
  *
  * Compatibilidade:
- * - WeeklyPlannerCore (Planner) usa TaskItem com { done: boolean }
- * - Meu Dia usa MyDayTaskItem com status/snooze etc.
+ * - Padrão novo: persist.ts (prefixo "m360:" aplicado automaticamente)
+ * - Legado: chave sem prefixo (localStorage direto)
  *
- * Estratégia:
- * - Persistimos tudo na mesma storageKey planner/tasks/YYYY-MM-DD
- * - Normalizamos no read (migração silenciosa)
- * - Mantemos coerência mínima status <-> done para não quebrar o Planner
+ * Estratégia segura:
+ * - LER: prioridade no prefixado (persist), fallback no legado
+ * - ESCREVER: prefixado (persist) + espelha no legado (compat total)
+ * - MIGRAR silenciosamente: se achar só no legado, replica no prefixado
  */
 
 /** Sources (telemetria + agrupamento fino no futuro) */
@@ -140,6 +141,10 @@ function makeDateKey(d: Date = new Date()): string {
   return `${y}-${m}-${day}`
 }
 
+/**
+ * Chave “limpa” (persist.ts aplica m360:)
+ * E também é a chave legada (sem prefixo) no localStorage cru.
+ */
 function storageKeyForDateKey(dateKey: string) {
   return `planner/tasks/${dateKey}`
 }
@@ -191,7 +196,7 @@ function countOpenTasks(tasks: MyDayTaskItem[]): number {
  * - TaskItem do Planner (done)
  * - MyDayTaskItem do Meu Dia (status)
  *
- * Retorna também se houve migração silenciosa (para persistir no próximo write).
+ * Retorna também se houve normalização (para persistir no próximo write).
  */
 function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | null; changed: boolean } {
   if (!it) return { item: null, changed: false }
@@ -217,7 +222,7 @@ function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | n
   const createdAtRaw = typeof it.createdAt === 'string' ? it.createdAt : undefined
   const source: MyDaySource | undefined = isMyDaySource(it.source) ? it.source : undefined
 
-  // se não tiver status → inferir (coerente com done legado)
+  // se não tiver status → inferir
   const computedStatus: TaskStatus =
     statusRaw ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : 'active')
 
@@ -252,36 +257,73 @@ function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | n
   return { item, changed }
 }
 
+/**
+ * Leitura com prioridade:
+ * 1) persist.ts (prefixado m360:)
+ * 2) legado (localStorage cru sem prefixo)
+ *
+ * Se vier só do legado, migra silenciosamente para o persist.
+ */
 function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
   if (typeof window === 'undefined') return []
+
   const key = storageKeyForDateKey(dateKey)
-  const parsed = safeParseJSON<unknown>(window.localStorage.getItem(key))
-  if (!Array.isArray(parsed)) return []
+
+  // 1) novo padrão: persist.ts
+  const fromPersist = load<unknown[] | null>(key, null)
+  if (Array.isArray(fromPersist)) {
+    const nowISO = new Date().toISOString()
+    let changed = false
+    const normalized: MyDayTaskItem[] = []
+
+    for (const raw of fromPersist) {
+      const r = normalizeStoredTask(raw, nowISO)
+      if (r.item) normalized.push(r.item)
+      if (r.changed) changed = true
+    }
+
+    if (changed) {
+      // escreve no persist e espelha no legado
+      writeTasksByDateKey(dateKey, normalized)
+    }
+    return normalized
+  }
+
+  // 2) legado: localStorage cru sem prefixo
+  const rawLegacy = safeParseJSON<unknown>(window.localStorage.getItem(key))
+  if (!Array.isArray(rawLegacy)) return []
 
   const nowISO = new Date().toISOString()
   let changed = false
-
   const normalized: MyDayTaskItem[] = []
-  for (const raw of parsed) {
-    const res = normalizeStoredTask(raw, nowISO)
-    if (res.item) normalized.push(res.item)
-    if (res.changed) changed = true
+
+  for (const raw of rawLegacy) {
+    const r = normalizeStoredTask(raw, nowISO)
+    if (r.item) normalized.push(r.item)
+    if (r.changed) changed = true
   }
 
-  // migração silenciosa
-  if (changed) {
-    try {
-      window.localStorage.setItem(key, safeStringifyJSON(normalized))
-    } catch {}
-  }
+  // migração silenciosa: achou só no legado → replica no persist
+  writeTasksByDateKey(dateKey, normalized)
 
+  // se normalizou, já persistiu acima
   return normalized
 }
 
 function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
   if (typeof window === 'undefined') return
+
   const key = storageKeyForDateKey(dateKey)
-  window.localStorage.setItem(key, safeStringifyJSON(tasks))
+
+  // fonte oficial: persist.ts (m360:)
+  try {
+    save(key, tasks)
+  } catch {}
+
+  // espelha no legado (sem prefixo)
+  try {
+    window.localStorage.setItem(key, safeStringifyJSON(tasks))
+  } catch {}
 }
 
 /** ---------- API pública ---------- */

@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { save } from '@/app/lib/persist'
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
@@ -13,7 +14,7 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
   return t
 }
 
-const SEEN_KEY = 'm360_seen_welcome_v1'
+const SEEN_KEY = 'seen_welcome_v1'
 
 export default function BemVindaClient() {
   const router = useRouter()
@@ -22,13 +23,22 @@ export default function BemVindaClient() {
   const nextRaw = searchParams.get('next')
   const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
 
-  function onStart() {
+  function markSeenSilently() {
     try {
-      localStorage.setItem(SEEN_KEY, '1')
+      save(SEEN_KEY, '1')
     } catch {
       // silencioso
     }
+  }
+
+  function onStartMeuDia() {
+    markSeenSilently()
     router.push(nextDest)
+  }
+
+  function onGoMaternar() {
+    markSeenSilently()
+    router.push('/maternar')
   }
 
   return (
@@ -68,14 +78,27 @@ export default function BemVindaClient() {
           <p>• Pequenos apoios pensados para a vida real</p>
         </div>
 
-        <p className="mt-4 text-xs text-[var(--color-text-muted)]">Nada de cobranças. Nada de perfeição.</p>
+        <p className="mt-4 text-xs text-[var(--color-text-muted)]">Sem cobrança. Sem perfeição.</p>
 
-        <button
-          onClick={onStart}
-          className="mt-8 w-full rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          Começar pelo meu dia
-        </button>
+        <div className="mt-8 space-y-2">
+          <button
+            onClick={onStartMeuDia}
+            className="w-full rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            Começar pelo Meu Dia
+          </button>
+
+          <button
+            onClick={onGoMaternar}
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:bg-black/[0.02] transition"
+          >
+            Ir para o Maternar
+          </button>
+
+          <p className="pt-2 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+            Você pode trocar de aba depois. Aqui é só para te dar um começo leve.
+          </p>
+        </div>
       </div>
     </div>
   )

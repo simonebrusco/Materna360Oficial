@@ -11,7 +11,7 @@ import { getDailyIndex } from '@/app/lib/dailyMessage'
 import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-import { MyDayGroups } from '@/components/my-day/MyDayGroups'
+import MyDayGroups from '@/components/my-day/MyDayGroups'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
@@ -107,7 +107,6 @@ function originLabel(origin: MeuDiaLeveRecentSave['origin']) {
 
 export default function MeuDiaClient() {
   const { name } = useProfile()
-
   const firstName = useMemo(() => getFirstName(name), [name])
 
   const [greeting, setGreeting] = useState('')
@@ -118,10 +117,6 @@ export default function MeuDiaClient() {
 
   // P13 — micro-frase de continuidade (no máximo 1 por dia)
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
-
-  // P16 — premium state (agora via experience tier)
-  const [premium, setPremium] = useState(false)
-  const [premiumSeenToday, setPremiumSeenToday] = useState(false)
 
   // P26 — CTA discreto: “voltar ao Meu Dia Leve” (1x por dia, só quando houve save recente)
   const [meuDiaLevePrompt, setMeuDiaLevePrompt] = useState<MeuDiaLeveRecentSave | null>(null)
@@ -207,26 +202,25 @@ export default function MeuDiaClient() {
     try {
       const tier = getExperienceTier()
       const next = tier === 'premium'
-      setPremium(next)
 
+      // Telemetria interna, sem qualquer efeito visual.
       if (next) {
         const key = `m360.premium_seen.${todayKey}`
-        const already = localStorage.getItem(key)
+        const already = safeGetLS(key)
 
         if (!already) {
-          localStorage.setItem(key, '1')
-
-          track('premium_state_visible', {
-            tab: 'meu-dia',
-            dateKey: todayKey,
-            timestamp: new Date().toISOString(),
-          })
-
-          setPremiumSeenToday(true)
+          safeSetLS(key, '1')
+          try {
+            track('premium_state_visible', {
+              tab: 'meu-dia',
+              dateKey: todayKey,
+              timestamp: new Date().toISOString(),
+            })
+          } catch {}
         }
       }
     } catch {
-      setPremium(false)
+      // silêncio total: fallback implícito para free
     }
   }, [todayKey])
 
@@ -303,9 +297,6 @@ export default function MeuDiaClient() {
     }
   }, [refreshAiContextAndContinuity, refreshPremiumState, refreshMeuDiaLeveContinuity])
 
-  // 🔹 P22 — regra de ordem silenciosa
-  const showMessageFirst = milestones.isFirstDay || milestones.isReturnAfterAbsence
-
   return (
     <main
       data-layout="page-template-v1"
@@ -325,7 +316,6 @@ export default function MeuDiaClient() {
             MEU DIA
           </span>
 
-          {/* Copy alinhada à promessa (menos “produtividade”, mais “apoio”) */}
           <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
             Seu dia, do seu jeito
           </h1>
@@ -334,7 +324,6 @@ export default function MeuDiaClient() {
             Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
           </p>
 
-          {/* Frase-permissão (primeira vitória) */}
           <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
             Você não precisa dar conta de tudo. Só do que fizer sentido agora.
           </p>
@@ -355,41 +344,40 @@ export default function MeuDiaClient() {
 
           {/* P26 — continuidade discreta (aparece só quando veio do Meu Dia Leve) */}
           {meuDiaLevePrompt ? (
-            <div className="mt-4">
+            <div className="mt-5">
               <div
                 className="
+                  bg-white
                   rounded-3xl
-                  bg-white/10
-                  border border-white/35
-                  backdrop-blur-xl
-                  shadow-[0_18px_45px_rgba(0,0,0,0.18)]
-                  p-3 md:p-4
+                  p-6
+                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                  border border-[#F5D7E5]
                 "
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
+                    <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
                       <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
                     </div>
 
-                    <div>
-                      <div className="text-[12px] text-white/90">
+                    <div className="min-w-0">
+                      <div className="text-[12px] text-[#6A6A6A]">
                         Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
                       </div>
-                      <div className="mt-1 text-[13px] text-white/85 leading-relaxed max-w-xl">
+                      <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-xl">
                         Se quiser, volte para pegar mais um próximo passo pronto — sem inventar nada.
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <a
                       href="/maternar/meu-dia-leve"
                       className="
                         rounded-full
-                        bg-white/90 hover:bg-white
-                        text-[#2f3a56]
-                        px-3 py-2
+                        bg-[#fd2597] hover:opacity-95
+                        text-white
+                        px-4 py-2
                         text-[12px]
                         font-semibold
                         shadow-lg transition
@@ -416,12 +404,13 @@ export default function MeuDiaClient() {
                       type="button"
                       className="
                         rounded-full
-                        bg-white/15 hover:bg-white/20
-                        border border-white/25
-                        text-white/90
-                        px-3 py-2
+                        bg-white
+                        border border-[#F5D7E5]
+                        text-[#545454]
+                        px-4 py-2
                         text-[12px]
                         transition
+                        hover:shadow-sm
                         whitespace-nowrap
                       "
                       onClick={() => {
@@ -442,16 +431,7 @@ export default function MeuDiaClient() {
           ) : null}
         </header>
 
-        {/* P22 — ordem silenciosa */}
-        {showMessageFirst ? (
-          <>
-            <MyDayGroups aiContext={aiContext} />
-          </>
-        ) : (
-          <>
-            <MyDayGroups aiContext={aiContext} />
-          </>
-        )}
+        <MyDayGroups aiContext={aiContext} />
 
         {/* BLOCO FREE / PREMIUM — inalterado */}
         {/* ... mantém exatamente como estava ... */}
@@ -459,12 +439,11 @@ export default function MeuDiaClient() {
         <section
           className="
             mt-6 md:mt-8
+            bg-white
             rounded-3xl
-            bg-white/10
-            border border-white/35
-            backdrop-blur-xl
-            shadow-[0_18px_45px_rgba(0,0,0,0.18)]
-            p-3 md:p-4
+            p-6
+            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+            border border-[#F5D7E5]
           "
         >
           <WeeklyPlannerShell />
