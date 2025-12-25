@@ -153,14 +153,14 @@ export default function MaternaBoxPage() {
   return (
     <PageTemplate
       headerTone="light"
-      label="MATERNAR"
+      label="" // remove o chip "MATERNAR" do topo
       title="MaternaBox"
       subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
     >
       <ClientOnly>
-        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
-          {/* Back */}
-          <BackToMaternar className="px-4 md:px-0" />
+        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-3xl mx-auto px-4 md:px-6">
+          {/* Back (no topo, antes de qualquer card) */}
+          <BackToMaternar className="px-0" />
 
           {/* HERO HUB-LIKE */}
           <Reveal>
