@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-  // Response base (permite set-cookie/refresh do Supabase)
+  // Response base (permite set-cookie/refresh)
   const response = NextResponse.next()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -104,11 +104,7 @@ export async function middleware(request: NextRequest) {
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
-      const u = new URL('/bem-vinda', request.url)
-      // se existir redirectTo, mantém como next; senão, /meu-dia
-      const rawNext = request.nextUrl.searchParams.get('redirectTo')
-      u.searchParams.set('next', safeInternalRedirect(rawNext, '/meu-dia'))
-      return NextResponse.redirect(u)
+      return NextResponse.redirect(new URL('/bem-vinda', request.url))
     }
 
     const rawNext = request.nextUrl.searchParams.get('redirectTo')
@@ -119,9 +115,7 @@ export async function middleware(request: NextRequest) {
   // "/" é público — mas se logada, aplica regra de entrada
   if (normalizedPath === '/' && hasSession) {
     if (!hasSeenWelcome) {
-      const u = new URL('/bem-vinda', request.url)
-      u.searchParams.set('next', '/meu-dia')
-      return NextResponse.redirect(u)
+      return NextResponse.redirect(new URL('/bem-vinda', request.url))
     }
     return NextResponse.redirect(new URL('/meu-dia', request.url))
   }
