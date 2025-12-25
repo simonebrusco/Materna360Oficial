@@ -452,7 +452,8 @@ export default function SavedContentsSection({
             <div className="max-h-80 overflow-y-auto pr-1 space-y-2 mt-2">
               {allItems.length === 0 && (
                 <p className="text-sm text-[var(--color-text-muted)]">
-                  Você ainda não salvou nada hoje. Use os hubs do Materna360 e
+                  Nada salvo por aqui hoje.
+Se quiser, você pode guardar algo quando fizer sentido. Use os hubs do Materna360 e
                   toque em &quot;Salvar no planner&quot; sempre que quiser
                   guardar algo com carinho.
                 </p>
