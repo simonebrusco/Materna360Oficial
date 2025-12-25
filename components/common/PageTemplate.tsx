@@ -8,6 +8,7 @@ export type PageTemplateProps = {
   title: string
   subtitle?: string
   children: ReactNode
+  headerVariant?: 'dark' | 'light'
   /**
    * Define a cor do header (label/título/subtítulo).
    * - "dark": padrão atual (cinza)
