@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
-const SEEN_KEY = 'seen_welcome_v1'
+const SEEN_KEY = 'm360_seen_welcome_v1'
 
 /* =========================
    Helpers de segurança
@@ -53,10 +53,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Builder / preview sempre passa
-  if (
-    request.nextUrl.searchParams.has('builder.preview') ||
-    pathname.startsWith('/builder-embed')
-  ) {
+  if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
     return NextResponse.next()
   }
 
@@ -67,6 +64,7 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
+  // Response base (permite set-cookie/refresh)
   const response = NextResponse.next()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -94,6 +92,7 @@ export async function middleware(request: NextRequest) {
       }
     } catch {
       hasSession = false
+      hasSeenWelcome = false
     }
   }
 
@@ -101,7 +100,7 @@ export async function middleware(request: NextRequest) {
      Regras principais
   ========================= */
 
-  // Usuária logada tentando acessar login/signup
+  // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
       return NextResponse.redirect(new URL('/bem-vinda', request.url))
@@ -120,7 +119,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/meu-dia', request.url))
   }
 
-  // Rota protegida sem sessão → login
+  // Rota protegida sem sessão -> login
   if (isProtectedPath(normalizedPath) && !hasSession) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirectTo', redirectToValue)
