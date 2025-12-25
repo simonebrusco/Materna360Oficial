@@ -1,8 +1,8 @@
-// app/bem-vinda/BemVindaClient.tsx
 'use client'
 
 import { useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { save } from '@/app/lib/persist'
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
@@ -16,17 +16,6 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
 
 const SEEN_KEY = 'm360_seen_welcome_v1'
 
-function setSeenCookie() {
-  try {
-    // Cookie “simples” e suficiente para a decisão do middleware.
-    // path=/ para valer no app inteiro.
-    // max-age ~ 2 anos (opcional, mas bom).
-    document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=63072000; SameSite=Lax`
-  } catch {
-    // silencioso
-  }
-}
-
 export default function BemVindaClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -35,7 +24,20 @@ export default function BemVindaClient() {
   const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
 
   function markSeenSilently() {
-    setSeenCookie()
+    // 1) Client storage (persist)
+    try {
+      save(SEEN_KEY, '1')
+    } catch {
+      // silencioso
+    }
+
+    // 2) Cookie (para o middleware)
+    try {
+      const oneYear = 60 * 60 * 24 * 365
+      document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=${oneYear}; SameSite=Lax`
+    } catch {
+      // silencioso
+    }
   }
 
   function onStartMeuDia() {
