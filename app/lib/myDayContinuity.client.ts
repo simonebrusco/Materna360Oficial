@@ -1,20 +1,7 @@
+// app/lib/myDayContinuity.client.ts
 'use client'
 
-import { load, save, remove } from '@/app/lib/persist'
-
-/**
- * P26 — Continuidade Meu Dia Leve -> Meu Dia
- * Fonte oficial: persist.ts (prefixo m360: aplicado internamente)
- *
- * Regras:
- * - mark: grava payload com ts (sempre)
- * - read: lê sem limpar
- * - consume: lê + valida janela de recência + de-dupe via lastHandled + limpa
- *
- * Compat (legado):
- * - tenta ler também de chaves antigas no localStorage cru, se não encontrar no persist.
- * - não faz “migrar tudo” aqui; só lê/limpa o essencial.
- */
+import { load, remove, save } from '@/app/lib/persist'
 
 export type MeuDiaContinuityOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 
@@ -27,10 +14,7 @@ export type MeuDiaContinuityPayload = {
 const RECENT_SAVE_KEY = 'my_day_recent_save_v1'
 const LAST_HANDLED_TS_KEY = 'meu_dia_leve_last_handled_ts_v1'
 
-// Janela padrão (Meu Dia abre "no lugar certo" se foi salvo recentemente)
-const DEFAULT_RECENT_WINDOW_MS = 30 * 60 * 1000 // 30 min
-
-// Legado que pode existir no storage “cru”
+// Legado (pode existir no localStorage cru; não quebra usuários antigos)
 const LEGACY_RECENT_SAVE_KEYS = [
   'my_day_recent_save_v1',
   'm360:my_day_recent_save_v1',
@@ -43,16 +27,6 @@ const LEGACY_LAST_HANDLED_KEYS = [
   'meu_dia_leve_last_handled_ts_v1',
 ] as const
 
-function isOrigin(v: any): v is MeuDiaContinuityOrigin {
-  return v === 'today' || v === 'family' || v === 'selfcare' || v === 'home' || v === 'other'
-}
-
-function isPayload(v: unknown): v is MeuDiaContinuityPayload {
-  if (!v || typeof v !== 'object') return false
-  const o: any = v
-  return typeof o.ts === 'number' && Number.isFinite(o.ts) && isOrigin(o.origin) && typeof o.source === 'string' && !!o.source.trim()
-}
-
 function safeParseJSON<T>(raw: string | null): T | null {
   if (!raw) return null
   try {
@@ -60,6 +34,20 @@ function safeParseJSON<T>(raw: string | null): T | null {
   } catch {
     return null
   }
+}
+
+function isPayload(v: unknown): v is MeuDiaContinuityPayload {
+  if (!v || typeof v !== 'object') return false
+  const o = v as any
+  const okOrigin =
+    o.origin === 'today' ||
+    o.origin === 'family' ||
+    o.origin === 'selfcare' ||
+    o.origin === 'home' ||
+    o.origin === 'other'
+  const okTs = typeof o.ts === 'number' && Number.isFinite(o.ts)
+  const okSource = typeof o.source === 'string' && !!o.source.trim()
+  return okOrigin && okTs && okSource
 }
 
 function readLegacyLSFirstMatch(keys: readonly string[]): string | null {
@@ -75,39 +63,6 @@ function readLegacyLSFirstMatch(keys: readonly string[]): string | null {
   }
 }
 
-function readLegacyRecentSave(): MeuDiaContinuityPayload | null {
-  const raw = readLegacyLSFirstMatch(LEGACY_RECENT_SAVE_KEYS)
-  const parsed = safeParseJSON<unknown>(raw)
-  return isPayload(parsed) ? parsed : null
-}
-
-function readLegacyLastHandledTs(): number {
-  const raw = readLegacyLSFirstMatch(LEGACY_LAST_HANDLED_KEYS)
-  const n = raw ? Number(raw) : 0
-  return Number.isFinite(n) ? n : 0
-}
-
-function writeLastHandledTs(ts: number) {
-  try {
-    save(LAST_HANDLED_TS_KEY, ts)
-  } catch {}
-}
-
-function readLastHandledTs(): number {
-  try {
-    const v = load<number | string | null>(LAST_HANDLED_TS_KEY, null)
-    const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0
-    return Number.isFinite(n) ? n : 0
-  } catch {
-    // fallback legado
-    return readLegacyLastHandledTs()
-  }
-}
-
-/**
- * Marca um "save recente" (Meu Dia Leve -> Meu Dia).
- * Isso é o que o hub Meu Dia Leve deve chamar depois de salvar uma tarefa.
- */
 export function markRecentMyDaySave(input: { origin: MeuDiaContinuityOrigin; source: string }) {
   try {
     const payload: MeuDiaContinuityPayload = {
@@ -119,41 +74,50 @@ export function markRecentMyDaySave(input: { origin: MeuDiaContinuityOrigin; sou
   } catch {}
 }
 
-/**
- * Lê o payload (sem limpar). Útil para debug.
- * Tenta persist primeiro, depois legado.
- */
 export function readRecentMyDaySave(): MeuDiaContinuityPayload | null {
+  // 1) novo padrão (persist.ts)
   try {
     const v = load<MeuDiaContinuityPayload | null>(RECENT_SAVE_KEY, null)
     if (isPayload(v)) return v
   } catch {}
 
-  return readLegacyRecentSave()
+  // 2) legado: localStorage cru
+  const raw = readLegacyLSFirstMatch(LEGACY_RECENT_SAVE_KEYS)
+  const parsed = safeParseJSON<unknown>(raw)
+  if (isPayload(parsed)) return parsed
+
+  return null
+}
+
+export function readLastHandledTs(): number {
+  // 1) novo padrão (persist.ts)
+  try {
+    const v = load<number | string | null>(LAST_HANDLED_TS_KEY, null)
+    const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0
+    return Number.isFinite(n) ? n : 0
+  } catch {}
+
+  // 2) legado: localStorage cru
+  const raw = readLegacyLSFirstMatch(LEGACY_LAST_HANDLED_KEYS)
+  const n = raw ? Number(raw) : 0
+  return Number.isFinite(n) ? n : 0
+}
+
+export function writeLastHandledTs(ts: number) {
+  try {
+    save(LAST_HANDLED_TS_KEY, ts)
+  } catch {}
 }
 
 /**
- * Consume = lê + valida recência + de-dupe + (opcional) limpa.
- * Retorna null se:
- * - não existe
- * - está fora da janela
- * - já foi "handled" (ts <= lastHandled)
- *
- * Por padrão, limpa a chave RECENT_SAVE_KEY quando:
- * - expirou (fora da janela), ou
- * - foi consumida com sucesso
- *
- * Observação: lastHandled é sempre atualizado quando consumido com sucesso.
+ * Consome a continuidade de forma “silenciosa”:
+ * - valida payload
+ * - aplica janela de recência (default 30 min)
+ * - dedupe por ts (lastHandled)
+ * - marca lastHandled
+ * - remove RECENT_SAVE_KEY (para evitar re-trigger)
  */
-export function consumeRecentMyDaySave(opts?: {
-  recentWindowMs?: number
-  clearOnConsume?: boolean
-  clearOnExpired?: boolean
-}): MeuDiaContinuityPayload | null {
-  const recentWindowMs = opts?.recentWindowMs ?? DEFAULT_RECENT_WINDOW_MS
-  const clearOnConsume = opts?.clearOnConsume ?? true
-  const clearOnExpired = opts?.clearOnExpired ?? true
-
+export function consumeRecentMyDaySave(opts?: { windowMs?: number }): MeuDiaContinuityPayload | null {
   try {
     const payload = readRecentMyDaySave()
     if (!isPayload(payload)) return null
@@ -163,26 +127,16 @@ export function consumeRecentMyDaySave(opts?: {
     if (!isNew) return null
 
     const ageMs = Date.now() - payload.ts
-    const isRecent = ageMs >= 0 && ageMs <= recentWindowMs
+    const windowMs = opts?.windowMs ?? 30 * 60 * 1000
+    const isRecent = ageMs >= 0 && ageMs <= windowMs
+    if (!isRecent) return null
 
-    if (!isRecent) {
-      if (clearOnExpired) {
-        try {
-          remove(RECENT_SAVE_KEY)
-        } catch {}
-      }
-      return null
-    }
-
-    // sucesso: marca handled
     writeLastHandledTs(payload.ts)
 
-    // limpa se quiser
-    if (clearOnConsume) {
-      try {
-        remove(RECENT_SAVE_KEY)
-      } catch {}
-    }
+    // limpa sinal para não repetir (dedupe já resolve, mas isso reduz ruído)
+    try {
+      remove(RECENT_SAVE_KEY)
+    } catch {}
 
     return payload
   } catch {
