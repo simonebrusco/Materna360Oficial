@@ -11,7 +11,7 @@ import { getDailyIndex } from '@/app/lib/dailyMessage'
 import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-import { MyDayGroups } from '@/components/my-day/MyDayGroups'
+import MyDayGroups from '@/components/my-day/MyDayGroups'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
