@@ -19,7 +19,11 @@ import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
-import { load, save } from '@/app/lib/persist'
+import {
+  loadMyDayRecentSave,
+  loadMeuDiaLeveLastHandledTs,
+  saveMeuDiaLeveLastHandledTs,
+} from '@/app/lib/persist'
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
@@ -29,42 +33,13 @@ const DEFAULT_LIMIT = 5
 
 /* =========================
    P26 — Continuidade Meu Dia Leve -> Meu Dia
+   (agora via persist.ts com migração silenciosa)
 ========================= */
 
 type MeuDiaLeveRecentSave = {
   ts: number
   origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
   source: string
-}
-
-/**
- * MIGRAÇÃO PARA persist.ts (m360:)
- * - Agora usamos as chaves “limpas” (persist aplica prefixo m360:)
- * - Mantemos fallback para chaves antigas (localStorage cru) para não quebrar usuários existentes
- */
-const PERSIST_RECENT_SAVE_KEY = 'my_day_recent_save_v1'
-const PERSIST_LAST_HANDLED_TS_KEY = 'meu_dia_leve_last_handled_ts_v1'
-
-// chaves legadas que podem existir no storage “cru”
-const LEGACY_RECENT_SAVE_KEYS = [
-  'my_day_recent_save_v1',
-  'm360:my_day_recent_save_v1',
-  'm360.my_day_recent_save_v1',
-] as const
-
-const LEGACY_LAST_HANDLED_KEYS = [
-  'm360.meu_dia_leve_last_handled_ts_v1',
-  'm360:meu_dia_leve_last_handled_ts_v1',
-  'meu_dia_leve_last_handled_ts_v1',
-] as const
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
 }
 
 function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
@@ -77,52 +52,12 @@ function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
   return okOrigin && okTs && okSource
 }
 
-function readLegacyLSFirstMatch(keys: readonly string[]): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    for (const k of keys) {
-      const v = window.localStorage.getItem(k)
-      if (v) return v
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
-function readRecentSave(): MeuDiaLeveRecentSave | null {
-  // 1) novo padrão: persist.ts (m360:)
-  try {
-    const v = load<MeuDiaLeveRecentSave | null>(PERSIST_RECENT_SAVE_KEY, null)
-    if (isRecentSavePayload(v)) return v
-  } catch {}
-
-  // 2) legado: localStorage cru (string JSON)
-  const raw = readLegacyLSFirstMatch(LEGACY_RECENT_SAVE_KEYS)
-  const parsed = safeParseJSON<unknown>(raw)
-  if (isRecentSavePayload(parsed)) return parsed
-
-  return null
-}
-
-function readLastHandledTs(): number {
-  // 1) novo padrão: persist.ts (m360:)
-  try {
-    const v = load<number | string | null>(PERSIST_LAST_HANDLED_TS_KEY, null)
-    const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0
-    return Number.isFinite(n) ? n : 0
-  } catch {}
-
-  // 2) legado: localStorage cru
-  const raw = readLegacyLSFirstMatch(LEGACY_LAST_HANDLED_KEYS)
-  const n = raw ? Number(raw) : 0
-  return Number.isFinite(n) ? n : 0
-}
-
-function writeLastHandledTs(ts: number) {
-  try {
-    save(PERSIST_LAST_HANDLED_TS_KEY, ts)
-  } catch {}
+function groupIdFromOrigin(origin: MeuDiaLeveRecentSave['origin']): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
 /* =========================
@@ -164,14 +99,6 @@ function formatSnoozeUntil(raw: unknown): string | null {
   } catch {
     return s
   }
-}
-
-function groupIdFromOrigin(origin: MeuDiaLeveRecentSave['origin']): GroupId {
-  if (origin === 'today') return 'para-hoje'
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  return 'outros'
 }
 
 /* =========================
@@ -349,10 +276,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     try {
       if (typeof window === 'undefined') return
 
-      const parsed = readRecentSave()
+      const parsed = loadMyDayRecentSave()
       if (!isRecentSavePayload(parsed)) return
 
-      const lastHandled = readLastHandledTs()
+      const lastHandled = loadMeuDiaLeveLastHandledTs()
       const isNew = Number.isFinite(parsed.ts) && parsed.ts > (Number.isFinite(lastHandled) ? lastHandled : 0)
 
       // janela de recência: 30 min
@@ -367,7 +294,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
       setExpanded((prev) => ({ ...prev, [gid]: true }))
       setHighlightGroup(gid)
 
-      writeLastHandledTs(parsed.ts)
+      saveMeuDiaLeveLastHandledTs(parsed.ts)
 
       window.setTimeout(() => {
         try {
