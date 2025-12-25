@@ -1,3 +1,4 @@
+// app/bem-vinda/BemVindaClient.tsx
 'use client'
 
 import { useMemo } from 'react'
@@ -14,7 +15,7 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
   return t
 }
 
-const SEEN_KEY = 'seen_welcome_v1'
+const SEEN_KEY = 'm360_seen_welcome_v1'
 
 export default function BemVindaClient() {
   const router = useRouter()
@@ -24,8 +25,16 @@ export default function BemVindaClient() {
   const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
 
   function markSeenSilently() {
+    // 1) persist (localStorage via persist.ts)
     try {
       save(SEEN_KEY, '1')
+    } catch {
+      // silencioso
+    }
+
+    // 2) cookie (para o middleware conseguir decidir)
+    try {
+      document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=31536000; SameSite=Lax`
     } catch {
       // silencioso
     }
