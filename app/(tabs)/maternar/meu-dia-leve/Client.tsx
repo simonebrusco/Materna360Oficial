@@ -273,7 +273,7 @@ async function requestAIRecipe(input: {
       childAgeLabel: input.childAgeLabel,
     }),
   })
-  if (!res.ok) return { ok: false, error: `http_${res.status}`, hint: ''Não deu certo agora. Se quiser, você pode usar uma opção pronta abaixo.' }
+  if (!res.ok) return { ok: false, error: `http_${res.status}`, hint: 'Não deu certo agora. Se quiser, você pode usar uma opção pronta abaixo.' }
   return (await res.json()) as AIRecipeResponse
 }
 
