@@ -164,7 +164,7 @@ export default function MaternaBoxPage() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl px-4 md:px-6">
-          {/* HEADER (igual padrão Minhas Conquistas) */}
+          {/* HEADER (igual Minhas Conquistas) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -185,9 +185,8 @@ export default function MaternaBoxPage() {
             </div>
           </header>
 
-          {/* CONTEÚDO */}
-          <div className="pb-12 space-y-8 md:space-y-10">
-            {/* HERO HUB-LIKE */}
+          <div className="space-y-8 md:space-y-10">
+            {/* VISÃO / HERO */}
             <Reveal>
               <SoftCard
                 id="maternabox-visao"
@@ -235,7 +234,7 @@ export default function MaternaBoxPage() {
                     </div>
                   </div>
 
-                  {/* 3 bullets objetivos */}
+                  {/* 3 bullets */}
                   <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
                     <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
@@ -361,7 +360,7 @@ export default function MaternaBoxPage() {
               </SoftCard>
             </Reveal>
 
-            {/* FAIXA ETÁRIA */}
+            {/* FAIXA */}
             <Reveal delay={60}>
               <SoftCard
                 id="maternabox-faixa"
@@ -486,7 +485,6 @@ export default function MaternaBoxPage() {
                     })}
                   </div>
 
-                  {/* RESUMO + CTA */}
                   <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div className="space-y-1">
