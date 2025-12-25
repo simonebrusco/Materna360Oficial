@@ -94,6 +94,12 @@ export type AddToMyDayResult = {
    * Mantido como campo opcional para não quebrar callers antigos.
    */
   limitHit?: boolean
+
+  /**
+   * P28 — fallback silencioso:
+   * quando o limite estoura, reaproveitamos 1 tarefa antiga (aberta) em vez de frustrar.
+   */
+  reused?: boolean
 }
 
 type GroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
@@ -184,6 +190,12 @@ function countOpenTasks(tasks: MyDayTaskItem[]): number {
     if (s === 'active' || s === 'snoozed') n += 1
   }
   return n
+}
+
+function createdAtTime(t: MyDayTaskItem): number {
+  const v = (t as any).createdAt
+  const n = v ? Date.parse(String(v)) : NaN
+  return Number.isFinite(n) ? n : 0
 }
 
 /**
@@ -281,7 +293,25 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
 function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
   if (typeof window === 'undefined') return
   const key = storageKeyForDateKey(dateKey)
-  window.localStorage.setItem(key, safeStringifyJSON(tasks))
+  try {
+    window.localStorage.setItem(key, safeStringifyJSON(tasks))
+  } catch {}
+}
+
+function findOldestOpenTaskIndex(tasks: MyDayTaskItem[]): number {
+  let idx = -1
+  let best = Infinity
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i]
+    const s = statusOf(t)
+    if (s !== 'active' && s !== 'snoozed') continue
+    const ts = createdAtTime(t)
+    if (ts < best) {
+      best = ts
+      idx = i
+    }
+  }
+  return idx
 }
 
 /** ---------- API pública ---------- */
@@ -303,9 +333,47 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     // guardrail (bola de neve)
     const openCount = countOpenTasks(tasks)
     if (openCount >= OPEN_TASKS_LIMIT_PER_DAY) {
+      // P28 — fallback silencioso: reaproveitar 1 tarefa antiga (aberta) em vez de frustrar.
+      const idx = findOldestOpenTaskIndex(tasks)
+      if (idx >= 0) {
+        const nowISO = new Date().toISOString()
+        const reusedId = tasks[idx]?.id
+
+        const next: MyDayTaskItem[] = tasks.map((t, i) => {
+          if (i !== idx) return t
+          return {
+            ...t,
+            title,
+            origin,
+            source,
+            status: 'active',
+            snoozeUntil: undefined,
+            done: false,
+            createdAt: nowISO,
+          }
+        })
+
+        writeTasksByDateKey(dk, next)
+
+        try {
+          track('my_day.task.limit_reuse', {
+            dateKey: dk,
+            openCount,
+            limit: OPEN_TASKS_LIMIT_PER_DAY,
+            origin,
+            source,
+            reusedId,
+          })
+        } catch {}
+
+        return { ok: true, id: reusedId, created: true, reused: true, dateKey: dk, limitHit: true }
+      }
+
+      // fallback final: sem reaproveitamento possível
       try {
         track('my_day.task.limit_hit', { dateKey: dk, openCount, limit: OPEN_TASKS_LIMIT_PER_DAY, origin, source })
       } catch {}
+
       return { ok: true, created: false, dateKey: dk, limitHit: true }
     }
 
@@ -341,6 +409,7 @@ export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDayS
       source: input.source,
       dateKey: res.dateKey,
       limitHit: !!res.limitHit,
+      reused: !!(res as any).reused,
     })
   } catch {}
   return res
@@ -390,12 +459,16 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
+    let found = false
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
+      found = true
       const baseStatus = t.status ?? (t.done ? 'done' : 'active')
       const nextStatus: TaskStatus = baseStatus === 'done' ? 'active' : 'done'
       return { ...t, status: nextStatus, done: nextStatus === 'done' }
     })
+
+    if (!found) return { ok: false }
 
     writeTasksByDateKey(dk, next)
     try {
@@ -425,10 +498,14 @@ export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean
 
     const tasks = readTasksByDateKey(dk)
 
+    let found = false
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
+      found = true
       return { ...t, status: 'snoozed', snoozeUntil: untilKey, done: false }
     })
+
+    if (!found) return { ok: false }
 
     writeTasksByDateKey(dk, next)
     try {
@@ -452,10 +529,14 @@ export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
+    let found = false
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
+      found = true
       return { ...t, status: 'active', snoozeUntil: undefined, done: false }
     })
+
+    if (!found) return { ok: false }
 
     writeTasksByDateKey(dk, next)
     try {
@@ -479,7 +560,10 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
+    const before = tasks.length
     const next: MyDayTaskItem[] = tasks.filter((t) => t.id !== taskId)
+    if (next.length === before) return { ok: false }
+
     writeTasksByDateKey(dk, next)
 
     try {
