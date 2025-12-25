@@ -7,13 +7,13 @@ import { track } from '@/app/lib/telemetry'
  * Fonte única: LocalStorage (key: planner/tasks/YYYY-MM-DD)
  *
  * Compatibilidade:
- * - WeeklyPlannerCore (Planner) usa TaskItem com { done: boolean }
- * - Meu Dia usa MyDayTaskItem com status/snooze etc.
+ * - WeeklyPlannerCore (Planner) usa persist.ts que grava com prefixo "m360:"
+ * - Meu Dia (myDayTasks.client) historicamente gravava sem prefixo
  *
- * Estratégia:
- * - Persistimos tudo na mesma storageKey planner/tasks/YYYY-MM-DD
- * - Normalizamos no read (migração silenciosa)
- * - Mantemos coerência mínima status <-> done para não quebrar o Planner
+ * Estratégia segura:
+ * - LER dos dois lugares (prioridade: prefixado)
+ * - ESCREVER nos dois lugares (compat total)
+ * - MIGRAR silenciosamente: se achar só no legado, replica para o prefixado
  */
 
 /** Sources (telemetria + agrupamento fino no futuro) */
@@ -94,12 +94,6 @@ export type AddToMyDayResult = {
    * Mantido como campo opcional para não quebrar callers antigos.
    */
   limitHit?: boolean
-
-  /**
-   * P28 — fallback silencioso:
-   * quando o limite estoura, reaproveitamos 1 tarefa antiga (aberta) em vez de frustrar.
-   */
-  reused?: boolean
 }
 
 type GroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
@@ -121,6 +115,8 @@ export type GroupedTasks = Record<
 const OPEN_TASKS_LIMIT_PER_DAY = 18
 
 /** ---------- Helpers ---------- */
+
+const M360_PREFIX = 'm360:'
 
 function safeParseJSON<T>(raw: string | null): T | null {
   if (!raw) return null
@@ -146,8 +142,18 @@ function makeDateKey(d: Date = new Date()): string {
   return `${y}-${m}-${day}`
 }
 
-function storageKeyForDateKey(dateKey: string) {
+function storageKeyRawForDateKey(dateKey: string) {
   return `planner/tasks/${dateKey}`
+}
+
+function storageKeyPrefixedForDateKey(dateKey: string) {
+  return `${M360_PREFIX}${storageKeyRawForDateKey(dateKey)}`
+}
+
+function getStorageKeys(dateKey: string) {
+  const raw = storageKeyRawForDateKey(dateKey)
+  const pref = storageKeyPrefixedForDateKey(dateKey)
+  return { raw, pref }
 }
 
 function isTaskOrigin(v: unknown): v is TaskOrigin {
@@ -190,12 +196,6 @@ function countOpenTasks(tasks: MyDayTaskItem[]): number {
     if (s === 'active' || s === 'snoozed') n += 1
   }
   return n
-}
-
-function createdAtTime(t: MyDayTaskItem): number {
-  const v = (t as any).createdAt
-  const n = v ? Date.parse(String(v)) : NaN
-  return Number.isFinite(n) ? n : 0
 }
 
 /**
@@ -264,27 +264,53 @@ function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | n
   return { item, changed }
 }
 
+function readRawArrayFromStorage(keys: { raw: string; pref: string }) {
+  if (typeof window === 'undefined') return { parsed: null as unknown[] | null, from: null as 'pref' | 'raw' | null }
+
+  // prioridade: prefixado (Planner via persist)
+  const prefItem = safeParseJSON<unknown>(window.localStorage.getItem(keys.pref))
+  if (Array.isArray(prefItem)) return { parsed: prefItem, from: 'pref' as const }
+
+  // fallback: legado (sem prefixo)
+  const rawItem = safeParseJSON<unknown>(window.localStorage.getItem(keys.raw))
+  if (Array.isArray(rawItem)) return { parsed: rawItem, from: 'raw' as const }
+
+  return { parsed: null, from: null }
+}
+
+function writeDual(keys: { raw: string; pref: string }, value: unknown) {
+  if (typeof window === 'undefined') return
+  const json = safeStringifyJSON(value)
+  try {
+    window.localStorage.setItem(keys.pref, json)
+  } catch {}
+  try {
+    window.localStorage.setItem(keys.raw, json)
+  } catch {}
+}
+
 function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
   if (typeof window === 'undefined') return []
-  const key = storageKeyForDateKey(dateKey)
-  const parsed = safeParseJSON<unknown>(window.localStorage.getItem(key))
-  if (!Array.isArray(parsed)) return []
+
+  const keys = getStorageKeys(dateKey)
+  const res = readRawArrayFromStorage(keys)
+  if (!res.parsed) return []
 
   const nowISO = new Date().toISOString()
   let changed = false
 
   const normalized: MyDayTaskItem[] = []
-  for (const raw of parsed) {
-    const res = normalizeStoredTask(raw, nowISO)
-    if (res.item) normalized.push(res.item)
-    if (res.changed) changed = true
+  for (const raw of res.parsed) {
+    const r = normalizeStoredTask(raw, nowISO)
+    if (r.item) normalized.push(r.item)
+    if (r.changed) changed = true
   }
 
-  // migração silenciosa
-  if (changed) {
-    try {
-      window.localStorage.setItem(key, safeStringifyJSON(normalized))
-    } catch {}
+  // migração silenciosa:
+  // - se veio do legado (raw), garante cópia no prefixado
+  // - se houve normalização, persiste a versão normalizada
+  if (changed || res.from === 'raw') {
+    writeDual(keys, normalized)
   }
 
   return normalized
@@ -292,26 +318,8 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
 
 function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
   if (typeof window === 'undefined') return
-  const key = storageKeyForDateKey(dateKey)
-  try {
-    window.localStorage.setItem(key, safeStringifyJSON(tasks))
-  } catch {}
-}
-
-function findOldestOpenTaskIndex(tasks: MyDayTaskItem[]): number {
-  let idx = -1
-  let best = Infinity
-  for (let i = 0; i < tasks.length; i++) {
-    const t = tasks[i]
-    const s = statusOf(t)
-    if (s !== 'active' && s !== 'snoozed') continue
-    const ts = createdAtTime(t)
-    if (ts < best) {
-      best = ts
-      idx = i
-    }
-  }
-  return idx
+  const keys = getStorageKeys(dateKey)
+  writeDual(keys, tasks)
 }
 
 /** ---------- API pública ---------- */
@@ -333,47 +341,9 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     // guardrail (bola de neve)
     const openCount = countOpenTasks(tasks)
     if (openCount >= OPEN_TASKS_LIMIT_PER_DAY) {
-      // P28 — fallback silencioso: reaproveitar 1 tarefa antiga (aberta) em vez de frustrar.
-      const idx = findOldestOpenTaskIndex(tasks)
-      if (idx >= 0) {
-        const nowISO = new Date().toISOString()
-        const reusedId = tasks[idx]?.id
-
-        const next: MyDayTaskItem[] = tasks.map((t, i) => {
-          if (i !== idx) return t
-          return {
-            ...t,
-            title,
-            origin,
-            source,
-            status: 'active',
-            snoozeUntil: undefined,
-            done: false,
-            createdAt: nowISO,
-          }
-        })
-
-        writeTasksByDateKey(dk, next)
-
-        try {
-          track('my_day.task.limit_reuse', {
-            dateKey: dk,
-            openCount,
-            limit: OPEN_TASKS_LIMIT_PER_DAY,
-            origin,
-            source,
-            reusedId,
-          })
-        } catch {}
-
-        return { ok: true, id: reusedId, created: true, reused: true, dateKey: dk, limitHit: true }
-      }
-
-      // fallback final: sem reaproveitamento possível
       try {
         track('my_day.task.limit_hit', { dateKey: dk, openCount, limit: OPEN_TASKS_LIMIT_PER_DAY, origin, source })
       } catch {}
-
       return { ok: true, created: false, dateKey: dk, limitHit: true }
     }
 
@@ -409,7 +379,6 @@ export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDayS
       source: input.source,
       dateKey: res.dateKey,
       limitHit: !!res.limitHit,
-      reused: !!(res as any).reused,
     })
   } catch {}
   return res
@@ -459,16 +428,12 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
-    let found = false
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
-      found = true
       const baseStatus = t.status ?? (t.done ? 'done' : 'active')
       const nextStatus: TaskStatus = baseStatus === 'done' ? 'active' : 'done'
       return { ...t, status: nextStatus, done: nextStatus === 'done' }
     })
-
-    if (!found) return { ok: false }
 
     writeTasksByDateKey(dk, next)
     try {
@@ -498,14 +463,10 @@ export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean
 
     const tasks = readTasksByDateKey(dk)
 
-    let found = false
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
-      found = true
       return { ...t, status: 'snoozed', snoozeUntil: untilKey, done: false }
     })
-
-    if (!found) return { ok: false }
 
     writeTasksByDateKey(dk, next)
     try {
@@ -529,14 +490,10 @@ export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
-    let found = false
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
-      found = true
       return { ...t, status: 'active', snoozeUntil: undefined, done: false }
     })
-
-    if (!found) return { ok: false }
 
     writeTasksByDateKey(dk, next)
     try {
@@ -560,10 +517,7 @@ export function removeTask(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
-    const before = tasks.length
     const next: MyDayTaskItem[] = tasks.filter((t) => t.id !== taskId)
-    if (next.length === before) return { ok: false }
-
     writeTasksByDateKey(dk, next)
 
     try {
