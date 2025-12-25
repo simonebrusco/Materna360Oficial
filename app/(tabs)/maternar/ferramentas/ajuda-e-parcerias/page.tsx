@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent, type ChangeEvent } from 'react'
+import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
@@ -8,6 +8,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import Link from 'next/link'
 
 type PartnershipType =
   | 'profissional_saude'
@@ -45,12 +46,10 @@ export default function AjudaEParceriasPage() {
   const [activeSection, setActiveSection] = useState<HubSectionId>('parcerias')
 
   const handleChange = (
-    event: ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       [name]: value,
     }))
@@ -104,6 +103,38 @@ export default function AjudaEParceriasPage() {
     window.scrollTo({ top: offsetTop, behavior: 'smooth' })
   }
 
+  // Observa seção ativa conforme scroll (leve)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const ids: HubSectionId[] = ['parcerias', 'ajuda']
+    const elements = ids
+      .map((id) => document.getElementById(`ajuda-parcerias-${id}`))
+      .filter(Boolean) as HTMLElement[]
+
+    if (!elements.length) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0]
+        if (!visible?.target?.id) return
+
+        const sectionId = visible.target.id.replace('ajuda-parcerias-', '') as HubSectionId
+        if (sectionId && ids.includes(sectionId)) setActiveSection(sectionId)
+      },
+      {
+        root: null,
+        rootMargin: '-120px 0px -55% 0px',
+        threshold: [0.05, 0.15, 0.25, 0.35],
+      },
+    )
+
+    elements.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   const Pill = ({ id, label }: { id: HubSectionId; label: string }) => {
     const isActive = activeSection === id
     return (
@@ -127,13 +158,27 @@ export default function AjudaEParceriasPage() {
 
   return (
     <PageTemplate
-  headerTone="light"
-  label="MATERNAR"
-  title="Ajuda & Parcerias"
-  subtitle="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
->
+      headerTone="light"
+      label="MATERNAR"
+      title="Ajuda & Parcerias"
+      subtitle="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
+    >
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+          {/* VOLTAR PARA O MATERNAR (seta) */}
+          <div className="px-4 md:px-0">
+            <Link
+              href="/maternar"
+              className="inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition"
+              aria-label="Voltar para o Maternar"
+            >
+              <span aria-hidden className="inline-flex items-center justify-center">
+                ←
+              </span>
+              <span>Voltar para o Maternar</span>
+            </Link>
+          </div>
+
           {/* HERO HUB-LIKE: dá ênfase em Parcerias e deixa Ajuda como secundário */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
@@ -160,7 +205,7 @@ export default function AjudaEParceriasPage() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {HUB_SECTIONS.map(s => (
+                    {HUB_SECTIONS.map((s) => (
                       <Pill key={s.id} id={s.id} label={s.label} />
                     ))}
                   </div>
@@ -249,9 +294,7 @@ export default function AjudaEParceriasPage() {
                           Profissional da saúde / desenvolvimento infantil
                         </option>
                         <option value="criadora_conteudo">Criadora de conteúdo</option>
-                        <option value="marca_produto">
-                          Marca / produto para mães ou crianças
-                        </option>
+                        <option value="marca_produto">Marca / produto para mães ou crianças</option>
                         <option value="outros">Outro tipo de parceria</option>
                       </select>
                     </div>
