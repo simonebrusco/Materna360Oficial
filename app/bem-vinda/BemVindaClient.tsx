@@ -34,8 +34,7 @@ export default function BemVindaClient() {
 
     // 2) cookie (para o middleware decidir a entrada)
     try {
-      // 180 dias, path global
-      const maxAge = 60 * 60 * 24 * 180
+      const maxAge = 60 * 60 * 24 * 180 // 180 dias
       document.cookie = `${SEEN_KEY}=1; Max-Age=${maxAge}; Path=/; SameSite=Lax`
     } catch {
       // silencioso
