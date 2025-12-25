@@ -62,13 +62,7 @@ type AutocuidadoStorage = {
 // CONSTANTES
 // ======================
 
-const RITMO_OPTIONS: Ritmo[] = [
-  'leve',
-  'cansada',
-  'animada',
-  'exausta',
-  'focada',
-]
+const RITMO_OPTIONS: Ritmo[] = ['leve', 'cansada', 'animada', 'exausta', 'focada']
 
 const MINI_ROTINA_ITEMS = [
   'Respirar por 1 minuto',
@@ -268,10 +262,7 @@ export default function AutocuidadoInteligentePage() {
         },
       })
     } catch (e) {
-      console.error(
-        '[Autocuidado] Erro ao salvar mini rotina no planner:',
-        e,
-      )
+      console.error('[Autocuidado] Erro ao salvar mini rotina no planner:', e)
     }
 
     toast.success(
@@ -406,7 +397,7 @@ export default function AutocuidadoInteligentePage() {
       console.error('[Autocuidado] Erro geral ao gerar sugestão:', e)
       buildFallbackSuggestion()
       toast.info(
-        'A conexão não respondeu agora, mas preparei um carinho simples para você.'',
+        'A conexão não respondeu agora, mas preparei um carinho simples para você.',
       )
       try {
         track('autocuidado_sugestao_gerada', {
@@ -465,10 +456,7 @@ export default function AutocuidadoInteligentePage() {
         },
       })
     } catch (e) {
-      console.error(
-        '[Autocuidado] Erro ao salvar carinho no planner:',
-        e,
-      )
+      console.error('[Autocuidado] Erro ao salvar carinho no planner:', e)
     }
 
     toast.success('Sugestão salva para você revisitar quando quiser.')
@@ -544,8 +532,7 @@ export default function AutocuidadoInteligentePage() {
                                     : 'bg-white text-[#545454] border border-[#F5D7E5] hover:border-[#fd2597] hover:bg-[#fdbed7]/15'
                                 }`}
                               >
-                                {ritmo.charAt(0).toUpperCase() +
-                                  ritmo.slice(1)}
+                                {ritmo.charAt(0).toUpperCase() + ritmo.slice(1)}
                               </button>
                             ))}
                           </div>
@@ -698,9 +685,7 @@ export default function AutocuidadoInteligentePage() {
                               <button
                                 key={label}
                                 onClick={() =>
-                                  setHidratacao(
-                                    hidratacao === idx ? null : idx,
-                                  )
+                                  setHidratacao(hidratacao === idx ? null : idx)
                                 }
                                 className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
                                   hidratacao === idx
@@ -727,9 +712,7 @@ export default function AutocuidadoInteligentePage() {
                             {SONO_OPTIONS.map(label => (
                               <button
                                 key={label}
-                                onClick={() =>
-                                  setSono(sono === label ? null : label)
-                                }
+                                onClick={() => setSono(sono === label ? null : label)}
                                 className={`px-3 py-2 rounded-full text-xs md:text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20 ${
                                   sono === label
                                     ? 'bg-[#fd2597] text-white shadow-md border border-[#fd2597]'
@@ -757,8 +740,7 @@ export default function AutocuidadoInteligentePage() {
                                 key={key}
                                 onClick={() =>
                                   setAlimentacao(
-                                    alimentacao ===
-                                      (key as typeof alimentacao)
+                                    alimentacao === (key as typeof alimentacao)
                                       ? null
                                       : (key as typeof alimentacao),
                                   )
@@ -843,11 +825,7 @@ export default function AutocuidadoInteligentePage() {
                                     ? 'Gerando outro carinho...'
                                     : 'Ver outra sugestão'}
                                   {!isLoadingSugestao && (
-                                    <AppIcon
-                                      name="refresh-cw"
-                                      size={14}
-                                      decorative
-                                    />
+                                    <AppIcon name="refresh-cw" size={14} decorative />
                                   )}
                                 </button>
                               </>
@@ -865,11 +843,7 @@ export default function AutocuidadoInteligentePage() {
                                     ? 'Gerando outro carinho...'
                                     : 'Ver outra sugestão'}
                                   {!isLoadingSugestao && (
-                                    <AppIcon
-                                      name="refresh-cw"
-                                      size={14}
-                                      decorative
-                                    />
+                                    <AppIcon name="refresh-cw" size={14} decorative />
                                   )}
                                 </button>
                               </>
