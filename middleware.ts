@@ -46,6 +46,23 @@ function isProtectedPath(pathname: string) {
 }
 
 /* =========================
+   Helpers de redirect com cookies
+========================= */
+
+function redirectWithResponse(request: NextRequest, response: NextResponse, to: string | URL) {
+  const url = typeof to === 'string' ? new URL(to, request.url) : to
+  const redirect = NextResponse.redirect(url)
+
+  // Garante que qualquer atualização de cookies/headers feita pelo Supabase
+  // não seja perdida quando retornamos um redirect.
+  response.headers.forEach((value, key) => {
+    redirect.headers.set(key, value)
+  })
+
+  return redirect
+}
+
+/* =========================
    Middleware
 ========================= */
 
@@ -103,27 +120,27 @@ export async function middleware(request: NextRequest) {
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
-      return NextResponse.redirect(new URL('/bem-vinda', request.url))
+      return redirectWithResponse(request, response, '/bem-vinda')
     }
 
     const rawNext = request.nextUrl.searchParams.get('redirectTo')
     const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-    return NextResponse.redirect(new URL(nextDest, request.url))
+    return redirectWithResponse(request, response, nextDest)
   }
 
   // "/" é público — mas se logada, aplica regra de entrada
   if (normalizedPath === '/' && hasSession) {
     if (!hasSeenWelcome) {
-      return NextResponse.redirect(new URL('/bem-vinda', request.url))
+      return redirectWithResponse(request, response, '/bem-vinda')
     }
-    return NextResponse.redirect(new URL('/meu-dia', request.url))
+    return redirectWithResponse(request, response, '/meu-dia')
   }
 
   // Rota protegida sem sessão -> login
   if (isProtectedPath(normalizedPath) && !hasSession) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirectTo', redirectToValue)
-    return NextResponse.redirect(loginUrl)
+    return redirectWithResponse(request, response, loginUrl)
   }
 
   // Rotas públicas seguem
