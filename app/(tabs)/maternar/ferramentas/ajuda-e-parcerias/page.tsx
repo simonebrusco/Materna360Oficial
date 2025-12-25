@@ -135,7 +135,7 @@ export default function AjudaEParceriasPage() {
       "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 md:px-6">
+       <div className="mx-auto max-w-3xl px-4 md:px-6">
           {/* HEADER (padrão correto: igual Minhas Conquistas) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
