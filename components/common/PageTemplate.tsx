@@ -8,6 +8,7 @@ export type PageTemplateProps = {
   title: string
   subtitle?: string
   children: ReactNode
+  headerVariant?: 'dark' | 'light'
 }
 
 export function PageTemplate({ label, title, subtitle, children }: PageTemplateProps) {
