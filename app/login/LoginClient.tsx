@@ -1,9 +1,9 @@
+// app/login/LoginClient.tsx
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { load } from '@/app/lib/persist'
 
 type UiError = {
   title: string
@@ -11,7 +11,7 @@ type UiError = {
   kind: 'generic' | 'not_confirmed' | 'network' | 'rate_limit'
 }
 
-const SEEN_KEY = 'seen_welcome_v1'
+const SEEN_KEY = 'm360_seen_welcome_v1'
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
@@ -21,6 +21,16 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
   if (t.startsWith('//')) return fallback
   if (t.includes('\\')) return fallback
   return t
+}
+
+function hasSeenWelcomeCookie(): boolean {
+  try {
+    if (typeof document === 'undefined') return false
+    // leitura simples e segura: middleware decide pelo cookie
+    return document.cookie.split(';').some((c) => c.trim().startsWith(`${SEEN_KEY}=1`))
+  } catch {
+    return false
+  }
 }
 
 function mapAuthErrorToUi(errorMessage: string): UiError {
@@ -66,15 +76,6 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
   }
 }
 
-function hasSeenWelcome(): boolean {
-  try {
-    const v = load<string | null>(SEEN_KEY, null)
-    return v === '1'
-  } catch {
-    return false
-  }
-}
-
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -95,10 +96,8 @@ export default function LoginClient() {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return
 
-      // Se já logada:
-      // - se não viu bem-vinda -> /bem-vinda
-      // - senão -> redirectTo
-      const seen = hasSeenWelcome()
+      // Regra oficial (P28/P28.5): decisão pelo cookie
+      const seen = hasSeenWelcomeCookie()
 
       if (!seen) {
         router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
@@ -128,10 +127,8 @@ export default function LoginClient() {
       return
     }
 
-    // Pós-login:
-    // - primeira vez -> /bem-vinda (com next)
-    // - senão -> redirectTo
-    const seen = hasSeenWelcome()
+    // Após login: decisão pelo cookie (middleware + BemVindaClient)
+    const seen = hasSeenWelcomeCookie()
 
     if (!seen) {
       router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
