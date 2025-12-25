@@ -8,54 +8,61 @@ export type PageTemplateProps = {
   title: string
   subtitle?: string
   children: ReactNode
+  headerVariant?: 'dark' | 'light'
+  /**
+   * Define a cor do header (label/título/subtítulo).
+   * - "dark": padrão atual (cinza)
+   * - "light": branco (para fundos mais fortes)
+   */
+  headerTone?: 'dark' | 'light'
 }
 
-export function PageTemplate({ label, title, subtitle, children }: PageTemplateProps) {
+export function PageTemplate({
+  label,
+  title,
+  subtitle,
+  children,
+  headerTone = 'dark',
+}: PageTemplateProps) {
+  const isLight = headerTone === 'light'
+
+  const labelClasses = isLight
+    ? 'border-white/25 bg-white/10 text-white backdrop-blur-md'
+    : 'border-[#F5D7E5] bg-white/85 text-[#b8236b] backdrop-blur-md'
+
+  const titleClasses = isLight ? 'text-white' : 'text-[#545454]'
+
+  const subtitleClasses = isLight ? 'text-white/85' : 'text-[#545454]'
+
   return (
-    <main
-      data-layout="page-template-v1"
-      className="
-        min-h-[100dvh]
-        bg-transparent
-      "
-    >
+    <main data-layout="page-template-v1" className="min-h-[100dvh] bg-transparent">
       <div className="mx-auto max-w-3xl px-4 md:px-6 pb-20">
         {/* HERO padrão das páginas internas */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
           <span
-            className="
-              inline-flex items-center rounded-full
-              border border-[#F5D7E5]
-              bg-white/85
-              px-3 py-1
-              text-[10px] font-semibold tracking-[0.24em] uppercase
-              text-[#b8236b]
-              backdrop-blur-md
-            "
+            className={[
+              'inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold tracking-[0.24em] uppercase',
+              labelClasses,
+            ].join(' ')}
           >
             {label}
           </span>
 
           <h1
-            className="
-              mt-3
-              text-[28px] md:text-[32px]
-              font-semibold leading-tight
-              text-[#545454]
-            "
+            className={[
+              'mt-3 text-[28px] md:text-[32px] font-semibold leading-tight',
+              titleClasses,
+            ].join(' ')}
           >
             {title}
           </h1>
 
           {subtitle && (
             <p
-              className="
-                mt-2
-                text-sm md:text-base
-                leading-relaxed
-                max-w-2xl
-                text-[#545454]
-              "
+              className={[
+                'mt-2 text-sm md:text-base leading-relaxed max-w-2xl',
+                subtitleClasses,
+              ].join(' ')}
             >
               {subtitle}
             </p>

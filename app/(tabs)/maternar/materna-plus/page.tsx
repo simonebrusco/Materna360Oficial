@@ -178,11 +178,12 @@ export default function MaternaPlusPage() {
   }
 
   return (
-    <PageTemplate
-      label="MATERNAR"
-      title="Materna+"
-      subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
-    >
+   <PageTemplate
+  headerTone="light"
+  label="MATERNAR"
+  title="Materna+"
+  subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
+>
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
           {/* HERO HUB-LIKE */}
