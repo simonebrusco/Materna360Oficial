@@ -1,4 +1,3 @@
-// app/bem-vinda/BemVindaClient.tsx
 'use client'
 
 import { useMemo } from 'react'
@@ -22,22 +21,21 @@ export default function BemVindaClient() {
   const searchParams = useSearchParams()
 
   const nextRaw = searchParams.get('next')
-  const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
+  const nextDest = useMemo(
+    () => safeInternalRedirect(nextRaw, '/meu-dia'),
+    [nextRaw]
+  )
 
   function markSeenSilently() {
-    // 1) persist (localStorage via persist.ts)
     try {
-      save(SEEN_KEY, '1')
-    } catch {
-      // silencioso
-    }
+      // cookie → middleware
+      document.cookie = `${SEEN_KEY}=1; path=/; max-age=31536000`
+    } catch {}
 
-    // 2) cookie (para o middleware conseguir decidir)
     try {
-      document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=31536000; SameSite=Lax`
-    } catch {
-      // silencioso
-    }
+      // persist → client continuity
+      save(SEEN_KEY, '1')
+    } catch {}
   }
 
   function onStartMeuDia() {
@@ -87,7 +85,9 @@ export default function BemVindaClient() {
           <p>• Pequenos apoios pensados para a vida real</p>
         </div>
 
-        <p className="mt-4 text-xs text-[var(--color-text-muted)]">Sem cobrança. Sem perfeição.</p>
+        <p className="mt-4 text-xs text-[var(--color-text-muted)]">
+          Sem cobrança. Sem perfeição.
+        </p>
 
         <div className="mt-8 space-y-2">
           <button
