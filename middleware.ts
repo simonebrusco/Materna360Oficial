@@ -100,6 +100,17 @@ export async function middleware(request: NextRequest) {
      Regras principais
   ========================= */
 
+  // (NOVO) Se está logada e tenta /bem-vinda de novo, não deixa “voltar” para welcome
+  if (hasSession && (normalizedPath === '/bem-vinda' || normalizedPath.startsWith('/bem-vinda/'))) {
+    if (hasSeenWelcome) {
+      const nextRaw = request.nextUrl.searchParams.get('next')
+      const nextDest = safeInternalRedirect(nextRaw, '/meu-dia')
+      return NextResponse.redirect(new URL(nextDest, request.url))
+    }
+    // Se não viu ainda, segue normal (mostra a tela)
+    return response
+  }
+
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
