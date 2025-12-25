@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import BackToMaternar from '@/components/common/BackToMaternar'
 
 type HubSectionId = 'visao' | 'como-funciona' | 'para-quem' | 'faixa' | 'planos'
 
@@ -97,15 +98,15 @@ export default function MaternaBoxPage() {
 
     const ids: HubSectionId[] = ['visao', 'como-funciona', 'para-quem', 'faixa', 'planos']
     const elements = ids
-      .map(id => document.getElementById(`maternabox-${id}`))
+      .map((id) => document.getElementById(`maternabox-${id}`))
       .filter(Boolean) as HTMLElement[]
 
     if (!elements.length) return
 
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         const visible = entries
-          .filter(e => e.isIntersecting)
+          .filter((e) => e.isIntersecting)
           .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0]
         if (!visible?.target?.id) return
 
@@ -119,7 +120,7 @@ export default function MaternaBoxPage() {
       },
     )
 
-    elements.forEach(el => observer.observe(el))
+    elements.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [])
 
@@ -145,19 +146,22 @@ export default function MaternaBoxPage() {
   }
 
   const selectedPlanData = useMemo(
-    () => PLANS.find(p => p.id === selectedPlan) ?? PLANS[0],
+    () => PLANS.find((p) => p.id === selectedPlan) ?? PLANS[0],
     [selectedPlan],
   )
 
   return (
     <PageTemplate
-  headerTone="light"
-  label="MATERNAR"
-  title="MaternaBox"
-  subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
->
+      headerTone="light"
+      label="MATERNAR"
+      title="MaternaBox"
+      subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
+    >
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+          {/* Back */}
+          <BackToMaternar className="px-4 md:px-0" />
+
           {/* HERO HUB-LIKE */}
           <Reveal>
             <SoftCard
@@ -186,7 +190,7 @@ export default function MaternaBoxPage() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {HUB_SECTIONS.map(s => (
+                    {HUB_SECTIONS.map((s) => (
                       <Pill key={s.id} id={s.id} label={s.label} />
                     ))}
                   </div>
@@ -346,13 +350,11 @@ export default function MaternaBoxPage() {
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                     Selecione a fase do seu filho.
                   </h2>
-                  <p className="text-[12px] text-[#6A6A6A]">
-                    Você pode ajustar depois.
-                  </p>
+                  <p className="text-[12px] text-[#6A6A6A]">Você pode ajustar depois.</p>
                 </header>
 
                 <div className="flex flex-wrap gap-2">
-                  {AGE_BANDS.map(b => {
+                  {AGE_BANDS.map((b) => {
                     const isActive = selectedAge === b.id
                     return (
                       <button
@@ -375,7 +377,11 @@ export default function MaternaBoxPage() {
                 <SoftCard className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="text-[13px] font-semibold text-[#545454]">Selecionado:</p>
                   <p className="text-[13px] text-[#545454]">
-                    Faixa <span className="font-semibold">{AGE_BANDS.find(a => a.id === selectedAge)?.label}</span> — conteúdos e atividades serão adaptados para essa fase.
+                    Faixa{' '}
+                    <span className="font-semibold">
+                      {AGE_BANDS.find((a) => a.id === selectedAge)?.label}
+                    </span>{' '}
+                    — conteúdos e atividades serão adaptados para essa fase.
                   </p>
                 </SoftCard>
               </div>
@@ -402,7 +408,7 @@ export default function MaternaBoxPage() {
                 </header>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {PLANS.map(plan => {
+                  {PLANS.map((plan) => {
                     const isSelected = selectedPlan === plan.id
                     return (
                       <SoftCard
@@ -433,7 +439,7 @@ export default function MaternaBoxPage() {
                         <p className="mt-1 text-[12px] text-[#6A6A6A]">{plan.note}</p>
 
                         <ul className="mt-3 space-y-1 text-[12px] text-[#545454]">
-                          {plan.bullets.map(b => (
+                          {plan.bullets.map((b) => (
                             <li key={b}>• {b}</li>
                           ))}
                         </ul>
@@ -466,7 +472,7 @@ export default function MaternaBoxPage() {
                         <span className="font-semibold">{selectedPlanData.title}</span> ·{' '}
                         <span className="font-semibold">{selectedPlanData.price}</span> · Faixa{' '}
                         <span className="font-semibold">
-                          {AGE_BANDS.find(a => a.id === selectedAge)?.label}
+                          {AGE_BANDS.find((a) => a.id === selectedAge)?.label}
                         </span>
                       </p>
                       <p className="text-[12px] text-[#6A6A6A]">
@@ -488,7 +494,6 @@ export default function MaternaBoxPage() {
                         size="sm"
                         className="text-[13px]"
                         onClick={() => {
-                          // Placeholder: integrar com checkout/lista de espera quando estiver pronto.
                           if (typeof window !== 'undefined') {
                             window.alert('Fluxo de compra será conectado no checkout do Materna+.')
                           }
