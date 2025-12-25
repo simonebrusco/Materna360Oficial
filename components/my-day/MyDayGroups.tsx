@@ -1,34 +1,113 @@
-// components/my-day/MyDayGroups.tsx
 'use client'
 
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import AppIcon from '@/components/ui/AppIcon'
-import { track } from '@/app/lib/telemetry'
-import { toast } from '@/app/lib/toast'
+
 import {
   groupTasks,
   listMyDayTasks,
-  toggleDone,
-  snoozeTask,
-  unsnoozeTask,
-  removeTask,
   type GroupedTasks,
   type MyDayTaskItem,
+  removeTask,
+  snoozeTask,
+  unsnoozeTask,
+  MY_DAY_SOURCES,
 } from '@/app/lib/myDayTasks.client'
+import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
+import { getDensityLevel } from '@/app/lib/experience/density'
+import { track } from '@/app/lib/telemetry'
 import { consumeRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
-type FocusGroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
+type GroupId = keyof GroupedTasks
+type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
+
+const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
+const DEFAULT_LIMIT = 5
+
+/* =========================
+   Helpers base
+========================= */
 
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  const s = (t as any).status
-  if (s === 'active' || s === 'snoozed' || s === 'done') return s
+  if ((t as any).status) return (t as any).status
   if ((t as any).done === true) return 'done'
   return 'active'
 }
 
-function groupIdForOrigin(origin: string): FocusGroupId {
+function timeOf(t: MyDayTaskItem): number {
+  const iso = (t as any).createdAt
+  const n = iso ? Date.parse(iso) : NaN
+  return Number.isFinite(n) ? n : 0
+}
+
+function formatSnoozeUntil(raw: unknown): string | null {
+  const s = typeof raw === 'string' ? raw : ''
+  if (!s) return null
+
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (m) {
+    const dt = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  }
+
+  const t = Date.parse(s)
+  if (!Number.isFinite(t)) return s
+
+  try {
+    return new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  } catch {
+    return s
+  }
+}
+
+/* =========================
+   Persona segura
+========================= */
+
+function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
+  const p: any = (aiContext as any)?.persona
+  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao') {
+    return p
+  }
+  if (typeof p === 'object' && p?.persona) return p.persona
+  return undefined
+}
+
+/* =========================
+   Ordenação contextual
+========================= */
+
+function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?: PersonaId }) {
+  const { premium, persona } = opts
+
+  const statusRank = (t: MyDayTaskItem) => {
+    const s = statusOf(t)
+    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
+  }
+
+  return [...items].sort((a, b) => {
+    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
+      const sa = timeOf(a)
+      const sb = timeOf(b)
+      if (sa !== sb) return sb - sa
+    }
+
+    const ra = statusRank(a)
+    const rb = statusRank(b)
+    if (ra !== rb) return ra - rb
+
+    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
+  })
+}
+
+/* =========================
+   Continuidade
+========================= */
+
+function groupIdFromOrigin(origin: string): GroupId {
   if (origin === 'today') return 'para-hoje'
   if (origin === 'family') return 'familia'
   if (origin === 'selfcare') return 'autocuidado'
@@ -36,317 +115,215 @@ function groupIdForOrigin(origin: string): FocusGroupId {
   return 'outros'
 }
 
-function labelForGroupId(id: FocusGroupId) {
-  if (id === 'para-hoje') return 'Para hoje (simples e real)'
-  if (id === 'familia') return 'Família & conexão'
-  if (id === 'autocuidado') return 'Autocuidado'
-  if (id === 'rotina-casa') return 'Rotina & casa'
-  return 'Outros'
-}
-
-function countOpen(items: MyDayTaskItem[]) {
-  let n = 0
-  for (const t of items) {
-    const s = statusOf(t)
-    if (s === 'active' || s === 'snoozed') n += 1
-  }
-  return n
-}
-
-function countActive(items: MyDayTaskItem[]) {
-  let n = 0
-  for (const t of items) {
-    if (statusOf(t) === 'active') n += 1
-  }
-  return n
-}
-
-function clamp(n: number, min: number, max: number) {
-  if (n < min) return min
-  if (n > max) return max
-  return n
-}
-
-function SoftButton({
-  children,
-  onClick,
-  variant = 'primary',
-  disabled,
-}: {
-  children: React.ReactNode
-  onClick?: () => void
-  variant?: 'primary' | 'ghost' | 'danger'
-  disabled?: boolean
-}) {
-  const base =
-    'inline-flex items-center justify-center rounded-full px-3 py-2 text-[12px] transition border shadow-sm'
-  const cls =
-    variant === 'primary'
-      ? 'bg-white text-[#2f3a56] border-[#f5d7e5] hover:bg-[#ffe1f1]'
-      : variant === 'danger'
-        ? 'bg-white text-[#b8236b] border-[#f5d7e5] hover:bg-[#ffe1f1]'
-        : 'bg-transparent text-[#2f3a56] border-transparent hover:bg-[#ffe1f1]'
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={[base, cls, disabled ? 'opacity-60 cursor-not-allowed' : ''].join(' ')}
-    >
-      {children}
-    </button>
-  )
-}
-
-function EmptyState({ groupId }: { groupId: FocusGroupId }) {
-  const title =
-    groupId === 'para-hoje'
-      ? 'Nada aqui por enquanto.'
-      : groupId === 'familia'
-        ? 'Sem tarefas de conexão por agora.'
-        : groupId === 'autocuidado'
-          ? 'Sem autocuidado salvo por agora.'
-          : groupId === 'rotina-casa'
-            ? 'Sem rotinas salvas por agora.'
-            : 'Sem lembretes por agora.'
-
-  const hint =
-    groupId === 'para-hoje'
-      ? 'Quando você salva algo no app, ele aparece aqui.'
-      : 'Se você salvar uma ação, ela aparece aqui — sem esforço.'
-
-  return (
-    <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-      <div className="text-[13px] font-semibold text-[#2f3a56]">{title}</div>
-      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{hint}</div>
-    </div>
-  )
-}
-
-function TaskRow({
-  t,
-  onToggle,
-  onSnooze,
-  onUnsnooze,
-  onRemove,
-}: {
-  t: MyDayTaskItem
-  onToggle: () => void
-  onSnooze: () => void
-  onUnsnooze: () => void
-  onRemove: () => void
-}) {
-  const st = statusOf(t)
-  const isDone = st === 'done'
-  const isSnoozed = st === 'snoozed'
-
-  return (
-    <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-      <div className="flex items-start justify-between gap-3">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="flex items-start gap-3 text-left w-full"
-        >
-          <div
-            className={[
-              'mt-0.5 h-6 w-6 rounded-full border flex items-center justify-center shrink-0',
-              isDone ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5]',
-            ].join(' ')}
-          >
-            {isDone ? <AppIcon name="check" size={16} className="text-[#b8236b]" /> : null}
-          </div>
-
-          <div className="min-w-0">
-            <div
-              className={[
-                'text-[13px] font-semibold leading-snug',
-                isDone ? 'text-[#6a6a6a] line-through' : 'text-[#2f3a56]',
-              ].join(' ')}
-            >
-              {t.title}
-            </div>
-
-            {isSnoozed && t.snoozeUntil ? (
-              <div className="mt-1 text-[11px] text-[#6a6a6a]">
-                Adiado até {t.snoozeUntil}
-              </div>
-            ) : null}
-          </div>
-        </button>
-
-        <div className="flex items-center gap-1 shrink-0">
-          {isSnoozed ? (
-            <SoftButton variant="ghost" onClick={onUnsnooze}>
-              Voltar
-            </SoftButton>
-          ) : (
-            <SoftButton variant="ghost" onClick={onSnooze} disabled={isDone}>
-              Adiar
-            </SoftButton>
-          )}
-
-          <SoftButton variant="danger" onClick={onRemove}>
-            Remover
-          </SoftButton>
-        </div>
-      </div>
-    </div>
-  )
-}
+/* =========================
+   COMPONENTE
+========================= */
 
 export default function MyDayGroups({
+  aiContext,
   initialDate,
 }: {
+  aiContext?: AiLightContext
   initialDate?: Date
 }) {
-  ...
-}
-  const [date] = useState<Date>(() => initialDate ?? new Date())
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
-  const [focusGroupId, setFocusGroupId] = useState<FocusGroupId>('para-hoje')
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
+
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+  const [experienceTier, setExperienceTier] = useState(() => getExperienceTier())
+  const [densityLevel, setDensityLevel] = useState(() => getDensityLevel())
+
+  const isPremiumExperience = experienceTier === 'premium'
+  const personaId = getPersonaId(aiContext)
+
+  const grouped = useMemo(() => groupTasks(tasks), [tasks])
+  const hasAny = tasks.length > 0
+
+  const effectiveLimit = useMemo(() => {
+    const raw = Number((euSignal as any)?.listLimit)
+    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
+
+    if (densityLevel === 'normal') {
+      return Math.max(5, Math.min(6, resolved))
+    }
+    return Math.max(3, Math.min(4, resolved))
+  }, [euSignal, densityLevel])
 
   function refresh() {
-    const list = listMyDayTasks(date)
-    setTasks(list)
+    setTasks(listMyDayTasks(initialDate))
   }
 
-  // initial load
+  function toggleGroup(groupId: GroupId) {
+    setExpanded((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
+  }
+
+  /* ---------- bootstrap ---------- */
+
   useEffect(() => {
     refresh()
+    setEuSignal(getEu360Signal())
+    setExperienceTier(getExperienceTier())
+    setDensityLevel(getDensityLevel())
+
+    const sync = () => {
+      setEuSignal(getEu360Signal())
+      setExperienceTier(getExperienceTier())
+      setDensityLevel(getDensityLevel())
+      refresh()
+    }
+
+    window.addEventListener('storage', sync)
+    window.addEventListener('m360:plan-updated', sync as EventListener)
+    window.addEventListener('eu360:persona-updated', sync as EventListener)
+
+    return () => {
+      window.removeEventListener('storage', sync)
+      window.removeEventListener('m360:plan-updated', sync as EventListener)
+      window.removeEventListener('eu360:persona-updated', sync as EventListener)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // P26 continuity: focus the intended group once, silently
+  /* ---------- continuidade silenciosa ---------- */
+
   useEffect(() => {
-    const payload = consumeRecentMyDaySave({ windowMs: 30 * 60 * 1000 })
-    if (!payload) return
-
-    const gid = groupIdForOrigin(payload.origin)
-    setFocusGroupId(gid)
-
     try {
-      track('my_day.continuity.consume', {
-        ok: true,
-        origin: payload.origin,
-        source: payload.source,
-        focusGroupId: gid,
-      })
+      const payload = consumeRecentMyDaySave()
+      if (!payload) return
+
+      const gid = groupIdFromOrigin(payload.origin)
+      setExpanded((prev) => ({ ...prev, [gid]: true }))
+      setHighlightGroup(gid)
+
+      window.setTimeout(() => {
+        try {
+          document.getElementById(`myday-group-${gid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } catch {}
+      }, 60)
+
+      window.setTimeout(() => setHighlightGroup(null), 6500)
+
+      try {
+        track('my_day.continuity.applied', { origin: payload.origin, source: payload.source })
+      } catch {}
     } catch {}
   }, [])
 
-  const grouped: GroupedTasks = useMemo(() => groupTasks(tasks), [tasks])
+  /* ---------- ações ---------- */
 
-  const groupOrder: FocusGroupId[] = useMemo(
-    () => ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros'],
-    []
-  )
-
-  const tabs = useMemo(() => {
-    return groupOrder.map((id) => {
-      const items = grouped[id]?.items ?? []
-      const open = countOpen(items)
-      const active = countActive(items)
-      return { id, title: labelForGroupId(id), open, active }
-    })
-  }, [groupOrder, grouped])
-
-  const focusedItems = grouped[focusGroupId]?.items ?? []
-
-  function onToggle(t: MyDayTaskItem) {
-    const res = toggleDone(t.id, date)
-    if (!res.ok) {
-      toast.info('Não deu agora. Tente de novo.')
-      return
-    }
-    refresh()
+  async function onDone(t: MyDayTaskItem) {
+    const res = removeTask(t.id, initialDate)
+    if (res.ok) refresh()
   }
 
-  function onSnooze(t: MyDayTaskItem) {
-    const res = snoozeTask(t.id, 1, date)
-    if (!res.ok) {
-      toast.info('Não deu agora. Tente de novo.')
-      return
-    }
-    refresh()
+  async function onRemove(t: MyDayTaskItem) {
+    const res = removeTask(t.id, initialDate)
+    if (res.ok) refresh()
   }
 
-  function onUnsnooze(t: MyDayTaskItem) {
-    const res = unsnoozeTask(t.id, date)
-    if (!res.ok) {
-      toast.info('Não deu agora. Tente de novo.')
-      return
-    }
-    refresh()
+  async function onSnooze(t: MyDayTaskItem) {
+    const res = snoozeTask(t.id, 1, initialDate)
+    if (res.ok) refresh()
   }
 
-  function onRemove(t: MyDayTaskItem) {
-    const res = removeTask(t.id, date)
-    if (!res.ok) {
-      toast.info('Não deu agora. Tente de novo.')
-      return
-    }
-    refresh()
+  async function onUnsnooze(t: MyDayTaskItem) {
+    const res = unsnoozeTask(t.id, initialDate)
+    if (res.ok) refresh()
   }
+
+  /* ---------- render ---------- */
 
   return (
-    <section className="space-y-4">
-      {/* Header / Nav */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="space-y-1">
-          <div className="text-[14px] font-semibold text-[#2f3a56]">Meu Dia</div>
-          <div className="text-[12px] text-[#6a6a6a]">Sem cobrança. Só o próximo passo.</div>
+    <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
+      {!hasAny ? (
+        <div className="bg-white rounded-3xl p-6 border">
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
+            Quando você registrar algo no Materna360, ele aparece aqui automaticamente.
+          </p>
         </div>
+      ) : (
+        <div className="space-y-4 md:space-y-5">
+          {GROUP_ORDER.map((groupId) => {
+            const group = grouped[groupId]
+            if (!group || group.items.length === 0) return null
 
-        <Link
-          href="/maternar"
-          className="inline-flex items-center rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-        >
-          <span className="mr-1.5 text-lg leading-none">←</span>
-          Maternar
-        </Link>
-      </div>
+            const sorted = sortForGroup(group.items, {
+              premium: isPremiumExperience,
+              persona: personaId,
+            })
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((t) => {
-          const active = focusGroupId === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setFocusGroupId(t.id)}
-              className={[
-                'rounded-full px-3 py-2 text-[12px] border transition',
-                active
-                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                  : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-              ].join(' ')}
-              aria-pressed={active}
-            >
-              <span className="font-semibold">{t.id === 'para-hoje' ? 'Para hoje' : t.id}</span>
-              <span className="ml-2 text-[11px] text-[#6a6a6a]">
-                {t.active > 0 ? `${t.active} ativas` : t.open > 0 ? `${t.open} abertas` : 'vazio'}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+            const isExpanded = !!expanded[groupId]
+            const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
+            const hasMore = sorted.length > effectiveLimit
+            const isHighlighted = highlightGroup === groupId
 
-      {/* Content */}
-      <div className="space-y-3">
-        {focusedItems.length === 0 ? <EmptyState groupId={focusGroupId} /> : null}
+            return (
+              <div
+                key={groupId}
+                id={`myday-group-${groupId}`}
+                className={[
+                  'bg-white rounded-3xl p-6 border',
+                  isHighlighted ? 'ring-2 ring-[#fd2597]/25 border-[#fd2597]/30' : '',
+                ].join(' ')}
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[16px] font-semibold">{group.title}</h4>
+                  {hasMore ? (
+                    <button
+                      onClick={() => toggleGroup(groupId)}
+                      className="rounded-full border px-4 py-2 text-[12px]"
+                    >
+                      {isExpanded ? 'Recolher' : 'Ver tudo'}
+                    </button>
+                  ) : null}
+                </div>
 
-        {focusedItems.map((t) => (
-          <TaskRow
-            key={t.id}
-            t={t}
-            onToggle={() => onToggle(t)}
-            onSnooze={() => onSnooze(t)}
-            onUnsnooze={() => onUnsnooze(t)}
-            onRemove={() => onRemove(t)}
-          />
-        ))}
-      </div>
+                <div className="mt-4 space-y-2">
+                  {visible.map((t) => {
+                    const st = statusOf(t)
+                    const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
+
+                    return (
+                      <div key={t.id} className="rounded-2xl border px-4 py-3">
+                        <div className="flex justify-between gap-3">
+                          <div>
+                            <p className="text-[14px]">{t.title}</p>
+                            {st === 'snoozed' && snoozeLabel ? (
+                              <p className="text-[11px] text-muted">Até {snoozeLabel}</p>
+                            ) : null}
+                          </div>
+
+                          <div className="flex gap-2">
+                            {st === 'active' ? (
+                              <>
+                                <button onClick={() => onDone(t)} className="text-[12px]">
+                                  Concluir
+                                </button>
+                                <button onClick={() => onSnooze(t)} className="text-[12px]">
+                                  Amanhã
+                                </button>
+                              </>
+                            ) : st === 'snoozed' ? (
+                              <button onClick={() => onUnsnooze(t)} className="text-[12px]">
+                                Trazer
+                              </button>
+                            ) : null}
+                            <button onClick={() => onRemove(t)} className="text-[12px]">
+                              Remover
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </section>
   )
 }
