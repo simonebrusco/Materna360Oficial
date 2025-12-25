@@ -200,6 +200,8 @@ export default function MyDayGroups({
 }: {
   initialDate?: Date
 }) {
+  ...
+}
   const [date] = useState<Date>(() => initialDate ?? new Date())
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [focusGroupId, setFocusGroupId] = useState<FocusGroupId>('para-hoje')
