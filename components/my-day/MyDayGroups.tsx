@@ -1,3 +1,4 @@
+// components/my-day/MyDayGroups.tsx
 'use client'
 
 import * as React from 'react'
@@ -14,51 +15,23 @@ import {
   unsnoozeTask,
   MY_DAY_SOURCES,
 } from '@/app/lib/myDayTasks.client'
+
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
+
 import {
-  loadMyDayRecentSave,
-  loadMeuDiaLeveLastHandledTs,
-  saveMeuDiaLeveLastHandledTs,
-} from '@/app/lib/persist'
+  consumeRecentMyDaySave,
+  type MeuDiaContinuityOrigin,
+} from '@/app/lib/myDayContinuity.client'
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
 const DEFAULT_LIMIT = 5
-
-/* =========================
-   P26 — Continuidade Meu Dia Leve -> Meu Dia
-   (agora via persist.ts com migração silenciosa)
-========================= */
-
-type MeuDiaLeveRecentSave = {
-  ts: number
-  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
-  source: string
-}
-
-function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
-  if (!v || typeof v !== 'object') return false
-  const o = v as any
-  const okOrigin =
-    o.origin === 'today' || o.origin === 'family' || o.origin === 'selfcare' || o.origin === 'home' || o.origin === 'other'
-  const okTs = typeof o.ts === 'number' && Number.isFinite(o.ts)
-  const okSource = typeof o.source === 'string' && !!o.source.trim()
-  return okOrigin && okTs && okSource
-}
-
-function groupIdFromOrigin(origin: MeuDiaLeveRecentSave['origin']): GroupId {
-  if (origin === 'today') return 'para-hoje'
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  return 'outros'
-}
 
 /* =========================
    Helpers base
@@ -76,7 +49,7 @@ function timeOf(t: MyDayTaskItem): number {
   return Number.isFinite(n) ? n : 0
 }
 
-// (P28) evita bug de timezone: parse manual para YYYY-MM-DD
+// evita bug de timezone: parse manual para YYYY-MM-DD
 function formatSnoozeUntil(raw: unknown): string | null {
   const s = typeof raw === 'string' ? raw : ''
   if (!s) return null
@@ -86,7 +59,7 @@ function formatSnoozeUntil(raw: unknown): string | null {
     const y = Number(m[1])
     const mo = Number(m[2])
     const d = Number(m[3])
-    const dt = new Date(y, mo - 1, d) // local time (seguro p/ BR)
+    const dt = new Date(y, mo - 1, d)
     return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   }
 
@@ -157,6 +130,14 @@ function getReturnLink(t: MyDayTaskItem): { href: string; label: string } | null
   }
 
   return null
+}
+
+function groupIdFromContinuityOrigin(origin: MeuDiaContinuityOrigin): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
 /* =========================
@@ -247,7 +228,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     setDensityLevel(getDensityLevel())
 
     const sync = () => {
-      // silencioso: apenas atualiza decisões internas
       setEuSignal(getEu360Signal())
       setExperienceTier(getExperienceTier())
       setDensityLevel(getDensityLevel())
@@ -267,34 +247,22 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   }, [])
 
   /**
-   * P26 — “Meu Dia Leve salvou e agora o Meu Dia abre no lugar certo”
-   * - quando detecta save recente: expande o grupo-alvo e aplica destaque suave
-   * - não mostra conteúdo; só orienta a atenção para a seção correta
-   * - de-dupe por ts (last handled)
+   * P26 — Continuidade “salvou no Meu Dia Leve -> Meu Dia abre no lugar certo”
+   * Agora usa myDayContinuity.client.ts:
+   * - consumeRecentMyDaySave() já limpa após ler (1x)
+   * - TTL padrão 30 min aplicado no helper
    */
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return
 
-      const parsed = loadMyDayRecentSave()
-      if (!isRecentSavePayload(parsed)) return
+      const evt = consumeRecentMyDaySave() // TTL default 30 min
+      if (!evt) return
 
-      const lastHandled = loadMeuDiaLeveLastHandledTs()
-      const isNew = Number.isFinite(parsed.ts) && parsed.ts > (Number.isFinite(lastHandled) ? lastHandled : 0)
-
-      // janela de recência: 30 min
-      const ageMs = Date.now() - parsed.ts
-      const RECENT_WINDOW_MS = 30 * 60 * 1000
-      const isRecent = ageMs >= 0 && ageMs <= RECENT_WINDOW_MS
-
-      if (!isNew || !isRecent) return
-
-      const gid = groupIdFromOrigin(parsed.origin)
+      const gid = groupIdFromContinuityOrigin(evt.origin)
 
       setExpanded((prev) => ({ ...prev, [gid]: true }))
       setHighlightGroup(gid)
-
-      saveMeuDiaLeveLastHandledTs(parsed.ts)
 
       window.setTimeout(() => {
         try {
@@ -307,10 +275,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
       try {
         track('meu_dia_leve.group_focus_applied', {
-          origin: parsed.origin,
+          origin: evt.origin,
           groupId: gid,
-          ageMs,
-          source: parsed.source,
+          ageMs: Date.now() - evt.ts,
+          source: evt.source,
         })
       } catch {}
     } catch {}
