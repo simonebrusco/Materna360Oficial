@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 
 import {
   groupTasks,
@@ -12,7 +11,6 @@ import {
   removeTask,
   snoozeTask,
   unsnoozeTask,
-  MY_DAY_SOURCES,
 } from '@/app/lib/myDayTasks.client'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
@@ -43,13 +41,17 @@ function timeOf(t: MyDayTaskItem): number {
   return Number.isFinite(n) ? n : 0
 }
 
+// (P28) evita bug de timezone: parse manual para YYYY-MM-DD
 function formatSnoozeUntil(raw: unknown): string | null {
   const s = typeof raw === 'string' ? raw : ''
   if (!s) return null
 
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
   if (m) {
-    const dt = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+    const y = Number(m[1])
+    const mo = Number(m[2])
+    const d = Number(m[3])
+    const dt = new Date(y, mo - 1, d) // local time (seguro p/ BR)
     return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   }
 
@@ -89,6 +91,7 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?
   }
 
   return [...items].sort((a, b) => {
+    // Premium invisível: organiza por recência para sobrevivência/organização
     if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
       const sa = timeOf(a)
       const sb = timeOf(b)
@@ -237,10 +240,17 @@ export default function MyDayGroups({
   return (
     <section className="mt-6 md:mt-8 space-y-4 md:space-y-5">
       {!hasAny ? (
-        <div className="bg-white rounded-3xl p-6 border">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Tudo certo por aqui.</h4>
+        <div className="bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]">
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">
+            Seu dia pode começar simples.
+          </h4>
+
           <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-            Quando você registrar algo no Materna360, ele aparece aqui automaticamente.
+            Você não precisa organizar tudo agora.
+          </p>
+
+          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
+            Quando quiser, registre uma coisa pequena — ou apenas volte depois. O Materna360 continua aqui.
           </p>
         </div>
       ) : (
@@ -264,16 +274,19 @@ export default function MyDayGroups({
                 key={groupId}
                 id={`myday-group-${groupId}`}
                 className={[
-                  'bg-white rounded-3xl p-6 border',
-                  isHighlighted ? 'ring-2 ring-[#fd2597]/25 border-[#fd2597]/30' : '',
+                  'bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]',
+                  isHighlighted ? 'ring-2 ring-[#fd2597]/25 border-[#fd2597]/30 bg-[rgba(253,37,151,0.04)]' : '',
                 ].join(' ')}
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[16px] font-semibold">{group.title}</h4>
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
+                    {group.title}
+                  </h4>
+
                   {hasMore ? (
                     <button
                       onClick={() => toggleGroup(groupId)}
-                      className="rounded-full border px-4 py-2 text-[12px]"
+                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                     >
                       {isExpanded ? 'Recolher' : 'Ver tudo'}
                     </button>
@@ -286,33 +299,69 @@ export default function MyDayGroups({
                     const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
 
                     return (
-                      <div key={t.id} className="rounded-2xl border px-4 py-3">
-                        <div className="flex justify-between gap-3">
-                          <div>
-                            <p className="text-[14px]">{t.title}</p>
-                            {st === 'snoozed' && snoozeLabel ? (
-                              <p className="text-[11px] text-muted">Até {snoozeLabel}</p>
+                      <div
+                        key={t.id}
+                        className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
+
+                            {st === 'snoozed' ? (
+                              <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                                Deixado para depois{snoozeLabel ? ` • até ${snoozeLabel}` : ''}.
+                              </p>
                             ) : null}
                           </div>
 
-                          <div className="flex gap-2">
+                          <div className="shrink-0 flex flex-wrap items-center justify-end gap-2">
                             {st === 'active' ? (
                               <>
-                                <button onClick={() => onDone(t)} className="text-[12px]">
+                                <button
+                                  onClick={() => onDone(t)}
+                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
+                                >
                                   Concluir
                                 </button>
-                                <button onClick={() => onSnooze(t)} className="text-[12px]">
-                                  Amanhã
+
+                                <button
+                                  onClick={() => onSnooze(t)}
+                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                                >
+                                  Deixar para amanhã
+                                </button>
+
+                                <button
+                                  onClick={() => onRemove(t)}
+                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                                >
+                                  Remover
                                 </button>
                               </>
                             ) : st === 'snoozed' ? (
-                              <button onClick={() => onUnsnooze(t)} className="text-[12px]">
-                                Trazer
+                              <>
+                                <button
+                                  onClick={() => onUnsnooze(t)}
+                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
+                                >
+                                  Trazer para hoje
+                                </button>
+
+                                <button
+                                  onClick={() => onRemove(t)}
+                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                                >
+                                  Remover
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => onRemove(t)}
+                                className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                              >
+                                Remover
                               </button>
-                            ) : null}
-                            <button onClick={() => onRemove(t)} className="text-[12px]">
-                              Remover
-                            </button>
+                            )}
                           </div>
                         </div>
                       </div>
