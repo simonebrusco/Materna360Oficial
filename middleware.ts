@@ -6,7 +6,7 @@ const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 
 // --- Helpers de segurança ---
 // Impede open redirect: só permite paths internos
-function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
+function safeInternalRedirect(target: string | null | undefined, fallback = '/bem-vinda') {
   if (!target) return fallback
   const t = target.trim()
   if (!t) return fallback
@@ -97,16 +97,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Se está logada e visita /login ou /signup, redireciona para destino (ou /maternar)
+  // Se está logada e visita /login ou /signup, redireciona para destino (ou /bem-vinda)
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     const rawNext = request.nextUrl.searchParams.get('redirectTo')
-    const nextDest = safeInternalRedirect(rawNext, '/maternar')
+    const nextDest = safeInternalRedirect(rawNext, '/bem-vinda')
     return NextResponse.redirect(new URL(nextDest, request.url))
   }
 
-  // "/" é público; se logada, joga para /maternar (experiência de app)
+  // "/" é público; se logada, joga para /bem-vinda (experiência pós-login)
   if (normalizedPath === '/' && hasSession) {
-    return NextResponse.redirect(new URL('/maternar', request.url))
+    return NextResponse.redirect(new URL('/bem-vinda', request.url))
   }
 
   // Se é rota protegida e NÃO tem sessão → manda para /login com redirectTo
