@@ -19,6 +19,7 @@ import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
+import { load, save } from '@/app/lib/persist'
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
@@ -36,24 +37,26 @@ type MeuDiaLeveRecentSave = {
   source: string
 }
 
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-const LS_LAST_HANDLED_TS = 'm360.meu_dia_leve_last_handled_ts_v1'
+/**
+ * MIGRAÇÃO PARA persist.ts (m360:)
+ * - Agora usamos as chaves “limpas” (persist aplica prefixo m360:)
+ * - Mantemos fallback para chaves antigas (localStorage cru) para não quebrar usuários existentes
+ */
+const PERSIST_RECENT_SAVE_KEY = 'my_day_recent_save_v1'
+const PERSIST_LAST_HANDLED_TS_KEY = 'meu_dia_leve_last_handled_ts_v1'
 
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
+// chaves legadas que podem existir no storage “cru”
+const LEGACY_RECENT_SAVE_KEYS = [
+  'my_day_recent_save_v1',
+  'm360:my_day_recent_save_v1',
+  'm360.my_day_recent_save_v1',
+] as const
 
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
+const LEGACY_LAST_HANDLED_KEYS = [
+  'm360.meu_dia_leve_last_handled_ts_v1',
+  'm360:meu_dia_leve_last_handled_ts_v1',
+  'meu_dia_leve_last_handled_ts_v1',
+] as const
 
 function safeParseJSON<T>(raw: string | null): T | null {
   if (!raw) return null
@@ -74,12 +77,52 @@ function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
   return okOrigin && okTs && okSource
 }
 
-function groupIdFromOrigin(origin: MeuDiaLeveRecentSave['origin']): GroupId {
-  if (origin === 'today') return 'para-hoje'
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  return 'outros'
+function readLegacyLSFirstMatch(keys: readonly string[]): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    for (const k of keys) {
+      const v = window.localStorage.getItem(k)
+      if (v) return v
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+function readRecentSave(): MeuDiaLeveRecentSave | null {
+  // 1) novo padrão: persist.ts (m360:)
+  try {
+    const v = load<MeuDiaLeveRecentSave | null>(PERSIST_RECENT_SAVE_KEY, null)
+    if (isRecentSavePayload(v)) return v
+  } catch {}
+
+  // 2) legado: localStorage cru (string JSON)
+  const raw = readLegacyLSFirstMatch(LEGACY_RECENT_SAVE_KEYS)
+  const parsed = safeParseJSON<unknown>(raw)
+  if (isRecentSavePayload(parsed)) return parsed
+
+  return null
+}
+
+function readLastHandledTs(): number {
+  // 1) novo padrão: persist.ts (m360:)
+  try {
+    const v = load<number | string | null>(PERSIST_LAST_HANDLED_TS_KEY, null)
+    const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : 0
+    return Number.isFinite(n) ? n : 0
+  } catch {}
+
+  // 2) legado: localStorage cru
+  const raw = readLegacyLSFirstMatch(LEGACY_LAST_HANDLED_KEYS)
+  const n = raw ? Number(raw) : 0
+  return Number.isFinite(n) ? n : 0
+}
+
+function writeLastHandledTs(ts: number) {
+  try {
+    save(PERSIST_LAST_HANDLED_TS_KEY, ts)
+  } catch {}
 }
 
 /* =========================
@@ -98,20 +141,37 @@ function timeOf(t: MyDayTaskItem): number {
   return Number.isFinite(n) ? n : 0
 }
 
+// (P28) evita bug de timezone: parse manual para YYYY-MM-DD
 function formatSnoozeUntil(raw: unknown): string | null {
   const s = typeof raw === 'string' ? raw : ''
   if (!s) return null
 
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (m) {
+    const y = Number(m[1])
+    const mo = Number(m[2])
+    const d = Number(m[3])
+    const dt = new Date(y, mo - 1, d) // local time (seguro p/ BR)
+    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  }
+
   const t = Date.parse(s)
-  if (!Number.isFinite(t)) return s // fallback: mostra como veio
+  if (!Number.isFinite(t)) return s
 
   try {
-    const d = new Date(t)
-    // formato curto e humano (pt-BR)
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    const dt = new Date(t)
+    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   } catch {
     return s
   }
+}
+
+function groupIdFromOrigin(origin: MeuDiaLeveRecentSave['origin']): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
 /* =========================
@@ -289,12 +349,10 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
     try {
       if (typeof window === 'undefined') return
 
-      const raw = safeGetLS(LS_RECENT_SAVE)
-      const parsed = safeParseJSON<unknown>(raw)
+      const parsed = readRecentSave()
       if (!isRecentSavePayload(parsed)) return
 
-      const lastHandledRaw = safeGetLS(LS_LAST_HANDLED_TS)
-      const lastHandled = lastHandledRaw ? Number(lastHandledRaw) : 0
+      const lastHandled = readLastHandledTs()
       const isNew = Number.isFinite(parsed.ts) && parsed.ts > (Number.isFinite(lastHandled) ? lastHandled : 0)
 
       // janela de recência: 30 min
@@ -309,7 +367,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
       setExpanded((prev) => ({ ...prev, [gid]: true }))
       setHighlightGroup(gid)
 
-      safeSetLS(LS_LAST_HANDLED_TS, String(parsed.ts))
+      writeLastHandledTs(parsed.ts)
 
       window.setTimeout(() => {
         try {
