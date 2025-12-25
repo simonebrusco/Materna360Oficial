@@ -1282,7 +1282,8 @@ export default function WeeklyPlannerCore() {
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {sortedAppointments.length === 0 ? (
-                    <p className="text-xs text-[var(--color-text-muted)]">Você ainda não marcou nenhum compromisso.</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">Nenhum compromisso por aqui hoje.
+Se fizer sentido, você pode registrar algo — ou só deixar assim.</p>
                   ) : (
                     (() => {
                       const limit = Math.max(1, Number(euSignal.listLimit) || 5)
