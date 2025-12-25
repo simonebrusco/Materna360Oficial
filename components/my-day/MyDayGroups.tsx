@@ -98,12 +98,20 @@ function timeOf(t: MyDayTaskItem): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function dateKeyOfNow(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+function formatSnoozeUntil(raw: unknown): string | null {
+  const s = typeof raw === 'string' ? raw : ''
+  if (!s) return null
+
+  const t = Date.parse(s)
+  if (!Number.isFinite(t)) return s // fallback: mostra como veio
+
+  try {
+    const d = new Date(t)
+    // formato curto e humano (pt-BR)
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  } catch {
+    return s
+  }
 }
 
 /* =========================
@@ -112,8 +120,7 @@ function dateKeyOfNow(): string {
 
 function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
   const p: any = (aiContext as any)?.persona
-  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao')
-    return p
+  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao') return p
   if (typeof p === 'object' && p?.persona) return p.persona
   return undefined
 }
@@ -169,6 +176,14 @@ function getReturnLink(t: MyDayTaskItem): { href: string; label: string } | null
    Jornada mínima (P26)
 ========================= */
 
+function dateKeyOfNow(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function markSelfcareDoneForJourney(source: string | undefined) {
   try {
     const dk = dateKeyOfNow()
@@ -206,18 +221,18 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
+  // P28 — experiência (somente decisão interna; atualiza silenciosamente)
+  const [experienceTier, setExperienceTier] = useState(() => getExperienceTier())
+  const [densityLevel, setDensityLevel] = useState(() => getDensityLevel())
+  const isPremiumExperience = experienceTier === 'premium'
+
   // P26 — destaque de grupo quando veio do Meu Dia Leve
   const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
-
-  const experienceTier = getExperienceTier()
-  const densityLevel = getDensityLevel()
-  const isPremiumExperience = experienceTier === 'premium'
 
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const personaId = getPersonaId(aiContext)
 
-  const totalCount = tasks.length
-  const hasAny = totalCount > 0
+  const hasAny = tasks.length > 0
 
   const effectiveLimit = useMemo(() => {
     const raw = Number((euSignal as any)?.listLimit)
@@ -240,10 +255,28 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
   useEffect(() => {
     refresh()
-  }, [])
-
-  useEffect(() => {
     setEuSignal(getEu360Signal())
+    setExperienceTier(getExperienceTier())
+    setDensityLevel(getDensityLevel())
+
+    const sync = () => {
+      // silencioso: apenas atualiza decisões internas
+      setEuSignal(getEu360Signal())
+      setExperienceTier(getExperienceTier())
+      setDensityLevel(getDensityLevel())
+      refresh()
+    }
+
+    window.addEventListener('storage', sync)
+    window.addEventListener('m360:plan-updated', sync as EventListener)
+    window.addEventListener('eu360:persona-updated', sync as EventListener)
+
+    return () => {
+      window.removeEventListener('storage', sync)
+      window.removeEventListener('m360:plan-updated', sync as EventListener)
+      window.removeEventListener('eu360:persona-updated', sync as EventListener)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /**
@@ -273,13 +306,11 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
 
       const gid = groupIdFromOrigin(parsed.origin)
 
-      // expande e destaca
       setExpanded((prev) => ({ ...prev, [gid]: true }))
       setHighlightGroup(gid)
 
       safeSetLS(LS_LAST_HANDLED_TS, String(parsed.ts))
 
-      // rola para o grupo
       window.setTimeout(() => {
         try {
           const el = document.getElementById(`myday-group-${gid}`)
@@ -287,7 +318,6 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
         } catch {}
       }, 50)
 
-      // destaque expira visualmente (sem “ack” UI)
       window.setTimeout(() => setHighlightGroup(null), 6500)
 
       try {
@@ -376,7 +406,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
           </p>
 
           <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
-            Comece pequeno, se fizer sentido. Um lembrete simples já ajuda.
+            Se fizer sentido, comece pequeno. Um lembrete simples já ajuda.
           </p>
         </div>
       ) : (
@@ -416,14 +446,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                 ].join(' ')}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
-                    {group.title}
-                  </h4>
+                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">{group.title}</h4>
 
                   {hasMore ? (
                     <button
                       onClick={() => toggleGroup(groupId)}
-                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)]"
+                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                     >
                       {isExpanded ? 'Recolher' : 'Ver tudo'}
                     </button>
@@ -433,8 +461,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                 {familyTooMany ? (
                   <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
                     <p className="text-[12px] text-[var(--color-text-muted)]">
-                      Dica do Materna: conexão funciona melhor quando é possível. Escolha uma ação por vez — presença vale
-                      mais que quantidade.
+                      Dica do Materna: escolha uma ação por vez — presença vale mais que quantidade.
                     </p>
                   </div>
                 ) : null}
@@ -442,8 +469,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                 {selfcareTooMany ? (
                   <div className="mt-3 rounded-2xl border border-[var(--color-border-soft)] bg-[rgba(0,0,0,0.02)] px-4 py-3">
                     <p className="text-[12px] text-[var(--color-text-muted)]">
-                      Dica do Materna: autocuidado funciona melhor com pouco. Escolha 1 tarefa, conclua e deixe o resto
-                      para outro dia.
+                      Dica do Materna: autocuidado funciona melhor com pouco. Escolha 1 tarefa e deixe o resto para outro dia.
                     </p>
                   </div>
                 ) : null}
@@ -452,22 +478,17 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                   {visible.map((t) => {
                     const st = statusOf(t)
                     const returnLink = getReturnLink(t)
+                    const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
 
                     return (
-                      <div
-                        key={t.id}
-                        className={[
-                          'rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]',
-                          isHighlighted ? 'bg-white/80' : '',
-                        ].join(' ')}
-                      >
+                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
 
                             {st === 'snoozed' ? (
                               <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-                                Adiado{(t as any).snoozeUntil ? ` até ${(t as any).snoozeUntil}` : ''}.
+                                Deixado para depois{snoozeLabel ? ` • até ${snoozeLabel}` : ''}.
                               </p>
                             ) : null}
                           </div>
@@ -486,7 +507,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                                   onClick={() => onSnooze(t)}
                                   className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                                 >
-                                  Adiar 1 dia
+                                  Deixar para amanhã
                                 </button>
 
                                 <button
@@ -502,7 +523,7 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                                   onClick={() => onUnsnooze(t)}
                                   className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
                                 >
-                                  Voltar para hoje
+                                  Trazer para hoje
                                 </button>
 
                                 <button
@@ -513,14 +534,12 @@ export function MyDayGroups({ aiContext }: { aiContext?: AiLightContext }) {
                                 </button>
                               </>
                             ) : (
-                              <>
-                                <button
-                                  onClick={() => onRemove(t)}
-                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
-                                >
-                                  Remover
-                                </button>
-                              </>
+                              <button
+                                onClick={() => onRemove(t)}
+                                className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                              >
+                                Remover
+                              </button>
                             )}
                           </div>
                         </div>
