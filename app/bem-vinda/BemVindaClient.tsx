@@ -20,7 +20,8 @@ export default function BemVindaClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const nextRaw = searchParams.get('next')
+  // Compat: algumas rotas podem mandar "next"; o middleware usa "redirectTo"
+  const nextRaw = searchParams.get('next') ?? searchParams.get('redirectTo')
   const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
 
   function markSeenSilently() {
@@ -34,7 +35,8 @@ export default function BemVindaClient() {
     // 2) Cookie (para o middleware)
     try {
       const oneYear = 60 * 60 * 24 * 365
-      document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=${oneYear}; SameSite=Lax`
+      const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''
+      document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=${oneYear}; SameSite=Lax${secure}`
     } catch {
       // silencioso
     }
@@ -91,6 +93,7 @@ export default function BemVindaClient() {
 
         <div className="mt-8 space-y-2">
           <button
+            type="button"
             onClick={onStartMeuDia}
             className="w-full rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
@@ -98,6 +101,7 @@ export default function BemVindaClient() {
           </button>
 
           <button
+            type="button"
             onClick={onGoMaternar}
             className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:bg-black/[0.02] transition"
           >
