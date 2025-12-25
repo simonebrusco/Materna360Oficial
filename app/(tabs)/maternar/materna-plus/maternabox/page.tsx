@@ -95,14 +95,7 @@ export default function MaternaBoxPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const ids: HubSectionId[] = [
-      'visao',
-      'como-funciona',
-      'para-quem',
-      'faixa',
-      'planos',
-    ]
-
+    const ids: HubSectionId[] = ['visao', 'como-funciona', 'para-quem', 'faixa', 'planos']
     const elements = ids
       .map((id) => document.getElementById(`maternabox-${id}`))
       .filter(Boolean) as HTMLElement[]
@@ -159,13 +152,13 @@ export default function MaternaBoxPage() {
   return (
     <PageTemplate
       headerTone="light"
+      label="MATERNAR"
       title="MaternaBox"
       subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
     >
       <ClientOnly>
-        {/* Mantém largura consistente (igual Ajuda & Parcerias) */}
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
-          {/* Back — com seta (não usa chip/label do PageTemplate) */}
+          {/* Back (estilo padrão do header, sem “chip” duplicado visualmente) */}
           <div className="px-4 md:px-0">
             <Link
               href="/maternar"
@@ -176,7 +169,6 @@ export default function MaternaBoxPage() {
             </Link>
           </div>
 
-          {/* HERO HUB-LIKE */}
           <Reveal>
             <SoftCard
               id="maternabox-visao"
@@ -197,7 +189,6 @@ export default function MaternaBoxPage() {
                   </p>
                 </div>
 
-                {/* MINI MENU */}
                 <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
                     MENU
@@ -225,21 +216,16 @@ export default function MaternaBoxPage() {
                   </div>
                 </div>
 
-                {/* 3 bullets objetivos */}
                 <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Pronto para usar
-                    </p>
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
                     <p className="text-[13px] text-[#545454] leading-snug">
                       Sem pesquisar atividades. Só abrir e fazer.
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Pouco tempo
-                    </p>
+                    <p className="font-semibold text-[13px] text-[#fd2597]">Pouco tempo</p>
                     <p className="text-[13px] text-[#545454] leading-snug">
                       Ideias que cabem na rotina real.
                     </p>
@@ -302,8 +288,7 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <p className="text-[12px] text-[#6A6A6A]">
-                  A MaternaBox é uma experiência de rotina e vínculo (não é terapia nem
-                  substitui acompanhamento profissional).
+                  A MaternaBox é uma experiência de rotina e vínculo (não é terapia nem substitui acompanhamento profissional).
                 </p>
               </div>
             </SoftCard>
@@ -327,10 +312,7 @@ export default function MaternaBoxPage() {
                   <ul className="space-y-2 text-[13px] text-[#545454]">
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon
-                          name="sparkles"
-                          className="h-3.5 w-3.5 text-[#fd2597]"
-                        />
+                        <AppIcon name="sparkles" className="h-3.5 w-3.5 text-[#fd2597]" />
                       </span>
                       <span>Quando você quer ideias prontas e aplicáveis.</span>
                     </li>
@@ -342,10 +324,7 @@ export default function MaternaBoxPage() {
                     </li>
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon
-                          name="calendar"
-                          className="h-3.5 w-3.5 text-[#fd2597]"
-                        />
+                        <AppIcon name="calendar" className="h-3.5 w-3.5 text-[#fd2597]" />
                       </span>
                       <span>Quando você quer rotina com leveza.</span>
                     </li>
@@ -487,7 +466,6 @@ export default function MaternaBoxPage() {
                   })}
                 </div>
 
-                {/* RESUMO + CTA */}
                 <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="space-y-1">
