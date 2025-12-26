@@ -46,7 +46,7 @@ const COLLECTIONS: Collection[] = [
     iconName: 'moon',
     titulo: 'Encontre Calma',
     descricao:
-      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
+      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando o que mais ajuda é silêncio e acolhimento.',
   },
   {
     id: 'acolhimento',
@@ -175,7 +175,7 @@ export default function MindfulnessForMoms() {
         onClose={() => setOpenCalma(false)}
         icon=""
         title="Encontre Calma"
-        subtitle="Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento."
+        subtitle="Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando o que mais ajuda é silêncio e acolhimento."
         tracks={TRACKS_ENCONTRE_CALMA}
         testId="modal-calma"
       />
