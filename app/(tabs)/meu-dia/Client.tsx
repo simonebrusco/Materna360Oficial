@@ -309,7 +309,7 @@ export default function MeuDiaClient() {
         overflow-hidden
       "
     >
-      <div className="relative z-10 flex-1 mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+     <div className="page-shell relative z-10 flex-1 w-full">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
