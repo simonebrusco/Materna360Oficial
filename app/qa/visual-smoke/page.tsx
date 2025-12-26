@@ -115,7 +115,7 @@ export default function VisualSmokePage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
+    <div className="p-4">
       <h1 className="text-[18px] font-semibold mb-2">QA — Visual Smoke (mobile 390×800)</h1>
       <p className="text-[12px] text-[#545454] mb-4">
         Checks overflow, basic focus visibility and heuristic contrast on key text elements.

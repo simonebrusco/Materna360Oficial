@@ -20,7 +20,7 @@ export default function ConquistasPage() {
 
   return (
     <div data-layout="page-template-v1" className="bg-[linear-gradient(180deg,#FFE5EF_0%,#FFFFFF_72%)] min-h-[100dvh] pb-24">
-      <div className="mx-auto max-w-[1040px] px-4 md:px-6 py-6">
+      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 py-6">
         <h1 className="text-2xl md:text-[28px] font-semibold mb-6">Conquistas</h1>
 
         {badges.length === 0 ? (

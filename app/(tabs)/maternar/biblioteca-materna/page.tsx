@@ -282,7 +282,7 @@ export default function BibliotecaMaternaPage() {
       "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl px-4 md:px-6">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           {/* HERO (mesmo padrão das outras) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">

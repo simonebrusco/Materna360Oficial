@@ -7,6 +7,7 @@ import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { Reveal } from '@/components/ui/Reveal'
+import BackToMaternar from '@/components/common/BackToMaternar'
 import {
   getProfessionals,
   type ProfessionalApi,
@@ -178,14 +179,16 @@ export default function MaternaPlusPage() {
   }
 
   return (
-   <PageTemplate
+ <PageTemplate
   headerTone="light"
   label="MATERNAR"
+  showLabel={false}
+  headerTop={<BackToMaternar />}
   title="Materna+"
   subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
 >
       <ClientOnly>
-        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10">
           {/* HERO HUB-LIKE */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
@@ -233,7 +236,7 @@ export default function MaternaPlusPage() {
                 </div>
 
                 {/* Cards curtos (3) */}
-                <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
+                <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">
                       Profissionais

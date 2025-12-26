@@ -231,7 +231,7 @@ export default function MinhaJornadaPage() {
       subtitle="Acompanhe sua evolução e os momentos especiais da sua maternidade."
     >
       <ClientOnly>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 space-y-6 md:space-y-8">
           {/* BLOCK 1 — Linha do Tempo da Mãe */}
           <Reveal delay={0}>
             <SoftCard className="rounded-3xl p-6 md:p-8">

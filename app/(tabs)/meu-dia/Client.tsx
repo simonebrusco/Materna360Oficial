@@ -309,7 +309,7 @@ export default function MeuDiaClient() {
         overflow-hidden
       "
     >
-      <div className="relative z-10 flex-1 mx-auto max-w-3xl px-4 md:px-6">
+     <div className="page-shell relative z-10 flex-1 w-full">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
@@ -320,11 +320,11 @@ export default function MeuDiaClient() {
             Seu dia, do seu jeito
           </h1>
 
-          <p className="mt-1 text-sm md:text-base text-white/90 max-w-xl">
+          <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl lg:max-w-3xl">
             Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
           </p>
 
-          <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
+          <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">
             Você não precisa dar conta de tudo. Só do que fizer sentido agora.
           </p>
 
@@ -333,10 +333,10 @@ export default function MeuDiaClient() {
               <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
             </ClientOnly>
 
-            <p className="text-sm md:text-base text-white/95 max-w-xl">“{dailyMessage}”</p>
+            <p className="text-sm md:text-base text-white/95 max-w-2xl lg:max-w-3xl">“{dailyMessage}”</p>
 
             {continuityLine?.text ? (
-              <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-xl leading-relaxed">
+              <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">
                 {continuityLine.text}
               </p>
             ) : null}
@@ -364,7 +364,7 @@ export default function MeuDiaClient() {
                       <div className="text-[12px] text-[#6A6A6A]">
                         Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
                       </div>
-                      <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-xl">
+                      <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-2xl lg:max-w-3xl">
                         Se quiser, volte para pegar mais um próximo passo pronto — sem inventar nada.
                       </div>
                     </div>

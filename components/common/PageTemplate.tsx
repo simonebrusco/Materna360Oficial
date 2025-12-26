@@ -1,81 +1,97 @@
+// components/common/PageTemplate.tsx
 'use client'
 
-import type { ReactNode } from 'react'
-import LegalFooter from '@/components/common/LegalFooter'
+import * as React from 'react'
+
+export type PageTemplateTone = 'light' | 'dark'
 
 export type PageTemplateProps = {
+  headerTone?: PageTemplateTone
   label: string
   title: string
   subtitle?: string
-  children: ReactNode
-  headerVariant?: 'dark' | 'light'
-  /**
-   * Define a cor do header (label/título/subtítulo).
-   * - "dark": padrão atual (cinza)
-   * - "light": branco (para fundos mais fortes)
-   */
-  headerTone?: 'dark' | 'light'
+  showLabel?: boolean
+  headerTop?: React.ReactNode
+  children: React.ReactNode
+  className?: string
+  contentClassName?: string
 }
 
 export function PageTemplate({
+  headerTone = 'light',
   label,
   title,
   subtitle,
+  showLabel = true,
+  headerTop,
   children,
-  headerTone = 'dark',
+  className,
+  contentClassName,
 }: PageTemplateProps) {
   const isLight = headerTone === 'light'
 
-  const labelClasses = isLight
-    ? 'border-white/25 bg-white/10 text-white backdrop-blur-md'
-    : 'border-[#F5D7E5] bg-white/85 text-[#b8236b] backdrop-blur-md'
+  const rootBg = isLight
+    ? 'bg-[#ffe1f1] bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]'
+    : 'bg-[#0b1220] bg-[linear-gradient(to_bottom,#121a2e_0%,#0b1220_70%,#0b1220_100%)]'
 
-  const titleClasses = isLight ? 'text-white' : 'text-[#545454]'
-
-  const subtitleClasses = isLight ? 'text-white/85' : 'text-[#545454]'
+  const titleColor = isLight ? 'text-white' : 'text-white'
+  const subtitleColor = isLight ? 'text-white/90' : 'text-white/85'
+  const labelPill = isLight
+    ? 'bg-white/15 border border-white/35 text-white/90'
+    : 'bg-white/10 border border-white/20 text-white/85'
 
   return (
-    <main data-layout="page-template-v1" className="min-h-[100dvh] bg-transparent">
-      <div className="mx-auto max-w-3xl px-4 md:px-6 pb-20">
-        {/* HERO padrão das páginas internas */}
-        <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
-          <span
-            className={[
-              'inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold tracking-[0.24em] uppercase',
-              labelClasses,
-            ].join(' ')}
-          >
-            {label}
-          </span>
+    <main
+      data-layout="page-template-v1"
+      className={['min-h-[100dvh] pb-32', rootBg, className ?? ''].join(' ')}
+    >
+      <div
+        className={[
+          'mx-auto w-full px-4 md:px-6',
+          'max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl',
+          contentClassName ?? '',
+        ].join(' ')}
+      >
+        <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+          <div className="space-y-3">
+            {headerTop ? <div className="mb-1">{headerTop}</div> : null}
 
-          <h1
-            className={[
-              'mt-3 text-[28px] md:text-[32px] font-semibold leading-tight',
-              titleClasses,
-            ].join(' ')}
-          >
-            {title}
-          </h1>
+            {showLabel ? (
+              <span
+                className={[
+                  'inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em]',
+                  labelPill,
+                ].join(' ')}
+              >
+                {label}
+              </span>
+            ) : null}
 
-          {subtitle && (
-            <p
+            <h1
               className={[
-                'mt-2 text-sm md:text-base leading-relaxed max-w-2xl',
-                subtitleClasses,
+                'text-2xl md:text-3xl font-semibold leading-tight',
+                titleColor,
+                'drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]',
               ].join(' ')}
             >
-              {subtitle}
-            </p>
-          )}
+              {title}
+            </h1>
+
+            {subtitle ? (
+              <p
+                className={[
+                  'text-sm md:text-base leading-relaxed max-w-2xl',
+                  subtitleColor,
+                  'drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]',
+                ].join(' ')}
+              >
+                {subtitle}
+              </p>
+            ) : null}
+          </div>
         </header>
 
-        {/* Conteúdo específico da página */}
-        <div className="space-y-6 md:space-y-7 pb-6">{children}</div>
-
-        {/* Rodapé legal global – fica acima da bottom nav */}
-        <div className="mt-4 md:mt-6">
-          <LegalFooter />
-        </div>
+        {children}
       </div>
     </main>
   )

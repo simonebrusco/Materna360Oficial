@@ -93,7 +93,7 @@ export default function MinhasConquistasPage() {
       subtitle="Celebre seu progresso — um passo de cada vez."
     >
       <ClientOnly>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-6 md:space-y-8">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 space-y-6 md:space-y-8">
           {/* MOTIVATIONAL LINE */}
           <Reveal delay={0}>
             <div className="text-center">

@@ -45,83 +45,97 @@ export default function WeekView({ weekData }: WeekViewProps) {
       </div>
 
       {/* Board da semana */}
-      <div className="overflow-x-auto -mx-2 md:-mx-3">
-        {/* 
-          Importante: manter largura mínima para NÃO “espremer” 7 colunas no container.
-          Isso garante a semana completa com scroll horizontal quando necessário.
-        */}
-        <div className="px-2 md:px-3 pb-1">
-          <div className="min-w-[980px] grid grid-cols-7 gap-2 md:gap-3">
+      <div className="relative">
+        {/* Mobile: carrossel com snap | Desktop: grid 7 colunas */}
+        <div className="md:hidden overflow-x-auto -mx-4 px-4 pb-2 snap-x snap-mandatory scroll-px-4">
+          <div className="flex gap-3">
             {weekData.map(day => (
-              <div
-                key={`${day.dayName}-${day.dayNumber}`}
-                className="flex flex-col rounded-2xl border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)]/60 p-2.5 md:p-3.5 min-h-[160px]"
-              >
-                {/* Cabeçalho do dia */}
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="leading-tight">
-                    <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {day.dayName}
-                    </p>
-                    <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
-                      {day.dayNumber}
-                    </p>
-                  </div>
+              <DayCard key={`${day.dayName}-${day.dayNumber}`} day={day} variant="mobile" />
+            ))}
+          </div>
+        </div>
 
-                  {hasAnyActivity(day) ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#FFE8F2] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand-deep)] whitespace-nowrap">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
-                      Dia em movimento
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* Pills de contagem */}
-                <div className="space-y-1.5">
-                  <CountPill
-                    icon="calendar"
-                    label="Agenda & compromissos"
-                    count={day.agendaCount}
-                    colorClass="bg-[var(--color-brand)]"
-                  />
-                  <CountPill
-                    icon="target"
-                    label="Prioridades do dia"
-                    count={day.top3Count}
-                    colorClass="bg-[#FFB3D3]"
-                    badgeTextClass="text-[#C2285F]"
-                    iconTextClass="text-[#C2285F]"
-                  />
-                  <CountPill
-                    icon="heart"
-                    label="Cuidar de mim"
-                    count={day.careCount}
-                    colorClass="bg-[#9b4d96]"
-                  />
-                  <CountPill
-                    icon="smile"
-                    label="Cuidar do meu filho"
-                    count={day.familyCount}
-                    colorClass="bg-[#2f3a56]"
-                  />
-                </div>
-
-                {/* Mensagem suave quando vazio */}
-                {!hasAnyActivity(day) ? (
-                  <p className="mt-2 text-[10px] md:text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-                    Esse dia ainda está em branco. Você pode começar pelos atalhos do planner ou adicionando um compromisso no calendário.
-                  </p>
-                ) : null}
-              </div>
+        <div className="hidden md:block">
+          <div className="grid grid-cols-7 gap-2 md:gap-3">
+            {weekData.map(day => (
+              <DayCard key={`${day.dayName}-${day.dayNumber}`} day={day} variant="desktop" />
             ))}
           </div>
         </div>
       </div>
 
+      {/* Dica adaptativa */}
       <p className="text-[11px] text-[var(--color-text-muted)]">
-        Dica: se estiver no notebook, você pode rolar horizontalmente com Shift + scroll.
+        <span className="md:hidden">Dica: arraste para o lado para ver todos os dias da semana.</span>
+        <span className="hidden md:inline">Dica: se estiver no notebook, você pode rolar horizontalmente com Shift + scroll.</span>
       </p>
     </SoftCard>
+  )
+}
+
+function DayCard({ day, variant }: { day: WeekDaySummary; variant: 'mobile' | 'desktop' }) {
+  const empty = !hasAnyActivity(day)
+
+  return (
+    <div
+      className={[
+        'flex flex-col rounded-2xl border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)]/60',
+        variant === 'mobile'
+          ? 'snap-start shrink-0 w-[82vw] max-w-[360px] p-3 min-h-[172px]'
+          : 'p-2.5 md:p-3.5 min-h-[160px]',
+      ].join(' ')}
+    >
+      {/* Cabeçalho do dia */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="leading-tight">
+          <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+            {day.dayName}
+          </p>
+          <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
+            {day.dayNumber}
+          </p>
+        </div>
+
+        {hasAnyActivity(day) ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#FFE8F2] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand-deep)] whitespace-nowrap">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+            Dia em movimento
+          </span>
+        ) : null}
+      </div>
+
+      {/* Pills de contagem */}
+      <div className="space-y-1.5">
+        <CountPill
+          icon="calendar"
+          label="Agenda & compromissos"
+          count={day.agendaCount}
+          colorClass="bg-[var(--color-brand)]"
+        />
+        <CountPill
+          icon="target"
+          label="Prioridades do dia"
+          count={day.top3Count}
+          colorClass="bg-[#FFB3D3]"
+          badgeTextClass="text-[#C2285F]"
+          iconTextClass="text-[#C2285F]"
+        />
+        <CountPill icon="heart" label="Cuidar de mim" count={day.careCount} colorClass="bg-[#9b4d96]" />
+        <CountPill
+          icon="smile"
+          label="Cuidar do meu filho"
+          count={day.familyCount}
+          colorClass="bg-[#2f3a56]"
+        />
+      </div>
+
+      {/* Mensagem suave quando vazio */}
+      {empty ? (
+        <p className="mt-2 text-[10px] md:text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+          Esse dia ainda está em branco. Você pode começar pelos atalhos do planner ou adicionando um compromisso no calendário.
+        </p>
+      ) : null}
+    </div>
   )
 }
 
@@ -133,9 +147,7 @@ function LegendDot({ colorClass, label }: { colorClass: string; label: string })
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#F5D7E5] px-2.5 py-1">
       <span className={`h-1.5 w-1.5 rounded-full ${colorClass}`} />
-      <span className="text-[10px] md:text-[11px] font-medium text-[var(--color-text-muted)]">
-        {label}
-      </span>
+      <span className="text-[10px] md:text-[11px] font-medium text-[var(--color-text-muted)]">{label}</span>
     </span>
   )
 }
@@ -156,9 +168,7 @@ function CountPill({ icon, label, count, colorClass, badgeTextClass, iconTextCla
     <div
       className={[
         'flex items-center justify-between gap-2 rounded-xl border px-2.5 py-1.5',
-        hasItems
-          ? 'bg-white border-[#FFE0F0] shadow-[0_4px_14px_rgba(0,0,0,0.06)]'
-          : 'bg-white/80 border-transparent',
+        hasItems ? 'bg-white border-[#FFE0F0] shadow-[0_4px_14px_rgba(0,0,0,0.06)]' : 'bg-white/80 border-transparent',
       ].join(' ')}
     >
       <div className="flex items-center gap-1.5 min-w-0">
@@ -172,9 +182,7 @@ function CountPill({ icon, label, count, colorClass, badgeTextClass, iconTextCla
           <AppIcon name={icon} className="h-3.5 w-3.5" decorative />
         </span>
 
-        <span className="text-[10px] md:text-[11px] font-medium text-[var(--color-text-main)] truncate">
-          {label}
-        </span>
+        <span className="text-[10px] md:text-[11px] font-medium text-[var(--color-text-main)] truncate">{label}</span>
       </div>
 
       <span

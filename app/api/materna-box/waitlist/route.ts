@@ -1,22 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-// Não quebra o build: apenas registra no servidor (útil para diagnosticar Vercel env)
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error(
-    '[MaternaBox Waitlist] Variáveis de ambiente do Supabase ausentes. ' +
-      'Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.',
-  )
-}
-
-const supabase =
-  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    : null
-
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -35,18 +19,26 @@ export async function POST(req: Request) {
       )
     }
 
-    // Se não tiver Supabase configurado, NÃO mascara em produção.
-    if (!supabase) {
-      const vercelEnv = process.env.VERCEL_ENV
-      const nodeEnv = process.env.NODE_ENV
-      const isProd = vercelEnv === 'production' || nodeEnv === 'production'
+    // Runtime env (evita ruído no build)
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+    const supabase =
+      SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+        ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+        : null
+
+    const vercelEnv = process.env.VERCEL_ENV
+    const nodeEnv = process.env.NODE_ENV
+    const isProd = vercelEnv === 'production' || nodeEnv === 'production'
+
+    // Supabase ausente → resposta segura + log mínimo (sem PII)
+    if (!supabase) {
       console.warn('[MaternaBox Waitlist] Supabase não configurado.', {
         vercelEnv,
         nodeEnv,
         hasUrl: Boolean(SUPABASE_URL),
         hasServiceKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
-        received: { name, email, childAgeRange, city, discoverySource, notes },
       })
 
       return NextResponse.json(

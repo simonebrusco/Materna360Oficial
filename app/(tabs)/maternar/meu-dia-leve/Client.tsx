@@ -273,7 +273,13 @@ async function requestAIRecipe(input: {
       childAgeLabel: input.childAgeLabel,
     }),
   })
-  if (!res.ok) return { ok: false, error: `http_${res.status}`, hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
+ if (!res.ok) {
+  return {
+    ok: false,
+    error: `http_${res.status}`,
+    hint: 'Não deu certo agora. Se quiser, você pode usar uma opção pronta abaixo.',
+  }
+}
   return (await res.json()) as AIRecipeResponse
 }
 
@@ -679,7 +685,7 @@ export default function MeuDiaLeveClient() {
       "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-3xl px-4 md:px-6">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">

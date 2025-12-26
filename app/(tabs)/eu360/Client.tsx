@@ -485,7 +485,7 @@ export default function Eu360Client() {
       data-tab="eu360"
       className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden"
     >
-      <div className="relative z-10 mx-auto max-w-3xl px-4 md:px-6">
+      <div className="relative z-10 mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
           <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">

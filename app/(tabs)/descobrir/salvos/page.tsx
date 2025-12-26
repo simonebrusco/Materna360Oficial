@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function SalvosPage() {
   return (
     <main className="min-h-screen bg-[#fff5f9]">
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-24 space-y-4">
+      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 pt-6 pb-24 space-y-4">
         <Link
           href="/meu-dia"
           className="inline-flex items-center gap-2 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-brand)]"

@@ -32,13 +32,7 @@ const THEMES = [
   'Parentalidade Sem Culpa',
 ]
 
-const FORMATS = [
-  'PDF',
-  'eBook',
-  'Guia Prático',
-  'Checklist',
-  'Insights (IA)',
-]
+const FORMATS = ['PDF', 'eBook', 'Guia Prático', 'Checklist', 'Insights (IA)']
 
 const PLACEHOLDER_MATERIALS: MaterialCard[] = [
   {
@@ -86,12 +80,15 @@ export default function BibliotecaMaternaPage() {
       subtitle="Conteúdos que apoiam sua jornada."
     >
       <ClientOnly>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 space-y-10">
+        {/* Alinhado com MaternaBox: largura padrão do conteúdo */}
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 space-y-10">
           {/* INTRO TEXT */}
           <Reveal delay={0}>
             <div className="max-w-2xl">
               <p className="text-sm md:text-base text-neutral-600 leading-relaxed">
-                Encontre materiais selecionados — PDFs, eBooks, guias práticos e conteúdos personalizados — filtrados por tema e formato para facilitar sua jornada.
+                Encontre materiais selecionados — PDFs, eBooks, guias práticos e
+                conteúdos personalizados — filtrados por tema e formato para
+                facilitar sua jornada.
               </p>
             </div>
           </Reveal>
@@ -104,7 +101,8 @@ export default function BibliotecaMaternaPage() {
                   Filtrar por
                 </h2>
                 <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                  Selecione um tema e formato para encontrar conteúdos relevantes.
+                  Selecione um tema e formato para encontrar conteúdos
+                  relevantes.
                 </p>
               </div>
 
@@ -156,7 +154,11 @@ export default function BibliotecaMaternaPage() {
               </h2>
               <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
                 {selectedTheme || selectedFormat
-                  ? `Resultados filtrados por ${selectedTheme ? `tema: ${selectedTheme}` : ''} ${selectedTheme && selectedFormat ? 'e' : ''} ${selectedFormat ? `formato: ${selectedFormat}` : ''}`
+                  ? `Resultados filtrados por ${
+                      selectedTheme ? `tema: ${selectedTheme}` : ''
+                    } ${selectedTheme && selectedFormat ? 'e' : ''} ${
+                      selectedFormat ? `formato: ${selectedFormat}` : ''
+                    }`
                   : 'Todos os materiais'}
               </p>
             </div>
@@ -165,44 +167,44 @@ export default function BibliotecaMaternaPage() {
               {PLACEHOLDER_MATERIALS.map((material, index) => (
                 <Reveal key={material.id} delay={100 + index * 30}>
                   <SoftCard className="rounded-3xl p-5 sm:p-6 flex flex-col h-full bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:shadow-[0_8px_20px_rgba(255,0,94,0.1)] overflow-hidden">
-                      {/* Thumbnail Placeholder */}
-                      <div className="mb-4 h-32 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-[var(--color-soft-strong)] rounded-2xl flex items-center justify-center">
-                        <AppIcon
-                          name={material.icon as any}
-                          size={48}
-                          className="text-[var(--color-brand)]/40"
-                          decorative
-                        />
-                      </div>
+                    {/* Thumbnail Placeholder */}
+                    <div className="mb-4 h-32 bg-gradient-to-br from-[var(--color-soft-strong)]/40 to-[var(--color-soft-strong)] rounded-2xl flex items-center justify-center">
+                      <AppIcon
+                        name={material.icon as any}
+                        size={48}
+                        className="text-[var(--color-brand)]/40"
+                        decorative
+                      />
+                    </div>
 
-                      {/* Content */}
-                      <h3 className="text-lg font-semibold text-[var(--color-text-main)] mb-2 line-clamp-2">
-                        {material.title}
-                      </h3>
-                      <p className="text-sm text-[var(--color-text-muted)] mb-4 line-clamp-2">
-                        {material.description}
-                      </p>
+                    {/* Content */}
+                    <h3 className="text-lg font-semibold text-[var(--color-text-main)] mb-2 line-clamp-2">
+                      {material.title}
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-muted)] mb-4 line-clamp-2">
+                      {material.description}
+                    </p>
 
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
-                          {material.theme}
-                        </span>
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]">
-                          {material.format}
-                        </span>
-                      </div>
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
+                        {material.theme}
+                      </span>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]">
+                        {material.format}
+                      </span>
+                    </div>
 
-                      {/* CTA */}
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => (window.location.href = '#')}
-                        className="w-full mt-auto"
-                      >
-                        Acessar
-                      </Button>
-                    </SoftCard>
+                    {/* CTA */}
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => (window.location.href = '#')}
+                      className="w-full mt-auto"
+                    >
+                      Acessar
+                    </Button>
+                  </SoftCard>
                 </Reveal>
               ))}
             </div>
@@ -215,7 +217,8 @@ export default function BibliotecaMaternaPage() {
                 Insight Personalizado
               </h2>
               <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                Aqui você verá recomendações inteligentes baseadas na idade e fase do seu filho.
+                Aqui você verá recomendações inteligentes baseadas na idade e
+                fase do seu filho.
               </p>
             </div>
 
@@ -231,7 +234,9 @@ export default function BibliotecaMaternaPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm md:text-base text-[#545454] leading-relaxed">
-                    Seu filho está passando por uma fase importante de desenvolvimento. Em breve, sugestões personalizadas aparecerão aqui.
+                    Seu filho está passando por uma fase importante de
+                    desenvolvimento. Em breve, sugestões personalizadas
+                    aparecerão aqui.
                   </p>
                 </div>
               </div>

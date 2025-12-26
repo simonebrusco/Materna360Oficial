@@ -59,7 +59,7 @@ export default function MomentosQueContamPage() {
       subtitle="Pequenos gestos que criam memórias para a vida toda."
     >
       <ClientOnly>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl">
           {CONNECTION_CARDS.map((card, index) => (
             <Reveal key={card.id} delay={index * 50}>
               <Link href={card.href} className="block h-full">
