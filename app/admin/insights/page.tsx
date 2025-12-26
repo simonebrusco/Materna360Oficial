@@ -1,13 +1,6 @@
-# backup local (só por segurança, não entra no git)
-cp app/admin/insights/page.tsx /tmp/admin-insights.page.tsx.bak
-
-cat > app/admin/insights/page.tsx <<'EOF'
 export const dynamic = 'force-dynamic'
 
 function isInsightsEnabled() {
-  // Mantém compatível com o que você já usa no projeto:
-  // - Se existir o FF, respeita
-  // - Caso não exista, deixa off por padrão (evita expor painel)
   return process.env.NEXT_PUBLIC_FF_INTERNAL_INSIGHTS === '1'
 }
 
@@ -32,9 +25,8 @@ export default function AdminInsightsPage() {
     <main className="max-w-screen-md mx-auto px-6 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">Insights</h1>
       <p className="mt-3 text-sm text-neutral-600">
-        Painel interno em manutenção (P29). Build estável em primeiro lugar.
+        Painel interno em manutenção (P29). Base estável em primeiro lugar.
       </p>
     </main>
   )
 }
-EOF
