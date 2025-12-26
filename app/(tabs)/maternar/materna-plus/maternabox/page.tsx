@@ -150,11 +150,12 @@ export default function MaternaBoxPage() {
 
   return (
     <PageTemplate
-      headerTone="light"
-      title="MaternaBox"
-      subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
-      showLabel={false}
-      headerTop={<BackToMaternar />}
+  headerTone="light"
+  label="MATERNAR"
+  title="MaternaBox"
+  subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
+  showLabel={false}
+  headerTop={<BackToMaternar className="px-0" />}
     >
       <ClientOnly>
         <div className="pb-12 space-y-8 md:space-y-10">
