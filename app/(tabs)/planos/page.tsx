@@ -111,7 +111,8 @@ export default function PlanosPage() {
   const [currentPlanId, setCurrentPlanId] = React.useState<PlanId>('essencial')
 
   // Qual plano foi clicado (para o sheet abrir “contextualizado” por re-mount)
-  const [selectedPlanId, setSelectedPlanId] = React.useState<PlanId>('materna-plus')
+  const [selectedPlanId, setSelectedPlanId] =
+    React.useState<PlanId>('materna-plus')
 
   React.useEffect(() => {
     const plan = getPlan()
@@ -137,7 +138,12 @@ export default function PlanosPage() {
       data-layout="page-template-v1"
       className="min-h-[100dvh] pb-16 bg-transparent"
     >
-      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 pt-10">
+      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl px-4 md:px-6 pt-10">
+        {/* VOLTAR PARA MATERNAR (Topo) */}
+        <div className="flex justify-start mb-6">
+          <BackToMaternar />
+        </div>
+
         {/* HERO da página de planos */}
         <header className="mb-8 sm:mb-10 text-center">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
@@ -523,8 +529,7 @@ export default function PlanosPage() {
         </div>
 
         {/* Sheet de upgrade
-            P15: re-mount quando mudar selectedPlanId (sem alterar API do componente).
-            ✅ Agora o UpgradeSheet suporta planId (já corrigido por você).
+            re-mount quando mudar selectedPlanId (sem alterar API do componente).
          */}
         <UpgradeSheet
           key={selectedPlanId}
