@@ -231,6 +231,7 @@ export function MemoryModal({
               onChange={handleImageChange}
               className="w-full px-4 py-2 rounded-xl border border-[#ffd8e6] bg-white text-sm text-[#6A6A6A] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF1475]/10 file:text-[#FF1475] hover:file:bg-[#FF1475]/20 transition-all"
             />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
             {imagePreview && (
               <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[#ffd8e6] bg-white/50">
                 <img
