@@ -44,81 +44,91 @@ export default function WeekView({ weekData }: WeekViewProps) {
         </div>
       </div>
 
-      {/* Board da semana */}
-      <div className="overflow-x-auto -mx-2 md:-mx-3">
-        {/* 
-          Importante: manter largura mínima para NÃO “espremer” 7 colunas no container.
-          Isso garante a semana completa com scroll horizontal quando necessário.
-        */}
-        <div className="px-2 md:px-3 pb-1">
-          <div className="min-w-[980px] grid grid-cols-7 gap-2 md:gap-3">
+      {/* Dica Mobile */}
+      <p className="text-[11px] text-[var(--color-text-muted)] md:hidden">
+        Dica: arraste para o lado para ver os dias.
+      </p>
+
+      {/* Board da semana (RESPONSIVO) */}
+      <div className="-mx-4 md:mx-0">
+        <div className="overflow-x-auto px-4 md:px-0 pb-1">
+          <div
+            className={[
+              // Mobile: carrossel horizontal com snap
+              'grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-3',
+              'min-w-max snap-x snap-mandatory',
+
+              // Desktop: 7 colunas, sem snap e sem min-width forçado
+              'md:grid-flow-row md:grid-cols-7 md:auto-cols-auto md:gap-3 md:min-w-0 md:snap-none',
+            ].join(' ')}
+          >
             {weekData.map(day => (
-              <div
-                key={`${day.dayName}-${day.dayNumber}`}
-                className="flex flex-col rounded-2xl border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)]/60 p-2.5 md:p-3.5 min-h-[160px]"
-              >
-                {/* Cabeçalho do dia */}
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="leading-tight">
-                    <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      {day.dayName}
-                    </p>
-                    <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
-                      {day.dayNumber}
-                    </p>
+              <div key={`${day.dayName}-${day.dayNumber}`} className="snap-start">
+                <div className="flex flex-col rounded-2xl border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)]/60 p-2.5 md:p-3.5 min-h-[160px]">
+                  {/* Cabeçalho do dia */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="leading-tight">
+                      <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                        {day.dayName}
+                      </p>
+                      <p className="text-sm md:text-base font-semibold text-[var(--color-text-main)]">
+                        {day.dayNumber}
+                      </p>
+                    </div>
+
+                    {hasAnyActivity(day) ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#FFE8F2] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand-deep)] whitespace-nowrap">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
+                        Dia em movimento
+                      </span>
+                    ) : null}
                   </div>
 
-                  {hasAnyActivity(day) ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-[#FFE8F2] px-2 py-0.5 text-[10px] font-medium text-[var(--color-brand-deep)] whitespace-nowrap">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand)]" />
-                      Dia em movimento
-                    </span>
+                  {/* Pills de contagem */}
+                  <div className="space-y-1.5">
+                    <CountPill
+                      icon="calendar"
+                      label="Agenda & compromissos"
+                      count={day.agendaCount}
+                      colorClass="bg-[var(--color-brand)]"
+                    />
+                    <CountPill
+                      icon="target"
+                      label="Prioridades do dia"
+                      count={day.top3Count}
+                      colorClass="bg-[#FFB3D3]"
+                      badgeTextClass="text-[#C2285F]"
+                      iconTextClass="text-[#C2285F]"
+                    />
+                    <CountPill
+                      icon="heart"
+                      label="Cuidar de mim"
+                      count={day.careCount}
+                      colorClass="bg-[#9b4d96]"
+                    />
+                    <CountPill
+                      icon="smile"
+                      label="Cuidar do meu filho"
+                      count={day.familyCount}
+                      colorClass="bg-[#2f3a56]"
+                    />
+                  </div>
+
+                  {/* Mensagem suave quando vazio */}
+                  {!hasAnyActivity(day) ? (
+                    <p className="mt-2 text-[10px] md:text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+                      Esse dia ainda está em branco. Você pode começar pelos atalhos do planner ou adicionando um compromisso no calendário.
+                    </p>
                   ) : null}
                 </div>
-
-                {/* Pills de contagem */}
-                <div className="space-y-1.5">
-                  <CountPill
-                    icon="calendar"
-                    label="Agenda & compromissos"
-                    count={day.agendaCount}
-                    colorClass="bg-[var(--color-brand)]"
-                  />
-                  <CountPill
-                    icon="target"
-                    label="Prioridades do dia"
-                    count={day.top3Count}
-                    colorClass="bg-[#FFB3D3]"
-                    badgeTextClass="text-[#C2285F]"
-                    iconTextClass="text-[#C2285F]"
-                  />
-                  <CountPill
-                    icon="heart"
-                    label="Cuidar de mim"
-                    count={day.careCount}
-                    colorClass="bg-[#9b4d96]"
-                  />
-                  <CountPill
-                    icon="smile"
-                    label="Cuidar do meu filho"
-                    count={day.familyCount}
-                    colorClass="bg-[#2f3a56]"
-                  />
-                </div>
-
-                {/* Mensagem suave quando vazio */}
-                {!hasAnyActivity(day) ? (
-                  <p className="mt-2 text-[10px] md:text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-                    Esse dia ainda está em branco. Você pode começar pelos atalhos do planner ou adicionando um compromisso no calendário.
-                  </p>
-                ) : null}
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <p className="text-[11px] text-[var(--color-text-muted)]">
+      {/* Dica Desktop */}
+      <p className="text-[11px] text-[var(--color-text-muted)] hidden md:block">
         Dica: se estiver no notebook, você pode rolar horizontalmente com Shift + scroll.
       </p>
     </SoftCard>
