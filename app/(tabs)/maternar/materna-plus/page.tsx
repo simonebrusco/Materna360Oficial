@@ -179,7 +179,7 @@ export default function MaternaPlusPage() {
   }
 
   return (
-  <PageTemplate
+ <PageTemplate
   headerTone="light"
   label="MATERNAR"
   showLabel={false}
