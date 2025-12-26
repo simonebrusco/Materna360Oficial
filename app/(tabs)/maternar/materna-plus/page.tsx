@@ -182,6 +182,7 @@ export default function MaternaPlusPage() {
   <PageTemplate
   headerTone="light"
   label="MATERNAR"
+  showLabel={false}
   headerTop={<BackToMaternar />}
   title="Materna+"
   subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
