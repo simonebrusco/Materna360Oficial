@@ -27,6 +27,7 @@ export function MentorCard({
       {/* Avatar + Name + Specialty */}
       <div className="flex gap-3 mb-4">
         {avatarUrl ? (
+      {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={avatarUrl}
             alt={name}
