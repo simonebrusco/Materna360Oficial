@@ -8,6 +8,7 @@ import UpgradeSheet from '@/components/premium/UpgradeSheet'
 import AppIcon from '@/components/ui/AppIcon'
 import { track } from '@/app/lib/telemetry'
 import LegalFooter from '@/components/common/LegalFooter'
+import BackToMaternar from '@/components/common/BackToMaternar'
 
 // Configuração dos planos (sem menção direta a IA)
 const PLANS = [
