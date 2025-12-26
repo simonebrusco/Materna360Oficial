@@ -399,7 +399,6 @@ function TelemetryViewer() {
         <div className="text-center">
           <p className="text-sm text-neutral-600">Carregando telemetria...</p>
         </div>
-      </main>
     );
   }
 
