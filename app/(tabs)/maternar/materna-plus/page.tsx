@@ -7,6 +7,7 @@ import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import { Reveal } from '@/components/ui/Reveal'
+import BackToMaternar from '@/components/common/BackToMaternar'
 import {
   getProfessionals,
   type ProfessionalApi,
@@ -178,9 +179,10 @@ export default function MaternaPlusPage() {
   }
 
   return (
-   <PageTemplate
+  <PageTemplate
   headerTone="light"
   label="MATERNAR"
+  headerTop={<BackToMaternar />}
   title="Materna+"
   subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
 >
