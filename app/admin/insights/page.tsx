@@ -395,7 +395,7 @@ function TelemetryViewer() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 py-8">
+      className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 py-8">
         <div className="text-center">
           <p className="text-sm text-neutral-600">Carregando telemetria...</p>
         </div>
@@ -404,7 +404,7 @@ function TelemetryViewer() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-8">
+    className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Insights de Telemetria (v0.3)</h1>
         <p className="mt-2 text-sm text-neutral-600">
@@ -546,7 +546,6 @@ function TelemetryViewer() {
           <p>Mostrando {filtered.length} de {events.length} eventos</p>
         </div>
       )}
-    </main>
   );
 }
 
