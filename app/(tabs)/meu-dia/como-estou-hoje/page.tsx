@@ -878,7 +878,7 @@ export default function ComoEstouHojePage() {
                 <p className="text-sm text-[#545454] max-w-xl">
                   Cada vez que você registra como está, o Materna360 te ajuda a
                   enxergar padrões: dias mais leves, dias mais pesados,
-                  momentos em que você precisa de mais apoio. Isso vira base
+                  momentos em que mais apoio ajudaria. Isso vira base
                   para o seu planner e para as suas conquistas.
                 </p>
               </div>

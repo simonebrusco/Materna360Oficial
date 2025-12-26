@@ -100,7 +100,7 @@ const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; d
     icon: '',
     title: 'Confie em você',
     description:
-      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
+      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando o que mais ajuda é silêncio e acolhimento.',
   },
 }
 

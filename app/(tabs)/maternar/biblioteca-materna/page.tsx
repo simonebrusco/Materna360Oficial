@@ -257,7 +257,7 @@ export default function BibliotecaMaternaPage() {
 
   const suggestionSubtitle =
     presetFilter === 'guias'
-      ? 'Para quando você precisa de clareza e um passo a passo rápido.'
+      ? 'Para quando você quer clareza e um passo a passo rápido.'
       : presetFilter === 'pdfs-ebooks'
         ? 'Para quando você quer ler algo curto e direto, sem ficar caçando.'
         : presetFilter === 'trilhas'
