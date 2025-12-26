@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+import BackToMaternar from '@/components/common/BackToMaternar'
 
 type HubSectionId = 'visao' | 'como-funciona' | 'para-quem' | 'faixa' | 'planos'
 
@@ -155,7 +156,9 @@ export default function MaternaBoxPage() {
   label="MATERNAR"
   title="MaternaBox"
   subtitle="Uma caixa mensal com rituais prontos para gerar conexão — sem dar mais trabalho."
->
+  showLabel={false}
+  headerTop={<BackToMaternar />}
+/>
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
           {/* HERO HUB-LIKE */}
