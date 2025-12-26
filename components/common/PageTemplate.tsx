@@ -10,28 +10,9 @@ export type PageTemplateProps = {
   label: string
   title: string
   subtitle?: string
-
-  /**
-   * Quando false, esconde o "pill" do label (ex.: MATERNAR).
-   * Útil quando você quer controlar manualmente o topo (ex.: BackToMaternar).
-   */
   showLabel?: boolean
-
-  /**
-   * Slot renderizado NO TOPO do header, antes do label/title/subtitle.
-   * É aqui que deve entrar o "← Voltar para o Maternar" (BackToMaternar),
-   * para não ficar atrás do subtítulo nem dentro do body.
-   */
   headerTop?: React.ReactNode
-
-  /**
-   * Conteúdo da página
-   */
   children: React.ReactNode
-
-  /**
-   * Ajustes opcionais
-   */
   className?: string
   contentClassName?: string
 }
@@ -49,8 +30,6 @@ export function PageTemplate({
 }: PageTemplateProps) {
   const isLight = headerTone === 'light'
 
-  // Mantém o padrão visual do app (gradiente Materna) e garante
-  // que o header seja "área própria" com espaçamento previsível.
   const rootBg = isLight
     ? 'bg-[#ffe1f1] bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]'
     : 'bg-[#0b1220] bg-[linear-gradient(to_bottom,#121a2e_0%,#0b1220_70%,#0b1220_100%)]'
@@ -66,7 +45,13 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className={['min-h-[100dvh] pb-32', rootBg, className ?? ''].join(' ')}
     >
-      <div className={['page-shell', contentClassName ?? ''].join(' ')}>
+      <div
+        className={[
+          'mx-auto w-full px-4 md:px-6',
+          'max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl',
+          contentClassName ?? '',
+        ].join(' ')}
+      >
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <div className="space-y-3">
             {headerTop ? <div className="mb-1">{headerTop}</div> : null}
@@ -112,5 +97,4 @@ export function PageTemplate({
   )
 }
 
-// Mantém compatibilidade com imports antigos: `import PageTemplate from ...`
 export default PageTemplate
