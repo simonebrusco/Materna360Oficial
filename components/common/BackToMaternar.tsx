@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import AppIcon from '@/components/ui/AppIcon'
 
 type Props = {
   href?: string
@@ -19,7 +18,9 @@ export default function BackToMaternar({
         className="inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition-colors"
         aria-label={label}
       >
-        <AppIcon name="chevron-left" size={18} decorative className="text-white/90" />
+        <span aria-hidden className="text-base leading-none">
+          ←
+        </span>
         <span>{label}</span>
       </Link>
     </div>
