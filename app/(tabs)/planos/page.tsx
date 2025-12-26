@@ -136,7 +136,7 @@ export default function PlanosPage() {
       data-layout="page-template-v1"
       className="min-h-[100dvh] pb-16 bg-transparent"
     >
-      <div className="mx-auto max-w-5xl px-4 md:px-6 pt-10">
+      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 pt-10">
         {/* HERO da página de planos */}
         <header className="mb-8 sm:mb-10 text-center">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
@@ -147,7 +147,7 @@ export default function PlanosPage() {
             Planos feitos para acompanhar o seu ritmo
           </h1>
 
-          <p className="mt-2 text-sm sm:text-base text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+          <p className="mt-2 text-sm sm:text-base text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
             Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
             que faz sentido para o seu momento — sem pressão, sem cobrança.
             Aqui, você é quem guia o caminho.
@@ -436,7 +436,7 @@ export default function PlanosPage() {
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-2">
               Escolha o plano que acolhe a sua rotina
             </h3>
-            <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)]">
               Aqui, tudo acontece no seu tempo — com carinho, calma e presença.
               Você pode começar pelo Essencial, seguir para o Materna+ ou
               aprofundar sua jornada no Materna+ 360, sempre que sentir que é o

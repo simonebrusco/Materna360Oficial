@@ -236,7 +236,7 @@ export default function MaternaPlusPage() {
                 </div>
 
                 {/* Cards curtos (3) */}
-                <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
+                <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">
                       Profissionais

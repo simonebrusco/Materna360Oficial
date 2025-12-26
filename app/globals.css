@@ -216,7 +216,7 @@ main[data-layout="page-template-v2"] {
   }
 
   .page-shell {
-    @apply mx-auto max-w-6xl px-4 md:px-6;
+    @apply mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6;
   }
 
   .section-card {

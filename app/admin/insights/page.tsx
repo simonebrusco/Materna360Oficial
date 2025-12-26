@@ -309,7 +309,7 @@ function EmptyState({ hasAnyEvents, onReload }: { hasAnyEvents: boolean; onReloa
         <h3 className="text-lg font-semibold text-neutral-900">
           {hasAnyEvents ? 'Nenhum evento corresponde aos filtros' : 'Nenhum evento de telemetria ainda'}
         </h3>
-        <p className="mt-2 text-sm text-neutral-600 max-w-sm mx-auto leading-relaxed">
+        <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
           {hasAnyEvents
             ? 'Tente limpar filtros ou ajustar sua busca para ver mais eventos.'
             : 'Navegue pelo aplicativo (alterne abas, abra paywall, tente exportar PDF) para gerar eventos de telemetria e depois atualize esta página.'}

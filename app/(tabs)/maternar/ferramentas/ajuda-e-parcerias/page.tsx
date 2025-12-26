@@ -135,7 +135,7 @@ export default function AjudaEParceriasPage() {
       "
     >
       <ClientOnly>
-       <div className="mx-auto max-w-3xl px-4 md:px-6">
+       <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           {/* HEADER (padrão correto: igual Minhas Conquistas) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
@@ -208,7 +208,7 @@ export default function AjudaEParceriasPage() {
                   </div>
 
                   {/* Cards curtos */}
-                  <div className="grid gap-3 md:gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
+                  <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">Profissionais</p>
                       <p className="text-[13px] text-[#545454] leading-snug">

@@ -81,7 +81,7 @@ export default function BibliotecaMaternaPage() {
     >
       <ClientOnly>
         {/* Alinhado com MaternaBox: largura padrão do conteúdo */}
-        <div className="max-w-3xl mx-auto px-4 md:px-6 space-y-10">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 space-y-10">
           {/* INTRO TEXT */}
           <Reveal delay={0}>
             <div className="max-w-2xl">

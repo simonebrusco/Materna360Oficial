@@ -685,7 +685,7 @@ export default function MeuDiaLeveClient() {
       "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-3xl px-4 md:px-6">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
