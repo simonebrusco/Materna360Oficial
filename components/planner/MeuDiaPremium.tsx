@@ -107,7 +107,7 @@ const fetchMotherName = async (): Promise<string> => {
 }
 
 export function MessageOfDay() {
-  // ✅ estado inicial estável (SSR/primeiro render)
+  //  estado inicial estável (SSR/primeiro render)
   const [message, setMessage] = useState<string>('…')
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
@@ -117,7 +117,7 @@ export function MessageOfDay() {
     const todayKey = getTodayDateKey()
     const cached = readCachedMessage()
 
-    // ✅ se houver cache válido de hoje, já mostra imediatamente
+    //  se houver cache válido de hoje, já mostra imediatamente
     if (cached?.dateKey === todayKey && cached.message.trim().length > 0) {
       setMessage(cached.message)
       setIsLoading(false)

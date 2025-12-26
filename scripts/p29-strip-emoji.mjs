@@ -3,7 +3,6 @@ import path from 'node:path'
 
 const ROOT = process.cwd()
 
-// Arquivos apontados pelo warning
 const files = [
   'app/(tabs)/cuidar/autocuidado-inteligente/page.tsx',
   'app/(tabs)/eu360/Client.tsx',
@@ -30,21 +29,23 @@ const files = [
   'components/planner/CuidarDoMeuFilhoSection.tsx',
   'components/planner/MeuDiaPremium.tsx',
   'components/planner/WeeklyPlannerCore.tsx',
-  // 'components/planner/WeeklyPlannerShell.tsx', // PROTEGIDO — NÃO TOCAR
+  // PROTEGIDO — não tocar
+  // 'components/planner/WeeklyPlannerShell.tsx',
   'components/ui/EmotionTrendDrawer.tsx',
   'components/ui/Header.tsx',
 ]
 
-// Remove caracteres “emoji-like” mantendo o texto intacto.
-// Extended_Pictographic cobre a maioria dos emojis.
-// Também removemos variation selectors e ZWJ que costumam acompanhar emojis.
+// Remove emojis + VS16 + ZWJ (mantém texto)
 const EMOJI_RE = /[\p{Extended_Pictographic}\uFE0F\u200D]/gu
 
 let changed = 0
 
 for (const rel of files) {
   const abs = path.join(ROOT, rel)
-  if (!fs.existsSync(abs)) continue
+  if (!fs.existsSync(abs)) {
+    console.log(`! missing: ${rel}`)
+    continue
+  }
 
   const before = fs.readFileSync(abs, 'utf8')
   const after = before.replace(EMOJI_RE, '')

@@ -305,7 +305,7 @@ function EmptyState({ hasAnyEvents, onReload }: { hasAnyEvents: boolean; onReloa
   return (
     <div className="rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50/50 p-8 text-center">
       <div className="mb-4">
-        <div className="text-5xl mb-3">📊</div>
+        <div className="text-5xl mb-3"></div>
         <h3 className="text-lg font-semibold text-neutral-900">
           {hasAnyEvents ? 'Nenhum evento corresponde aos filtros' : 'Nenhum evento de telemetria ainda'}
         </h3>

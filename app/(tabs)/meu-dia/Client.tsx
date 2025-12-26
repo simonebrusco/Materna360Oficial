@@ -20,7 +20,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
-// ✅ P23 — camada de experiência (nunca chamar isPremium diretamente em componente)
+//  P23 — camada de experiência (nunca chamar isPremium diretamente em componente)
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 // P22 — fricção zero (primeiro uso, retorno, dia 7/30)
@@ -455,7 +455,7 @@ export default function MeuDiaClient() {
       </div>
 
       <footer className="relative z-10 w-full text-center pt-4 pb-2 px-4 text-[12px] text-[#6A6A6A]/85">
-        <p>© 2025 Materna360®. Todos os direitos reservados.</p>
+        <p> 2025 Materna360. Todos os direitos reservados.</p>
         <p>Proibida a reprodução total ou parcial sem autorização.</p>
       </footer>
     </main>

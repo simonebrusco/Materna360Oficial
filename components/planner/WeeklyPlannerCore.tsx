@@ -7,7 +7,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
 
-// ✅ usar o shape evolutivo do Meu Dia (compatível com Planner)
+//  usar o shape evolutivo do Meu Dia (compatível com Planner)
 import type { MyDayTaskItem, TaskOrigin, TaskStatus } from '@/app/lib/myDayTasks.client'
 import { MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 
@@ -179,7 +179,7 @@ function normalizeText(s: string) {
   return (s ?? '').trim().replace(/\s+/g, ' ')
 }
 
-// ✅ normaliza tasks antigas (que podem vir apenas com `done`)
+//  normaliza tasks antigas (que podem vir apenas com `done`)
 function normalizeLoadedTasks(raw: any[]): MyDayTaskItem[] {
   const nowISO = new Date().toISOString()
 
@@ -293,7 +293,7 @@ function CoachMiniCard({
           </div>
 
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-bg)] border border-[var(--color-soft-strong)]">
-            <span className="text-[12px] font-semibold text-[var(--color-brand)]">✨</span>
+            <span className="text-[12px] font-semibold text-[var(--color-brand)]"></span>
           </span>
         </div>
 

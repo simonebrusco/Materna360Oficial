@@ -468,7 +468,7 @@ export default function MeuFilhoClient() {
       source: SOURCE,
     })
 
-    // ✅ guardrail global do core (anti “bola de neve”)
+    //  guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {

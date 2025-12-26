@@ -153,7 +153,7 @@ export default function MindfulnessForMoms() {
       <MindfulnessModal
         open={openReconecte}
         onClose={() => setOpenReconecte(false)}
-        icon="🌸"
+        icon=""
         title="Reconecte-se"
         subtitle="Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença."
         tracks={TRACKS_RECONCETE_SE}
@@ -163,7 +163,7 @@ export default function MindfulnessForMoms() {
       <MindfulnessModal
         open={openRenove}
         onClose={() => setOpenRenove(false)}
-        icon="🌞"
+        icon=""
         title="Renove sua Energia"
         subtitle="Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma."
         tracks={TRACKS_RENOVE_SUA_ENERGIA}
@@ -173,7 +173,7 @@ export default function MindfulnessForMoms() {
       <MindfulnessModal
         open={openCalma}
         onClose={() => setOpenCalma(false)}
-        icon="🌙"
+        icon=""
         title="Encontre Calma"
         subtitle="Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento."
         tracks={TRACKS_ENCONTRE_CALMA}

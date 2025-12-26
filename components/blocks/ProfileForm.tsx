@@ -282,7 +282,7 @@ export default function ProfileForm() {
     return Object.keys(nextErrors).length === 0
   }
 
-  // ✅ Gate para navegação pelos pills
+  //  Gate para navegação pelos pills
   function canJumpTo(target: 1 | 2 | 3 | 4) {
     const hasName = Boolean(form.nomeMae?.trim())
     const hasChild = (form.filhos?.length ?? 0) >= 1
@@ -346,7 +346,7 @@ export default function ProfileForm() {
       })
     } catch {}
 
-    // 🔗 Salvamento “de verdade” no mesmo endpoint que o useProfile lê
+    //  Salvamento “de verdade” no mesmo endpoint que o useProfile lê
     try {
       const payload = buildProfileApiPayload(form)
 
