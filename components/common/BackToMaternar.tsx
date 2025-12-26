@@ -19,7 +19,7 @@ export default function BackToMaternar({
         className="inline-flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white transition-colors"
         aria-label={label}
       >
-        <AppIcon name="arrow-left" size={18} decorative className="text-white/90" />
+        <AppIcon name="chevron-left" size={18} decorative className="text-white/90" />
         <span>{label}</span>
       </Link>
     </div>
