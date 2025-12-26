@@ -407,7 +407,7 @@ function TelemetryViewer() {
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Insights de Telemetria (v0.3)</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          Painel de debug local com visualizacoes de dados. Le eventos de telemetria do navegador <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
+          Painel de debug local com visualizações de dados. Lê eventos de telemetria do navegador <code className="text-xs bg-neutral-100 px-2 py-1 rounded">localStorage</code>.
         </p>
       </div>
 
