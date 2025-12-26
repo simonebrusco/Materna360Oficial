@@ -64,20 +64,17 @@ export function MemoryModal({
     setSaveStatus('idle');
   };
 
-  const handleImageChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          setImagePreview(result);
-        };
-        reader.readAsDataURL(file);
-      }
-    },
-    [],
-  );
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!title.trim() || !description.trim()) {
@@ -231,9 +228,10 @@ export function MemoryModal({
               onChange={handleImageChange}
               className="w-full px-4 py-2 rounded-xl border border-[#ffd8e6] bg-white text-sm text-[#6A6A6A] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF1475]/10 file:text-[#FF1475] hover:file:bg-[#FF1475]/20 transition-all"
             />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+
             {imagePreview && (
               <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[#ffd8e6] bg-white/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
                   alt="Prévia da memória"
