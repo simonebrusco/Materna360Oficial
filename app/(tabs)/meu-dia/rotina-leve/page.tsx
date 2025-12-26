@@ -919,7 +919,7 @@ export default function RotinaLevePage() {
       subtitle="Depois de sentir como você está, aqui é o espaço para planejar o que cabe no seu dia real — sem perfeição."
     >
       <ClientOnly>
-        <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6 pb-16 space-y-8">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 pt-6 pb-16 space-y-8">
           {/* TEXTO DE ABERTURA */}
           <div className="space-y-2">
             <p className="text-sm md:text-base text-white">
