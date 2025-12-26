@@ -66,14 +66,7 @@ export function PageTemplate({
       data-layout="page-template-v1"
       className={['min-h-[100dvh] pb-32', rootBg, className ?? ''].join(' ')}
     >
-      <div
-        className={[
-          'mx-auto w-full px-4 md:px-6',
-          // Mobile/tablet mais contido; desktop mais largo
-          'max-w-5xl lg:max-w-6xl xl:max-w-7xl',
-          contentClassName ?? '',
-        ].join(' ')}
-      >
+      <div className={['page-shell', contentClassName ?? ''].join(' ')}>
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <div className="space-y-3">
             {headerTop ? <div className="mb-1">{headerTop}</div> : null}
