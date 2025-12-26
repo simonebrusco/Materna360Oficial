@@ -160,7 +160,7 @@ export default function MaternaBoxPage() {
       headerTop={<BackToMaternar />}
     >
       <ClientOnly>
-        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10">
           {/* HERO HUB-LIKE */}
           <Reveal>
             <SoftCard

@@ -395,7 +395,7 @@ function TelemetryViewer() {
 
   if (loading) {
     return (
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 py-8">
         <div className="text-center">
           <p className="text-sm text-neutral-600">Carregando telemetria...</p>
         </div>

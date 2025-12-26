@@ -493,7 +493,7 @@ export default function CuidarComAmorPage() {
     >
       <ClientOnly>
         {/* mesmo padrão de coluna central das outras páginas */}
-        <div className="pt-6 pb-12 space-y-10 max-w-5xl mx-auto">
+        <div className="pt-6 pb-12 space-y-10">
           {/* BLOCO 1 — Hoje com seu filho */}
           <Reveal>
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#F5D7E5] shadow-[0_6px_22px_rgba(0,0,0,0.06)]">

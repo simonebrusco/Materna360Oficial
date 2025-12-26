@@ -188,7 +188,7 @@ export default function MaternaPlusPage() {
   subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
 >
       <ClientOnly>
-        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10 max-w-5xl mx-auto">
+        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10">
           {/* HERO HUB-LIKE */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
