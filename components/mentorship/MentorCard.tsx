@@ -31,13 +31,13 @@ export function MentorCard({
       {/* Avatar + Name + Specialty */}
       <div className="flex gap-3 mb-4">
         {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={avatarUrl}
-            alt={name}
-            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src={avatarUrl}
+    alt={name}
+    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+  />
+) : (
           <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
             <span className="text-sm font-bold text-primary">{initials}</span>
           </div>
