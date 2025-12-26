@@ -230,14 +230,14 @@ export function MemoryModal({
             />
 
             {imagePreview && (
-              <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[#ffd8e6] bg-white/50">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imagePreview}
-                  alt="Prévia da memória"
-                  className="w-full h-full object-cover"
-                />
-                <button
+  <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[#ffd8e6] bg-white/50">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+      src={imagePreview}
+      alt="Prévia da memória"
+      className="w-full h-full object-cover"
+    />
+    <button
                   onClick={() => setImagePreview(null)}
                   className="absolute top-2 right-2 p-1 rounded-lg bg-black/50 text-white hover:bg-black/70 transition-all"
                   aria-label="Remover imagem"
