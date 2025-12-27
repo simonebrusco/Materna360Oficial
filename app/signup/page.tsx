@@ -6,10 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export default function SignupPage() {
   return (
-    <AuthShell>
-      <Suspense fallback={null}>
+    <Suspense fallback={null}>
+      <AuthShell>
         <SignupClient />
-      </Suspense>
-    </AuthShell>
+      </AuthShell>
+    </Suspense>
   )
 }
