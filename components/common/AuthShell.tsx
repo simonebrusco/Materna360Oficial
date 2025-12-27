@@ -16,7 +16,7 @@ export default function AuthShell({ children, title, subtitle }: AuthShellProps)
       {/* Fundo silencioso com identidade (sem “gritar”) */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,#fde2ec_0%,#ffffff_60%,#ffffff_100%)]"
+       className="fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,#fd2597_0%,#fde2ec_22%,#ffffff_55%,#ffffff_100%)]"
       />
 
       {/* Container */}
@@ -26,15 +26,15 @@ export default function AuthShell({ children, title, subtitle }: AuthShellProps)
           <Image
             src="/images/logo-materna.png"
             alt="Materna360"
-            width={180}
-            height={58}
+             width={170}
+  height={54}
             priority
             className="h-auto w-[180px] select-none"
           />
         </div>
 
         {/* Card premium/silencioso */}
-        <div className="rounded-3xl bg-white p-6 shadow-sm border border-[#F5D7E5]">
+       <div className="rounded-3xl bg-white p-6 border border-[#F5D7E5] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)]">
           {(title || subtitle) && (
             <header className="mb-5">
               {title && (
