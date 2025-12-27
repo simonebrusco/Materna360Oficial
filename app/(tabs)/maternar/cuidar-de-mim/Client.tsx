@@ -320,8 +320,8 @@ export default function Client() {
                     p-4 md:p-5
                   "
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
+                    <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
                       <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
                         <AppIcon name="heart" size={22} className="text-white" />
                       </div>
@@ -341,7 +341,7 @@ export default function Client() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                       <button
                         onClick={() => go('ritmo')}
                         className="
@@ -374,7 +374,7 @@ export default function Client() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
                     {chips.map((it) => {
                       const active = step === it.id
                       return (
@@ -463,7 +463,7 @@ export default function Client() {
 
                         <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
                           <button
                             onClick={() => go('mini-rotina')}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
@@ -483,7 +483,7 @@ export default function Client() {
 
                   {step === 'mini-rotina' ? (
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                         <div>
                           <div className="text-[14px] text-[#2f3a56] font-semibold">Faça isso agora</div>
                           <div className="text-[12px] text-[#6a6a6a]">
@@ -491,7 +491,7 @@ export default function Client() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                           <button
                             onClick={() => go('pausas')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
@@ -536,7 +536,7 @@ export default function Client() {
                           Faça só o passo 1. Isso já ajuda.
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
                           <button
                             onClick={() => saveToMyDay(routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
@@ -575,10 +575,10 @@ export default function Client() {
                           Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
                           <button
                             onClick={nextPause}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition w-full sm:w-auto"
                           >
                             Outra pausa
                           </button>
@@ -616,7 +616,7 @@ export default function Client() {
                         </div>
                         <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
 
-                        <div className="mt-5 flex flex-wrap gap-2">
+                        <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
                           <button
                             onClick={() => saveToMyDay(routine.title)}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
