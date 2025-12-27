@@ -278,7 +278,7 @@ export default function MyDayGroups({
                   isHighlighted ? 'ring-2 ring-[#fd2597]/25 border-[#fd2597]/30 bg-[rgba(253,37,151,0.04)]' : '',
                 ].join(' ')}
               >
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                   <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
                     {group.title}
                   </h4>
@@ -303,7 +303,7 @@ export default function MyDayGroups({
                         key={t.id}
                         className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3 items-stretch sm:items-center">
                           <div className="min-w-0">
                             <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
 
@@ -314,7 +314,7 @@ export default function MyDayGroups({
                             ) : null}
                           </div>
 
-                          <div className="shrink-0 flex flex-wrap items-center justify-end gap-2">
+                          <div className="shrink-0 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-2">
                             {st === 'active' ? (
                               <>
                                 <button
