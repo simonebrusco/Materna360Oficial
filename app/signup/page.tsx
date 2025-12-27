@@ -6,7 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export default function SignupPage() {
   return (
-    <AuthShell>
+    <AuthShell
+      title="Criar conta"
+      subtitle="Uma conta só para manter sua rotina mais leve."
+    >
       <Suspense fallback={null}>
         <SignupClient />
       </Suspense>
