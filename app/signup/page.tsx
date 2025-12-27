@@ -7,9 +7,8 @@ export const dynamic = 'force-dynamic'
 export default function SignupPage() {
   return (
     <AuthShell
-      title="Criar sua conta"
-      subtitle="Um primeiro passo simples para organizar o seu dia com leveza."
-      footer={<span>Já tem conta? Você pode entrar quando quiser.</span>}
+      title="Criar conta"
+      subtitle="Leva poucos passos. O Materna360 funciona no seu ritmo."
     >
       <Suspense fallback={null}>
         <SignupClient />
