@@ -8,8 +8,7 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Entrar"
-      subtitle="Um acesso rápido, sem complicação."
-      footer={<span>Se for seu primeiro acesso, você pode criar sua conta.</span>}
+      subtitle="Um acesso simples, sem pressão. Você retoma de onde parou."
     >
       <Suspense fallback={null}>
         <LoginClient />
