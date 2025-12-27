@@ -568,7 +568,7 @@ export default function ComoEstouHojePage() {
                                 : 'border-[#F5D7E5] bg-white hover:border-[#fd2597]/70 hover:bg-[#fdbed7]/20',
                             )}
                           >
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                               <AppIcon
                                 name={mood.icon}
                                 className={clsx(
@@ -701,7 +701,7 @@ export default function ComoEstouHojePage() {
               </div>
 
               {/* AÇÕES PRINCIPAIS + CONQUISTAS */}
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between flex-wrap min-w-0">
                 <div className="space-y-1 text-[11px] text-[#545454]/90">
                   <p>
                     Hoje você já fez{' '}
@@ -731,7 +731,7 @@ export default function ComoEstouHojePage() {
               </div>
 
               {/* FAIXA — VER MINHAS CONQUISTAS */}
-              <div className="mt-1 rounded-2xl bg-[#ffe1f1] border border-[#F5D7E5]/90 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="mt-1 rounded-2xl bg-[#ffe1f1] border border-[#F5D7E5]/90 px-4 py-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between flex-wrap min-w-0">
                 <p className="text-[11px] md:text-xs text-[#545454] max-w-md">
                   Se quiser ver tudo isso traduzido em{' '}
                   <span className="font-semibold text-[#545454]">
@@ -744,7 +744,7 @@ export default function ComoEstouHojePage() {
                   size="sm"
                   type="button"
                   onClick={handleGoToConquistas}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#fd2597]/40 bg-white px-4 py-2 text-[11px] font-semibold text-[#fd2597] shadow-[0_6px_22px_rgba(0,0,0,0.06)] hover:bg-[#fdbed7]/40 hover:border-[#fd2597]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#fd2597]/40 bg-white px-4 py-2 text-[11px] font-semibold text-[#fd2597] shadow-[0_6px_22px_rgba(0,0,0,0.06)] hover:bg-[#fdbed7]/40 hover:border-[#fd2597] flex-wrap min-w-0"
                 >
                   <span>Ver minhas conquistas</span>
                   <AppIcon name="arrow-right" className="h-3 w-3" />
@@ -798,7 +798,7 @@ export default function ComoEstouHojePage() {
 
                   <div className="space-y-3 text-xs text-[#545454]">
                     <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/80 px-3 py-3 space-y-1">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b]">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b] flex-wrap min-w-0">
                         <span className="rounded-full bg-[#fdbed7] px-2 py-0.5">
                           Pausa
                         </span>
@@ -820,7 +820,7 @@ export default function ComoEstouHojePage() {
                     </div>
 
                     <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/80 px-3 py-3 space-y-1">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b]">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b] flex-wrap min-w-0">
                         <span className="rounded-full bg-[#fdbed7] px-2 py-0.5">
                           Conexão
                         </span>
@@ -842,7 +842,7 @@ export default function ComoEstouHojePage() {
                     </div>
 
                     <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/80 px-3 py-3 space-y-1">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b]">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b] flex-wrap min-w-0">
                         <span className="rounded-full bg-[#fdbed7] px-2 py-0.5">
                           Rotina
                         </span>
@@ -870,7 +870,7 @@ export default function ComoEstouHojePage() {
 
           {/* BLOCO 3 — EXPLICAÇÃO SUAVE */}
           <SoftCard className="rounded-3xl p-5 md:p-6 bg-white/90 border border-[#F5D7E5]/70 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between flex-wrap min-w-0">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
                   Por que isso importa
@@ -878,11 +878,11 @@ export default function ComoEstouHojePage() {
                 <p className="text-sm text-[#545454] max-w-xl">
                   Cada vez que você registra como está, o Materna360 te ajuda a
                   enxergar padrões: dias mais leves, dias mais pesados,
-                  momentos em que você precisa de mais apoio. Isso vira base
+                  momentos em que mais apoio ajudaria. Isso vira base
                   para o seu planner e para as suas conquistas.
                 </p>
               </div>
-              <div className="mt-1 flex items-start gap-2 text-xs text-[#545454]/90 max-w-xs">
+              <div className="mt-1 flex items-start gap-2 text-xs text-[#545454]/90 max-w-xs flex-wrap min-w-0">
                 <div className="mt-0.5">
                   <AppIcon name="sparkles" className="h-4 w-4 text-[#fd2597]" />
                 </div>

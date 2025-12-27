@@ -33,7 +33,7 @@ export default function ExportButton({ variant }: ExportButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // ✅ Estado “hidratado” (evita qualquer risco de mismatch e mantém hooks sempre no topo)
+  //  Estado “hidratado” (evita qualquer risco de mismatch e mantém hooks sempre no topo)
   const [ffEnabled, setFfEnabled] = useState(false)
   const [tier, setTier] = useState<ExperienceTier>('unknown')
 
@@ -192,7 +192,7 @@ export default function ExportButton({ variant }: ExportButtonProps) {
     }
   }
 
-  // ✅ Return condicional só depois dos hooks
+  //  Return condicional só depois dos hooks
   if (!ffEnabled) return null
 
   return (

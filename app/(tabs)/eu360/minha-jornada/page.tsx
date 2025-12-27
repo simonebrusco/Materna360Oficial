@@ -217,11 +217,11 @@ export default function MinhaJornadaPage() {
 
   const timelineDays = generateTimeline()
   const humorEmojis: Record<string, string> = {
-    'Muito bem': '😄',
-    'Bem': '🙂',
-    'Neutro': '😐',
+    'Muito bem': '',
+    'Bem': '',
+    'Neutro': '',
     'Cansada': '����',
-    'Exausta': '😴',
+    'Exausta': '',
   }
 
   return (
@@ -263,14 +263,14 @@ export default function MinhaJornadaPage() {
                         </p>
                         {entry.humor && (
                           <p className="text-lg mb-1">
-                            {humorEmojis[entry.humor] || '😊'}
+                            {humorEmojis[entry.humor] || ''}
                           </p>
                         )}
                         {entry.energia && (
                           <p className="text-xs text-[var(--color-text-muted)]">
-                            {entry.energia === 'Alta' && '⚡'}
-                            {entry.energia === 'Média' && '🔋'}
-                            {entry.energia === 'Baixa' && '😴'}
+                            {entry.energia === 'Alta' && ''}
+                            {entry.energia === 'Média' && ''}
+                            {entry.energia === 'Baixa' && ''}
                           </p>
                         )}
                         {entry.nota && (

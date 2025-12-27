@@ -6,7 +6,7 @@ import type { PlannerTask } from './types'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { prioritizeItems } from '@/app/lib/experience/priority'
 
-// ✅ Tipagem local para não depender do MeuDiaPremium
+//  Tipagem local para não depender do MeuDiaPremium
 // (mantém o build estável mesmo que a estrutura de task evolua)
 interface AcoesDoDiaSectionProps {
   tasks: PlannerTask[]

@@ -233,6 +233,7 @@ export function MemoryModal({
             />
             {imagePreview && (
               <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[#ffd8e6] bg-white/50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
                   alt="Prévia da memória"

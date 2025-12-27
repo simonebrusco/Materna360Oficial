@@ -49,7 +49,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
   const [stickerId, setStickerId] = useState<string>(DEFAULT_STICKER_ID)
   const [isLoadingSticker, setIsLoadingSticker] = useState(false)
 
-  // ✅ Nome da mãe (vem do /api/profile via hook já existente)
+  //  Nome da mãe (vem do /api/profile via hook já existente)
   const { name, isLoading: isLoadingProfile } = useProfile()
 
   const greeting = useMemo(() => {
@@ -142,7 +142,7 @@ export function Header({ title, showNotification = false }: HeaderProps) {
           {title}
         </h1>
 
-        {/* ✅ Direita: Saudação + (opcional) notificação/vibe */}
+        {/*  Direita: Saudação + (opcional) notificação/vibe */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold text-support-2/80 whitespace-nowrap">{greeting}</span>
 

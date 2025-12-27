@@ -57,25 +57,25 @@ const AGE_BAND_LABEL: Record<string, string> = {
 
 const QUICK_SUGGESTIONS = [
   {
-    emoji: '🍠',
+    emoji: '',
     title: 'Purê cremoso de batata-doce',
     prep: '15 min',
     description: 'Textura macia com toque de azeite e tomilho fresco.',
   },
   {
-    emoji: '🥦',
+    emoji: '',
     title: 'Brócolis ao vapor com ricota',
     prep: '12 min',
     description: 'Verdinhos no ponto, com ricota temperada e limão.',
   },
   {
-    emoji: '🍓',
+    emoji: '',
     title: 'Iogurte com frutas vermelhas',
     prep: '5 min',
     description: 'Iogurte natural com frutas amassadas e chia.',
   },
   {
-    emoji: '🌽',
+    emoji: '',
     title: 'Bolinho de milho de frigideira',
     prep: '18 min',
     description: 'Milho, aveia e ovo em mini panquequinhas macias.',
@@ -494,7 +494,7 @@ const childAgeBand = useMemo(
       <Reveal>
         <Card className="section-card space-y-4">
           <div className="flex items-start gap-4">
-            <div className="text-3xl" aria-hidden="true">🤱</div>
+            <div className="text-3xl" aria-hidden="true"></div>
             <div className="space-y-3">
               <div>
                 <h2 className="section-title">Receitas Saudáveis</h2>
@@ -824,7 +824,7 @@ const childAgeBand = useMemo(
                 <div key={item.title} className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-soft">
                   <div className="text-3xl">{item.emoji}</div>
                   <h4 className="mt-2 text-sm font-semibold text-support-1">{item.title}</h4>
-                  <p className="mt-1 text-xs text-support-2"><Emoji char="⏱️" size={12} /> {item.prep}</p>
+                  <p className="mt-1 text-xs text-support-2"><Emoji char="" size={12} /> {item.prep}</p>
                   <p className="mt-2 text-xs text-support-2">{item.description}</p>
                 </div>
               ))}

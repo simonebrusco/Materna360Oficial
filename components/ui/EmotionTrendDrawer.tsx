@@ -17,7 +17,7 @@ export default function EmotionTrendDrawer({
   onClose,
   resolveData,
 }: Props) {
-  // ✅ Hooks SEMPRE no topo
+  //  Hooks SEMPRE no topo
   const [range, setRange] = React.useState<'7d' | '28d'>('7d')
 
   // Lock de data para evitar drift entre renders

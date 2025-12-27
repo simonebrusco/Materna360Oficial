@@ -37,7 +37,7 @@ const ONBOARDING_STEPS: Step[] = [
   {
     id: 'features',
     title: 'Explore os recursos',
-    subtitle: 'Tudo que você precisa em um só lugar',
+    subtitle: 'O essencial em um só lugar',
     content:
       'Organize seu dia, acompanhe o bem-estar, celebre conquistas e muito mais — tudo pensado para você e seu filho.',
     icon: 'star',

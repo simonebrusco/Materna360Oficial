@@ -53,7 +53,7 @@ export function PageTemplate({
         ].join(' ')}
       >
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-          <div className="space-y-3">
+          <div className="space-y-3 pb-[calc(env(safe-area-inset-bottom)+92px)]">
             {headerTop ? <div className="mb-1">{headerTop}</div> : null}
 
             {showLabel ? (

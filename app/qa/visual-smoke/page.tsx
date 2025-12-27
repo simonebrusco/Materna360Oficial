@@ -134,8 +134,8 @@ export default function VisualSmokePage() {
             <div key={r.route} className="rounded-xl border border-white/60 p-3 bg-white/80">
               <div className="font-medium text-[14px]">{r.route}</div>
               <div className="text-[12px] text-[#545454] mt-1">
-                Overflow: <strong>{r.overflow ? 'YES ⚠️' : 'no ✓'}</strong> •
-                Focus visible: <strong>{r.focusVisible ? 'YES ✓' : 'no ⚠️'}</strong> •
+                Overflow: <strong>{r.overflow ? 'YES ' : 'no ✓'}</strong> •
+                Focus visible: <strong>{r.focusVisible ? 'YES ✓' : 'no '}</strong> •
                 Low-contrast (heuristic): <strong>{r.lowContrastCount}</strong>
               </div>
             </div>

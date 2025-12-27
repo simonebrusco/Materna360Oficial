@@ -11,7 +11,7 @@ interface Props {
   onChange: (updates: Partial<ProfileFormState>) => void
 
   /**
-   * ✅ Opcional para evitar cascata de erros
+   *  Opcional para evitar cascata de erros
    * Se não vier, o bloco faz o toggle via onChange.
    */
   onToggleArrayField?: (fieldName: RoutineArrayField, value: string) => void

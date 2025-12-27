@@ -559,7 +559,7 @@ export async function POST(req: Request) {
       track('meu_dia_leve.recipe.response', { ok: false, latencyMs })
     } catch {}
 
-    const out: ApiResponse = { ok: false, error: 'route_error', hint: 'Falhou agora. Se quiser, use uma opção pronta abaixo.' }
+    const out: ApiResponse = { ok: false, error: 'route_error', hint: 'Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.' }
     return NextResponse.json(out, { status: 200 })
   }
 }

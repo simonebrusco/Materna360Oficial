@@ -14,11 +14,11 @@ import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
 import LegalFooter from '@/components/common/LegalFooter'
 
-// ✅ P14
+//  P14
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getEu360FortnightLine } from '@/app/lib/continuity.client'
 
-// ✅ P23 — Tom por camada de experiência (free sempre gentil)
+//  P23 — Tom por camada de experiência (free sempre gentil)
 import { getContinuityTone } from '@/app/lib/experience/continuityTone'
 
 type WeeklyInsight = {
@@ -90,7 +90,7 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
-// ✅ P14 (dateKey simples, client-only)
+//  P14 (dateKey simples, client-only)
 function safeDateKey(d = new Date()) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -193,7 +193,7 @@ function readPersonaFromLS(): PersonaResult | null {
 function writePersonaToLS(result: PersonaResult) {
   safeSetLS(LS_KEYS.eu360Persona, JSON.stringify(result))
 
-  // ✅ P12: avisa o app (Meu Dia / outros hubs) que a persona mudou — sem reload
+  //  P12: avisa o app (Meu Dia / outros hubs) que a persona mudou — sem reload
   try {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('eu360:persona-updated'))
@@ -318,12 +318,12 @@ export default function Eu360Client() {
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
 
-  // ✅ P14 — signal + linha quinzenal
+  //  P14 — signal + linha quinzenal
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
   const [fortnightLine, setFortnightLine] = useState<string | null>(null)
   const dateKey = useMemo(() => safeDateKey(new Date()), [])
 
-  // ✅ P23 — tom resolvido (free sempre gentil; premium respeita)
+  //  P23 — tom resolvido (free sempre gentil; premium respeita)
   const resolvedTone = useMemo(() => {
     return getContinuityTone((euSignal?.tone ?? 'gentil') as any) as NonNullable<Eu360Signal['tone']>
   }, [euSignal?.tone])
@@ -351,7 +351,7 @@ export default function Eu360Client() {
     return keys.filter((k) => Boolean(answers[k])).length
   }, [answers])
 
-  // ✅ P11: persona “resolvida” para mandar no contexto (resultado salvo > preview)
+  //  P11: persona “resolvida” para mandar no contexto (resultado salvo > preview)
   const personaForAi = useMemo(() => {
     if (personaResult) {
       return { id: personaResult.persona, label: personaResult.label, microCopy: personaResult.microCopy }
@@ -359,7 +359,7 @@ export default function Eu360Client() {
     return { id: personaPreview.persona, label: personaPreview.label, microCopy: personaPreview.microCopy }
   }, [personaResult, personaPreview])
 
-  // ✅ P14 — re-hidrata signal quando persona mudar (storage + custom event)
+  //  P14 — re-hidrata signal quando persona mudar (storage + custom event)
   useEffect(() => {
     const refresh = () => {
       try {
@@ -385,7 +385,7 @@ export default function Eu360Client() {
     }
   }, [])
 
-  // ✅ P14 — calcula linha quinzenal (1x/14 dias, respeita regras internas)
+  //  P14 — calcula linha quinzenal (1x/14 dias, respeita regras internas)
   useEffect(() => {
     try {
       const line = getEu360FortnightLine({ dateKey, tone: resolvedTone })
@@ -520,7 +520,7 @@ export default function Eu360Client() {
                         : personaPreview.microCopy}
                     </p>
 
-                    {/* ✅ P15 — continuidade quinzenal (leve, 1x/14 dias) */}
+                    {/*  P15 — continuidade quinzenal (leve, 1x/14 dias) */}
                     {fortnightLine ? (
                       <p className="mt-2 text-[12px] text-white/80 leading-relaxed">{fortnightLine}</p>
                     ) : null}
@@ -574,7 +574,7 @@ export default function Eu360Client() {
           {/* 2 — QUESTIONÁRIO */}
           <div ref={questionnaireRef} />
 
-          {/* ✅ P15 — menos ruído vertical */}
+          {/*  P15 — menos ruído vertical */}
           <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">

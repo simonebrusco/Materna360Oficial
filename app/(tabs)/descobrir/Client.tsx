@@ -323,7 +323,7 @@ export default function DiscoverClient() {
                   setSelectedTimeWindow(undefined);
                   handleFilterChange('time_cleared');
                 }}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors flex-wrap min-w-0"
                 aria-label={`Remover filtro: ${TIME_OPTIONS.find(t => t.id === selectedTimeWindow)?.label}`}
               >
                 <AppIcon name="time" size={14} decorative />
@@ -337,7 +337,7 @@ export default function DiscoverClient() {
                   setSelectedLocation(undefined);
                   handleFilterChange('location_cleared');
                 }}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors flex-wrap min-w-0"
                 aria-label={`Remover filtro: ${LOCATION_OPTIONS.find(l => l.id === selectedLocation)?.label}`}
               >
                 <AppIcon name="place" size={14} decorative />
@@ -351,7 +351,7 @@ export default function DiscoverClient() {
                   setSelectedMood(undefined);
                   handleFilterChange('mood_cleared');
                 }}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors flex-wrap min-w-0"
                 aria-label={`Remover filtro: ${MOODS.find(m => m.id === selectedMood)?.label}`}
               >
                 <AppIcon name="heart" size={14} decorative />
@@ -490,18 +490,18 @@ export default function DiscoverClient() {
                   alt={suggestion.title}
                   className="mb-3"
                 />
-                <header className="mb-2 flex items-center gap-2">
+                <header className="mb-2 flex items-center gap-2 flex-wrap min-w-0">
                   <AppIcon name={suggestion.icon} decorative />
                   <BlockH3 className="text-base">{suggestion.title}</BlockH3>
                 </header>
                 <p className="mb-3 text-sm text-support-2">
                   {suggestion.description}
                 </p>
-                <p className="mb-4 text-xs text-support-3 flex items-center gap-1">
+                <p className="mb-4 text-xs text-support-3 flex items-center gap-1 flex-wrap min-w-0">
                   <AppIcon name="time" size={14} decorative />
                   {suggestion.durationMin} minutos
                 </p>
-                <div className="flex gap-2 items-center justify-between">
+                <div className="flex gap-2 items-center justify-between flex-wrap min-w-0">
                   <div className="flex-1">
                     {showSaveForLater ? (
                       <Button

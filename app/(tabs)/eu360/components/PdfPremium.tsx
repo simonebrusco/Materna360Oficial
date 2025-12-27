@@ -220,7 +220,7 @@ export function renderPremiumDoc({
 
           <!-- Footer -->
           <div class="footer">
-            <p>Materna360 © 2024 | Premium Report</p>
+            <p>Materna360  2024 | Premium Report</p>
           </div>
         </div>
 

@@ -8,7 +8,7 @@ import WeeklyPlannerCore from './WeeklyPlannerCore'
  * -------------------
  * Camada de orquestração do planner.
  *
- * ❗ Regras importantes:
+ *  Regras importantes:
  * - NÃO conter lógica de estado
  * - NÃO conter hooks
  * - NÃO duplicar responsabilidades do Core

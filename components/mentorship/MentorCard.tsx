@@ -20,23 +20,32 @@ export function MentorCard({
   avatarUrl,
   onViewAvailability,
 }: MentorCardProps) {
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase();
 
   return (
     <Card className="rounded-2xl bg-white border border-white/60 shadow-[0_4px_24px_rgba(47,58,86,0.08)] p-4 md:p-5">
       {/* Avatar + Name + Specialty */}
       <div className="flex gap-3 mb-4">
         {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={name}
-            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarUrl}
+              alt={name}
+              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+            />
+          </>
         ) : (
           <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
             <span className="text-sm font-bold text-primary">{initials}</span>
           </div>
         )}
+
         <div className="flex-1">
           <h3 className="text-base font-semibold text-support-1">{name}</h3>
           <p className="text-xs text-primary font-medium">{specialty}</p>
@@ -54,12 +63,7 @@ export function MentorCard({
       </ul>
 
       {/* CTA */}
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={onViewAvailability}
-        className="w-full"
-      >
+      <Button variant="primary" size="sm" onClick={onViewAvailability} className="w-full">
         Ver disponibilidade
       </Button>
     </Card>
