@@ -1,3 +1,4 @@
+cat > app/signup/page.tsx <<'EOF'
 import { Suspense } from 'react'
 import SignupClient from './SignupClient'
 import AuthShell from '@/components/common/AuthShell'
@@ -13,3 +14,4 @@ export default function SignupPage() {
     </Suspense>
   )
 }
+EOF
