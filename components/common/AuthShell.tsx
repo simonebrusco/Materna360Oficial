@@ -66,7 +66,7 @@ export function AuthShell({
         ) : null}
 
         <div className="mt-6">
-          <LegalFooter tone="light" />
+         <LegalFooter />
         </div>
       </div>
     </main>
