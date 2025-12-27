@@ -1,3 +1,4 @@
+cat > app/login/page.tsx <<'EOF'
 import { Suspense } from 'react'
 import LoginClient from './LoginClient'
 import AuthShell from '@/components/common/AuthShell'
@@ -13,3 +14,4 @@ export default function LoginPage() {
     </Suspense>
   )
 }
+EOF
