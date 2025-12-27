@@ -1,3 +1,4 @@
+cat > components/common/AuthShell.tsx <<'EOF'
 'use client'
 
 import Image from 'next/image'
@@ -18,3 +19,4 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
     </main>
   )
 }
+EOF
