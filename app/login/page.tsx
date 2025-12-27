@@ -6,13 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
-      <AuthShell
-        title="Entrar"
-        subtitle="Um acesso simples, sem pressão. Você retoma de onde parou."
-      >
+    <AuthShell>
+      <Suspense fallback={null}>
         <LoginClient />
-      </AuthShell>
-    </Suspense>
+      </Suspense>
+    </AuthShell>
   )
 }
