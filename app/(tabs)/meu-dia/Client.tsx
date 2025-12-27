@@ -350,7 +350,7 @@ export default function MeuDiaClient() {
                   bg-white
                   rounded-3xl
                   p-6
-                  shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+                  shadow-[0_2px_14px_rgba(0,0,0,0.05)]
                   border border-[#F5D7E5]
                 "
               >
@@ -405,7 +405,7 @@ export default function MeuDiaClient() {
                       className="
                         rounded-full
                         bg-white
-                        border border-[#F5D7E5]
+                        border border-[#F5D7E5]/70
                         text-[#545454]
                         px-4 py-2
                         text-[12px]
