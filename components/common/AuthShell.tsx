@@ -1,53 +1,34 @@
 'use client'
 
 import Image from 'next/image'
-import LegalFooter from '@/components/common/LegalFooter'
-
-type AuthShellProps = {
-  title?: string
-  subtitle?: string
-  children: React.ReactNode
-}
+import LegalFooter from './LegalFooter'
 
 export default function AuthShell({
-  title,
-  subtitle,
   children,
-}: AuthShellProps) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <main className="min-h-[100dvh] flex flex-col items-center justify-center bg-gradient-to-b from-[#fd2597] via-[#fd2597] to-[#fff7fa] px-4">
+    <main className="min-h-screen w-full bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_35%,#fdbed7_70%,#fff7fa_100%)] flex flex-col items-center justify-center px-4">
       
       {/* Logo */}
-      <div className="mb-8">
+      <div className="mb-8 flex flex-col items-center">
         <Image
           src="/images/LogoBranco.png"
-          alt="Maternar"
-          width={180}
+          alt="Materna360"
+          width={160}
           height={48}
           priority
         />
       </div>
 
-      {/* Texto opcional */}
-      {title && (
-        <h1 className="text-2xl font-semibold text-white mb-2 text-center">
-          {title}
-        </h1>
-      )}
-
-      {subtitle && (
-        <p className="text-white/90 mb-6 text-center max-w-md">
-          {subtitle}
-        </p>
-      )}
-
-      {/* Card */}
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
+      {/* Conteúdo */}
+      <div className="w-full max-w-[420px]">
         {children}
       </div>
 
-      {/* Rodapé */}
-      <div className="mt-8">
+      {/* Rodapé silencioso */}
+      <div className="mt-10 opacity-70">
         <LegalFooter />
       </div>
     </main>
