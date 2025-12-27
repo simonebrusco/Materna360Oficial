@@ -16,20 +16,20 @@ export default function AuthShell({ children, title, subtitle }: AuthShellProps)
       {/* Fundo silencioso com identidade (sem “gritar”) */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,#ffd8e6_0%,#ffffff_55%,#ffffff_100%)]"
+        className="fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,#fde2ec_0%,#ffffff_60%,#ffffff_100%)]"
       />
 
       {/* Container */}
       <div className="w-full max-w-[420px]">
         {/* Logo fora do card (presença + respiro) */}
-        <div className="mb-7 flex justify-center">
+        <div className="mb-8 flex justify-center">
           <Image
             src="/images/logo-materna.png"
             alt="Materna360"
-            width={200}
-            height={64}
+            width={180}
+            height={58}
             priority
-            className="h-auto w-[200px] select-none"
+            className="h-auto w-[180px] select-none"
           />
         </div>
 
@@ -54,7 +54,7 @@ export default function AuthShell({ children, title, subtitle }: AuthShellProps)
         </div>
 
         {/* Rodapé legal discreto */}
-        <div className="mt-8 opacity-70">
+        <div className="mt-8 opacity-50 text-[11px]">
           <LegalFooter />
         </div>
       </div>
