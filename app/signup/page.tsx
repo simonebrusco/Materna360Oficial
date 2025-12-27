@@ -1,4 +1,3 @@
-cat > app/signup/page.tsx <<'EOF'
 import { Suspense } from 'react'
 import SignupClient from './SignupClient'
 import AuthShell from '@/components/common/AuthShell'
@@ -7,11 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={null}>
-      <AuthShell>
+    <AuthShell>
+      <Suspense fallback={null}>
         <SignupClient />
-      </AuthShell>
-    </Suspense>
+      </Suspense>
+    </AuthShell>
   )
 }
-EOF
