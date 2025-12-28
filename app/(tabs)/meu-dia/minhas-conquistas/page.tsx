@@ -38,7 +38,7 @@ function MissionsCard() {
       <div className="space-y-1">
         <h2 className="text-base font-semibold text-gray-900">Missões de hoje</h2>
         <p className="text-sm text-gray-600">
-          Pequenas ações que valem pontos.
+          Pequenas ações que ajudam você a se sentir no caminho.
         </p>
       </div>
 
@@ -52,9 +52,7 @@ function MissionsCard() {
               onClick={() => {
                 setMissions((prev) =>
                   prev.map((item) =>
-                    item.id === mission.id
-                      ? { ...item, done: !item.done }
-                      : item
+                    item.id === mission.id ? { ...item, done: !item.done } : item
                   )
                 )
               }}
@@ -75,9 +73,14 @@ function MissionsCard() {
                   )}
                 >
                   {isDone && (
-                    <AppIcon name="check" className="h-3 w-3 text-white" decorative />
+                    <AppIcon
+                      name="check"
+                      className="h-3 w-3 text-white"
+                      decorative
+                    />
                   )}
                 </div>
+
                 <span
                   className={clsx(
                     'text-sm',
@@ -89,7 +92,7 @@ function MissionsCard() {
               </div>
 
               <span className="text-xs font-medium text-pink-600">
-                +{mission.xp} XP
+                +{mission.xp}
               </span>
             </button>
           )
@@ -97,7 +100,7 @@ function MissionsCard() {
       </div>
 
       <p className="text-xs text-gray-500">
-        {completedCount} de {missions.length} missões concluídas hoje.
+        {completedCount} de {missions.length} escolhas marcadas (se fizer sentido hoje).
       </p>
     </SoftCard>
   )
@@ -109,14 +112,10 @@ export default function MinhasConquistasPage() {
     <PageTemplate
       label="MEU DIA"
       title="Minhas Conquistas"
-      subtitle="Celebre seus pequenos progressos todos os dias."
+      subtitle="Um espaço leve para reconhecer o que você já fez — do seu jeito."
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 space-y-6 md:space-y-8">
-          <p className="mt-1 text-sm text-gray-500">
-            Versão gamificada v0.1 ��� teste de layout (/meu-dia)
-          </p>
-
           {/* GAMIFIED LAYOUT START */}
           <div className="mt-4 space-y-6">
             {/* SECTION 1 – Seu painel de progresso */}
@@ -126,28 +125,23 @@ export default function MinhasConquistasPage() {
                   Seu painel de progresso
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Cada pequeno avanço importa.
+                  Pequenos avanços também contam.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-wide text-gray-500">
-                    Pontuação de hoje
+                    Hoje
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">320</p>
                 </div>
+
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-wide text-gray-500">
-                    Pontuação total
+                    No total
                   </p>
                   <p className="text-2xl font-semibold text-gray-900">4.250</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
-                    Dias de sequência
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">3</p>
                 </div>
               </div>
 
@@ -155,8 +149,9 @@ export default function MinhasConquistasPage() {
                 <div className="h-2 w-full overflow-hidden rounded-full bg-pink-50">
                   <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500" />
                 </div>
+
                 <p className="text-xs text-gray-500">
-                  Faltam 80 XP para o próximo nível.
+                  Se você quiser, pode seguir no seu ritmo.
                 </p>
               </div>
             </SoftCard>
@@ -168,10 +163,10 @@ export default function MinhasConquistasPage() {
             <SoftCard className="w-full rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
               <div className="space-y-1">
                 <h2 className="text-base font-semibold text-gray-900">
-                  Selos desbloqueados
+                  Selos
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Uma coleção das suas pequenas grandes vitórias.
+                  Uma coleção simbólica das suas pequenas grandes vitórias.
                 </p>
               </div>
 
@@ -188,11 +183,13 @@ export default function MinhasConquistasPage() {
                         decorative
                       />
                     </div>
+
                     <p className="text-xs font-medium text-gray-800 text-center">
                       {seal.label}
                     </p>
+
                     <span className="mt-1 inline-flex items-center rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-medium text-pink-600">
-                      Conquistado
+                      Guardado aqui
                     </span>
                   </div>
                 ))}
