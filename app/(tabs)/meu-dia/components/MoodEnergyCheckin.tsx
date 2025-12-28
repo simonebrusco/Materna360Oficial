@@ -55,6 +55,10 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
   const width = 140
   const height = 36
   const step = points.length > 1 ? width / (points.length - 1) : width
+<<<<<<< HEAD
+=======
+
+>>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
   const polyPoints = points.length > 0 ? points.map((p, i) => `${i * step},${p.y}`).join(' ') : ''
 
   return (
