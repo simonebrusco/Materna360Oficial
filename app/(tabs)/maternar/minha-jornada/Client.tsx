@@ -1,1598 +1,470 @@
+// app/(tabs)/maternar/minha-jornada/Client.tsx
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'next/navigation'
-import clsx from 'clsx'
-import { PageTemplate } from '@/components/common/PageTemplate'
-import { SoftCard } from '@/components/ui/card'
-import { Button } from '@/components/ui/Button'
-import { ClientOnly } from '@/components/common/ClientOnly'
-import { MotivationalFooter } from '@/components/common/MotivationalFooter'
-import { usePlannerSavedContents } from '@/app/hooks/usePlannerSavedContents'
-import { toast } from '@/app/lib/toast'
-import { useRotinaAISuggestions } from '@/app/hooks/useRotinaAISuggestions'
-import { usePrimaryChildAge } from '@/app/hooks/usePrimaryChildAge'
-import type { RotinaLeveContext } from '@/app/lib/ai/rotinaLeve'
-import { getBrazilDateKey } from '@/app/lib/dateKey'
-import { save, load } from '@/app/lib/persist'
+import * as React from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
+import { Reveal } from '@/components/ui/Reveal'
+import { ClientOnly } from '@/components/common/ClientOnly'
+import LegalFooter from '@/components/common/LegalFooter'
+import { SoftCard } from '@/components/ui/card'
+import AppIcon from '@/components/ui/AppIcon'
 
-type QuickIdea = {
-  id: string
-  text: string
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-type GeneratedRecipe = {
-  id: string
-  title: string
-  description: string
-  timeLabel: string
-  ageLabel: string
-  preparation: string
-}
+/**
+ * P26 — PRINCÍPIO DA JORNADA (ANTI-CULPA)
+ *
+ * A Jornada é acompanhamento silencioso, não produtividade.
+ * Regras inegociáveis:
+ * - A Jornada registra apenas o que ACONTECEU (conclusões/salvamentos/ações).
+ * - Ausência não é registrada como “falha”.
+ * - Não existe “dias perdidos”, “streak quebrado” ou qualquer penalidade.
+ * - Repetição conta como continuidade (não como insistência / cobrança).
+ *
+ * Se uma mudança futura introduzir sensação de cobrança,
+ * ela viola diretamente a P26 e deve ser revertida.
+ */
 
-type Inspiration = {
-  phrase: string
-  care: string
-  ritual: string
-}
-
-// ---------- MOCKS (fallback padrão) ----------
-
-function mockGenerateIdeas(): Promise<QuickIdea[]> {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: 'idea-1',
-          text: 'Mini brincadeira sensorial com objetos que você já tem na sala.',
-        },
-        {
-          id: 'idea-2',
-          text: 'Conexão de 5 minutos: conte algo bom do seu momento para o seu filho.',
-        },
-        {
-          id: 'idea-3',
-          text: 'Um pequeno ritual de pausa juntas antes de retomar as tarefas.',
-        },
-      ])
-    }, 800)
-  })
-}
-
-function mockGenerateRecipes(): Promise<GeneratedRecipe[]> {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: 'recipe-1',
-          title: 'Creminho de aveia rápida',
-          description:
-            'Aveia, leite ou bebida vegetal e fruta amassada. Ideal para momentos corridos.',
-          timeLabel: 'Pronto em ~10 min',
-          ageLabel: 'a partir de 1 ano',
-          preparation:
-            '1. Cozinhe 3 colheres de sopa de aveia em fogo baixo com 150ml de leite (ou bebida vegetal) por 5 minutos, mexendo ocasionalmente.\n2. Amasse uma fruta à sua escolha (maçã, banana, pera) em um prato à parte.\n3. Misture a aveia cozida com a fruta amassada.\n4. Deixe esfriar um pouco antes de servir.\n5. Você pode adicionar uma colher de mel ou melado se desejar mais doçura (após 1 ano).',
-        },
-        {
-          id: 'recipe-2',
-          title: 'Banana amassada com chia',
-          description: 'Combinação simples para lanches rápidos e nutritivos.',
-          timeLabel: 'Pronto em ~5 min',
-          ageLabel: 'a partir de 6 meses',
-          preparation:
-            '1. Escolha uma banana bem madura e descasque-a.\n2. Amasse a banana em um prato com um garfo até obter uma consistência cremosa.\n3. Adicione 1 colher de chá de sementes de chia (se o bebê já tiver 8+ meses).\n4. Misture bem os ingredientes.\n5. Sirva imediatamente para evitar oxidação. Para bebês menores de 8 meses, omita a chia ou ofereça apenas a banana amassada.',
-        },
-        {
-          id: 'recipe-3',
-          title: 'Batida de iogurte com fruta',
-          description: 'Uma opção refrescante e probiótica para o seu filho.',
-          timeLabel: 'Pronto em ~3 min',
-          ageLabel: 'a partir de 9 meses',
-          preparation:
-            '1. Coloque 100ml de iogurte natural integral em um copo.\n2. Adicione uma porção de fruta fresca (morango, mirtilo ou goiaba).\n3. Se preferir uma textura mais batida, use um garfo ou liquidificador por alguns segundos.\n4. Sirva em seguida. Dica: você pode congelar a fruta antes para deixar a bebida bem gelada e refrescante no calor.',
-        },
-      ])
-    }, 900)
-  })
-}
-
-function mockGenerateInspiration(): Promise<Inspiration> {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        phrase: 'Você não precisa dar conta de tudo agora.',
-        care: '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-        ritual: 'Envie uma mensagem carinhosa para alguém que te apoia.',
-      })
-    }, 700)
-  })
-}
-
-// ---------- motor de receitas com fallback suave (via /api/ai/rotina-leve) ----------
-
-async function generateRecipesWithAI(
-  context: RotinaLeveContext,
-  prompt?: string,
-): Promise<GeneratedRecipe[]> {
+function safeGetLS(key: string): string | null {
   try {
-    try {
-      track('rotina_leve.recipes.requested_backend', {
-        hasKidsAround: context.hasKidsAround ?? null,
-        availableMinutes: context.availableMinutes ?? null,
-        timeOfDay: context.timeOfDay,
-      })
-    } catch {
-      // telemetria nunca quebra a experiência
-    }
-
-    const body: any = { context }
-    if (prompt && prompt.trim().length > 0) {
-      body.prompt = prompt
-    }
-
-    const res = await fetch('/api/ai/rotina-leve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (!res.ok) {
-      throw new Error('Resposta inválida')
-    }
-
-    const data = await res.json()
-    const suggestions = data?.suggestions
-
-    if (!Array.isArray(suggestions) || suggestions.length === 0) {
-      throw new Error('Nenhuma sugestão recebida')
-    }
-
-    const recipes: GeneratedRecipe[] = suggestions
-      .filter((s: any) => s.category === 'receita-inteligente')
-      .map((s: any, index: number) => ({
-        id: s.id || `recipe-${index}`,
-        title: s.title || 'Sugestão de receita rápida',
-        description:
-          s.description ||
-          'Uma sugestão simples para um lanche rápido que cabe no seu momento.',
-        timeLabel: s.timeLabel || 'Tempo flexível',
-        ageLabel:
-          s.ageLabel ||
-          'Idade a partir de 6 meses (sempre respeitando orientação do pediatra).',
-        preparation:
-          s.preparation ||
-          'Adapte esta sugestão aos ingredientes que você tem em casa e à fase do seu filho, sempre seguindo as orientações do pediatra.',
-      }))
-
-    if (recipes.length === 0) {
-      throw new Error('Nenhuma receita categorizada recebida')
-    }
-
-    try {
-      track('rotina_leve.recipes.generated_backend', {
-        suggestionsCount: recipes.length,
-      })
-    } catch {
-      // ignora
-    }
-
-    return recipes
-  } catch (error) {
-    console.error('[Rotina Leve] Erro ao buscar receitas, usando fallback:', error)
-
-    try {
-      track('rotina_leve.recipes.fallback_used', {
-        hasKidsAround: context.hasKidsAround ?? null,
-        availableMinutes: context.availableMinutes ?? null,
-      })
-    } catch {
-      // ignora
-    }
-
-    toast.info('Separei algumas sugestões simples para você escolher com calma.')
-    return await mockGenerateRecipes()
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
   }
 }
 
-// ---------- inspiração com fallback suave ----------
-
-async function generateInspirationWithAI(focus: string | null): Promise<Inspiration> {
-  try {
-    try {
-      track('rotina_leve.inspiration.requested_backend', {
-        focus: focus || null,
-      })
-    } catch {
-      // ignora
-    }
-
-    const res = await fetch('/api/ai/emocional', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        feature: 'daily_inspiration',
-        origin: 'rotina-leve',
-        focus: focus || null,
-      }),
-    })
-
-    if (!res.ok) {
-      throw new Error('Resposta inválida')
-    }
-
-    const data = await res.json()
-    const inspiration = data?.inspiration
-
-    if (!inspiration || typeof inspiration !== 'object') {
-      throw new Error('Inspiração vazia')
-    }
-
-    try {
-      track('rotina_leve.inspiration.generated_backend', {
-        hasInspiration: true,
-      })
-    } catch {
-      // ignora
-    }
-
-    return {
-      phrase: inspiration.phrase ?? 'Você não precisa dar conta de tudo agora.',
-      care:
-        inspiration.care ??
-        '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-      ritual:
-        inspiration.ritual ??
-        'Envie uma mensagem carinhosa para alguém que te apoia.',
-    }
-  } catch (error) {
-    console.error('[Rotina Leve] Erro ao buscar inspiração, usando fallback:', error)
-
-    try {
-      track('rotina_leve.inspiration.fallback_used', {
-        focus: focus || null,
-      })
-    } catch {
-      // ignora
-    }
-
-    toast.info('Separei uma inspiração para te acompanhar, sem pressa.')
-    return await mockGenerateInspiration()
-  }
+function safeParseInt(v: string | null, fallback = 0) {
+  const n = Number.parseInt(String(v ?? ''), 10)
+  return Number.isFinite(n) ? n : fallback
 }
 
-export default function RotinaLevePage() {
-  const searchParams = useSearchParams()
-  const abrir = searchParams?.get('abrir') ?? undefined
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n))
+}
 
-  const currentDateKey = useMemo(() => getBrazilDateKey(), [])
+function todayKey() {
+  const d = new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
 
-  const [openIdeas, setOpenIdeas] = useState(false)
-  const [openInspiration, setOpenInspiration] = useState(false)
+function addDaysKey(date: Date, delta: number) {
+  const d = new Date(date)
+  d.setDate(d.getDate() + delta)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
 
-  // Receitas
-  const [recipesLoading, setRecipesLoading] = useState(false)
-  const [recipes, setRecipes] = useState<GeneratedRecipe[] | null>(null)
-  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null)
+function getRangeKeys(daysBack: number, anchor = new Date()) {
+  const keys: string[] = []
+  for (let i = -Math.max(0, daysBack - 1); i <= 0; i++) keys.push(addDaysKey(anchor, i))
+  return keys
+}
 
-  // Controles de formulário de receitas
-  const [recipeIngredient, setRecipeIngredient] = useState('')
-  const [recipeMealType, setRecipeMealType] = useState<string | null>(null)
-  const [recipeTime, setRecipeTime] = useState<string | null>(null)
+/**
+ * Chaves atuais usadas no Maternar (sem backend).
+ * Mantemos compatível com o que já existe no app.
+ */
+const LS = {
+  pointsTotal: 'mj_points_total',
+  dayPrefix: 'mj_day_',
+  // OBS: mesmo que exista 'mj_streak' no storage/histórico,
+  // a Jornada P26 NÃO deve depender disso como métrica central.
+  streak: 'mj_streak',
+}
 
-  // Limites técnicos (invisíveis)
-  const DAILY_RECIPE_LIMIT = 3
-  const [usedRecipesToday, setUsedRecipesToday] = useState(0)
+function readDayPoints(key: string) {
+  return safeParseInt(safeGetLS(LS.dayPrefix + key), 0)
+}
 
-  const DAILY_IDEAS_LIMIT = 5
-  const [usedIdeasToday, setUsedIdeasToday] = useState(0)
+function readTotalPoints() {
+  return safeParseInt(safeGetLS(LS.pointsTotal), 0)
+}
 
-  const DAILY_INSPIRATION_LIMIT = 3
-  const [usedInspirationsToday, setUsedInspirationsToday] = useState(0)
-
-  // Ideias rápidas
-  const [ideas, setIdeas] = useState<QuickIdea[] | null>(null)
-
-  // Ideias rápidas - filtros
-  const [tempoDisponivel, setTempoDisponivel] = useState<string | null>(null)
-  const [comQuem, setComQuem] = useState<string | null>(null)
-  const [tipoIdeia, setTipoIdeia] = useState<string | null>(null)
-
-  // Inspirações
-  const [inspirationLoading, setInspirationLoading] = useState(false)
-  const [inspiration, setInspiration] = useState<Inspiration | null>(null)
-  const [focusOfDay, setFocusOfDay] = useState<string>('Cansaço')
-
-  // Idade principal do filho (Eu360)
-  const { ageMonths } = usePrimaryChildAge()
-  const isBabyUnderSixMonths = ageMonths !== null && ageMonths < 6
-
-  const {
-    suggestions: aiSuggestions,
-    isLoading: ideasLoading,
-    requestSuggestions,
-  } = useRotinaAISuggestions()
-
-  const { addItem, getByOrigin } = usePlannerSavedContents()
-
-  // Dados agregados do Planner para este mini-hub
-  const plannerItemsFromRotinaLeve = getByOrigin('rotina-leve')
-  const savedRecipesCount = plannerItemsFromRotinaLeve.filter(
-    item => item.type === 'recipe',
-  ).length
-  const savedInsights = plannerItemsFromRotinaLeve.filter(
-    item => item.type === 'insight',
+function ProgressBar({ value, max }: { value: number; max: number }) {
+  const pct = clamp(Math.round((value / Math.max(1, max)) * 100), 0, 100)
+  return (
+    <div className="w-full">
+      <div className="h-2.5 rounded-full bg-[#ffe1f1] overflow-hidden border border-[#f5d7e5]">
+        <div className="h-full bg-[#ff005e] rounded-full" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[11px] text-[#6a6a6a]">
+        <span>{pct}%</span>
+        <span>
+          {value}/{max}
+        </span>
+      </div>
+    </div>
   )
-  const savedInspirationCount = savedInsights.length
-  const lastInspiration = savedInsights[savedInsights.length - 1]
+}
 
-  // Telemetria de abertura da página
-  useEffect(() => {
-    try {
-      track('rotina_leve.page_opened', {
-        dateKey: currentDateKey,
-        abrir: abrir ?? null,
-      })
-    } catch {
-      // ignora
-    }
-  }, [currentDateKey, abrir])
+type View = 'hoje' | 'resumo'
 
-  // carregar limite persistente de receitas (técnico, invisível)
-  useEffect(() => {
-    const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
-    const stored = load(storageKey)
-
-    if (typeof stored === 'number') {
-      setUsedRecipesToday(stored)
-    } else if (typeof stored === 'string') {
-      const parsed = Number(stored)
-      if (!Number.isNaN(parsed)) {
-        setUsedRecipesToday(parsed)
-      }
-    }
-  }, [currentDateKey])
-
-  // carregar limite persistente de ideias (técnico, invisível)
-  useEffect(() => {
-    const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
-    const stored = load(storageKey)
-
-    if (typeof stored === 'number') {
-      setUsedIdeasToday(stored)
-    } else if (typeof stored === 'string') {
-      const parsed = Number(stored)
-      if (!Number.isNaN(parsed)) {
-        setUsedIdeasToday(parsed)
-      }
-    }
-  }, [currentDateKey])
-
-  // carregar limite persistente de inspirações (técnico, invisível)
-  useEffect(() => {
-    const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
-    const stored = load(storageKey)
-
-    if (typeof stored === 'number') {
-      setUsedInspirationsToday(stored)
-    } else if (typeof stored === 'string') {
-      const parsed = Number(stored)
-      if (!Number.isNaN(parsed)) {
-        setUsedInspirationsToday(parsed)
-      }
-    }
-  }, [currentDateKey])
-
-  // Quando o motor de Rotina retornar sugestões, convertemos para QuickIdea
-  useEffect(() => {
-    if (!aiSuggestions || aiSuggestions.length === 0) return
-
-    const quickIdeas: QuickIdea[] = aiSuggestions
-      .filter(s => s.category === 'ideia-rapida')
-      .map((s, index) => ({
-        id: s.id || `ai-idea-${index}`,
-        text: s.description || s.title,
-      }))
-
-    if (quickIdeas.length > 0) {
-      setIdeas(quickIdeas)
-
-      try {
-        track('rotina_leve.ideas.generated', {
-          ideasCount: quickIdeas.length,
-        })
-      } catch {
-        // ignora
-      }
-    }
-  }, [aiSuggestions])
-
-  // Scroll vindo do hub (?abrir=...)
-  useEffect(() => {
-    if (!abrir || typeof window === 'undefined') return
-
-    const options: ScrollIntoViewOptions = {
-      behavior: 'smooth',
-      block: 'start',
-      inline: 'nearest',
-    }
-
-    if (abrir === 'receitas') {
-      document.getElementById('rotina-leve-receitas')?.scrollIntoView(options)
-    }
-
-    if (abrir === 'ideias') {
-      setOpenIdeas(true)
-      document.getElementById('rotina-leve-ideias')?.scrollIntoView(options)
-    }
-
-    if (abrir === 'inspiracoes') {
-      setOpenInspiration(true)
-      document.getElementById('rotina-leve-inspiracoes')?.scrollIntoView(options)
-    }
-
-    if (abrir === 'planejar') {
-      document.getElementById('rotina-leve-planner')?.scrollIntoView(options)
-    }
-  }, [abrir])
-
-  const handleSaveIdeia = () => {
-    try {
-      const ideasToSave =
-        ideas && ideas.length > 0
-          ? ideas.map(idea => idea.text)
-          : [
-              'Mini brincadeira sensorial com objetos da sala.',
-              'Conexão de 5 minutos: conte algo bom do seu momento para o seu filho.',
-              'Ritual rápido: uma pausa tranquila juntas antes de recomeçar.',
-            ]
-
-      addItem({
-        origin: 'rotina-leve',
-        type: 'insight',
-        title: 'Ideias rápidas para agora',
-        payload: {
-          ideas: ideasToSave,
-        },
-      })
-
-      try {
-        track('rotina_leve.ideas.saved', {
-          origin: 'rotina-leve',
-          ideasCount: ideasToSave.length,
-        })
-      } catch {
-        // ignora
-      }
-
-      toast.success('Ideias salvas no planner')
-    } catch (error) {
-      console.error('[Rotina Leve] Error saving ideas:', error)
-      toast.danger('Não foi possível salvar as ideias agora.')
-    }
-  }
-
-  const handleSaveRecipe = (recipe: GeneratedRecipe) => {
-    try {
-      addItem({
-        origin: 'rotina-leve',
-        type: 'recipe',
-        title: recipe.title,
-        payload: {
-          description: recipe.description,
-          timeLabel: recipe.timeLabel,
-          ageLabel: recipe.ageLabel,
-          preparation: recipe.preparation,
-        },
-      })
-
-      try {
-        track('rotina_leve.recipe.saved', {
-          origin: 'rotina-leve',
-          title: recipe.title,
-        })
-      } catch {
-        // ignora
-      }
-
-      toast.success('Receita salva no planner')
-    } catch (error) {
-      console.error('[Rotina Leve] Error saving recipe:', error)
-      toast.danger('Não foi possível salvar a receita agora.')
-    }
-  }
-
-  const handleSaveInspiracao = () => {
-    try {
-      addItem({
-        origin: 'rotina-leve',
-        type: 'insight',
-        title: 'Inspiração do momento',
-        payload: {
-          frase: inspiration?.phrase || 'Você não precisa dar conta de tudo agora.',
-          pequenoCuidado:
-            inspiration?.care ||
-            '1 minuto de respiração consciente antes de retomar a próxima tarefa.',
-          miniRitual:
-            inspiration?.ritual ||
-            'Envie uma mensagem carinhosa para alguém que te apoia.',
-        },
-      })
-
-      try {
-        track('rotina_leve.inspiration.saved', {
-          origin: 'rotina-leve',
-          hasCustomInspiration: Boolean(inspiration),
-        })
-      } catch {
-        // ignora
-      }
-
-      toast.success('Inspiração salva no planner')
-    } catch (error) {
-      console.error('[Rotina Leve] Error saving inspiration:', error)
-      toast.danger('Não foi possível salvar a inspiração agora.')
-    }
-  }
-
-  const handleGenerateRecipes = async () => {
-    if (isBabyUnderSixMonths) {
-      toast.info(
-        'Até os 6 meses, a recomendação principal é o aleitamento materno exclusivo. Sempre siga a orientação do pediatra.',
-      )
-      return
-    }
-
-    if (usedRecipesToday >= DAILY_RECIPE_LIMIT) {
-      toast.info(
-        'Por enquanto, este espaço já te deu o suficiente. Se quiser, você pode voltar aqui quando fizer sentido.',
-      )
-      try {
-        track('rotina_leve.recipes.limit_reached', {
-          dateKey: currentDateKey,
-        })
-      } catch {
-        // ignora
-      }
-      return
-    }
-
-    const recipeAvailableMinutes =
-      recipeTime === '10'
-        ? 10
-        : recipeTime === '20'
-        ? 20
-        : recipeTime === '30'
-        ? 30
-        : recipeTime === '40+'
-        ? 40
-        : undefined
-
-    const hasKidsAround =
-      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
-        ? true
-        : comQuem === 'so-eu'
-        ? false
-        : undefined
-
-    const context: RotinaLeveContext = {
-      mood: 'cansada',
-      energy: 'baixa',
-      timeOfDay: 'hoje',
-      hasKidsAround,
-      availableMinutes: recipeAvailableMinutes,
-    }
-
-    const promptParts: string[] = []
-
-    if (recipeIngredient.trim().length > 0) {
-      promptParts.push(`Ingrediente principal: ${recipeIngredient.trim()}.`)
-    }
-
-    if (recipeMealType) {
-      const tipo =
-        recipeMealType === 'lanche'
-          ? 'lanche rápido'
-          : recipeMealType === 'almoco-jantar'
-          ? 'refeição principal (almoço ou jantar)'
-          : recipeMealType === 'cafe-manha'
-          ? 'café da manhã prático'
-          : 'sobremesa leve'
-
-      promptParts.push(`Tipo de refeição desejado: ${tipo}.`)
-    }
-
-    if (recipeTime) {
-      promptParts.push(`Tempo de preparo preferido: cerca de ${recipeTime} minutos.`)
-    }
-
-    if (ageMonths !== null) {
-      const idadeDescricao =
-        ageMonths < 12
-          ? `${ageMonths} meses`
-          : `${Math.floor(ageMonths / 12)} ano(s) aproximadamente`
-
-      promptParts.push(`Idade aproximada do filho: ${idadeDescricao}.`)
-    }
-
-    if (comQuem === 'familia-toda') {
-      promptParts.push('A ideia é algo que funcione bem para a família toda.')
-    } else if (comQuem === 'eu-e-meu-filho') {
-      promptParts.push('A ideia é algo para mãe e filho fazerem juntos.')
-    } else if (comQuem === 'so-eu') {
-      promptParts.push(
-        'Se fizer sentido, as sugestões podem ser simples para a mãe preparar sozinha.',
-      )
-    }
-
-    const prompt =
-      promptParts.length > 0
-        ? promptParts.join(' ') +
-          ' Gere até 3 sugestões de receitas simples, práticas e acolhedoras, sempre respeitando as orientações pediátricas para a idade.'
-        : undefined
-
-    setRecipesLoading(true)
-    try {
-      try {
-        track('rotina_leve.recipes.requested', {
-          dateKey: currentDateKey,
-          hasKidsAround,
-          availableMinutes: recipeAvailableMinutes ?? null,
-        })
-      } catch {
-        // ignora
-      }
-
-      const result = await generateRecipesWithAI(context, prompt)
-      setRecipes(result)
-
-      try {
-        track('rotina_leve.recipes.generated', {
-          dateKey: currentDateKey,
-          suggestionsCount: result.length,
-        })
-      } catch {
-        // ignora
-      }
-
-      const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
-      setUsedRecipesToday(prev => {
-        const next = prev + 1
-        save(storageKey, next)
-        return next
-      })
-    } finally {
-      setRecipesLoading(false)
-    }
-  }
-
-  const handleGenerateIdeas = async () => {
-    if (usedIdeasToday >= DAILY_IDEAS_LIMIT) {
-      toast.info(
-        'Por enquanto, este espaço já te deu ideias suficientes. Se quiser, você pode voltar aqui quando fizer sentido.',
-      )
-      try {
-        track('rotina_leve.ideas.limit_reached', {
-          dateKey: currentDateKey,
-        })
-      } catch {
-        // ignora
-      }
-      return
-    }
-
-    const availableMinutes =
-      tempoDisponivel === '5'
-        ? 5
-        : tempoDisponivel === '10'
-        ? 10
-        : tempoDisponivel === '20'
-        ? 20
-        : tempoDisponivel === '30+'
-        ? 30
-        : undefined
-
-    const hasKidsAround =
-      comQuem === 'familia-toda' || comQuem === 'eu-e-meu-filho'
-        ? true
-        : comQuem === 'so-eu'
-        ? false
-        : undefined
-
-    try {
-      try {
-        track('rotina_leve.ideas.requested', {
-          dateKey: currentDateKey,
-          availableMinutes: availableMinutes ?? null,
-          comQuem: comQuem ?? null,
-          tipoIdeia: tipoIdeia ?? null,
-        })
-      } catch {
-        // ignora
-      }
-
-      await requestSuggestions({
-        mood: 'cansada',
-        energy: 'baixa',
-        timeOfDay: 'hoje',
-        hasKidsAround,
-        availableMinutes,
-        comQuem: comQuem as any,
-        tipoIdeia: tipoIdeia as any,
-      })
-
-      const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
-      setUsedIdeasToday(prev => {
-        const next = prev + 1
-        save(storageKey, next)
-        return next
-      })
-    } catch (error) {
-      console.error('[Rotina Leve] Erro ao gerar ideias:', error)
-      toast.danger('Não consegui gerar ideias agora. Se quiser, tente novamente mais tarde.')
-    }
-  }
-
-  const handleGenerateInspiration = async () => {
-    if (usedInspirationsToday >= DAILY_INSPIRATION_LIMIT) {
-      toast.info(
-        'Por enquanto, esta parte já está completa. O resto pode ser vivido do seu jeito, sem pressa.',
-      )
-      try {
-        track('rotina_leve.inspiration.limit_reached', {
-          dateKey: currentDateKey,
-        })
-      } catch {
-        // ignora
-      }
-      return
-    }
-
-    setInspirationLoading(true)
-    try {
-      try {
-        track('rotina_leve.inspiration.requested', {
-          dateKey: currentDateKey,
-          focus: focusOfDay || null,
-        })
-      } catch {
-        // ignora
-      }
-
-      const result = await generateInspirationWithAI(focusOfDay)
-      setInspiration(result)
-
-      const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
-      setUsedInspirationsToday(prev => {
-        const next = prev + 1
-        save(storageKey, next)
-        return next
-      })
-    } catch (error) {
-      console.error('[Rotina Leve] Erro ao gerar inspiração:', error)
-      toast.danger('Não consegui gerar uma inspiração agora. Se quiser, tente novamente mais tarde.')
-    } finally {
-      setInspirationLoading(false)
-    }
-  }
-
-  const hasRecipes = recipes && recipes.length > 0
-  const isOverLimit = usedRecipesToday >= DAILY_RECIPE_LIMIT
-  const isIdeasOverLimit = usedIdeasToday >= DAILY_IDEAS_LIMIT
-  const isInspirationOverLimit = usedInspirationsToday >= DAILY_INSPIRATION_LIMIT
-
-  const idadeLabel =
-    ageMonths === null
-      ? 'idade não cadastrada'
-      : ageMonths < 12
-      ? `${ageMonths} meses`
-      : `${Math.floor(ageMonths / 12)} ano(s)`
-
-  // ---------- Cardápio leve da semana (estados locais) ----------
-  const savedRecipes = plannerItemsFromRotinaLeve.filter(
-    item => item.type === 'recipe',
+function ViewPill({
+  active,
+  onClick,
+  label,
+}: {
+  active?: boolean
+  onClick?: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'rounded-full px-3 py-1.5 text-[12px] border transition',
+        active
+          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+          : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+      ].join(' ')}
+    >
+      {label}
+    </button>
   )
+}
 
-  const defaultMeals = ['Café da manhã', 'Almoço', 'Lanche', 'Jantar']
+export default function MinhaJornadaClient() {
+  const [view, setView] = useState<View>('hoje')
 
-  const [meals, setMeals] = useState<string[]>(() => {
-    const stored = load('rotina-leve:cardapio:meals')
-    return Array.isArray(stored) && stored.length > 0 ? stored : defaultMeals
-  })
+  const [today, setToday] = useState<string>(todayKey())
+  const [totalPoints, setTotalPoints] = useState<number>(0)
+  const [todayPoints, setTodayPoints] = useState<number>(0)
 
-  const [weekPlan, setWeekPlan] = useState<Record<string, Record<string, string>>>(() => {
-    const stored = load('rotina-leve:cardapio:week')
-    return stored && typeof stored === 'object'
-      ? (stored as Record<string, Record<string, string>>)
-      : {}
-  })
+  useEffect(() => {
+    try {
+      track('nav.view', {
+        tab: 'maternar',
+        page: 'minha-jornada',
+        timestamp: new Date().toISOString(),
+      })
+    } catch {}
+  }, [])
 
-  const weekdays = [
-    'Segunda',
-    'Terça',
-    'Quarta',
-    'Quinta',
-    'Sexta',
-    'Sábado',
-    'Domingo',
-  ]
+  useEffect(() => {
+    const t = todayKey()
+    setToday(t)
 
-  const saveAll = (
-    nextWeek: Record<string, Record<string, string>>,
-    nextMeals: string[],
-  ) => {
-    save('rotina-leve:cardapio:meals', nextMeals)
-    save('rotina-leve:cardapio:week', nextWeek)
-  }
+    const total = readTotalPoints()
+    const tPoints = readDayPoints(t)
 
-  const addMeal = () => {
-    const name = prompt('Nome da refeição:')
-    if (!name?.trim()) return
+    setTotalPoints(total)
+    setTodayPoints(tPoints)
 
-    const nextMeals = [...meals, name.trim()]
-    setMeals(nextMeals)
-    save('rotina-leve:cardapio:meals', nextMeals)
-  }
+    try {
+      track('minha_jornada.open', { today: t, totalPoints: total, todayPoints: tPoints })
+    } catch {}
+  }, [])
 
-  const removeMeal = (meal: string) => {
-    if (!confirm('Remover esta refeição?')) return
+  const weekKeys = useMemo(() => getRangeKeys(7, new Date()), [])
+  const monthKeys = useMemo(() => getRangeKeys(28, new Date()), [])
 
-    const nextMeals = meals.filter(m => m !== meal)
+  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
+  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
 
-    const nextWeek: Record<string, Record<string, string>> = {}
-    for (const day of weekdays) {
-      nextWeek[day] = { ...(weekPlan[day] || {}) }
-      delete nextWeek[day][meal]
-    }
+  const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
+  const monthlyTotal = useMemo(() => monthKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [monthKeys])
 
-    setMeals(nextMeals)
-    setWeekPlan(nextWeek)
-    saveAll(nextWeek, nextMeals)
-  }
+  // metas “internas” (não viram cobrança; só referência visual)
+  const todaySoftMax = 26
+  const weekSoftMax = 120
 
-  const assignRecipe = (
-    day: string,
-    meal: string,
-    recipe: { title?: string },
-  ) => {
-    const nextWeek: Record<string, Record<string, string>> = {
-      ...weekPlan,
-      [day]: {
-        ...(weekPlan[day] || {}),
-        [meal]: recipe.title ?? 'Receita',
-      },
-    }
-
-    setWeekPlan(nextWeek)
-    saveAll(nextWeek, meals)
-  }
+  const presenceLabel =
+    daysActive28 === 0
+      ? 'Você pode voltar quando fizer sentido.'
+      : daysActive28 === 1
+        ? 'Você esteve aqui 1 dia nas últimas 4 semanas.'
+        : `Você esteve aqui ${daysActive28} dias nas últimas 4 semanas.`
 
   return (
-    <PageTemplate
-      label="MEU DIA"
-      title="Rotina Leve"
-      subtitle="Depois de sentir como você está, aqui é o espaço para planejar o que cabe na sua rotina real — sem perfeição."
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="
+        min-h-[100dvh]
+        pb-32
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#ff005e_0%,#ff005e_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+      "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 pt-6 pb-16 space-y-8">
-          {/* TEXTO DE ABERTURA */}
-          <div className="space-y-2">
-            <p className="text-sm md:text-base text-white">
-              <span className="font-semibold">
-                Comece pela próxima coisa que faz sentido agora.
-              </span>{' '}
-              Pode ser uma receitinha rápida, uma ideia simples ou apenas uma inspiração
-              para respirar com mais calma.
-            </p>
-            <p className="text-xs md:text-sm text-white/80">
-              Tudo aqui foi pensado para caber na sua rotina real, com filhos, trabalho,
-              cansaço e também momentos bons.
-            </p>
-          </div>
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+          {/* HERO */}
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+            <div className="space-y-3">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar para o Maternar
+              </Link>
 
-          <div className="space-y-6">
-            {/* BLOCO 0 — BOAS ÂNCORAS (Ideias + Inspirações) */}
-            <SoftCard
-              id="rotina-leve-ancoras"
-              className="rounded-3xl p-6 md:p-8 bg-[#ffe1f1]/70 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
-            >
-              <div className="space-y-5">
-                <header className="space-y-1 pb-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                    Boas âncoras
-                  </p>
-                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
-                    Escolha uma âncora para te acompanhar agora
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
-                    Antes de organizar tarefas e receitas, comece por uma pequena ação ou
-                    inspiração. É um ponto de calma antes do resto — e ele pode vir de uma
-                    ideia rápida ou de uma inspiração.
-                  </p>
-                </header>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Minha Jornada
+              </h1>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* COLUNA — IDEIAS RÁPIDAS */}
-                  <div id="rotina-leve-ideias" className="h-full">
-                    <div className="h-full rounded-2xl bg-white border border-[#ffd8e6] p-4 md:p-5 shadow-[0_4px_14px_rgba(0,0,0,0.04)] flex flex-col space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                          Ideias rápidas
-                        </p>
-                        <h4 className="text-sm md:text-base font-semibold text-[#545454]">
-                          Pequenas ideias para encaixar entre um compromisso e outro
-                        </h4>
-                        <p className="text-xs text-[#545454] leading-relaxed">
-                          Brincadeiras, organização, autocuidado ou uma coisinha rápida na
-                          cozinha — tudo pensado para caber em minutos.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setOpenIdeas(prev => !prev)}
-                        className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
-                      >
-                        {openIdeas ? 'Recolher filtros ↑' : 'Escolher filtros →'}
-                      </button>
-
-                      {openIdeas && (
-                        <div className="space-y-4 text-xs flex-1">
-                          {/* TEMPO DISPONÍVEL */}
-                          <div>
-                            <p className="mb-1 font-medium text-[#545454]">
-                              Quanto tempo você tem agora?
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { id: '5', label: '5 min' },
-                                { id: '10', label: '10 min' },
-                                { id: '20', label: '20 min' },
-                                { id: '30+', label: '30+' },
-                              ].map(option => (
-                                <button
-                                  key={option.id}
-                                  type="button"
-                                  onClick={() =>
-                                    setTempoDisponivel(current =>
-                                      current === option.id ? null : option.id,
-                                    )
-                                  }
-                                  className={clsx(
-                                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
-                                    tempoDisponivel === option.id
-                                      ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
-                                      : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
-                                  )}
-                                >
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* COM QUEM */}
-                          <div>
-                            <p className="mb-1 font-medium text-[#545454]">
-                              Quem está com você nesse momento?
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { id: 'so-eu', label: 'Só eu' },
-                                { id: 'eu-e-meu-filho', label: 'Eu e meu filho' },
-                                { id: 'familia-toda', label: 'Família toda' },
-                              ].map(option => (
-                                <button
-                                  key={option.id}
-                                  type="button"
-                                  onClick={() =>
-                                    setComQuem(current =>
-                                      current === option.id ? null : option.id,
-                                    )
-                                  }
-                                  className={clsx(
-                                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
-                                    comQuem === option.id
-                                      ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
-                                      : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
-                                  )}
-                                >
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* TIPO DE IDEIA */}
-                          <div>
-                            <p className="mb-1 font-medium text-[#545454]">
-                              Você prefere uma ideia de…
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {[
-                                { id: 'brincadeira', label: 'Brincadeira' },
-                                { id: 'organizacao', label: 'Organização da casa' },
-                                { id: 'autocuidado', label: 'Autocuidado' },
-                                { id: 'receita-rapida', label: 'Receita rápida' },
-                              ].map(option => (
-                                <button
-                                  key={option.id}
-                                  type="button"
-                                  onClick={() =>
-                                    setTipoIdeia(current =>
-                                      current === option.id ? null : option.id,
-                                    )
-                                  }
-                                  className={clsx(
-                                    'rounded-full border px-3 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/20',
-                                    tipoIdeia === option.id
-                                      ? 'border-[#fd2597] bg-[#ffd8e6] text-[#fd2597]'
-                                      : 'border-[#ffd8e6] bg-white text-[#545454] hover:border-[#fd2597] hover:bg-[#ffd8e6]/15',
-                                  )}
-                                >
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleGenerateIdeas}
-                            disabled={ideasLoading || isIdeasOverLimit}
-                            className="w-full md:w-auto"
-                          >
-                            {ideasLoading ? 'Gerando ideias…' : 'Ver ideias para agora'}
-                          </Button>
-
-                          {/* LISTA IDEIAS */}
-                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                            <p className="text-xs font-medium text-[#545454] mb-2">
-                              Sugestões para agora
-                            </p>
-
-                            {ideasLoading && (
-                              <p className="text-[11px] text-[#545454]">
-                                Pensando em pequenas ações que cabem no seu momento…
-                              </p>
-                            )}
-
-                            {!ideasLoading && ideas && (
-                              <ul className="space-y-2 text-xs text-[#545454]">
-                                {ideas.map(idea => (
-                                  <li key={idea.id}>• {idea.text}</li>
-                                ))}
-                              </ul>
-                            )}
-
-                            {!ideasLoading && !ideas && (
-                              <ul className="space-y-2 text-xs text-[#545454]">
-                                <li>• Mini brincadeira sensorial com objetos da sala.</li>
-                                <li>
-                                  • Conexão de 5 minutos: conte algo bom do seu momento para o
-                                  seu filho.
-                                </li>
-                                <li>
-                                  • Ritual rápido: uma pausa tranquila juntas antes de
-                                  recomeçar.
-                                </li>
-                              </ul>
-                            )}
-
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={handleSaveIdeia}
-                              className="w-full mt-3"
-                            >
-                              Salvar ideias no planner
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* COLUNA — INSPIRAÇÕES */}
-                  <div id="rotina-leve-inspiracoes" className="h-full">
-                    <div className="h-full rounded-2xl bg-white border border-[#ffd8e6] p-4 md:p-5 shadow-[0_4px_14px_rgba(0,0,0,0.04)] flex flex-col space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                          Inspirações
-                        </p>
-                        <h4 className="text-sm md:text-base font-semibold text-[#545454]">
-                          Uma frase, um cuidado e um mini ritual
-                        </h4>
-                        <p className="text-xs text-[#545454] leading-relaxed">
-                          Pequenas âncoras emocionais para lembrar que você não precisa
-                          dar conta de tudo ao mesmo tempo.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setOpenInspiration(prev => !prev)}
-                        className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 self-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fd2597]/60"
-                      >
-                        {openInspiration ? 'Recolher inspiração ↑' : 'Ver inspiração →'}
-                      </button>
-
-                      {openInspiration && (
-                        <div className="text-xs space-y-4 flex-1">
-                          <div className="space-y-1">
-                            <p className="font-medium text-[#545454]">Foco</p>
-                            <select
-                              className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
-                              value={focusOfDay}
-                              onChange={e => setFocusOfDay(e.target.value)}
-                            >
-                              <option>Cansaço</option>
-                              <option>Culpa</option>
-                              <option>Organização</option>
-                              <option>Conexão com o filho</option>
-                            </select>
-                          </div>
-
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleGenerateInspiration}
-                            disabled={inspirationLoading || isInspirationOverLimit}
-                            className="w-full md:w-auto"
-                          >
-                            {inspirationLoading ? 'Buscando inspiração…' : 'Ver inspiração'}
-                          </Button>
-
-                          <div className="rounded-2xl bg-[#ffd8e6]/10 p-3 text-xs text-[#545454] space-y-3">
-                            {inspirationLoading && (
-                              <p className="text-[11px]">
-                                Pensando em uma frase e um cuidado para te acompanhar…
-                              </p>
-                            )}
-
-                            {!inspirationLoading && (
-                              <>
-                                <div>
-                                  <p className="mb-1 text-[11px] font-medium text-[#545454]">
-                                    Frase
-                                  </p>
-                                  <p>
-                                    {(inspiration && inspiration.phrase) ||
-                                      'Você não precisa dar conta de tudo agora.'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="mb-1 text-[11px] font-medium text-[#545454]">
-                                    Pequeno cuidado
-                                  </p>
-                                  <p>
-                                    {(inspiration && inspiration.care) ||
-                                      '1 minuto de respiração consciente antes de retomar a próxima tarefa.'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="mb-1 text-[11px] font-medium text-[#545454]">
-                                    Mini ritual
-                                  </p>
-                                  <p>
-                                    {(inspiration && inspiration.ritual) ||
-                                      'Envie uma mensagem carinhosa para alguém que te apoia.'}
-                                  </p>
-                                </div>
-                              </>
-                            )}
-
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={handleSaveInspiracao}
-                              className="w-full mt-2"
-                            >
-                              Salvar inspiração no planner
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SoftCard>
-
-            {/* BLOCO 1 — RECEITAS */}
-            <SoftCard
-              id="rotina-leve-receitas"
-              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
-            >
-              <div className="space-y-6 flex flex-col">
-                <header className="space-y-1 pb-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                    Receitas simples
-                  </p>
-                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
-                    Receitinhas que cabem no tempo que você tem
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
-                    Você escolhe um ingrediente e o tempo que tem. O Materna360 mostra
-                    opções simples e possíveis para a fase do seu filho.
-                  </p>
-                </header>
-
-                {/* FORM RECEITAS */}
-                <div className="space-y-3 text-xs">
-                  <div className="space-y-1">
-                    <p className="font-medium text-[#545454]">Ingrediente principal</p>
-                    <input
-                      type="text"
-                      placeholder="Ex.: banana, aveia, frango..."
-                      value={recipeIngredient}
-                      onChange={e => setRecipeIngredient(e.target.value)}
-                      className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] placeholder-[#545454]/40 focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2 md:flex-row">
-                    <div className="flex-1 space-y-1">
-                      <p className="font-medium text-[#545454]">Tipo de refeição</p>
-                      <select
-                        value={recipeMealType ?? ''}
-                        onChange={e =>
-                          setRecipeMealType(
-                            e.target.value === '' ? null : e.target.value,
-                          )
-                        }
-                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
-                      >
-                        <option value="">Selecione</option>
-                        <option value="lanche">Lanche</option>
-                        <option value="almoco-jantar">Almoço / Jantar</option>
-                        <option value="cafe-manha">Café da manhã</option>
-                        <option value="sobremesa">Sobremesa leve</option>
-                      </select>
-                    </div>
-
-                    <div className="flex-1 space-y-1">
-                      <p className="font-medium text-[#545454]">Tempo de preparo</p>
-                      <select
-                        value={recipeTime ?? ''}
-                        onChange={e =>
-                          setRecipeTime(e.target.value === '' ? null : e.target.value)
-                        }
-                        className="w-full rounded-2xl border border-[#ffd8e6] px-3 py-2 text-xs text-[#545454] focus:outline-none focus:ring-1 focus:ring-[#fd2597]"
-                      >
-                        <option value="">Selecione</option>
-                        <option value="10">10 min</option>
-                        <option value="20">20 min</option>
-                        <option value="30">30 min</option>
-                        <option value="40+">40+ min</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[#ffd8e6]/20 px-3 py-1 text-[11px] text-[#fd2597]">
-                    <span>Idade principal: {idadeLabel}</span>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-[#545454]">
-                  Para bebês menores de 6 meses, o foco principal ainda é o aleitamento
-                  materno. Sempre siga a orientação do pediatra da sua família.
-                </p>
-
-                {/* AÇÕES RECEITAS */}
-                <div className="space-y-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleGenerateRecipes}
-                    disabled={recipesLoading || isBabyUnderSixMonths || isOverLimit}
-                    className="w-full md:w-auto"
-                  >
-                    {recipesLoading ? 'Pensando em opções…' : 'Ver sugestões de receitas'}
-                  </Button>
-
-                  {isOverLimit && (
-                    <p className="text-[11px] text-[#fd2597] font-medium">
-                      Por enquanto, este espaço já te deu o suficiente. Se quiser, você
-                      pode voltar aqui quando fizer sentido.
-                    </p>
-                  )}
-
-                  {isBabyUnderSixMonths && (
-                    <p className="text-[11px] text-[#fd2597] font-medium">
-                      Como o seu bebê tem menos de 6 meses, as receitinhas sólidas ainda
-                      vão esperar um pouquinho. O Materna360 segue ao seu lado quando
-                      essa fase chegar.
-                    </p>
-                  )}
-                </div>
-
-                {/* LISTA DE RECEITAS */}
-                <div className="space-y-3">
-                  {recipesLoading && (
-                    <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                      <p className="text-[11px] text-[#545454]">
-                        Pensando nas melhores opções que cabem no seu momento…
-                      </p>
-                    </div>
-                  )}
-
-                  {!recipesLoading && hasRecipes && !isBabyUnderSixMonths && (
-                    <>
-                      <p className="text-xs font-medium text-[#545454]">
-                        Sugestões (até 3)
-                      </p>
-                      <div className="space-y-3">
-                        {recipes!.slice(0, 3).map(recipe => (
-                          <div
-                            key={recipe.id}
-                            className="rounded-2xl bg-white border border-[#ffd8e6] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all"
-                          >
-                            <div
-                              className="p-4 cursor-pointer hover:bg-[#ffd8e6]/5 transition-colors"
-                              onClick={() =>
-                                setExpandedRecipeId(
-                                  expandedRecipeId === recipe.id ? null : recipe.id,
-                                )
-                              }
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1">
-                                  <h4 className="text-sm font-semibold text-[#545454]">
-                                    {recipe.title}
-                                  </h4>
-                                  <p className="text-xs text-[#545454] mt-1 line-clamp-2">
-                                    {recipe.description}
-                                  </p>
-                                  <p className="text-[10px] text-[#545454] mt-1.5">
-                                    {recipe.timeLabel} · {recipe.ageLabel}
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    setExpandedRecipeId(
-                                      expandedRecipeId === recipe.id ? null : recipe.id,
-                                    )
-                                  }}
-                                  className="text-sm font-semibold text-[#fd2597] hover:text-[#fd2597]/80 transition-colors whitespace-nowrap flex-shrink-0 pt-0.5"
-                                >
-                                  {expandedRecipeId === recipe.id
-                                    ? 'Ver menos ↑'
-                                    : 'Ver detalhes →'}
-                                </button>
-                              </div>
-                            </div>
-
-                            {expandedRecipeId === recipe.id && (
-                              <div className="border-t border-[#ffd8e6] bg-[#ffd8e6]/5 p-4 space-y-3">
-                                <div>
-                                  <h5 className="text-xs font-semibold text-[#545454] uppercase tracking-wide mb-2">
-                                    Modo de preparo
-                                  </h5>
-                                  <p className="text-xs text-[#545454] leading-relaxed whitespace-pre-wrap">
-                                    {recipe.preparation}
-                                  </p>
-                                </div>
-
-                                <p className="text-[10px] text-[#545454] italic">
-                                  Lembre-se: adapte sempre às orientações do pediatra.
-                                </p>
-
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  onClick={() => handleSaveRecipe(recipe)}
-                                  className="w-full"
-                                >
-                                  Salvar receita no planner
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-[11px] text-[#545454] mt-2">
-                        Toque em &quot;Ver detalhes&quot; para escolher qual receita salvar
-                        no planner.
-                      </p>
-                    </>
-                  )}
-
-                  {!recipesLoading &&
-                    (!recipes || recipes.length === 0) &&
-                    !isBabyUnderSixMonths && (
-                      <div className="rounded-2xl bg-[#ffd8e6]/10 p-3">
-                        <p className="text-[11px] text-[#545454]">
-                          Clique em &quot;Ver sugestões de receitas&quot; para receber
-                          opções adaptadas à idade do seu filho.
-                        </p>
-                      </div>
-                    )}
-                </div>
-              </div>
-            </SoftCard>
-
-            {/* BLOCO EXTRA — CARDÁPIO LEVE DA SEMANA */}
-            <SoftCard
-              id="rotina-leve-cardapio"
-              className="rounded-3xl p-6 md:p-8 bg-white/95 border border-[#ffd8e6] shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
-            >
-              <div className="space-y-6 flex flex-col">
-                {/* HEADER */}
-                <header className="space-y-1 pb-1">
-                  <p className="text-[11px] font-semibold tracking-[0.26em] uppercase text-[#fd2597]/80">
-                    Cardápio leve
-                  </p>
-                  <h3 className="text-base md:text-lg font-semibold text-[#545454]">
-                    Planeje com leveza
-                  </h3>
-                  <p className="text-xs md:text-sm text-[#545454] leading-relaxed max-w-2xl">
-                    Conforme você salva receitinhas no Materna360, pode distribuí-las nos
-                    dias da semana como quiser — sem regras, só o que funciona para você.
-                  </p>
-                </header>
-
-                <div className="space-y-6">
-                  {/* LISTA DE RECEITAS DISPONÍVEIS */}
-                  <div>
-                    <p className="text-xs font-semibold text-[#545454] mb-2">
-                      Receitas salvas para usar no cardápio
-                    </p>
-
-                    {savedRecipes.length === 0 && (
-                      <p className="text-xs text-[#545454]">
-                        Salve uma receita no planner para poder adicioná-la ao cardápio.
-                      </p>
-                    )}
-
-                    {savedRecipes.length > 0 && (
-                      <div className="flex gap-2 overflow-x-auto py-2">
-                        {savedRecipes.map(rec => (
-                          <div
-                            key={rec.id}
-                            className="min-w-[180px] rounded-xl border border-[#ffd8e6] bg-white p-3 shadow-sm cursor-pointer hover:bg-[#ffd8e6]/10 transition"
-                            draggable
-                            onDragStart={e => {
-                              e.dataTransfer.setData('recipe', JSON.stringify(rec))
-                            }}
-                          >
-                            <p className="text-sm font-semibold text-[#545454]">
-                              {rec.title}
-                            </p>
-                            <p className="text-[11px] text-[#545454] mt-1 line-clamp-2">
-                              {rec.payload?.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* BOTÃO PARA ADICIONAR REFEIÇÃO */}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={addMeal}
-                    className="self-start"
-                  >
-                    + Adicionar nova refeição
-                  </Button>
-
-                  {/* TABELA — SEMANA */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-xs md:text-sm">
-                      <thead>
-                        <tr>
-                          <th className="p-2 text-left text-[#545454]/70">Dia</th>
-                          {meals.map(meal => (
-                            <th key={meal} className="p-2 text-left text-[#545454]/70">
-                              <div className="flex items-center gap-2">
-                                {meal}
-                                <button
-                                  onClick={() => removeMeal(meal)}
-                                  className="text-[#fd2597] text-[10px] hover:underline"
-                                >
-                                  remover
-                                </button>
-                              </div>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {weekdays.map(day => (
-                          <tr key={day} className="border-t border-[#ffd8e6]">
-                            <td className="p-2 font-medium text-[#545454]">{day}</td>
-
-                            {meals.map(meal => (
-                              <td key={meal} className="p-2 align-top">
-                                <div
-                                  className="min-h-[60px] rounded-xl border border-[#ffd8e6] bg-[#ffe1f1]/70 p-2 text-[11px] text-[#545454] flex items-center justify-center text-center cursor-pointer hover:bg-[#ffd8e6]/20 transition"
-                                  onDragOver={e => e.preventDefault()}
-                                  onDrop={e => {
-                                    const data = e.dataTransfer.getData('recipe')
-                                    if (!data) return
-                                    const rec = JSON.parse(data)
-                                    assignRecipe(day, meal, rec)
-                                  }}
-                                >
-                                  {weekPlan?.[day]?.[meal] || (
-                                    <span className="text-[#545454]/60">
-                                      Arraste uma receita aqui
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </SoftCard>
-          </div>
-
-          {/* BLOCO 3 — RESUMO NO PLANNER */}
-          <SoftCard
-            id="rotina-leve-planner"
-            className="rounded-3xl p-5 md:p-6 bg-white/90 border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
-          >
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                  Seu resumo na Rotina Leve
-                </p>
-                {savedRecipesCount === 0 && savedInspirationCount === 0 ? (
-                  <p className="text-sm text-[#545454]">
-                    Conforme você salvar receitas, ideias e inspirações por aqui, este
-                    espaço mostra um retrato rápido do que já está no seu planner.
-                  </p>
-                ) : (
-                  <p className="text-sm text-[#545454]">
-                    Você já salvou{' '}
-                    <span className="font-semibold text-[#545454]">
-                      {savedRecipesCount} receita(s)
-                    </span>{' '}
-                    e{' '}
-                    <span className="font-semibold text-[#545454]">
-                      {savedInspirationCount} inspiração(ões)
-                    </span>{' '}
-                    deste mini-hub no seu planner. Cada gesto conta como presença.
-                  </p>
-                )}
-              </div>
-
-              {lastInspiration && (
-                <div className="mt-3 md:mt-0 md:max-w-sm rounded-2xl bg-[#ffd8e6]/20 border border-[#ffd8e6]/60 px-4 py-3 space-y-1">
-                  <p className="text-[11px] font-semibold text-[#545454] uppercase tracking-wide">
-                    Última inspiração salva
-                  </p>
-                  {lastInspiration.payload?.frase && (
-                    <p className="text-xs text-[#545454]">
-                      <span className="font-medium">Frase: </span>
-                      {lastInspiration.payload.frase}
-                    </p>
-                  )}
-                  {lastInspiration.payload?.pequenoCuidado && (
-                    <p className="text-xs text-[#545454]">
-                      <span className="font-medium">Cuidado: </span>
-                      {lastInspiration.payload.pequenoCuidado}
-                    </p>
-                  )}
-                </div>
-              )}
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Um registro silencioso do que aconteceu — sem cobrança, sem “tudo ou nada”.
+              </p>
             </div>
-          </SoftCard>
+          </header>
 
-          <MotivationalFooter routeKey="meu-dia-rotina-leve" />
+          <Reveal>
+            <section
+              className="
+                rounded-3xl
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                overflow-hidden
+              "
+            >
+              {/* Top bar */}
+              <div className="p-4 md:p-6 border-b border-white/25">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
+                      <AppIcon name="sparkles" size={20} className="text-[#ff005e]" />
+                    </div>
+
+                    <div>
+                      <div className="text-[12px] text-white/85">
+                        hoje: {todayPoints} pts • total: {totalPoints} pts • {presenceLabel}
+                      </div>
+                      <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
+                        O que coube hoje já conta
+                      </div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
+                        A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Link
+                      href="/maternar/minhas-conquistas"
+                      className="
+                        rounded-full
+                        bg-white/90 hover:bg-white
+                        text-[#2f3a56]
+                        px-4 py-2 text-[12px]
+                        shadow-lg transition
+                        text-center
+                      "
+                    >
+                      Conquistas & Selos
+                    </Link>
+
+                    <Link
+                      href="/meu-dia"
+                      className="
+                        rounded-full
+                        bg-white/15 hover:bg-white/25
+                        text-white
+                        px-4 py-2 text-[12px]
+                        border border-white/35
+                        transition
+                        text-center
+                      "
+                    >
+                      Meu Dia
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Mini menu */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <ViewPill active={view === 'hoje'} onClick={() => setView('hoje')} label="Hoje" />
+                  <ViewPill active={view === 'resumo'} onClick={() => setView('resumo')} label="Resumo" />
+                </div>
+              </div>
+
+              {/* CONTENT */}
+              <div className="p-4 md:p-6 space-y-4">
+                {/* HOJE */}
+                {view === 'hoje' ? (
+                  <SoftCard
+                    className="
+                      p-5 md:p-6 rounded-2xl
+                      bg-white/95
+                      border border-[#f5d7e5]
+                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    "
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                        <AppIcon name="heart" size={22} className="text-[#ff005e]" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                          Hoje
+                        </span>
+
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">Registro do dia</h2>
+
+                        <p className="text-[13px] text-[#6a6a6a]">
+                          Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          feito hoje
+                        </div>
+                        <div className="mt-2 text-[26px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
+
+                        <div className="mt-4">
+                          <ProgressBar value={todayPoints} max={todaySoftMax} />
+                        </div>
+
+                        <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+                          Referência visual gentil — não é meta. Se não coube, não vira dívida.
+                        </div>
+                      </div>
+
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          presença recente
+                        </div>
+
+                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">Últimos 7 dias</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com registro: {daysActive7}/7</div>
+
+                        <div className="mt-4">
+                          <div className="text-[11px] text-[#6a6a6a]">pontos na semana</div>
+                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
+                          <div className="mt-3">
+                            <ProgressBar value={weeklyTotal} max={weekSoftMax} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                        fechamento leve
+                      </div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo.
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Link
+                          href="/maternar"
+                          className="rounded-full bg-[#ff005e] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Voltar para o Maternar
+                        </Link>
+                        <Link
+                          href="/meu-dia"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ir para Meu Dia
+                        </Link>
+                      </div>
+                    </div>
+                  </SoftCard>
+                ) : null}
+
+                {/* RESUMO */}
+                {view === 'resumo' ? (
+                  <SoftCard
+                    className="
+                      p-5 md:p-6 rounded-2xl
+                      bg-white/95
+                      border border-[#f5d7e5]
+                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+                    "
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                        <AppIcon name="star" size={22} className="text-[#ff005e]" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                          Resumo
+                        </span>
+
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">Leitura de continuidade</h2>
+
+                        <p className="text-[13px] text-[#6a6a6a]">
+                          Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total</div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalPoints} pts</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">somatório do que foi registrado</div>
+                      </div>
+
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          últimos 7 dias
+                        </div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com registro: {daysActive7}/7</div>
+                      </div>
+
+                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">28 dias</div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{daysActive28} dias</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">pontos no período: {monthlyTotal} pts</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança. A Jornada
+                        respeita silêncio e pausa. Voltar já é suficiente.
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setView('hoje')}
+                          className="rounded-full bg-[#ff005e] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Ver hoje
+                        </button>
+
+                        <Link
+                          href="/maternar/minhas-conquistas"
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ir para Conquistas & Selos
+                        </Link>
+                      </div>
+                    </div>
+                  </SoftCard>
+                ) : null}
+              </div>
+            </section>
+          </Reveal>
+
+          <div className="mt-6">
+            <LegalFooter />
+          </div>
         </div>
       </ClientOnly>
-    </PageTemplate>
+    </main>
   )
 }
