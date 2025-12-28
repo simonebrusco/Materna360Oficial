@@ -258,7 +258,7 @@ export default function MyDayGroups({
       } catch {}
     } else {
       try {
-        track('my_day.quick_add_failed', { origin, source: MY_DAY_SOURCES.UNKNOWN, reason: res.reason ?? 'unknown' })
+       track('my_day.quick_add_failed', { origin, source: MY_DAY_SOURCES.UNKNOWN })
       } catch {}
     }
   }
