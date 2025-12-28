@@ -5,7 +5,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   return (
     <div className="my-6 mx-auto max-w-6xl rounded-2xl border border-rose-200 bg-rose-50 p-6">
       <h2 className="font-semibold text-rose-700">Ops, algo deu errado ao carregar a página.</h2>
-      <p className="mt-2 text-sm text-rose-800/80">Tente novamente. Se persistir, volte mais tarde.</p>
+      <p className="mt-2 text-sm text-rose-800/80">Tente novamente. Se persistir, tente novamente mais tarde.</p>
       <button
         type="button"
         onClick={reset}

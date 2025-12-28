@@ -225,7 +225,7 @@ Regras:
         ? tips
         : [
             'Escolha um pequeno gesto que caiba na sua energia de hoje e tudo bem se for pouco.',
-            'Observe um momento de calma com seu filho e tente repetir algo parecido amanhã.',
+            'Observe um momento de calma com seu filho e tente repetir algo parecido quando der.',
           ]
 
     return {

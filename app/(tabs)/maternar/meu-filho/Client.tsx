@@ -288,7 +288,7 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       plan: {
         a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
         b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
-        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “amanhã continua”.' },
+        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “depois continua”.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
@@ -360,7 +360,7 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       plan: {
         a: { tag: 'equilíbrio', time: '15', title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.' },
         b: { tag: 'casa', time: '15', title: 'Arrumar junto', how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.' },
-        c: { tag: 'fala', time: '15', title: 'Plano de amanhã', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
+        c: { tag: 'fala', time: '15', title: 'Plano para depois', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },

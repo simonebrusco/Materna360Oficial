@@ -214,7 +214,7 @@ export default function BibliotecaMaternaPage() {
           if (material.format !== 'Trilha educativa') return false
         } else if (presetFilter === 'tema-fase') {
           // hoje: sem backend de fase — mantém “amostra geral”
-          // amanhã: aqui entra a lógica Eu360 (idade/fase) real.
+          // depois: aqui entra a lógica Eu360 (idade/fase) real.
         }
       } else if (selectedFormat && material.format !== selectedFormat) {
         return false

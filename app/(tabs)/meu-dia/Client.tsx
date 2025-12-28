@@ -365,7 +365,7 @@ export default function MeuDiaClient() {
                         Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
                       </div>
                       <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-2xl lg:max-w-3xl">
-                        Se quiser, volte para pegar mais um próximo passo pronto — sem inventar nada.
+                        Se quiser, pegue mais um próximo passo pronto — sem inventar nada.
                       </div>
                     </div>
                   </div>

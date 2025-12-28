@@ -136,7 +136,7 @@ export const SELF_CARE_CMS: SelfCare[] = [
     energyFit: ['exausta', 'normal', 'animada'],
     steps: [
       'Anote três coisas boas do dia.',
-      'Escreva uma intenção simples para amanhã.',
+      'Escreva uma intenção simples para depois.',
       'Respire fundo e guarde o caderno.',
     ],
     tip: 'Use bloco no celular se preferir digital.',

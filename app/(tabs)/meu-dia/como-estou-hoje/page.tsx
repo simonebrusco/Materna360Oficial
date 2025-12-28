@@ -704,18 +704,17 @@ export default function ComoEstouHojePage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between flex-wrap min-w-0">
                 <div className="space-y-1 text-[11px] text-[#545454]/90">
                   <p>
-  Check-ins feitos aqui:{' '}
-  <span className="font-semibold text-[#545454]">
-    {usedCheckinsToday} de {DAILY_CHECKIN_LIMIT}
-  </span>
-  .
-</p>
-{isOverLimit && (
-  <p className="text-[#fd2597] font-medium">
-    Por agora, essa parte já está completa. O que você registrou já é suficiente.
-  </p>
-)}
-
+                    Registros feitos por aqui:{' '}
+                    <span className="font-semibold text-[#545454]">
+                      {usedCheckinsToday} de {DAILY_CHECKIN_LIMIT}
+                    </span>{' '}
+                    check-ins emocionais.
+                  </p>
+                  {isOverLimit && (
+                    <p className="text-[#fd2597] font-medium">
+                      Por agora, essa parte já está completa. O que você registrou já é suficiente.
+                    </p>
+                  )}
                 </div>
 
                 <Button

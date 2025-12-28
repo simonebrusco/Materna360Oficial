@@ -112,7 +112,7 @@ const ROUTINES: Routine[] = [
       { label: 'Alongar mãos (30s)', min: 1 },
     ],
     close: 'Feito. Você se deu um reinício sem parar o mundo.',
-    next: 'Se quiser, faça mais 1 pausa rápida — ou volte para o dia.',
+    next: 'Se quiser, faça mais 1 pausa rápida — ou siga para o seu dia.',
   },
   {
     id: 'r3',

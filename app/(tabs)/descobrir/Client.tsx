@@ -468,7 +468,7 @@ export default function DiscoverClient() {
       {showQuotaWarning && (
         <div className="mb-4">
           <PaywallBanner
-            message={`Está perto do limite diário de ideias salvas (${dailyLimit}). Faça upgrade para ampliar.`}
+            message={`Se quiser mais espaço, o plano premium amplia este limite — sem pressa.`}
           />
         </div>
       )}

@@ -13,7 +13,7 @@ const TIPS: OrganizationTip[] = [
     id: 'organize-night-before',
     icon: '🪶',
     title: 'Organize a Noite Anterior',
-    description: 'Deixe tudo pronto para amanhã com 15 minutos de foco.',
+    description: 'Deixe tudo pronto para depois com 15 minutos de foco.',
     checklist: [
       'Separar roupa e mochila das crianças.',
       'Deixar lanche e garrafinha prontos.',
