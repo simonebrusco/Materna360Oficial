@@ -58,7 +58,7 @@ export async function fetchCuidarComAmorSuggestion(
         'Mesmo nos dias puxados, o que conta é a intenção de cuidar. Um passo de cada vez já é muito.',
       tips: [
         'Escolha um gesto simples para hoje e lembre-se de que você não precisa dar conta de tudo.',
-        'Observe um momento em que seu filho pareceu mais tranquilo e tente repetir algo parecido amanhã.',
+        'Observe um momento em que seu filho pareceu mais tranquilo e tente repetir algo parecido quando der.',
         'Se algo não saiu como você esperava, se acolha: você já está fazendo o seu melhor.',
       ],
       disclaimer:

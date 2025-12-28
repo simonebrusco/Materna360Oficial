@@ -341,7 +341,7 @@ export default function RotinaLevePage() {
     }
   }, [currentDateKey, abrir])
 
-  // carregar limite diário persistente de receitas
+  // carregar limite do dia persistente de receitas
   useEffect(() => {
     const storageKey = `rotina-leve:recipes:${currentDateKey}:count`
     const stored = load(storageKey)
@@ -356,7 +356,7 @@ export default function RotinaLevePage() {
     }
   }, [currentDateKey])
 
-  // carregar limite diário persistente de ideias
+  // carregar limite do dia persistente de ideias
   useEffect(() => {
     const storageKey = `rotina-leve:ideas:${currentDateKey}:count`
     const stored = load(storageKey)
@@ -371,7 +371,7 @@ export default function RotinaLevePage() {
     }
   }, [currentDateKey])
 
-  // carregar limite diário persistente de inspirações
+  // carregar limite do dia persistente de inspirações
   useEffect(() => {
     const storageKey = `rotina-leve:inspiration:${currentDateKey}:count`
     const stored = load(storageKey)
@@ -699,7 +699,7 @@ export default function RotinaLevePage() {
   const handleGenerateIdeas = async () => {
     if (usedIdeasToday >= DAILY_IDEAS_LIMIT) {
       toast.info(
-        'Você já usou as ideias rápidas do dia por aqui. Guarda um pouquinho de energia pra amanhã, combinado?',
+        'Por agora, as ideias rápidas já foram usadas por aqui. Se quiser, você pode gerar mais em outro momento — sem pressa.',
       )
       try {
         track('rotina_leve.ideas.limit_reached', {
@@ -1092,7 +1092,7 @@ export default function RotinaLevePage() {
                           </Button>
 
                           <p className="text-[11px] text-[#545454]">
-                            Hoje você já usou{' '}
+                            Usos feitos por aqui:{' '}
                             <span className="font-semibold text-[#545454]">
                               {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
                             </span>{' '}
@@ -1101,8 +1101,7 @@ export default function RotinaLevePage() {
 
                           {isIdeasOverLimit && (
                             <p className="text-[11px] text-[#fd2597] font-medium">
-                              Você chegou ao limite de ideias rápidas por hoje. O resto do
-                              dia pode ser só vivido, sem pressão
+                              Por agora, essa parte já está completa. O que você fez hoje já conta.
                             </p>
                           )}
 
@@ -1209,7 +1208,7 @@ export default function RotinaLevePage() {
                           </Button>
 
                           <p className="text-[11px] text-[#545454]">
-                            Hoje você já usou{' '}
+                            Usos feitos por aqui:{' '}
                             <span className="font-semibold text-[#545454]">
                               {usedInspirationsToday} de {DAILY_INSPIRATION_LIMIT}
                             </span>{' '}
@@ -1218,8 +1217,7 @@ export default function RotinaLevePage() {
 
                           {isInspirationOverLimit && (
                             <p className="text-[11px] text-[#fd2597] font-medium">
-                              Você chegou ao limite de inspirações do dia. O que você já
-                              está fazendo hoje pela sua família já é muita coisa
+                              Por agora, essa parte já está completa. O que você fez hoje já vale.
                             </p>
                           )}
 
@@ -1372,7 +1370,7 @@ export default function RotinaLevePage() {
                   </Button>
 
                   <p className="text-[11px] text-[#545454]">
-                    Hoje você já usou{' '}
+                    Usos feitos por aqui:{' '}
                     <span className="font-semibold text-[#545454]">
                       {usedRecipesToday} de {DAILY_RECIPE_LIMIT}
                     </span>{' '}
@@ -1381,8 +1379,7 @@ export default function RotinaLevePage() {
 
                   {isOverLimit && (
                     <p className="text-[11px] text-[#fd2597] font-medium">
-                      Você chegou ao limite de receitas inteligentes do plano hoje. Amanhã
-                      a gente pensa em novas possibilidades com calma
+                      Por agora, essa parte já está completa. Quando fizer sentido, você pode gerar novas com calma.
                     </p>
                   )}
 

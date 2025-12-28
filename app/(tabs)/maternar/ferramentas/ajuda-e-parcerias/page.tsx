@@ -438,7 +438,7 @@ export default function AjudaEParceriasPage() {
                         App não carrega / travou
                       </summary>
                       <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
-                        Verifique a internet e feche/abra o app. Se persistir, volte mais tarde: estamos evoluindo com cuidado.
+                        Verifique a internet e feche/abra o app. Se persistir, tente novamente mais tarde: estamos evoluindo com cuidado.
                       </p>
                     </details>
 

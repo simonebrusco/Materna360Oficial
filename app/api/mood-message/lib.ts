@@ -21,7 +21,7 @@ export const QUOTES: Record<Mood, string[]> = {
     'dias neutros também fazem parte do caminho.',
     'nem todo dia precisa ser extraordinário.',
     'respire: está tudo bem não sentir tudo.',
-    'o simples de hoje sustenta o amanhã.',
+    'o simples de hoje já é suficiente.',
     'acolha o que couber; solte o resto.',
     'você está fazendo o suficiente.',
   ],

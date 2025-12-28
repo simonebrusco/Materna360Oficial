@@ -103,7 +103,7 @@ export function buildWeeklyInsight(ctx: WeeklyInsightContext): WeeklyInsight {
   } else if (bucket === 'equilibrio') {
     suggestions.push('Mantenha a constância gentil: um bloco por vez, sem acelerar o ritmo.')
     suggestions.push('Use o Meu Dia como eixo: escolha 1 tarefa essencial + 1 tarefa de cuidado.')
-    suggestions.push('Se sobrar energia, organize o amanhã em 2 linhas (só o essencial).')
+    suggestions.push('Se sobrar energia, organize o que vem a seguir em 2 linhas (só o essencial).')
   } else if (bucket === 'expansao') {
     suggestions.push('Aproveite a energia para simplificar o sistema: retire 1 exigência que não ajuda.')
     suggestions.push('Crie 1 rotina curta “que se repete” (3 a 5 min) para dar estabilidade ao dia.')
