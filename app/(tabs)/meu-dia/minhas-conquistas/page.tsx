@@ -24,8 +24,13 @@ const SEALS: { id: string; label: string; icon: KnownIconName }[] = [
   { id: 'presenca', label: 'Presença real', icon: 'star' },
 ]
 
+type Mission = { id: string; label: string; xp: number; done: boolean }
+
 function MissionsCard() {
-  const [missions, setMissions] = useState(INITIAL_MISSIONS.map((m) => ({ ...m, done: false })))
+  const [missions, setMissions] = useState<Mission[]>(
+    INITIAL_MISSIONS.map((m) => ({ ...m, done: false }))
+  )
+
   const completedCount = missions.filter((m) => m.done).length
 
   return (
@@ -44,18 +49,16 @@ function MissionsCard() {
               type="button"
               onClick={() => {
                 setMissions((prev) =>
-<<<<<<< HEAD
-                  prev.map((item) => (item.id === mission.id ? { ...item, done: !item.done } : item))
-=======
                   prev.map((item) =>
                     item.id === mission.id ? { ...item, done: !item.done } : item
                   )
->>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
                 )
               }}
               className={clsx(
                 'flex w-full items-center justify-between rounded-2xl border px-3 py-2.5 text-left transition',
-                isDone ? 'border-pink-200 bg-pink-50' : 'border-pink-100 bg-white hover:bg-pink-50/60'
+                isDone
+                  ? 'border-pink-200 bg-pink-50'
+                  : 'border-pink-100 bg-white hover:bg-pink-50/60'
               )}
             >
               <div className="flex items-center gap-3">
@@ -65,30 +68,22 @@ function MissionsCard() {
                     isDone ? 'border-pink-500 bg-pink-500' : 'border-pink-300 bg-white'
                   )}
                 >
-                  {isDone && <AppIcon name="check" className="h-3 w-3 text-white" decorative />}
+                  {isDone ? (
+                    <AppIcon name="check" className="h-3 w-3 text-white" decorative />
+                  ) : null}
                 </div>
 
-<<<<<<< HEAD
-                <span className={clsx('text-sm', isDone ? 'text-gray-700 line-through' : 'text-gray-800')}>
-=======
                 <span
                   className={clsx(
                     'text-sm',
                     isDone ? 'text-gray-700 line-through' : 'text-gray-800'
                   )}
                 >
->>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
                   {mission.label}
                 </span>
               </div>
 
-<<<<<<< HEAD
               <span className="text-xs font-medium text-pink-600">+{mission.xp}</span>
-=======
-              <span className="text-xs font-medium text-pink-600">
-                +{mission.xp}
-              </span>
->>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
             </button>
           )
         })}
@@ -113,13 +108,7 @@ export default function MinhasConquistasPage() {
           <div className="mt-4 space-y-6">
             <SoftCard className="w-full rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
               <div className="space-y-1">
-<<<<<<< HEAD
                 <h2 className="text-base font-semibold text-gray-900">Seu painel de progresso</h2>
-=======
-                <h2 className="text-base font-semibold text-gray-900">
-                  Seu painel de progresso
-                </h2>
->>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
                 <p className="text-sm text-gray-600">Pequenos avanços também contam.</p>
               </div>
 
@@ -148,13 +137,9 @@ export default function MinhasConquistasPage() {
             <SoftCard className="w-full rounded-3xl border border-pink-100 shadow-sm p-6 space-y-4">
               <div className="space-y-1">
                 <h2 className="text-base font-semibold text-gray-900">Selos</h2>
-<<<<<<< HEAD
-                <p className="text-sm text-gray-600">Uma coleção simbólica das suas pequenas grandes vitórias.</p>
-=======
                 <p className="text-sm text-gray-600">
                   Uma coleção simbólica das suas pequenas grandes vitórias.
                 </p>
->>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
               </div>
 
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -167,13 +152,7 @@ export default function MinhasConquistasPage() {
                       <AppIcon name={seal.icon} className="h-5 w-5 text-pink-500" decorative />
                     </div>
 
-<<<<<<< HEAD
                     <p className="text-xs font-medium text-gray-800 text-center">{seal.label}</p>
-=======
-                    <p className="text-xs font-medium text-gray-800 text-center">
-                      {seal.label}
-                    </p>
->>>>>>> 891816e7 (P30: corrigir parsing do MoodEnergyCheckin)
 
                     <span className="mt-1 inline-flex items-center rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-medium text-pink-600">
                       Guardado aqui
