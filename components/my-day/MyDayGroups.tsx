@@ -4,10 +4,12 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
 import {
+  addTaskToMyDay,
   groupTasks,
   listMyDayTasks,
   type GroupedTasks,
   type MyDayTaskItem,
+  MY_DAY_SOURCES,
   removeTask,
   snoozeTask,
   unsnoozeTask,
@@ -161,6 +163,19 @@ export default function MyDayGroups({
     setExpanded((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
   }
 
+  function focusGroup(gid: GroupId) {
+    setExpanded((prev) => ({ ...prev, [gid]: true }))
+    setHighlightGroup(gid)
+
+    window.setTimeout(() => {
+      try {
+        document.getElementById(`myday-group-${gid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } catch {}
+    }, 60)
+
+    window.setTimeout(() => setHighlightGroup(null), 4500)
+  }
+
   /* ---------- bootstrap ---------- */
 
   useEffect(() => {
@@ -196,21 +211,13 @@ export default function MyDayGroups({
       if (!payload) return
 
       const gid = groupIdFromOrigin(payload.origin)
-      setExpanded((prev) => ({ ...prev, [gid]: true }))
-      setHighlightGroup(gid)
-
-      window.setTimeout(() => {
-        try {
-          document.getElementById(`myday-group-${gid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        } catch {}
-      }, 60)
-
-      window.setTimeout(() => setHighlightGroup(null), 6500)
+      focusGroup(gid)
 
       try {
         track('my_day.continuity.applied', { origin: payload.origin, source: payload.source })
       } catch {}
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /* ---------- ações ---------- */
@@ -235,22 +242,73 @@ export default function MyDayGroups({
     if (res.ok) refresh()
   }
 
+  function quickAdd(origin: 'today' | 'family' | 'selfcare' | 'home' | 'other', title: string) {
+    const res = addTaskToMyDay({
+      title,
+      origin,
+      source: MY_DAY_SOURCES.UNKNOWN,
+    })
+
+    if (res.ok) {
+      refresh()
+      focusGroup(groupIdFromOrigin(origin))
+
+      try {
+        track('my_day.quick_add', { origin, source: MY_DAY_SOURCES.UNKNOWN })
+      } catch {}
+    } else {
+      try {
+        track('my_day.quick_add_failed', { origin, source: MY_DAY_SOURCES.UNKNOWN, reason: res.reason ?? 'unknown' })
+      } catch {}
+    }
+  }
+
   /* ---------- render ---------- */
 
   return (
-   <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
+    <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
       {!hasAny ? (
         <div className="bg-white rounded-3xl p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)] border border-[var(--color-border-soft)]">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">
-            Seu dia pode começar simples.
-          </h4>
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Seu dia pode começar simples.</h4>
 
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-            Você não precisa organizar tudo agora.
-          </p>
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">Você não precisa organizar tudo agora.</p>
 
-          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
-            Quando quiser, registre uma coisa pequena — ou apenas volte depois. O Materna360 continua aqui.
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => quickAdd('today', 'Uma coisa pequena para hoje')}
+              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] font-semibold hover:opacity-95 transition"
+            >
+              Para hoje
+            </button>
+
+            <button
+              type="button"
+              onClick={() => quickAdd('family', 'Uma coisa pequena para a família')}
+              className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+            >
+              Família
+            </button>
+
+            <button
+              type="button"
+              onClick={() => quickAdd('selfcare', 'Um cuidado simples para mim')}
+              className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+            >
+              Autocuidado
+            </button>
+
+            <button
+              type="button"
+              onClick={() => quickAdd('home', 'Uma coisa simples de casa')}
+              className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+            >
+              Casa
+            </button>
+          </div>
+
+          <p className="mt-4 text-[12px] text-[var(--color-text-muted)]">
+            Se preferir, pode deixar para depois. O Materna360 continua aqui.
           </p>
         </div>
       ) : (
@@ -299,10 +357,7 @@ export default function MyDayGroups({
                     const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
 
                     return (
-                      <div
-                        key={t.id}
-                        className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]"
-                      >
+                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-3 items-stretch sm:items-center">
                           <div className="min-w-0">
                             <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
