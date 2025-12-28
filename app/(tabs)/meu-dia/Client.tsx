@@ -1,3 +1,4 @@
+// app/(tabs)/meu-dia/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -14,6 +15,7 @@ import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import MyDayGroups from '@/components/my-day/MyDayGroups'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
+import { PageTemplate } from '@/components/common/PageTemplate'
 
 // P13 — continuidade (micro-frase 1x/dia)
 import { getBrazilDateKey } from '@/app/lib/dateKey'
@@ -298,166 +300,148 @@ export default function MeuDiaClient() {
   }, [refreshAiContextAndContinuity, refreshPremiumState, refreshMeuDiaLeveContinuity])
 
   return (
-    <main
-      data-layout="page-template-v1"
-      data-tab="meu-dia"
-      className="
-        eu360-hub-bg
-        relative min-h-[100dvh]
-        pb-24
-        flex flex-col
-        overflow-hidden
-      "
+    <PageTemplate
+      headerTone="light"
+      label="MEU DIA"
+      title="Seu dia, do seu jeito"
+      subtitle="Um espaço para organizar o que importa hoje — com leveza, sem cobrança."
+      className="relative overflow-hidden"
     >
-     <div className="page-shell relative z-10 flex-1 w-full">
-        {/* HERO */}
-        <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-          <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
-            MEU DIA
-          </span>
+      {/* Extensão do hero (mantém o conteúdo existente sem duplicar label/título) */}
+      <section className="-mt-4 md:-mt-5 mb-6 md:mb-8">
+        <p className="text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">
+          Você não precisa dar conta de tudo. Só do que fizer sentido agora.
+        </p>
 
-          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
-            Seu dia, do seu jeito
-          </h1>
+        <div className="pt-4 space-y-1">
+          <ClientOnly>
+            <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
+          </ClientOnly>
 
-          <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl lg:max-w-3xl">
-            Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
-          </p>
+          <p className="text-sm md:text-base text-white/95 max-w-2xl lg:max-w-3xl">“{dailyMessage}”</p>
 
-          <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">
-            Você não precisa dar conta de tudo. Só do que fizer sentido agora.
-          </p>
+          {continuityLine?.text ? (
+            <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">
+              {continuityLine.text}
+            </p>
+          ) : null}
+        </div>
 
-          <div className="pt-4 space-y-1">
-            <ClientOnly>
-              <h2 className="text-[22px] md:text-[24px] font-semibold text-white">{greeting || 'Bom dia'}</h2>
-            </ClientOnly>
-
-            <p className="text-sm md:text-base text-white/95 max-w-2xl lg:max-w-3xl">“{dailyMessage}”</p>
-
-            {continuityLine?.text ? (
-              <p className="pt-2 text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">
-                {continuityLine.text}
-              </p>
-            ) : null}
-          </div>
-
-          {/* P26 — continuidade discreta (aparece só quando veio do Meu Dia Leve) */}
-          {meuDiaLevePrompt ? (
-            <div className="mt-5">
-              <div
-                className="
-                  bg-white
-                  rounded-3xl
-                  p-6
-                  shadow-[0_2px_14px_rgba(0,0,0,0.05)]
-                  border border-[#F5D7E5]
-                "
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="text-[12px] text-[#6A6A6A]">
-                        Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
-                      </div>
-                      <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-2xl lg:max-w-3xl">
-                        Se quiser, pegue mais um próximo passo pronto — sem inventar nada.
-                      </div>
-                    </div>
+        {/* P26 — continuidade discreta (aparece só quando veio do Meu Dia Leve) */}
+        {meuDiaLevePrompt ? (
+          <div className="mt-5">
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                p-6
+                shadow-[0_2px_14px_rgba(0,0,0,0.05)]
+                border border-[#F5D7E5]
+              "
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                    <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href="/maternar/meu-dia-leve"
-                      className="
-                        rounded-full
-                        bg-[#fd2597] hover:opacity-95
-                        text-white
-                        px-4 py-2
-                        text-[12px]
-                        font-semibold
-                        shadow-lg transition
-                        whitespace-nowrap
-                      "
-                      onClick={() => {
-                        try {
-                          track('meu_dia_leve.continuity_prompt.click', {
-                            dateKey: todayKey,
-                            origin: meuDiaLevePrompt.origin,
-                            source: meuDiaLevePrompt.source,
-                          })
-                        } catch {}
-
-                        // ack 1x/dia + limpar payload para não “grudar”
-                        safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        safeRemoveLS(LS_RECENT_SAVE)
-                      }}
-                    >
-                      Voltar ao Meu Dia Leve
-                    </a>
-
-                    <button
-                      type="button"
-                      className="
-                        rounded-full
-                        bg-white
-                        border border-[#F5D7E5]/70
-                        text-[#545454]
-                        px-4 py-2
-                        text-[12px]
-                        transition
-                        hover:shadow-sm
-                        whitespace-nowrap
-                      "
-                      onClick={() => {
-                        safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        safeRemoveLS(LS_RECENT_SAVE)
-                        setMeuDiaLevePrompt(null)
-                        try {
-                          track('meu_dia_leve.continuity_prompt.dismiss', { dateKey: todayKey })
-                        } catch {}
-                      }}
-                    >
-                      Ok
-                    </button>
+                  <div className="min-w-0">
+                    <div className="text-[12px] text-[#6A6A6A]">
+                      Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
+                    </div>
+                    <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-2xl lg:max-w-3xl">
+                      Se quiser, pegue mais um próximo passo pronto — sem inventar nada.
+                    </div>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href="/maternar/meu-dia-leve"
+                    className="
+                      rounded-full
+                      bg-[#fd2597] hover:opacity-95
+                      text-white
+                      px-4 py-2
+                      text-[12px]
+                      font-semibold
+                      shadow-lg transition
+                      whitespace-nowrap
+                    "
+                    onClick={() => {
+                      try {
+                        track('meu_dia_leve.continuity_prompt.click', {
+                          dateKey: todayKey,
+                          origin: meuDiaLevePrompt.origin,
+                          source: meuDiaLevePrompt.source,
+                        })
+                      } catch {}
+
+                      // ack 1x/dia + limpar payload para não “grudar”
+                      safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
+                      safeRemoveLS(LS_RECENT_SAVE)
+                    }}
+                  >
+                    Voltar ao Meu Dia Leve
+                  </a>
+
+                  <button
+                    type="button"
+                    className="
+                      rounded-full
+                      bg-white
+                      border border-[#F5D7E5]/70
+                      text-[#545454]
+                      px-4 py-2
+                      text-[12px]
+                      transition
+                      hover:shadow-sm
+                      whitespace-nowrap
+                    "
+                    onClick={() => {
+                      safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
+                      safeRemoveLS(LS_RECENT_SAVE)
+                      setMeuDiaLevePrompt(null)
+                      try {
+                        track('meu_dia_leve.continuity_prompt.dismiss', { dateKey: todayKey })
+                      } catch {}
+                    }}
+                  >
+                    Ok
+                  </button>
                 </div>
               </div>
             </div>
-          ) : null}
-        </header>
+          </div>
+        ) : null}
+      </section>
 
-        <MyDayGroups aiContext={aiContext} />
+      <MyDayGroups aiContext={aiContext} />
 
-        {/* BLOCO FREE / PREMIUM — inalterado */}
-        {/* ... mantém exatamente como estava ... */}
+      {/* BLOCO FREE / PREMIUM — inalterado */}
+      {/* ... mantém exatamente como estava ... */}
 
-        <section
-          className="
-            mt-6 md:mt-8
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-            border border-[#F5D7E5]
-          "
-        >
-          <WeeklyPlannerShell />
-        </section>
+      <section
+        className="
+          mt-6 md:mt-8
+          bg-white
+          rounded-3xl
+          p-6
+          shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+          border border-[#F5D7E5]
+        "
+      >
+        <WeeklyPlannerShell />
+      </section>
 
-        <div className="mt-8 md:mt-10">
-          <MotivationalFooter routeKey="meu-dia-hub" />
-        </div>
+      <div className="mt-8 md:mt-10">
+        <MotivationalFooter routeKey="meu-dia-hub" />
       </div>
 
-      <footer className="relative z-10 w-full text-center pt-4 pb-2 px-4 text-[12px] text-[#6A6A6A]/85">
-        <p> 2025 Materna360. Todos os direitos reservados.</p>
+      <footer className="w-full text-center pt-4 pb-2 px-4 text-[12px] text-[#6A6A6A]/85">
+        <p>2025 Materna360. Todos os direitos reservados.</p>
         <p>Proibida a reprodução total ou parcial sem autorização.</p>
       </footer>
-    </main>
+    </PageTemplate>
   )
 }
