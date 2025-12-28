@@ -1091,17 +1091,17 @@ export default function RotinaLevePage() {
                             {ideasLoading ? 'Gerando ideias…' : 'Gerar ideias para agora'}
                           </Button>
 
-                          <p className="text-[11px] text-[#545454]">
-  Ideias geradas hoje:{' '}
+                         <p className="text-[11px] text-[#545454]">
+  Inspirações de hoje:{' '}
   <span className="font-semibold text-[#545454]">
-    {usedIdeasToday} de {DAILY_IDEAS_LIMIT}
+    {usedInspirationsToday} de {DAILY_INSPIRATION_LIMIT}
   </span>
   .
 </p>
 
-{isIdeasOverLimit && (
+{isInspirationOverLimit && (
   <p className="text-[11px] text-[#fd2597] font-medium">
-    Por agora, essa parte já está completa. Se quiser, volte mais tarde — sem pressa.
+    Por agora, já está completo por aqui. O que você fez hoje já vale.
   </p>
 )}
 
