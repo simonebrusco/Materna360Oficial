@@ -172,79 +172,74 @@ export default function LoginClient() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center px-4">
-      <div className="w-full max-w-[420px] rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-[var(--color-text-main)]">Entrar</h1>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Acesse sua conta para continuar sua jornada.</p>
-
-        <form className="mt-5 space-y-3" onSubmit={onSubmit}>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--color-text-main)]">Email</label>
-            <input
-              className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm outline-none"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--color-text-main)]">Senha</label>
-            <input
-              className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm outline-none"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </div>
-
-          {uiError ? (
-            <div className="rounded-xl border border-black/10 bg-black/5 px-3 py-2 text-xs text-[var(--color-text-main)]">
-              <div className="font-semibold">{uiError.title}</div>
-              <div className="mt-1 text-[var(--color-text-muted)]">{uiError.message}</div>
-
-              {uiError.kind === 'not_confirmed' ? (
-                <div className="mt-2 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={onResendConfirmation}
-                    disabled={resendLoading}
-                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-[var(--color-text-main)] disabled:opacity-60"
-                  >
-                    {resendLoading ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
-                  </button>
-
-                  {resendMsg ? <div className="text-[11px] text-[var(--color-text-muted)]">{resendMsg}</div> : null}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <button
-            className="w-full rounded-xl bg-[var(--color-brand)] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Entrando…' : 'Entrar'}
-          </button>
-        </form>
-
-        <div className="mt-3 text-xs text-[var(--color-text-muted)]">
-          <a className="underline" href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}>
-            Esqueci minha senha
-          </a>
+    <div className="w-full">
+      <form className="space-y-4" onSubmit={onSubmit}>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-[#2f3a56]">Email</label>
+          <input
+            className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-sm text-[#2f3a56] outline-none placeholder:text-[#545454]/60 focus:border-[#fd2597]"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
         </div>
 
-        <div className="mt-4 text-xs text-[var(--color-text-muted)]">
-          Ainda não tem conta?{' '}
-          <a className="underline" href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>
-            Criar agora
-          </a>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-[#2f3a56]">Senha</label>
+          <input
+            className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-sm text-[#2f3a56] outline-none placeholder:text-[#545454]/60 focus:border-[#fd2597]"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
         </div>
+
+        {uiError ? (
+          <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-xs">
+            <div className="font-semibold text-[#2f3a56]">{uiError.title}</div>
+            <div className="mt-1 text-[#545454]">{uiError.message}</div>
+
+            {uiError.kind === 'not_confirmed' ? (
+              <div className="mt-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={onResendConfirmation}
+                  disabled={resendLoading}
+                  className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-xs font-semibold text-[#2f3a56] disabled:opacity-60"
+                >
+                  {resendLoading ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
+                </button>
+
+                {resendMsg ? <div className="text-[11px] text-[#545454]">{resendMsg}</div> : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <button
+          className="w-full rounded-2xl bg-[#fd2597] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? 'Entrando…' : 'Entrar'}
+        </button>
+      </form>
+
+      <div className="mt-4 text-xs text-[#545454]">
+        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}>
+          Esqueci minha senha
+        </a>
+      </div>
+
+      <div className="mt-4 text-xs text-[#545454]">
+        Ainda não tem conta?{' '}
+        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>
+          Criar agora
+        </a>
       </div>
     </div>
   )

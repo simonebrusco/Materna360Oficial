@@ -266,7 +266,7 @@ const HUB_CARDS: HubCard[] = [
     icons: [
       {
         id: 'planos',
-        href: '/planos', // 🔗 rota de planos correta
+        href: '/planos', //  rota de planos correta
         icon: 'calendar',
         label: 'Planos',
       },

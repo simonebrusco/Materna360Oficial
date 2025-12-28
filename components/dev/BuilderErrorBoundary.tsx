@@ -32,7 +32,7 @@ export default class BuilderErrorBoundary extends React.Component<Props, State> 
         }}
       >
         <h1 style={{ margin: '8px 0', fontSize: '20px', fontWeight: 'bold' }}>
-          ⚠️ Builder Preview Error
+           Builder Preview Error
         </h1>
         <p style={{ margin: '12px 0', fontSize: '14px', lineHeight: 1.5 }}>
           We caught a rendering error to keep the preview alive. See details below.

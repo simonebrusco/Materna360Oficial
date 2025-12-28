@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { track } from '@/app/lib/telemetry'
 import { buildWeekLabels, getWeekStartKey, formatDateKey } from '@/app/lib/weekLabels'
 
-// ✅ P23 — camada de experiência (não chamar isPremium aqui)
+//  P23 — camada de experiência (não chamar isPremium aqui)
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 type DayPoint = { label: string; mood: number; energy: number }

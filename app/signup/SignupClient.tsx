@@ -101,10 +101,6 @@ export default function SignupClient() {
       return
     }
 
-    // Quando confirmação por email está ativa:
-    // - pode vir session nula
-    // - user existe (data.user) e session pode não existir
-    // UX: não redirecionar; explicar e dar ação.
     const hasSession = Boolean(data?.session)
 
     if (hasSession) {
@@ -121,8 +117,7 @@ export default function SignupClient() {
     setUiMsg({
       kind: 'success',
       title: 'Conta criada',
-      message:
-        'Agora confirme seu e-mail para entrar com segurança. Assim que confirmar, você volta e faz login.',
+      message: 'Agora confirme seu e-mail para entrar com segurança. Assim que confirmar, você volta e faz login.',
     })
   }
 
@@ -175,84 +170,82 @@ export default function SignupClient() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center px-4">
-      <div className="w-full max-w-[420px] rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-[var(--color-text-main)]">Criar conta</h1>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Leva poucos segundos.</p>
-
-        <form className="mt-5 space-y-3" onSubmit={onSubmit}>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--color-text-main)]">Email</label>
-            <input
-              className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm outline-none"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-              disabled={loading || resendLoading}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--color-text-main)]">Senha</label>
-            <input
-              className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm outline-none"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-              disabled={loading || resendLoading}
-            />
-          </div>
-
-          {uiMsg ? (
-            <div className="rounded-xl border border-black/10 bg-black/5 px-3 py-2 text-xs text-[var(--color-text-main)]">
-              {uiMsg.title ? <div className="font-semibold">{uiMsg.title}</div> : null}
-              <div className={uiMsg.title ? 'mt-1 text-[var(--color-text-muted)]' : ''}>{uiMsg.message}</div>
-
-              {signupDone ? (
-                <div className="mt-2 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={onResendConfirmation}
-                    disabled={resendLoading}
-                    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-[var(--color-text-main)] disabled:opacity-60"
-                  >
-                    {resendLoading ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
-                  </button>
-
-                  <a
-                    className="w-full text-center rounded-xl bg-[var(--color-brand)] px-3 py-2 text-xs font-semibold text-white"
-                    href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
-                  >
-                    Já confirmei, quero entrar
-                  </a>
-
-                  <div className="text-[11px] text-[var(--color-text-muted)]">
-                    Dica rápida: às vezes o e-mail cai em spam ou promoções.
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <button
-            className="w-full rounded-xl bg-[var(--color-brand)] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            type="submit"
+    <div className="w-full">
+      <form className="space-y-4" onSubmit={onSubmit}>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-[#2f3a56]">Email</label>
+          <input
+            className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-sm text-[#2f3a56] outline-none placeholder:text-[#545454]/60 focus:border-[#fd2597]"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
             disabled={loading || resendLoading}
-          >
-            {loading ? 'Criando…' : 'Criar conta'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-xs text-[var(--color-text-muted)]">
-          Já tem conta?{' '}
-          <a className="underline" href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}>
-            Entrar
-          </a>
+          />
         </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-[#2f3a56]">Senha</label>
+          <input
+            className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-sm text-[#2f3a56] outline-none placeholder:text-[#545454]/60 focus:border-[#fd2597]"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            required
+            disabled={loading || resendLoading}
+          />
+        </div>
+
+        {uiMsg ? (
+          <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-xs">
+            {uiMsg.title ? <div className="font-semibold text-[#2f3a56]">{uiMsg.title}</div> : null}
+            <div className={uiMsg.title ? 'mt-1 text-[#545454]' : 'text-[#545454]'}>{uiMsg.message}</div>
+
+            {signupDone ? (
+              <div className="mt-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={onResendConfirmation}
+                  disabled={resendLoading}
+                  className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-xs font-semibold text-[#2f3a56] disabled:opacity-60"
+                >
+                  {resendLoading ? 'Reenviando…' : 'Reenviar e-mail de confirmação'}
+                </button>
+
+                <a
+                  className="w-full text-center rounded-2xl bg-[#fd2597] px-4 py-3 text-xs font-semibold text-white"
+                  href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
+                >
+                  Já confirmei, quero entrar
+                </a>
+
+                <div className="text-[11px] text-[#545454]">
+                  Dica rápida: às vezes o e-mail cai em spam ou promoções.
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <button
+          className="w-full rounded-2xl bg-[#fd2597] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          type="submit"
+          disabled={loading || resendLoading}
+        >
+          {loading ? 'Criando…' : 'Criar conta'}
+        </button>
+      </form>
+
+      <div className="mt-4 text-xs text-[#545454]">
+        Já tem conta?{' '}
+        <a
+          className="underline decoration-[#F5D7E5] underline-offset-4"
+          href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
+          Entrar
+        </a>
       </div>
     </div>
   )

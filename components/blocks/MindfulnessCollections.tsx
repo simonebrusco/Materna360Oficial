@@ -85,22 +85,22 @@ type CollectionGroup = {
 
 const COLLECTION_DETAILS: Record<CollectionKey, { icon: string; title: string; description: string }> = {
   reconecteSe: {
-    icon: '🪷',
+    icon: '',
     title: 'Reconecte-se',
     description:
       'Um convite para pausar, respirar e se reconectar com você mesma. Essas práticas ajudam a acalmar a mente e acolher o que você sente, com leveza e presença.',
   },
   renoveSuaEnergia: {
-    icon: '☀️',
+    icon: '',
     title: 'Renove sua energia',
     description:
       'Pequenas pausas para despertar alegria, esperança e equilíbrio. Essas meditações trazem leveza para o dia e ajudam a transformar o caos em calma.',
   },
   confieEmVoce: {
-    icon: '🌙',
+    icon: '',
     title: 'Confie em você',
     description:
-      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando tudo o que você precisa é de silêncio e acolhimento.',
+      'Momentos para relaxar, descansar e liberar o cansaço emocional. Ideal para o fim do dia, quando o que mais ajuda é silêncio e acolhimento.',
   },
 }
 

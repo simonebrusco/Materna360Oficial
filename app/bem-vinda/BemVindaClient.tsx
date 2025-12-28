@@ -1,10 +1,14 @@
 'use client'
 
-import { useMemo } from 'react'
+import * as React from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { save } from '@/app/lib/persist'
 
-function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
+const SEEN_KEY = 'm360_seen_welcome_v1'
+
+function safeInternalRedirect(
+  target: string | null | undefined,
+  fallback = '/meu-dia'
+) {
   if (!target) return fallback
   const t = target.trim()
   if (!t) return fallback
@@ -14,105 +18,113 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
   return t
 }
 
-const SEEN_KEY = 'm360_seen_welcome_v1'
+function setSeenWelcomeCookie() {
+  try {
+    document.cookie = `${SEEN_KEY}=1; path=/; max-age=31536000; samesite=lax`
+  } catch {
+    // silêncio intencional
+  }
+}
 
 export default function BemVindaClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Compat: algumas rotas podem mandar "next"; o middleware usa "redirectTo"
-  const nextRaw = searchParams.get('next') ?? searchParams.get('redirectTo')
-  const nextDest = useMemo(() => safeInternalRedirect(nextRaw, '/meu-dia'), [nextRaw])
+  const nextRaw = searchParams.get('next')
+  const nextPath = safeInternalRedirect(nextRaw, '/meu-dia')
 
-  function markSeenSilently() {
-    // 1) Client storage (persist)
-    try {
-      save(SEEN_KEY, '1')
-    } catch {
-      // silencioso
-    }
-
-    // 2) Cookie (para o middleware)
-    try {
-      const oneYear = 60 * 60 * 24 * 365
-      const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''
-      document.cookie = `${SEEN_KEY}=1; Path=/; Max-Age=${oneYear}; SameSite=Lax${secure}`
-    } catch {
-      // silencioso
-    }
+  function handleStartMyDay() {
+    setSeenWelcomeCookie()
+    router.replace(nextPath || '/meu-dia')
   }
 
-  function onStartMeuDia() {
-    markSeenSilently()
-    router.push(nextDest)
-  }
-
-  function onGoMaternar() {
-    markSeenSilently()
-    router.push('/maternar')
+  function handleGoMaternar() {
+    setSeenWelcomeCookie()
+    router.replace('/maternar')
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center px-4">
-      <div className="w-full max-w-[520px] rounded-3xl border border-black/10 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold leading-tight text-[var(--color-text-main)]">
-          Você não está falhando.
-          <br />
-          Você está cansada.
-        </h1>
+    <main className="min-h-[100svh] w-full px-4 py-10">
+      {/* Área rolável segura */}
+      <div className="min-h-[100svh] w-full flex items-start justify-center overflow-y-auto">
+        {/* Fundo com identidade, mas silencioso */}
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 -z-10 bg-[linear-gradient(to_bottom,#fd2597_0%,#fde2ec_22%,#ffffff_58%,#ffffff_100%)]"
+        />
 
-        <p className="mt-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
-          Entre trabalho, casa, filhos e expectativas,
-          <br />
-          o dia pesa — e mesmo fazendo o seu melhor,
-          <br />
-          parece que nunca é suficiente.
-        </p>
+        <div className="w-full max-w-[520px]">
+          <div className="rounded-3xl bg-white p-7 border border-[#F5D7E5] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)]">
+            {/* Headline */}
+            <h1 className="text-[28px] leading-tight font-semibold text-[#2f3a56]">
+              Você não está sozinha.
+              <br />
+              Você está cansada.
+            </h1>
 
-        <p className="mt-5 text-sm leading-relaxed text-[var(--color-text-main)]">
-          O <strong>Materna360</strong> não existe para te ensinar
-          <br />
-          a ser uma mãe melhor.
-          <br />
-          <span className="font-medium">Você já é.</span>
-        </p>
+            {/* Texto principal */}
+            <div className="mt-4 space-y-3 text-[14px] leading-relaxed text-[#545454]">
+              <p>
+                Entre trabalho, casa, filhos e expectativas, o dia pesa — e mesmo
+                fazendo o seu melhor, às vezes parece que nunca é suficiente.
+              </p>
 
-        <p className="mt-3 text-sm leading-relaxed text-[var(--color-text-muted)]">
-          Ele existe para te ajudar a viver a maternidade
-          <br />
-          com menos culpa e mais leveza.
-        </p>
+              <p>
+                O{' '}
+                <span className="font-semibold text-[#2f3a56]">
+                  Materna360
+                </span>{' '}
+                não existe para te ensinar a ser uma mãe melhor. Você já é.
+              </p>
 
-        <div className="mt-6 space-y-2 text-sm text-[var(--color-text-muted)]">
-          <p>• Um jeito mais gentil de organizar o dia</p>
-          <p>• Um espaço que também é seu</p>
-          <p>• Pequenos apoios pensados para a vida real</p>
-        </div>
+              <p>
+                Ele existe para te ajudar a viver a maternidade com menos culpa e
+                mais leveza.
+              </p>
+            </div>
 
-        <p className="mt-4 text-xs text-[var(--color-text-muted)]">Sem cobrança. Sem perfeição.</p>
+            {/* Pílulas de valor */}
+            <div className="mt-5 grid gap-3">
+              <div className="rounded-2xl border border-[#F5D7E5] bg-[#fff7fa] px-4 py-3 text-[13px] text-[#545454]">
+                Um jeito mais gentil de organizar o dia
+              </div>
+              <div className="rounded-2xl border border-[#F5D7E5] bg-[#fff7fa] px-4 py-3 text-[13px] text-[#545454]">
+                Um espaço que também é seu
+              </div>
+              <div className="rounded-2xl border border-[#F5D7E5] bg-[#fff7fa] px-4 py-3 text-[13px] text-[#545454]">
+                Pequenos apoios pensados para a vida real
+              </div>
+            </div>
 
-        <div className="mt-8 space-y-2">
-          <button
-            type="button"
-            onClick={onStartMeuDia}
-            className="w-full rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          >
-            Começar pelo Meu Dia
-          </button>
+            <p className="mt-5 text-[12px] text-[#545454]">
+              Sem cobrança. Sem perfeição.
+            </p>
 
-          <button
-            type="button"
-            onClick={onGoMaternar}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:bg-black/[0.02] transition"
-          >
-            Ir para o Maternar
-          </button>
+            {/* CTAs */}
+            <div className="mt-7 space-y-3">
+              <button
+                type="button"
+                onClick={handleStartMyDay}
+                className="w-full rounded-2xl bg-[#fd2597] px-4 py-3 text-sm font-semibold text-white"
+              >
+                Começar pelo Meu Dia
+              </button>
 
-          <p className="pt-2 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
-            Você pode trocar de aba depois. Aqui é só para te dar um começo leve.
-          </p>
+              <button
+                type="button"
+                onClick={handleGoMaternar}
+                className="w-full rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3 text-sm font-semibold text-[#2f3a56]"
+              >
+                Ir para o Maternar
+              </button>
+            </div>
+
+            <p className="mt-5 text-center text-[12px] text-[#545454]/60">
+              Você pode trocar de aba depois. Aqui é só para te dar um começo leve.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

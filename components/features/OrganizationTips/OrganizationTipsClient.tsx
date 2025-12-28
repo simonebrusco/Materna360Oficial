@@ -455,7 +455,7 @@ export function OrganizationTipsClient({ tips }: OrganizationTipsClientProps) {
                     <p className="font-mono text-2xl text-support-1">{formattedTime}</p>
                   </div>
                   {timerStatus === 'completed' ? (
-                    <p className="text-sm font-medium text-primary"><span aria-hidden>⏰</span> Tempo concluído! Pequenas pausas fazem grande diferença.</p>
+                    <p className="text-sm font-medium text-primary"><span aria-hidden></span> Tempo concluído! Pequenas pausas fazem grande diferença.</p>
                   ) : (
                     <p className="text-xs text-support-2">Reserve um momento só seu. Pausas curtas trazem fôlego para o dia.</p>
                   )}

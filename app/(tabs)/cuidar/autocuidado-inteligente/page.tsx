@@ -728,7 +728,7 @@ export default function AutocuidadoInteligentePage() {
                         {/* Alimentação */}
                         <div className="space-y-3">
                           <p className="text-[11px] md:text-xs font-semibold text-[#545454] uppercase tracking-wide">
-                            🍽️ Alimentação
+                             Alimentação
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {[

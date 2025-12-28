@@ -642,8 +642,8 @@ export default function MeuDiaLeveClient() {
       setAiRecipeHint('')
     } catch {
       setAiRecipeError('erro_rede')
-      setAiRecipeHint('Falhou agora. Se quiser, use uma opção pronta abaixo.')
-      toast.info('Falhou agora. Se quiser, use uma opção pronta abaixo.')
+      setAiRecipeHint('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
+      toast.info('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
     } finally {
       setAiRecipeLoading(false)
     }

@@ -81,7 +81,7 @@ export default function CuidarDoMeuFilhoSection({
                   : 'bg-[var(--color-soft-bg)] text-[var(--color-text-muted)]/50 text-[10px]'
               }`}
             >
-              {task.priority === 'alta' ? '★ Prioridade' : 'Normal'}
+              {task.priority === 'alta' ? ' Prioridade' : 'Normal'}
             </button>
           </div>
         ))}
