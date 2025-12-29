@@ -1,0 +1,492 @@
+'use client'
+
+import { useCallback, useMemo, useRef, useState } from 'react'
+import AppIcon from '@/components/ui/AppIcon'
+import { SoftCard } from '@/components/ui/card'
+import { Button } from '@/components/ui/Button'
+
+type Suggestion = {
+  id: string
+  title: string
+  description?: string
+  tag?: string
+}
+
+type State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; items: Suggestion[] }
+
+const LS_SAVED_KEY = 'm360.ai.maternar_cards.saved.v1'
+const LS_DISMISS_KEY_PREFIX = 'm360.ai.maternar_cards.dismissed.' // + dateKey
+
+function safeParse<T>(raw: string | null): T | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function brazilDateKey(d: Date) {
+  // suficiente para “1x por dia” em pt-BR sem dependência extra
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function signature(items: Suggestion[]) {
+  return items.map(i => `${i.title}::${i.description ?? ''}`).join('|')
+}
+
+function shuffle<T>(arr: T[], seed: number) {
+  const a = [...arr]
+  let m = a.length
+  let s = seed
+  while (m) {
+    s = (s * 9301 + 49297) % 233280
+    const rnd = s / 233280
+    const i = Math.floor(rnd * m--)
+    ;[a[m], a[i]] = [a[i], a[m]]
+  }
+  return a
+}
+
+function baseFallback(): Suggestion[] {
+  return [
+    {
+      id: 'fb-1',
+      tag: 'hoje',
+      title: 'Escolha só 1 coisa para hoje',
+      description: 'Uma prioridade já é suficiente. O resto pode esperar.',
+    },
+    {
+      id: 'fb-2',
+      tag: 'pausa',
+      title: 'Respire por 60 segundos',
+      description: 'Inspire 4, segure 2, solte 6. Só uma vez já ajuda.',
+    },
+    {
+      id: 'fb-3',
+      tag: 'vínculo',
+      title: 'Um gesto pequeno de conexão',
+      description: 'Olho no olho por 10 segundos. Sem falar nada. Só presença.',
+    },
+    {
+      id: 'fb-4',
+      tag: 'limites',
+      title: 'Uma frase curta para limites',
+      description: '“Eu te ouço. E ainda assim, agora não.” Sem justificar demais.',
+    },
+    {
+      id: 'fb-5',
+      tag: 'cansaço',
+      title: 'Troque “dar conta” por “caber”',
+      description: 'Pergunta de hoje: o que cabe — de verdade — nesse momento?',
+    },
+  ]
+}
+
+function normalize(payload: any): Suggestion[] | null {
+  if (!payload) return null
+
+  // formato preferido: { suggestions: [{id,title,description,tag}] }
+  if (Array.isArray(payload?.suggestions)) {
+    const items = payload.suggestions
+      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
+      .slice(0, 3)
+      .map((x: any, idx: number) => ({
+        id: typeof x.id === 'string' && x.id.trim() ? x.id : `m-${idx + 1}`,
+        title: String(x.title),
+        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+        tag: typeof x.tag === 'string' && x.tag.trim() ? String(x.tag) : undefined,
+      }))
+
+    return items.length ? items : null
+  }
+
+  // fallback legado: { title, body } -> split lines
+  if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
+    const raw = String(payload?.body ?? '')
+      .split('\n')
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+      .slice(0, 3)
+
+    const items = (raw.length ? raw : [payload?.title].filter(Boolean))
+      .slice(0, 3)
+      .map((line: any, idx: number) => ({
+        id: `m-${idx + 1}`,
+        title: String(line),
+      }))
+
+    return items.length ? items : null
+  }
+
+  return null
+}
+
+function getSavedFromLS(): Suggestion[] {
+  const raw = safeGetLS(LS_SAVED_KEY)
+  const parsed = safeParse<unknown>(raw)
+  if (!Array.isArray(parsed)) return []
+  const items = (parsed as any[])
+    .filter(x => x && typeof x.title === 'string' && x.title.trim())
+    .slice(0, 50)
+    .map((x, idx) => ({
+      id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
+      title: String(x.title),
+      description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+      tag: typeof x.tag === 'string' && x.tag.trim() ? String(x.tag) : undefined,
+    }))
+  return items
+}
+
+function setSavedToLS(items: Suggestion[]) {
+  safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
+}
+
+function getDismissedToday(todayKey: string): Record<string, true> {
+  const raw = safeGetLS(`${LS_DISMISS_KEY_PREFIX}${todayKey}`)
+  const parsed = safeParse<Record<string, true>>(raw)
+  return parsed && typeof parsed === 'object' ? parsed : {}
+}
+
+function setDismissedToday(todayKey: string, value: Record<string, true>) {
+  safeSetLS(`${LS_DISMISS_KEY_PREFIX}${todayKey}`, JSON.stringify(value))
+}
+
+export default function MaternarAICards() {
+  const todayKey = useMemo(() => brazilDateKey(new Date()), [])
+
+  const [state, setState] = useState<State>(() => ({ status: 'idle' }))
+  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
+  const [dismissed, setDismissed] = useState<Record<string, true>>(() => getDismissedToday(todayKey))
+
+  const lastSigRef = useRef<string>('')
+  const seedRef = useRef<number>(Date.now())
+
+  const visibleItems = useMemo(() => {
+    if (state.status !== 'done') return []
+    return state.items.filter(i => !dismissed[i.id])
+  }, [state, dismissed])
+
+  const persistDismiss = useCallback(
+    (next: Record<string, true>) => {
+      setDismissed(next)
+      setDismissedToday(todayKey, next)
+    },
+    [todayKey]
+  )
+
+  const dismissOne = useCallback(
+    (id: string) => {
+      persistDismiss({ ...dismissed, [id]: true })
+    },
+    [dismissed, persistDismiss]
+  )
+
+  const saveOne = useCallback(
+    (item: Suggestion) => {
+      const key = `${item.title}::${item.description ?? ''}`.trim()
+      const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
+      if (exists) {
+        dismissOne(item.id)
+        return
+      }
+
+      const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
+      setSaved(next)
+      setSavedToLS(next)
+      dismissOne(item.id)
+    },
+    [saved, dismissOne]
+  )
+
+  const removeSaved = useCallback(
+    (id: string) => {
+      const next = saved.filter(s => s.id !== id)
+      setSaved(next)
+      setSavedToLS(next)
+    },
+    [saved]
+  )
+
+  const fetchCards = useCallback(
+    async (attempt = 0) => {
+      setState({ status: 'loading' })
+
+      const nonce = Date.now()
+
+      try {
+        // preferimos usar o endpoint existente /api/ai/emocional
+        // porque está alinhado com “Maternar” (acolhimento/repertório).
+        const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
+          method: 'GET',
+          cache: 'no-store',
+        })
+
+        let data: any = null
+        if (res.ok) data = await res.json().catch(() => null)
+
+        const normalized = normalize(data)
+        const nextItems =
+          normalized ??
+          shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
+
+        const sig = signature(nextItems)
+
+        if (sig && sig === lastSigRef.current && attempt < 1) {
+          return await fetchCards(attempt + 1)
+        }
+
+        lastSigRef.current = sig
+        // a cada “rodada”, não zeramos dismiss global do dia; respeitamos “não agora”
+        setState({ status: 'done', items: nextItems })
+      } catch {
+        const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
+        const sig = signature(nextItems)
+
+        if (sig && sig === lastSigRef.current && attempt < 1) {
+          return await fetchCards(attempt + 1)
+        }
+
+        lastSigRef.current = sig
+        setState({ status: 'done', items: nextItems })
+      }
+    },
+    []
+  )
+
+  return (
+    <div className="space-y-4">
+      <SoftCard
+        className="
+          p-5 md:p-6 rounded-2xl
+          bg-white/95
+          border border-[#f5d7e5]
+          shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+        "
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+              <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                Para agora
+              </span>
+              <h2 className="text-[16px] md:text-[17px] font-semibold text-[#2f3a56]">
+                Um conteúdo pronto, sem esforço
+              </h2>
+              <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                Se fizer sentido, você usa. Se não fizer, você ignora — sem peso.
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0">
+            {state.status === 'idle' ? (
+              <Button className="px-4" onClick={() => void fetchCards()}>
+                Ver sugestões
+              </Button>
+            ) : (
+              <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
+                Outra leva
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {state.status === 'loading' ? (
+          <div className="mt-4 rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3">
+            <p className="text-[13px] text-[#6a6a6a]">Carregando…</p>
+          </div>
+        ) : null}
+
+        {state.status === 'done' ? (
+          <div className="mt-4 space-y-3">
+            {visibleItems.length ? (
+              visibleItems.map(item => (
+                <div
+                  key={item.id}
+                  className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      {item.tag ? (
+                        <span className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          {item.tag}
+                        </span>
+                      ) : null}
+
+                      <p className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
+                      {item.description ? (
+                        <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{item.description}</p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        className="
+                          rounded-full
+                          bg-white
+                          border border-[#f5d7e5]/70
+                          text-[#545454]
+                          px-3 py-1.5
+                          text-[12px]
+                          transition
+                          hover:shadow-sm
+                          whitespace-nowrap
+                        "
+                        onClick={() => dismissOne(item.id)}
+                      >
+                        Não agora
+                      </button>
+
+                      <button
+                        type="button"
+                        className="
+                          rounded-full
+                          bg-[#fd2597]
+                          text-white
+                          px-3 py-1.5
+                          text-[12px]
+                          font-semibold
+                          transition
+                          hover:opacity-95
+                          whitespace-nowrap
+                        "
+                        onClick={() => saveOne(item)}
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3">
+                <p className="text-[13px] text-[#6a6a6a]">
+                  Sem pressão. Se quiser, peça outra leva.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </SoftCard>
+
+      {saved.length ? (
+        <SoftCard
+          className="
+            p-5 md:p-6 rounded-2xl
+            bg-white/95
+            border border-[#f5d7e5]
+            shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+          "
+        >
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+              <AppIcon name="bookmark" size={20} className="text-[#fd2597]" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                Guardadas
+              </span>
+              <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                Só para você. Sem virar tarefa, sem virar cobrança.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {saved.slice(0, 3).map(item => (
+              <div
+                key={item.id}
+                className="
+                  rounded-2xl
+                  border border-[#f5d7e5]/50
+                  bg-white
+                  px-4 py-3
+                  flex items-start justify-between gap-3
+                "
+              >
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
+                  {item.description ? (
+                    <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{item.description}</p>
+                  ) : null}
+                </div>
+
+                <button
+                  type="button"
+                  className="text-[12px] font-semibold text-[#6a6a6a] hover:opacity-90 transition whitespace-nowrap"
+                  onClick={() => removeSaved(item.id)}
+                >
+                  Remover
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {saved.length > 3 ? (
+            <p className="mt-3 text-[12px] text-[#6a6a6a]">
+              Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
+            </p>
+          ) : null}
+
+          <div className="mt-3">
+            <button
+              type="button"
+              className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
+              onClick={() => {
+                // opção de “resetar guardadas” (silenciosa)
+                setSaved([])
+                setSavedToLS([])
+              }}
+            >
+              Limpar guardadas
+            </button>
+          </div>
+        </SoftCard>
+      ) : null}
+
+      {/* higiene: evitar acumular “não agora” indefinidamente */}
+      <button
+        type="button"
+        className="hidden"
+        onClick={() => safeRemoveLS(`${LS_DISMISS_KEY_PREFIX}${todayKey}`)}
+        aria-hidden="true"
+      />
+    </div>
+  )
+}
