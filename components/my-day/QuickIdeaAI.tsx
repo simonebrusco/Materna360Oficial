@@ -1,25 +1,51 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import type { AISuggestion } from '@/app/lib/ai/orchestrator.types'
+
+type Suggestion = {
+  id: string
+  title: string
+  description?: string
+}
 
 type State =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; items: AISuggestion[] }
+  | { status: 'done'; items: Suggestion[] }
 
-function getFallback(): AISuggestion[] {
-  return [
-    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Uma pausa curta já ajuda a reorganizar.' },
-    { id: 'fallback-2', title: 'Escolher só uma prioridade', description: 'O resto pode esperar.' },
-    { id: 'fallback-3', title: 'Fazer algo simples', description: 'Algo pequeno já é suficiente por agora.' },
-  ]
+const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
+
+function safeParse<T>(raw: string | null): T | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
 }
 
-function normalize(payload: any): AISuggestion[] | null {
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
+function normalize(payload: any): Suggestion[] | null {
   if (!payload) return null
 
+  // Formato A: { suggestions: [{id,title,description}] }
   if (Array.isArray(payload?.suggestions)) {
     const items = payload.suggestions
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -32,6 +58,7 @@ function normalize(payload: any): AISuggestion[] | null {
     return items.length ? items : null
   }
 
+  // Formato B: { title, body } (legado)
   if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
     const raw = String(payload?.body ?? '')
       .split('\n')
@@ -52,33 +79,153 @@ function normalize(payload: any): AISuggestion[] | null {
   return null
 }
 
+function signature(items: Suggestion[]) {
+  return items.map(i => `${i.title}::${i.description ?? ''}`).join('|')
+}
+
+function shuffle<T>(arr: T[], seed: number) {
+  const a = [...arr]
+  let m = a.length
+  let s = seed
+  while (m) {
+    // pseudo-random determinístico por seed
+    s = (s * 9301 + 49297) % 233280
+    const rnd = s / 233280
+    const i = Math.floor(rnd * m--)
+    ;[a[m], a[i]] = [a[i], a[m]]
+  }
+  return a
+}
+
+function baseFallback(): Suggestion[] {
+  return [
+    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Uma pausa curta já ajuda a reorganizar.' },
+    { id: 'fallback-2', title: 'Escolher só uma prioridade', description: 'O resto pode esperar.' },
+    { id: 'fallback-3', title: 'Fazer algo simples', description: 'Algo pequeno já é suficiente por agora.' },
+    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Só para ancorar o corpo no presente.' },
+    { id: 'fallback-5', title: 'Pedir ajuda com uma frase', description: 'Uma frase curta já resolve muita coisa.' },
+  ]
+}
+
+function getSavedFromLS(): Suggestion[] {
+  const raw = safeGetLS(LS_SAVED_KEY)
+  const parsed = safeParse<unknown>(raw)
+  if (!Array.isArray(parsed)) return []
+  const items = (parsed as any[])
+    .filter(x => x && typeof x.title === 'string' && x.title.trim())
+    .slice(0, 50)
+    .map((x, idx) => ({
+      id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
+      title: String(x.title),
+      description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+    }))
+  return items
+}
+
+function setSavedToLS(items: Suggestion[]) {
+  safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
+}
+
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
+  const [dismissed, setDismissed] = useState<Record<string, true>>({})
+  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
 
-  const run = useCallback(async () => {
+  const lastSigRef = useRef<string>('')
+  const fallbackSeedRef = useRef<number>(Date.now())
+
+  const visibleItems = useMemo(() => {
+    if (state.status !== 'done') return []
+    return state.items.filter(i => !dismissed[i.id])
+  }, [state, dismissed])
+
+  const run = useCallback(async (attempt = 0) => {
     setState({ status: 'loading' })
 
+    const nonce = Date.now()
+
     try {
+      // POST (preferido)
       const postRes = await fetch('/api/ai/quick-ideas', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ intent: 'quick_idea' }),
+        body: JSON.stringify({ intent: 'quick_idea', nonce }),
+        cache: 'no-store',
       })
 
       let data: any = null
+
       if (postRes.ok) {
         data = await postRes.json().catch(() => null)
       } else {
-        const getRes = await fetch('/api/ai/quick-ideas', { method: 'GET' })
+        // GET (fallback), com query pra evitar cache
+        const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
+          method: 'GET',
+          cache: 'no-store',
+        })
         if (getRes.ok) data = await getRes.json().catch(() => null)
       }
 
-      const items = normalize(data) ?? getFallback()
-      setState({ status: 'done', items })
+      const normalized = normalize(data)
+
+      // se não veio nada utilizável, usa fallback embaralhado
+      const nextItems =
+        normalized ??
+        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
+
+      const sig = signature(nextItems)
+
+      // se repetiu exatamente e ainda não tentou, tenta mais uma vez
+      if (sig && sig === lastSigRef.current && attempt < 1) {
+        return await run(attempt + 1)
+      }
+
+      lastSigRef.current = sig
+
+      // reseta “dismissed” a cada nova rodada para não “sumir tudo”
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
     } catch {
-      setState({ status: 'done', items: getFallback() })
+      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 3)
+      const sig = signature(nextItems)
+
+      if (sig && sig === lastSigRef.current && attempt < 1) {
+        return await run(attempt + 1)
+      }
+
+      lastSigRef.current = sig
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
     }
   }, [])
+
+  const dismissOne = useCallback((id: string) => {
+    setDismissed(prev => ({ ...prev, [id]: true }))
+  }, [])
+
+  const saveOne = useCallback(
+    (item: Suggestion) => {
+      // não duplica por title+description
+      const key = `${item.title}::${item.description ?? ''}`.trim()
+      const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
+      if (exists) return
+
+      const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
+      setSaved(next)
+      setSavedToLS(next)
+      dismissOne(item.id)
+    },
+    [saved, dismissOne]
+  )
+
+  const removeSaved = useCallback(
+    (id: string) => {
+      const next = saved.filter(s => s.id !== id)
+      setSaved(next)
+      setSavedToLS(next)
+    },
+    [saved]
+  )
 
   return (
     <div className="mt-6 md:mt-8">
@@ -133,22 +280,118 @@ export default function QuickIdeaAI() {
               </button>
             </div>
 
-            {state.items.map(item => (
-              <div
-                key={item.id}
-                className="
-                  rounded-2xl
-                  border border-[#F5D7E5]/70
-                  bg-white
-                  px-4 py-3
-                "
-              >
-                <p className="text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
-                {item.description ? (
-                  <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
+            {visibleItems.length ? (
+              <div className="space-y-3">
+                {visibleItems.map(item => (
+                  <div
+                    key={item.id}
+                    className="
+                      rounded-2xl
+                      border border-[#F5D7E5]/70
+                      bg-white
+                      px-4 py-3
+                    "
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
+                        {item.description ? (
+                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          className="
+                            rounded-full
+                            bg-white
+                            border border-[#F5D7E5]/70
+                            text-[#545454]
+                            px-3 py-1.5
+                            text-[12px]
+                            transition
+                            hover:shadow-sm
+                            whitespace-nowrap
+                          "
+                          onClick={() => dismissOne(item.id)}
+                        >
+                          Não agora
+                        </button>
+
+                        <button
+                          type="button"
+                          className="
+                            rounded-full
+                            bg-[#fd2597]
+                            text-white
+                            px-3 py-1.5
+                            text-[12px]
+                            font-semibold
+                            transition
+                            hover:opacity-95
+                            whitespace-nowrap
+                          "
+                          onClick={() => saveOne(item)}
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
+                <p className="text-[13px] text-[#6A6A6A]">
+                  Sem pressão. Se quiser, peça outra ideia.
+                </p>
+              </div>
+            )}
+
+            {saved.length ? (
+              <div className="pt-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[13px] text-[#6A6A6A]">Guardadas</p>
+                </div>
+
+                <div className="mt-2 space-y-2">
+                  {saved.slice(0, 3).map(item => (
+                    <div
+                      key={item.id}
+                      className="
+                        rounded-2xl
+                        border border-[#F5D7E5]/50
+                        bg-white
+                        px-4 py-3
+                        flex items-start justify-between gap-3
+                      "
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
+                        {item.description ? (
+                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
+                        ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="text-[12px] font-semibold text-[#6A6A6A] hover:opacity-90 transition whitespace-nowrap"
+                        onClick={() => removeSaved(item.id)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {saved.length > 3 ? (
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
+                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
+                  </p>
                 ) : null}
               </div>
-            ))}
+            ) : null}
           </div>
         ) : null}
       </div>
