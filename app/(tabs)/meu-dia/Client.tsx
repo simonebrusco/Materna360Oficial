@@ -12,6 +12,7 @@ import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import MyDayGroups from '@/components/my-day/MyDayGroups'
+import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
@@ -309,7 +310,7 @@ export default function MeuDiaClient() {
         overflow-hidden
       "
     >
-     <div className="page-shell relative z-10 flex-1 w-full">
+      <div className="page-shell relative z-10 flex-1 w-full">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
           <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
@@ -432,6 +433,9 @@ export default function MeuDiaClient() {
         </header>
 
         <MyDayGroups aiContext={aiContext} />
+
+        {/* P33.2 — IA guiada sob demanda (ação opcional) */}
+        <QuickIdeaAI />
 
         {/* BLOCO FREE / PREMIUM — inalterado */}
         {/* ... mantém exatamente como estava ... */}
