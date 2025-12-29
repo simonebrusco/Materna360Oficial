@@ -8,3 +8,4 @@ export {
   hasCapability,
   getEntitlements,
 } from './entitlements'
+export { getRequestEntitlements } from './request'
