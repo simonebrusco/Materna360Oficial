@@ -53,7 +53,6 @@ function safeRemoveLS(key: string) {
 }
 
 function brazilDateKey(d: Date) {
-  // suficiente para “1x por dia” em pt-BR sem dependência extra
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
@@ -61,7 +60,7 @@ function brazilDateKey(d: Date) {
 }
 
 function signature(items: Suggestion[]) {
-  return items.map(i => `${i.title}::${i.description ?? ''}`).join('|')
+  return items.map(i => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
 }
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -81,21 +80,21 @@ function baseFallback(): Suggestion[] {
   return [
     {
       id: 'fb-1',
-      tag: 'hoje',
-      title: 'Escolha só 1 coisa para hoje',
-      description: 'Uma prioridade já é suficiente. O resto pode esperar.',
+      tag: 'frase',
+      title: 'Hoje, o suficiente já é muito.',
+      description: 'Sem corrida. Sem dívida emocional.',
     },
     {
       id: 'fb-2',
-      tag: 'pausa',
-      title: 'Respire por 60 segundos',
-      description: 'Inspire 4, segure 2, solte 6. Só uma vez já ajuda.',
+      tag: 'cuidado',
+      title: 'Um cuidado pequeno por você',
+      description: 'Água, respiração, um minuto de silêncio. Só o que couber.',
     },
     {
       id: 'fb-3',
-      tag: 'vínculo',
-      title: 'Um gesto pequeno de conexão',
-      description: 'Olho no olho por 10 segundos. Sem falar nada. Só presença.',
+      tag: 'ritual',
+      title: 'Um ritual de 60 segundos',
+      description: 'Inspire 4, segure 2, solte 6. Uma vez. E pronto.',
     },
     {
       id: 'fb-4',
@@ -112,40 +111,41 @@ function baseFallback(): Suggestion[] {
   ]
 }
 
-function normalize(payload: any): Suggestion[] | null {
+function normalizeFromEmocional(payload: any): Suggestion[] | null {
   if (!payload) return null
 
-  // formato preferido: { suggestions: [{id,title,description,tag}] }
-  if (Array.isArray(payload?.suggestions)) {
-    const items = payload.suggestions
-      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
-      .slice(0, 3)
-      .map((x: any, idx: number) => ({
-        id: typeof x.id === 'string' && x.id.trim() ? x.id : `m-${idx + 1}`,
-        title: String(x.title),
-        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-        tag: typeof x.tag === 'string' && x.tag.trim() ? String(x.tag) : undefined,
-      }))
+  // Novo schema: { inspiration: { phrase, care, ritual } }
+  if (payload?.inspiration) {
+    const phrase = typeof payload.inspiration.phrase === 'string' ? payload.inspiration.phrase.trim() : ''
+    const care = typeof payload.inspiration.care === 'string' ? payload.inspiration.care.trim() : ''
+    const ritual = typeof payload.inspiration.ritual === 'string' ? payload.inspiration.ritual.trim() : ''
 
-    return items.length ? items : null
-  }
+    const items: Suggestion[] = []
 
-  // fallback legado: { title, body } -> split lines
-  if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
-    const raw = String(payload?.body ?? '')
-      .split('\n')
-      .map((s: string) => s.trim())
-      .filter(Boolean)
-      .slice(0, 3)
+    if (phrase) {
+      items.push({ id: 'inspo-phrase', tag: 'frase', title: phrase })
+    }
 
-    const items = (raw.length ? raw : [payload?.title].filter(Boolean))
-      .slice(0, 3)
-      .map((line: any, idx: number) => ({
-        id: `m-${idx + 1}`,
-        title: String(line),
-      }))
+    if (care) {
+      // care pode vir 3–6 linhas: preserva, mas deixa leve
+      items.push({
+        id: 'inspo-care',
+        tag: 'cuidado',
+        title: 'Um cuidado para hoje',
+        description: care,
+      })
+    }
 
-    return items.length ? items : null
+    if (ritual) {
+      items.push({
+        id: 'inspo-ritual',
+        tag: 'ritual',
+        title: 'Um ritual simples',
+        description: ritual,
+      })
+    }
+
+    return items.length ? items.slice(0, 3) : null
   }
 
   return null
@@ -213,8 +213,8 @@ export default function MaternarAICards() {
 
   const saveOne = useCallback(
     (item: Suggestion) => {
-      const key = `${item.title}::${item.description ?? ''}`.trim()
-      const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
+      const key = `${item.tag ?? ''}::${item.title}::${item.description ?? ''}`.trim()
+      const exists = saved.some(s => `${s.tag ?? ''}::${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) {
         dismissOne(item.id)
         return
@@ -244,17 +244,23 @@ export default function MaternarAICards() {
       const nonce = Date.now()
 
       try {
-        // preferimos usar o endpoint existente /api/ai/emocional
-        // porque está alinhado com “Maternar” (acolhimento/repertório).
         const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
-          method: 'GET',
+          method: 'POST',
           cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            feature: 'daily_inspiration',
+            origin: 'maternar-hub',
+            // Contexto pode vir vazio; a rota é robusta e mantém tom Materna360.
+            // No futuro, podemos plugar personaLabel / firstName daqui com segurança.
+            context: {},
+          }),
         })
 
         let data: any = null
         if (res.ok) data = await res.json().catch(() => null)
 
-        const normalized = normalize(data)
+        const normalized = normalizeFromEmocional(data)
         const nextItems =
           normalized ??
           shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
@@ -266,7 +272,6 @@ export default function MaternarAICards() {
         }
 
         lastSigRef.current = sig
-        // a cada “rodada”, não zeramos dismiss global do dia; respeitamos “não agora”
         setState({ status: 'done', items: nextItems })
       } catch {
         const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
@@ -349,7 +354,9 @@ export default function MaternarAICards() {
 
                       <p className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
                       {item.description ? (
-                        <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{item.description}</p>
+                        <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">
+                          {item.description}
+                        </p>
                       ) : null}
                     </div>
 
@@ -443,7 +450,9 @@ export default function MaternarAICards() {
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
                   {item.description ? (
-                    <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{item.description}</p>
+                    <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">
+                      {item.description}
+                    </p>
                   ) : null}
                 </div>
 
@@ -469,7 +478,6 @@ export default function MaternarAICards() {
               type="button"
               className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
               onClick={() => {
-                // opção de “resetar guardadas” (silenciosa)
                 setSaved([])
                 setSavedToLS([])
               }}
@@ -480,7 +488,7 @@ export default function MaternarAICards() {
         </SoftCard>
       ) : null}
 
-      {/* higiene: evitar acumular “não agora” indefinidamente */}
+      {/* higiene: botão invisível (sem UI) para eventual reset manual no futuro */}
       <button
         type="button"
         className="hidden"
