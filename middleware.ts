@@ -19,7 +19,16 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
   return t
 }
 
-function isPublicPath(pathname: string) {
+function isCodespacesOrDev(request: NextRequest) {
+  const host = request.headers.get('host') ?? ''
+  // Codespaces port forwarding / preview
+  if (host.includes('.app.github.dev')) return true
+  // Local dev
+  if (host.includes('localhost') || host.includes('127.0.0.1')) return true
+  return process.env.NODE_ENV !== 'production'
+}
+
+function isPublicPath(pathname: string, request: NextRequest) {
   if (pathname === '/') return true
   if (pathname === '/login') return true
   if (pathname === '/signup') return true
@@ -30,18 +39,28 @@ function isPublicPath(pathname: string) {
   if (pathname.startsWith('/builder-embed')) return true
   if (pathname.startsWith('/auth')) return true
   if (pathname.startsWith('/recuperar-senha')) return true
+
+  // ✅ DEV/PREVIEW: liberar Maternar para conseguir trabalhar nos hubs sem ficar travada por sessão
+  // (Em produção continua protegido)
+  if (isCodespacesOrDev(request) && (pathname === '/maternar' || pathname.startsWith('/maternar/'))) return true
+
   return false
 }
 
-function isProtectedPath(pathname: string) {
+function isProtectedPath(pathname: string, request: NextRequest) {
+  // ✅ Em produção, Maternar permanece protegido
+  const maternarsProtected = !(isCodespacesOrDev(request) && (pathname === '/maternar' || pathname.startsWith('/maternar/')))
+
   if (pathname === '/bem-vinda' || pathname.startsWith('/bem-vinda/')) return true
   if (pathname === '/meu-dia' || pathname.startsWith('/meu-dia/')) return true
   if (pathname === '/eu360' || pathname.startsWith('/eu360/')) return true
-  if (pathname === '/maternar' || pathname.startsWith('/maternar/')) return true
-  if (pathname === '/cuidar' || pathname.startsWith('/cuidar/')) return true
-  if (pathname === '/descobrir' || pathname.startsWith('/descobrir/')) return true
+  if (maternarsProtected && (pathname === '/maternar' || pathname.startsWith('/maternar/'))) return true
+
+  // ✅ Mantém áreas internas protegidas
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return true
   if (pathname === '/qa' || pathname.startsWith('/qa/')) return true
+
+  // 🚫 Removido: /cuidar e /descobrir (abas proibidas pelo estado atual do produto)
   return false
 }
 
@@ -53,8 +72,6 @@ function redirectWithResponse(request: NextRequest, response: NextResponse, to: 
   const url = typeof to === 'string' ? new URL(to, request.url) : to
   const redirect = NextResponse.redirect(url)
 
-  // Garante que qualquer atualização de cookies/headers feita pelo Supabase
-  // não seja perdida quando retornamos um redirect.
   response.headers.forEach((value, key) => {
     redirect.headers.set(key, value)
   })
@@ -81,7 +98,6 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-  // Response base (permite set-cookie/refresh)
   const response = NextResponse.next()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -113,10 +129,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  /* =========================
-     Regras principais
-  ========================= */
-
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
@@ -137,14 +149,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rota protegida sem sessão -> login
-  if (isProtectedPath(normalizedPath) && !hasSession) {
+  if (isProtectedPath(normalizedPath, request) && !hasSession) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirectTo', redirectToValue)
     return redirectWithResponse(request, response, loginUrl)
   }
 
   // Rotas públicas seguem
-  if (isPublicPath(normalizedPath)) {
+  if (isPublicPath(normalizedPath, request)) {
     if (TABS_PREFIX_PATTERN.test(pathname)) {
       return NextResponse.rewrite(new URL(normalizedPath, request.url))
     }
