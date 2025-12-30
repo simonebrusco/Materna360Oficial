@@ -9,6 +9,7 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
+import { Button } from '@/components/ui/Button'
 import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 
 export const dynamic = 'force-dynamic'
@@ -25,10 +26,30 @@ type Routine = {
   subtitle: string
   focus: FocusMode
   steps: string[]
-  pauseDeck: { label: string; min: 1 | 2 }[]
+  pauseDeck: { id: string; label: string; min: 1 | 2 }[]
   close: string
-  next: string
 }
+
+type LaterSave = {
+  ts: number
+  kind: 'routine'
+  routineId: string
+  focus: FocusMode
+  ritmo: Ritmo
+}
+
+const LS_FOCUS = 'eu360_focus_time'
+const LS_RITMO = 'eu360_ritmo'
+
+// deck anti-repetição (por dia)
+const LS_DECK_KEY_PREFIX = 'm360.cuidar_de_mim.deck.' // + dateKey
+const LS_DECK_SEEN_PREFIX = 'm360.cuidar_de_mim.seen.' // + dateKey
+
+// salvar para mais tarde (local)
+const LS_SAVED_LATER = 'm360.cuidar_de_mim.saved_later_v1'
+
+// Meu Dia Leve -> Meu Dia (continuidade) — reaproveitamos o mesmo padrão
+const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 
 function safeGetLS(key: string): string | null {
   try {
@@ -46,6 +67,30 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
+function safeRemoveLS(key: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.removeItem(key)
+  } catch {}
+}
+
+function safeParseJSON<T>(raw: string | null): T | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function getBrazilDateKey(d: Date) {
+  // YYYY-MM-DD em timezone local do browser (suficiente para deck diário)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function focusLabel(f: FocusMode) {
   if (f === '1min') return '1 min'
   if (f === '3min') return '3 min'
@@ -59,7 +104,7 @@ function focusTitle(f: FocusMode) {
 }
 
 function focoHint(f: FocusMode) {
-  if (f === '1min') return 'Para quando você só precisa baixar o volume e seguir.'
+  if (f === '1min') return 'Para quando você só quer baixar o volume e seguir.'
   if (f === '3min') return 'Para quando dá para se reorganizar por dentro e continuar.'
   return 'Para quando você consegue cuidar com um pouco mais de calma.'
 }
@@ -86,13 +131,12 @@ const ROUTINES: Routine[] = [
     subtitle: 'Um minuto para reduzir o ruído e voltar para o próximo passo do seu dia.',
     steps: ['Inspire 4', 'Segure 2', 'Solte 6', 'Repita 3x'],
     pauseDeck: [
-      { label: 'Respirar 1 min', min: 1 },
-      { label: 'Água (3 goles) + pausa', min: 1 },
-      { label: 'Ombros para baixo (3x)', min: 1 },
-      { label: 'Olhar pela janela (30s)', min: 1 },
+      { id: 'p1', label: 'Respirar 1 min', min: 1 },
+      { id: 'p2', label: 'Água (3 goles) + pausa', min: 1 },
+      { id: 'p3', label: 'Ombros para baixo (3x)', min: 1 },
+      { id: 'p4', label: 'Olhar pela janela (30s)', min: 1 },
     ],
     close: 'Pronto. Isso já é suficiente para seguir um pouco melhor.',
-    next: '',
   },
   {
     id: 'r2',
@@ -101,13 +145,12 @@ const ROUTINES: Routine[] = [
     subtitle: 'Três minutos para retomar o controle do próximo gesto possível.',
     steps: ['Água: 3–5 goles', 'Pescoço: 3 giros leves', 'Respire: 4 lentas', 'Escolha 1 próxima ação pequena'],
     pauseDeck: [
-      { label: 'Água + pausa', min: 1 },
-      { label: 'Pescoço (30s)', min: 1 },
-      { label: 'Respirar 1 min', min: 1 },
-      { label: 'Alongar mãos (30s)', min: 1 },
+      { id: 'p5', label: 'Água + pausa', min: 1 },
+      { id: 'p6', label: 'Pescoço (30s)', min: 1 },
+      { id: 'p7', label: 'Respirar 1 min', min: 1 },
+      { id: 'p8', label: 'Alongar mãos (30s)', min: 1 },
     ],
     close: 'Feito. Você se deu um reinício sem parar o mundo.',
-    next: '',
   },
   {
     id: 'r3',
@@ -116,19 +159,18 @@ const ROUTINES: Routine[] = [
     subtitle: 'Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.',
     steps: ['Hidratante nas mãos (30s)', 'Braços: alongar 30s', 'Mão no peito: 4 respirações', '1 item no lugar'],
     pauseDeck: [
-      { label: 'Hidratante (2 min)', min: 2 },
-      { label: 'Braços (30s) + ombros', min: 1 },
-      { label: 'Respirar 1 min', min: 1 },
-      { label: 'Água + pausa', min: 1 },
+      { id: 'p9', label: 'Hidratante (2 min)', min: 2 },
+      { id: 'p10', label: 'Braços (30s) + ombros', min: 1 },
+      { id: 'p11', label: 'Respirar 1 min', min: 1 },
+      { id: 'p12', label: 'Água + pausa', min: 1 },
     ],
     close: 'Pronto. Isso já deixa o resto do dia mais leve.',
-    next: '',
   },
 ]
 
 function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
-  const focusRaw = safeGetLS('eu360_focus_time')
-  const ritmoRaw = safeGetLS('eu360_ritmo')
+  const focusRaw = safeGetLS(LS_FOCUS)
+  const ritmoRaw = safeGetLS(LS_RITMO)
 
   const focus: FocusMode = focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
   const ritmo: Ritmo =
@@ -140,20 +182,58 @@ function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
   return { focus, ritmo }
 }
 
-function pickRoutine(focus: FocusMode) {
-  return ROUTINES.find((r) => r.focus === focus) ?? ROUTINES[1]
-}
-
 function originForCuidarDeMim(): TaskOrigin {
   return 'selfcare'
+}
+
+/**
+ * Deck diário: garante variação e evita repetição até esgotar.
+ * Não é “IA”, mas é “inteligência de experiência” (premium de verdade).
+ */
+function buildDailyDeck(dateKey: string, focus: FocusMode): string[] {
+  const routinesForFocus = ROUTINES.filter((r) => r.focus === focus).map((r) => r.id)
+  // fallback (se por algum motivo ficar vazio)
+  const base = routinesForFocus.length ? routinesForFocus : ROUTINES.map((r) => r.id)
+
+  // shuffle determinístico leve (não precisa ser criptográfico)
+  const seed = `${dateKey}:${focus}`
+  const arr = [...base]
+  let x = 0
+  for (let i = 0; i < seed.length; i++) x = (x + seed.charCodeAt(i) * 17) % 997
+
+  for (let i = arr.length - 1; i > 0; i--) {
+    x = (x * 37 + 13) % 997
+    const j = x % (i + 1)
+    const tmp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = tmp
+  }
+
+  return arr
+}
+
+function getRoutineById(id: string) {
+  return ROUTINES.find((r) => r.id === id) ?? ROUTINES[1]
 }
 
 export default function Client() {
   const [view, setView] = useState<View>('entrada')
   const [focus, setFocus] = useState<FocusMode>('3min')
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
-  const [checked, setChecked] = useState<boolean[]>([false, false, false, false])
+
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
+  // rotina atual (mudará com “Outra opção”)
+  const [routineId, setRoutineId] = useState<string>('r2')
+
+  // checklist gentil (opcional)
+  const routine = useMemo(() => getRoutineById(routineId), [routineId])
+  const [checked, setChecked] = useState<boolean[]>([])
+
+  // pausas
   const [pauseIndex, setPauseIndex] = useState(0)
+
+  // feedbacks
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
   useEffect(() => {
@@ -168,40 +248,70 @@ export default function Client() {
     setRitmo(inferred.ritmo)
     setView('entrada')
 
-    try {
-      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo })
-    } catch {}
-  }, [])
+    // inicializa deck e escolhe primeira opção do dia (sem repetição)
+    const deckKey = `${LS_DECK_KEY_PREFIX}${todayKey}.${inferred.focus}`
+    const seenKey = `${LS_DECK_SEEN_PREFIX}${todayKey}.${inferred.focus}`
 
-  const routine = useMemo(() => pickRoutine(focus), [focus])
+    let deck = safeParseJSON<string[]>(safeGetLS(deckKey))
+    let seen = safeParseJSON<string[]>(safeGetLS(seenKey)) ?? []
+
+    if (!deck || !Array.isArray(deck) || deck.length === 0) {
+      deck = buildDailyDeck(todayKey, inferred.focus)
+      safeSetLS(deckKey, JSON.stringify(deck))
+      safeSetLS(seenKey, JSON.stringify([]))
+      seen = []
+    }
+
+    // pega a primeira não vista
+    const nextId = deck.find((id) => !seen.includes(id)) ?? deck[0] ?? 'r2'
+    setRoutineId(nextId)
+
+    try {
+      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo, routineId: nextId })
+    } catch {}
+  }, [todayKey])
 
   useEffect(() => {
-    setChecked([false, false, false, false])
+    // checklist opcional
+    setChecked(Array.from({ length: routine.steps.length }, () => false))
     setPauseIndex(0)
-  }, [routine.id])
+    setSaveFeedback('')
+  }, [routine.id, routine.steps.length])
 
   function go(next: View) {
     setView(next)
     try {
-      track('cuidar_de_mim.step', { step: next })
+      track('cuidar_de_mim.step', { step: next, routineId: routine.id, focus, ritmo })
     } catch {}
   }
 
   function onSelectFocus(next: FocusMode) {
     setFocus(next)
-    safeSetLS('eu360_focus_time', next)
+    safeSetLS(LS_FOCUS, next)
+
+    // ao mudar focus, reinicia deck do dia para esse focus (sem travar)
+    const deckKey = `${LS_DECK_KEY_PREFIX}${todayKey}.${next}`
+    const seenKey = `${LS_DECK_SEEN_PREFIX}${todayKey}.${next}`
+
+    let deck = buildDailyDeck(todayKey, next)
+    safeSetLS(deckKey, JSON.stringify(deck))
+    safeSetLS(seenKey, JSON.stringify([]))
+
+    const nextId = deck[0] ?? 'r2'
+    setRoutineId(nextId)
+
     try {
-      track('cuidar_de_mim.focus.select', { focus: next })
+      track('cuidar_de_mim.focus.select', { focus: next, routineId: nextId })
     } catch {}
   }
 
   function onSelectRitmo(next: Ritmo) {
     setRitmo(next)
-    safeSetLS('eu360_ritmo', next)
+    safeSetLS(LS_RITMO, next)
 
+    // sobrecarregada -> automaticamente sugere 1min (mas sem “punição”)
     if (next === 'sobrecarregada') {
-      setFocus('1min')
-      safeSetLS('eu360_focus_time', '1min')
+      onSelectFocus('1min')
     }
 
     try {
@@ -214,460 +324,455 @@ export default function Client() {
       const next = [...prev]
       next[i] = !next[i]
       try {
-        track('cuidar_de_mim.routine.toggle', { i, value: next[i], focus })
+        track('cuidar_de_mim.routine.toggle', { i, value: next[i], focus, ritmo, routineId: routine.id })
       } catch {}
       return next
     })
   }
 
-  function nextPause() {
-    setPauseIndex((p) => (p + 1) % routine.pauseDeck.length)
+  function markRoutineSeen(routineToMark: string) {
+    const seenKey = `${LS_DECK_SEEN_PREFIX}${todayKey}.${focus}`
+    const seen = safeParseJSON<string[]>(safeGetLS(seenKey)) ?? []
+    if (!seen.includes(routineToMark)) {
+      const next = [...seen, routineToMark]
+      safeSetLS(seenKey, JSON.stringify(next))
+    }
+  }
+
+  function pickAnotherOption() {
+    const deckKey = `${LS_DECK_KEY_PREFIX}${todayKey}.${focus}`
+    const seenKey = `${LS_DECK_SEEN_PREFIX}${todayKey}.${focus}`
+
+    let deck = safeParseJSON<string[]>(safeGetLS(deckKey))
+    let seen = safeParseJSON<string[]>(safeGetLS(seenKey)) ?? []
+
+    if (!deck || !Array.isArray(deck) || deck.length === 0) {
+      deck = buildDailyDeck(todayKey, focus)
+      seen = []
+      safeSetLS(deckKey, JSON.stringify(deck))
+      safeSetLS(seenKey, JSON.stringify(seen))
+    }
+
+    // marca a atual como vista (para não voltar)
+    if (!seen.includes(routineId)) {
+      seen = [...seen, routineId]
+      safeSetLS(seenKey, JSON.stringify(seen))
+    }
+
+    const nextId = deck.find((id) => !seen.includes(id))
+
+    // se acabou, reembaralha e começa de novo, mas evita repetir imediatamente
+    if (!nextId) {
+      const rebuilt = buildDailyDeck(todayKey, focus)
+      safeSetLS(deckKey, JSON.stringify(rebuilt))
+      safeSetLS(seenKey, JSON.stringify([routineId]))
+      const fallback = rebuilt.find((id) => id !== routineId) ?? rebuilt[0] ?? 'r2'
+      setRoutineId(fallback)
+      try {
+        track('cuidar_de_mim.option.next', { focus, ritmo, from: routineId, to: fallback, exhausted: true })
+      } catch {}
+      return
+    }
+
+    setRoutineId(nextId)
     try {
-      track('cuidar_de_mim.pause.next', { focus })
+      track('cuidar_de_mim.option.next', { focus, ritmo, from: routineId, to: nextId, exhausted: false })
     } catch {}
   }
 
-  function saveToMyDay(title: string) {
-    const origin = originForCuidarDeMim()
-    const res = addTaskToMyDay({
-      title,
-      origin,
-      source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-    })
-
-    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
-
+  function saveForLater() {
+    const payload: LaterSave = {
+      ts: Date.now(),
+      kind: 'routine',
+      routineId: routine.id,
+      focus,
+      ritmo,
+    }
+    safeSetLS(LS_SAVED_LATER, JSON.stringify(payload))
+    setSaveFeedback('Salvo para mais tarde.')
     try {
-      track('cuidar_de_mim.save_to_my_day', {
-        origin,
-        created: res.created,
-        dateKey: res.dateKey,
-        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+      track('cuidar_de_mim.save_later', { routineId: routine.id, focus, ritmo })
+    } catch {}
+  }
+
+  async function saveToMyDay() {
+    setSaveFeedback('')
+    try {
+      const title = `Cuidar de Mim: ${routine.title}`
+      const note = routine.steps.slice(0, 3).join(' · ')
+
+      await addTaskToMyDay({
+        title,
+        note,
+        origin: originForCuidarDeMim(),
+        source: MY_DAY_SOURCES.cuidar_de_mim ?? 'cuidar_de_mim',
       })
-    } catch {}
 
-    window.setTimeout(() => setSaveFeedback(''), 2200)
+      // sinal de continuidade para o Meu Dia (sem conteúdo sensível)
+      safeSetLS(
+        LS_RECENT_SAVE,
+        JSON.stringify({
+          ts: Date.now(),
+          origin: 'selfcare',
+          source: 'cuidar-de-mim',
+        }),
+      )
+
+      setSaveFeedback('Adicionado ao Meu Dia.')
+      markRoutineSeen(routine.id)
+
+      try {
+        track('cuidar_de_mim.save_my_day', { routineId: routine.id, focus, ritmo })
+      } catch {}
+    } catch {
+      setSaveFeedback('Não consegui salvar agora. Se quiser, tente de novo.')
+      try {
+        track('cuidar_de_mim.save_my_day.error', { routineId: routine.id })
+      } catch {}
+    }
   }
+
+  const pauseCard = useMemo(() => routine.pauseDeck[pauseIndex % routine.pauseDeck.length], [routine, pauseIndex])
 
   return (
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
-        min-h-[100dvh]
-        pb-32
-        bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+        eu360-hub-bg
+        relative min-h-[100dvh]
+        pb-28
+        overflow-hidden
       "
     >
-      <ClientOnly>
-        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
-                <span className="mr-1.5 text-lg leading-none">←</span>
-                Voltar para o Maternar
-              </Link>
+      <div className="page-shell relative z-10 w-full">
+        <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+          <Link
+            href="/maternar"
+            className="inline-flex items-center gap-2 text-white/90 hover:text-white transition"
+            onClick={() => {
+              try {
+                track('cuidar_de_mim.back_to_maternar', { ts: Date.now() })
+              } catch {}
+            }}
+          >
+            <AppIcon name="arrow-left" size={18} />
+            <span className="text-[13px] font-semibold tracking-wide">Voltar</span>
+          </Link>
 
-              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                Cuidar de Mim
-              </h1>
+          <div className="mt-4">
+            <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.22em] text-white uppercase backdrop-blur-md">
+              CUIDAR DE MIM
+            </span>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                O que você precisa agora?
-              </p>
-            </div>
-          </header>
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+              Um cuidado que cabe no seu dia
+            </h1>
 
-          <div className="space-y-7 md:space-y-8 pb-10">
-            <div
-              className="
-                rounded-3xl
-                bg-white/10
-                border border-white/35
-                backdrop-blur-xl
-                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
-                p-4 md:p-6
-                space-y-6
-              "
-            >
-              <Reveal>
-                <div
-                  className="
-                    rounded-3xl
-                    bg-white/10
-                    border border-white/25
-                    shadow-[0_14px_40px_rgba(0,0,0,0.12)]
-                    p-4 md:p-5
-                  "
-                >
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
-                    <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
-                      <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
-                        <AppIcon name="heart" size={22} className="text-white" />
-                      </div>
+            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
+              Você escolhe o ritmo. E se não fizer sentido, a gente troca — sem drama.
+            </p>
+          </div>
+        </header>
 
-                      <div className="space-y-1">
-                        <div className="text-[12px] text-white/85">
-                          {focusTitle(focus)} • {ritmo}
-                        </div>
+        {/* CONTROLES (sempre disponíveis, sem prender a mãe) */}
+        <Reveal>
+          <SoftCard className="bg-white/95 border border-[#F5D7E5] rounded-3xl p-5 md:p-6 shadow-[0_10px_26px_rgba(184,35,107,0.10)]">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                <AppIcon name="sliders" size={18} className="text-[#fd2597]" />
+              </div>
 
-                        <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                          {routine.title}
-                        </div>
+              <div className="min-w-0">
+                <div className="text-[14px] font-semibold text-[#2f3a56]">Seu ritmo hoje</div>
+                <div className="text-[13px] text-[#6a6a6a]">
+                  Ajuste isso quando quiser. Não é compromisso — é só referência.
+                </div>
 
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">
-                          {routine.subtitle}
-                        </div>
-                      </div>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* FOCUS */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4">
+                    <div className="text-[12px] font-semibold tracking-wide text-[#b8236b] uppercase">Tempo</div>
+                    <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{focusTitle(focus)}</div>
+                    <div className="mt-1 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
+                        const active = f === focus
+                        return (
+                          <button
+                            key={f}
+                            type="button"
+                            className={[
+                              'rounded-full px-3 py-1.5 text-[12px] font-semibold transition',
+                              active
+                                ? 'bg-[#fd2597] text-white'
+                                : 'bg-[#ffe1f1] text-[#545454] hover:bg-[#fdbed7]',
+                            ].join(' ')}
+                            onClick={() => onSelectFocus(f)}
+                          >
+                            {focusLabel(f)}
+                          </button>
+                        )
+                      })}
                     </div>
+                  </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <button
-                        onClick={() => go('ritmo')}
-                        className="
-                          rounded-full
-                          bg-white/90 hover:bg-white
-                          text-[#2f3a56]
-                          px-4 py-2
-                          text-[12px]
-                          shadow-[0_6px_18px_rgba(0,0,0,0.12)]
-                          transition
-                        "
-                      >
-                        Ajustar ritmo
-                      </button>
-                      <button
-                        onClick={() => go(view === 'rotina' ? 'rotina' : 'entrada')}
-                        className="
-                          rounded-full
-                          bg-[#fd2597]
-                          text-white
-                          px-4 py-2
-                          text-[12px]
-                          shadow-[0_10px_26px_rgba(253,37,151,0.35)]
-                          hover:opacity-95
-                          transition
-                        "
-                      >
-                        Ver opções
-                      </button>
+                  {/* RITMO */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-white p-4">
+                    <div className="text-[12px] font-semibold tracking-wide text-[#b8236b] uppercase">Como você está</div>
+                    <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
+                    <div className="mt-1 text-[12px] text-[#6a6a6a]">{ritmoHint(ritmo)}</div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(['leve', 'animada', 'cansada', 'sobrecarregada'] as Ritmo[]).map((r) => {
+                        const active = r === ritmo
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            className={[
+                              'rounded-full px-3 py-1.5 text-[12px] font-semibold transition',
+                              active
+                                ? 'bg-[#2f3a56] text-white'
+                                : 'bg-white border border-[#F5D7E5] text-[#545454] hover:bg-[#ffe1f1]',
+                            ].join(' ')}
+                            onClick={() => onSelectRitmo(r)}
+                          >
+                            {r === 'leve'
+                              ? 'Leve'
+                              : r === 'animada'
+                                ? 'Animada'
+                                : r === 'cansada'
+                                  ? 'Cansada'
+                                  : 'Sobrecarregada'}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
-              </Reveal>
-
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-5 md:p-6 rounded-3xl
-                    bg-white/95
-                    border border-[#f5d7e5]
-                    shadow-[0_10px_28px_rgba(184,35,107,0.12)]
-                  "
-                >
-                  {saveFeedback ? (
-                    <div className="mb-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] px-4 py-3 text-[12px] text-[#2f3a56]">
-                      {saveFeedback}
-                    </div>
-                  ) : null}
-
-                  {view === 'entrada' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Escolha uma opção simples</div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
-                          const active = focus === f
-                          return (
-                            <button
-                              key={f}
-                              onClick={() => {
-                                onSelectFocus(f)
-                                go('rotina')
-                              }}
-                              className={[
-                                'rounded-3xl border p-4 text-left transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
-                              <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
-                              <div className="text-[12px] text-[#6a6a6a] mt-2">{focoHint(f)}</div>
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      <div className="mt-2 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                        <button
-                          onClick={() => go('ritmo')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Se quiser, ajustar ritmo
-                        </button>
-
-                        <Link
-                          href="/maternar"
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition text-center"
-                        >
-                          Agora não
-                        </Link>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {view === 'ritmo' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Se quiser, ajuste seu ritmo</div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
-                          const active = ritmo === r
-                          return (
-                            <button
-                              key={r}
-                              onClick={() => onSelectRitmo(r)}
-                              className={[
-                                'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
-                                active
-                                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                  : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              {r}
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
-
-                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Quanto tempo dá agora?</div>
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
-                            const active = focus === f
-                            return (
-                              <button
-                                key={f}
-                                onClick={() => onSelectFocus(f)}
-                                className={[
-                                  'rounded-2xl border p-3 text-left transition',
-                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                                ].join(' ')}
-                              >
-                                <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
-                                <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={() => go('rotina')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Abrir opção
-                          </button>
-                          <button
-                            onClick={() => go('pausas')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Só uma pausa rápida
-                          </button>
-                          <button
-                            onClick={() => go('entrada')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {view === 'rotina' ? (
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <div>
-                          <div className="text-[14px] text-[#2f3a56] font-semibold">Se quiser, faça por partes</div>
-                          <div className="text-[12px] text-[#6a6a6a]">Você pode marcar só o que fizer. Ou nada.</div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                          <button
-                            onClick={() => go('pausas')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Pausa rápida
-                          </button>
-                          <button
-                            onClick={() => go('fechar')}
-                            className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Encerrar
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {routine.steps.slice(0, 4).map((s, i) => (
-                          <button
-                            key={`${routine.id}-${s}`}
-                            onClick={() => toggleStep(i)}
-                            className={[
-                              'rounded-3xl border p-4 text-left transition',
-                              checked[i]
-                                ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                            ].join(' ')}
-                          >
-                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                              parte {i + 1}
-                            </div>
-                            <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-3">
-                              {checked[i] ? 'marcado ✓' : 'marcar'}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só a parte 1. Isso já conta.</div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={() => saveToMyDay(routine.title)}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('entrada')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ver outra opção
-                          </button>
-
-                          <button
-                            onClick={() => go('fechar')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Encerrar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {view === 'pausas' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Escolha uma pausa (curta)</div>
-
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                          {routine.pauseDeck[pauseIndex]?.label}
-                        </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-2">
-                          Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
-                        </div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={nextPause}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition w-full sm:w-auto"
-                          >
-                            Outra pausa
-                          </button>
-
-                          <button
-                            onClick={() => saveToMyDay(routine.pauseDeck[pauseIndex]?.label ?? routine.title)}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('rotina')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="text-[12px] text-[#6a6a6a]">Uma pausa já conta. Você pode parar aqui.</div>
-                    </div>
-                  ) : null}
-
-                  {view === 'fechar' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Fechamento</div>
-
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">ok</div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                          {routine.close}
-                        </div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">
-                          Você pode encerrar agora. Se quiser, volte aqui quando fizer sentido.
-                        </div>
-
-                        <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={() => saveToMyDay(routine.title)}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('entrada')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ver outra opção
-                          </button>
-
-                          <button
-                            onClick={() => go('ritmo')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ajustar ritmo
-                          </button>
-
-                          <Link
-                            href="/maternar"
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition text-center"
-                          >
-                            Encerrar
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </SoftCard>
-              </Reveal>
+              </div>
             </div>
+          </SoftCard>
+        </Reveal>
 
-            <div className="mt-4">
-              <LegalFooter />
-            </div>
-          </div>
+        {/* ROTINA PRINCIPAL (com livre arbítrio) */}
+        <div className="mt-6 md:mt-8 space-y-5 md:space-y-6">
+          <Reveal>
+            <SoftCard className="bg-white rounded-3xl p-6 md:p-7 border border-[#F5D7E5] shadow-[0_10px_26px_rgba(184,35,107,0.10)]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                    <AppIcon name="heart" size={20} className="text-[#fd2597]" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="text-[12px] text-[#6a6a6a]">
+                      Sugestão de agora • {focusLabel(focus)}
+                    </div>
+                    <h2 className="mt-1 text-[18px] md:text-[20px] font-semibold text-[#2f3a56] leading-snug">
+                      {routine.title}
+                    </h2>
+                    <p className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-2xl">
+                      {routine.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    className="px-4"
+                    onClick={() => pickAnotherOption()}
+                    title="Trocar por outra opção"
+                  >
+                    Outra opção
+                  </Button>
+                </div>
+              </div>
+
+              {/* passos opcionais */}
+              <div className="mt-5 rounded-2xl border border-[#F5D7E5]/70 bg-white p-4">
+                <div className="text-[13px] font-semibold text-[#2f3a56]">Se quiser fazer agora</div>
+                <div className="text-[12px] text-[#6a6a6a] mt-1">
+                  Pode fazer tudo, pode fazer só um pedaço, ou pode pular. Tudo bem.
+                </div>
+
+                <ul className="mt-3 space-y-2">
+                  {routine.steps.map((s, i) => (
+                    <li key={`${routine.id}-${i}`} className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        className={[
+                          'mt-0.5 h-5 w-5 rounded-md border transition flex items-center justify-center',
+                          checked[i] ? 'bg-[#fd2597] border-[#fd2597]' : 'bg-white border-[#EEC2D6]',
+                        ].join(' ')}
+                        onClick={() => toggleStep(i)}
+                        aria-label="Marcar passo"
+                      >
+                        {checked[i] ? <AppIcon name="check" size={14} className="text-white" /> : null}
+                      </button>
+
+                      <span className="text-[14px] text-[#545454] leading-relaxed">{s}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-4 flex flex-col md:flex-row gap-2">
+                  <Button
+                    className="md:w-auto"
+                    onClick={() => {
+                      markRoutineSeen(routine.id)
+                      go('pausas')
+                    }}
+                  >
+                    Quero uma pausa guiada
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="md:w-auto"
+                    onClick={() => {
+                      markRoutineSeen(routine.id)
+                      go('fechar')
+                    }}
+                  >
+                    Encerrar por aqui
+                  </Button>
+                </div>
+              </div>
+
+              {/* ações de liberdade */}
+              <div className="mt-4 flex flex-col md:flex-row gap-2">
+                <Button variant="secondary" className="md:w-auto" onClick={saveForLater}>
+                  Salvar para mais tarde
+                </Button>
+
+                <Button variant="outline" className="md:w-auto" onClick={saveToMyDay}>
+                  Salvar no Meu Dia
+                </Button>
+
+                <Link href="/maternar" className="md:ml-auto">
+                  <Button variant="ghost" className="w-full md:w-auto">
+                    Voltar ao Maternar
+                  </Button>
+                </Link>
+              </div>
+
+              {saveFeedback ? (
+                <div className="mt-3 text-[12px] text-[#6a6a6a]">{saveFeedback}</div>
+              ) : null}
+            </SoftCard>
+          </Reveal>
+
+          {/* PAUSA GUIADA (deck que troca de verdade) */}
+          {view === 'pausas' ? (
+            <Reveal>
+              <SoftCard className="bg-white rounded-3xl p-6 md:p-7 border border-[#F5D7E5] shadow-[0_10px_26px_rgba(184,35,107,0.10)]">
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                    <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[12px] text-[#6a6a6a]">Pausa do momento</div>
+                    <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{pauseCard.label}</div>
+                    <div className="mt-1 text-[13px] text-[#545454]">
+                      Tempo sugerido: {pauseCard.min} min. Se for menos, também serve.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-col md:flex-row gap-2">
+                  <Button
+                    variant="secondary"
+                    className="md:w-auto"
+                    onClick={() => {
+                      setPauseIndex((p) => p + 1)
+                      try {
+                        track('cuidar_de_mim.pause.next', { routineId: routine.id, pauseId: pauseCard.id })
+                      } catch {}
+                    }}
+                  >
+                    Outra pausa
+                  </Button>
+
+                  <Button
+                    className="md:w-auto"
+                    onClick={() => {
+                      go('fechar')
+                      try {
+                        track('cuidar_de_mim.pause.done', { routineId: routine.id, pauseId: pauseCard.id })
+                      } catch {}
+                    }}
+                  >
+                    Feito
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    className="md:w-auto md:ml-auto"
+                    onClick={() => {
+                      setView('entrada')
+                      try {
+                        track('cuidar_de_mim.pause.back', { routineId: routine.id })
+                      } catch {}
+                    }}
+                  >
+                    Voltar
+                  </Button>
+                </div>
+              </SoftCard>
+            </Reveal>
+          ) : null}
+
+          {/* FECHAMENTO (sem cobrança) */}
+          {view === 'fechar' ? (
+            <Reveal>
+              <SoftCard className="bg-white rounded-3xl p-6 md:p-7 border border-[#F5D7E5] shadow-[0_10px_26px_rgba(184,35,107,0.10)]">
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                    <AppIcon name="star" size={18} className="text-[#fd2597]" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[14px] text-[#545454] leading-relaxed">{routine.close}</div>
+                    <div className="mt-2 text-[12px] text-[#6a6a6a]">
+                      Se quiser, você pode guardar isso no seu dia — ou só seguir em frente.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-col md:flex-row gap-2">
+                  <Button variant="outline" className="md:w-auto" onClick={saveToMyDay}>
+                    Salvar no Meu Dia
+                  </Button>
+
+                  <Button variant="secondary" className="md:w-auto" onClick={() => pickAnotherOption()}>
+                    Outra opção leve
+                  </Button>
+
+                  <Link href="/maternar" className="md:ml-auto">
+                    <Button className="w-full md:w-auto">Voltar ao Maternar</Button>
+                  </Link>
+                </div>
+
+                {saveFeedback ? (
+                  <div className="mt-3 text-[12px] text-[#6a6a6a]">{saveFeedback}</div>
+                ) : null}
+              </SoftCard>
+            </Reveal>
+          ) : null}
         </div>
-      </ClientOnly>
+
+        <div className="mt-10">
+          <LegalFooter />
+        </div>
+      </div>
+
+      <footer className="relative z-10 w-full text-center pt-4 pb-2 px-4 text-[12px] text-white/70">
+        <p>2025 Materna360. Todos os direitos reservados.</p>
+        <p>Proibida a reprodução total ou parcial sem autorização.</p>
+      </footer>
     </main>
   )
 }
