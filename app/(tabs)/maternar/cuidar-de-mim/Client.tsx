@@ -65,7 +65,7 @@ export default function Client() {
 
   useEffect(() => {
     try {
-      track('cuidar_de_mim.open')
+    track('cuidar_de_mim.open', {})
     } catch {}
   }, [])
 
