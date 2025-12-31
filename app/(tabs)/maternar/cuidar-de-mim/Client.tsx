@@ -401,11 +401,12 @@ export default function Client() {
       const title = `Cuidar de Mim: ${routine.title}`
       const note = routine.steps.slice(0, 3).join(' · ')
 
-      await addTaskToMyDay({
-        title,
-        origin: originForCuidarDeMim(),
-        source: MY_DAY_SOURCES.cuidar_de_mim ?? 'cuidar_de_mim',
-      })
+      const titleFinal = note ? `${title} — ${note}` : title
+await addTaskToMyDay({
+  title: titleFinal,
+  origin: 'selfcare',
+  source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+})
 
       // sinal de continuidade para o Meu Dia (sem conteúdo sensível)
       safeSetLS(
