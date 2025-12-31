@@ -98,8 +98,7 @@ function setSeenForDay(day: string, keys: DeckKey[]) {
 function addSeen(day: string, key: DeckKey) {
   const current = getSeenForDay(day)
   if (current.includes(key)) return
-  const next = [...current, key]
-  setSeenForDay(day, next)
+  setSeenForDay(day, [...current, key])
 }
 
 function clearSeen(day: string) {
@@ -119,7 +118,7 @@ export default function Client() {
   const [emocao, setEmocao] = useState<'neutra' | 'sensivel' | 'tensa' | 'carente' | null>(null)
   const [corpo, setCorpo] = useState<'tenso' | 'cansado' | 'ok' | 'pedindo-pausa' | null>(null)
 
-  // Deck diário anti-repetição: seed do dia + cursor + seen diário
+  // Deck determinístico diário: seed do dia + cursor + seen diário
   const [deckCursor, setDeckCursor] = useState<number>(0)
   const [day, setDay] = useState<string>(todayKey())
 
@@ -144,7 +143,6 @@ export default function Client() {
   const suggestions = useMemo(() => buildDeck(), [])
 
   const baseRotated = useMemo(() => {
-    // Determinístico por dia (auditável): apenas seed do dia + lista base
     const seed = hashToInt(`${day}|cuidar-de-mim`)
     const start = pickIndex(seed, suggestions.length)
     return rotate(suggestions, start)
@@ -156,8 +154,6 @@ export default function Client() {
     const seen = getSeenForDay(day)
     const firstUnseen = cursorRotated.find((s) => !seen.includes(s.key))
     if (firstUnseen) return firstUnseen
-
-    // Se viu todas hoje, reseta o seen do dia e volta a oferecer (sem “histórico”)
     clearSeen(day)
     return cursorRotated[0] ?? suggestions[0]
   }, [cursorRotated, day, suggestions])
@@ -169,21 +165,18 @@ export default function Client() {
   }, [activeSuggestionKey, suggestions])
 
   const heroSubtitle = useMemo(() => {
-    // Ajuste de TOM permitido pelo plano (sem exposição de inferência; sem IA falante)
     if (ritmo === 'sobrecarregada') return 'Você não precisa fazer nada agora. Se quiser, pode escolher só uma coisa pequena.'
     if (ritmo === 'cansada') return 'Se quiser, escolha algo que ajude um pouco. Se não fizer sentido, tudo bem.'
     return 'Se quiser, escolha algo que ajude um pouco. Se não fizer sentido, tudo bem.'
   }, [ritmo])
 
   function onOtherOption() {
-    // Anti-repetição real: marca a atual como vista antes de girar
     addSeen(day, current.key)
     setDeckCursor((c) => c + 1)
     track('maternar_cuidar_de_mim_other_option', { key: current.key })
   }
 
   function onOpenSuggestion(s: Suggestion) {
-    // Marca como vista no dia (não repetir mecânico)
     addSeen(day, s.key)
     setActiveSuggestionKey(s.key)
     setView('experiencia')
@@ -217,60 +210,63 @@ export default function Client() {
       })
       track('maternar_cuidar_de_mim_save_my_day', { key: s.key })
     } catch {
-      // silent (sem linguagem de falha)
       track('maternar_cuidar_de_mim_save_my_day_error', { key: s.key })
     }
   }
 
   return (
     <ClientOnly>
-      <div className={cx('min-h-screen', 'bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]')}>
-        <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-6">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_62%,#ffffff_100%)]">
+        <div className="mx-auto w-full max-w-4xl px-4 pb-28 pt-5 sm:px-6">
           <Reveal>
-            {/* Top bar */}
-            <div className="mb-4 flex items-center justify-between">
-              <Link href="/maternar" className="flex items-center gap-2 text-sm text-white/90">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
-                  <AppIcon name="arrow-left" className="h-4 w-4 text-white" />
-                </span>
-                <span>Voltar</span>
-              </Link>
+            {/* HEADER UNIFICADO (top bar + hero) */}
+            <div className="rounded-3xl bg-[#fd2597] px-5 py-5 text-white shadow-[0_10px_28px_rgba(0,0,0,0.10)] sm:px-6 sm:py-6">
+              <div className="flex items-center justify-between">
+                <Link href="/maternar" className="flex items-center gap-2 text-sm text-white/90">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15">
+                    <AppIcon name="arrow-left" className="h-4 w-4 text-white" />
+                  </span>
+                  <span>Voltar</span>
+                </Link>
 
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white">CUIDAR DE MIM</span>
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white">CUIDAR DE MIM</span>
+              </div>
+
+              <div className="mt-5">
+                <h1 className="text-[26px] font-semibold leading-tight sm:text-[30px]">Um espaço para se respeitar</h1>
+                <p className="mt-2 max-w-2xl text-sm text-white/90">{heroSubtitle}</p>
+              </div>
             </div>
 
-            {/* Hero */}
-            <div className="rounded-3xl bg-[#fd2597] px-6 py-6 text-white shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <h1 className="text-[28px] font-semibold leading-tight">Um espaço para se respeitar</h1>
-              <p className="mt-2 text-sm text-white/90">{heroSubtitle}</p>
-            </div>
-
-            {/* ENTRADA: convite aberto + saída sempre visível */}
+            {/* CAMADA 0 — ENTRADA (convite aberto + saída clara) */}
             <div className="mt-6">
-              <SoftCard className="relative">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-[#6A6A6A]">Convite aberto</p>
+              <SoftCard className="rounded-3xl">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold tracking-wide text-[#b8236b]">CONVITE ABERTO</p>
                     <h2 className="mt-1 text-lg font-semibold text-[#545454]">O que você sente que precisa agora?</h2>
                     <p className="mt-2 text-sm text-[#6A6A6A]">Se não quiser escolher nada, você pode encerrar por aqui.</p>
                   </div>
 
-                  <Link href="/maternar" className="shrink-0 text-sm text-[#545454] underline-offset-2 hover:underline">
+                  <Link
+                    href="/maternar"
+                    className="inline-flex shrink-0 items-center justify-center rounded-full border border-[var(--color-border-soft)] bg-white px-4 py-2 text-sm font-semibold text-[#545454] hover:-translate-y-[1px] hover:shadow-[0_8px_18px_rgba(0,0,0,0.06)]"
+                  >
                     Encerrar por aqui
                   </Link>
                 </div>
 
                 {/* CAMADA 1 — CHECK-IN (OPCIONAL E FRAGMENTÁVEL) */}
-                <div className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[#ffffff] p-4">
+                <div className="mt-5 rounded-3xl border border-[var(--color-border-soft)] bg-white p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-semibold text-[#b8236b]">SE QUISER, UM CHECK-IN</p>
+                      <p className="text-xs font-semibold tracking-wide text-[#b8236b]">SE QUISER, UM CHECK-IN</p>
                       <p className="mt-1 text-sm text-[#6A6A6A]">Pode ser só uma coisa. Pode pular tudo. Não existe “incompleto”.</p>
                     </div>
                     <span className="text-xs text-[#A0A0A0]">opcional</span>
                   </div>
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                     <MiniField
                       label="Ritmo"
                       hint="Só uma referência."
@@ -340,15 +336,15 @@ export default function Client() {
 
             {/* CAMADA 2 — CAMPO DE POSSIBILIDADES */}
             <div className="mt-6">
-              <SoftCard>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#ffe1f1]">
+              <SoftCard className="rounded-3xl">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#ffe1f1]">
                       <AppIcon name="heart" className="h-5 w-5 text-[#b8236b]" />
                     </span>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm text-[#6A6A6A]">Se quiser, uma possibilidade agora</p>
-                      <h3 className="mt-1 text-lg font-semibold text-[#545454]">{current.title}</h3>
+                      <h3 className="mt-1 truncate text-lg font-semibold text-[#545454]">{current.title}</h3>
                       <p className="mt-1 text-sm text-[#6A6A6A]">{current.subtitle}</p>
                     </div>
                   </div>
@@ -358,7 +354,7 @@ export default function Client() {
                   </Button>
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-[var(--color-border-soft)] bg-white p-4">
+                <div className="mt-5 rounded-3xl border border-[var(--color-border-soft)] bg-white p-4 sm:p-5">
                   <p className="text-sm font-semibold text-[#545454]">{current.content.heading}</p>
                   <div className="mt-3 space-y-2">
                     {current.content.lines.map((line, idx) => (
@@ -368,19 +364,19 @@ export default function Client() {
                     ))}
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Button onClick={() => onOpenSuggestion(current)} className="rounded-full bg-[#fd2597] px-6 py-3 text-white shadow-lg">
                       Quero tentar agora
                     </Button>
 
-                    <Link href="/maternar" className="text-sm text-[#545454] underline-offset-2 hover:underline">
+                    <Link href="/maternar" className="text-sm font-semibold text-[#545454] underline-offset-2 hover:underline">
                       Encerrar por aqui
                     </Link>
                   </div>
                 </div>
 
-                {/* ações (sem coleção visível) */}
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                {/* AÇÕES — sempre visíveis (sem coleção) */}
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap items-center gap-2">
                     <Button variant="secondary" onClick={() => onSaveLocal(current)}>
                       Salvar para mais tarde
@@ -390,7 +386,7 @@ export default function Client() {
                     </Button>
                   </div>
 
-                  <Link href="/maternar" className="text-sm text-[#545454] underline-offset-2 hover:underline">
+                  <Link href="/maternar" className="text-sm font-semibold text-[#545454] underline-offset-2 hover:underline">
                     Voltar ao Maternar
                   </Link>
                 </div>
@@ -400,20 +396,20 @@ export default function Client() {
             {/* CAMADA 3 — EXPERIÊNCIA ÚNICA + CAMADA 4 — ENCERRAMENTO GENTIL */}
             {view === 'experiencia' && activeSuggestion && (
               <div className="mt-6">
-                <SoftCard>
-                  <div className="flex items-start justify-between gap-4">
+                <SoftCard className="rounded-3xl">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-sm text-[#6A6A6A]">Experiência única</p>
                       <h3 className="mt-1 text-lg font-semibold text-[#545454]">{activeSuggestion.title}</h3>
                       <p className="mt-1 text-sm text-[#6A6A6A]">Você pode parar a qualquer momento.</p>
                     </div>
 
-                    <button type="button" onClick={onCloseHere} className="text-sm text-[#545454] underline-offset-2 hover:underline">
+                    <button type="button" onClick={onCloseHere} className="text-sm font-semibold text-[#545454] underline-offset-2 hover:underline">
                       Encerrar por aqui
                     </button>
                   </div>
 
-                  <div className="mt-5 rounded-2xl border border-[var(--color-border-soft)] bg-white p-4">
+                  <div className="mt-5 rounded-3xl border border-[var(--color-border-soft)] bg-white p-4 sm:p-5">
                     <p className="text-sm font-semibold text-[#545454]">{activeSuggestion.content.heading}</p>
                     <div className="mt-3 space-y-2">
                       {activeSuggestion.content.lines.map((line, idx) => (
@@ -423,11 +419,11 @@ export default function Client() {
                       ))}
                     </div>
 
-                    <div className="mt-4 rounded-2xl bg-[#ffe1f1] p-4">
+                    <div className="mt-4 rounded-3xl bg-[#ffe1f1] p-4 sm:p-5">
                       <p className="text-sm text-[#545454]">{activeSuggestion.content.gentleClose}</p>
                     </div>
 
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                       <Button
                         onClick={() => {
                           track('maternar_cuidar_de_mim_enough', { key: activeSuggestion.key })
@@ -451,7 +447,7 @@ export default function Client() {
                         Ver outra possibilidade
                       </Button>
 
-                      <button type="button" onClick={onCloseHere} className="text-sm text-[#545454] underline-offset-2 hover:underline">
+                      <button type="button" onClick={onCloseHere} className="text-sm font-semibold text-[#545454] underline-offset-2 hover:underline">
                         Encerrar por aqui
                       </button>
                     </div>
@@ -471,10 +467,10 @@ export default function Client() {
 }
 
 /**
- * Deck editorial FIXO (sem pesos, sem contexto, sem reordenação “inteligente”).
- * A variação vem APENAS de:
+ * Deck editorial FIXO (sem pesos, sem contexto).
+ * Variação APENAS via:
  * - rotação determinística por dia (seed)
- * - cursor de “Outra opção”
+ * - cursor “Outra opção”
  * - seen diário (anti-repetição real)
  */
 function buildDeck(): Suggestion[] {
@@ -554,7 +550,7 @@ function MiniField(props: {
   onChange: (v: string) => void
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[#ffffff] p-3">
+    <div className="rounded-3xl border border-[var(--color-border-soft)] bg-white p-4">
       <div>
         <p className="text-sm font-semibold text-[#545454]">{props.label}</p>
         <p className="mt-1 text-xs text-[#6A6A6A]">{props.hint}</p>
