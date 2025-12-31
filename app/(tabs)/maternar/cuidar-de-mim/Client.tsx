@@ -7,6 +7,8 @@ import { track } from '@/app/lib/telemetry'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
+import AppIcon from '@/components/ui/AppIcon'
+import { Button } from '@/components/ui/Button'
 import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 
 export const dynamic = 'force-dynamic'
@@ -21,66 +23,31 @@ type Suggestion = {
   id: string
   title: string
   description: string
+  source?: 'eu360' | 'ai' | 'fallback'
 }
 
 const DAILY_SUGGESTIONS: Suggestion[] = [
-  { id: 'pausa-silencio', title: 'Pausa sem explicação', description: 'Permissão para não responder nada agora.' },
-  { id: 'respirar-curto', title: 'Respirar por alguns instantes', description: 'Só parar e perceber a respiração por um momento.' },
-  { id: 'corpo-apoio', title: 'Sentir o corpo', description: 'Apoie os pés no chão e solte os ombros.' },
-  { id: 'nao-agora', title: 'Não fazer nada agora', description: 'Ficar aqui já é suficiente.' },
+  { id: 'pausa-silencio', title: 'Pausa sem explicação', description: 'Permissão para não responder nada agora.', source: 'fallback' },
+  { id: 'respirar-curto', title: 'Respirar por alguns instantes', description: 'Só parar e perceber a respiração por um momento.', source: 'fallback' },
+  { id: 'corpo-apoio', title: 'Sentir o corpo', description: 'Apoie os pés no chão e solte os ombros.', source: 'fallback' },
+  { id: 'nao-agora', title: 'Não fazer nada agora', description: 'Ficar aqui já é suficiente.', source: 'fallback' },
 ]
 
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
-
-function safeDelLS(key: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(key)
-  } catch {}
-}
-
-function getTodayKey() {
+function todayKey() {
   const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// hash simples, auditável
-function hashStringToInt(s: string) {
+function hashToInt(s: string) {
   let h = 0
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
   return h
 }
 
 function rotate<T>(arr: T[], by: number) {
-  if (arr.length === 0) return arr
+  if (!arr.length) return arr
   const n = ((by % arr.length) + arr.length) % arr.length
   return [...arr.slice(n), ...arr.slice(0, n)]
-}
-
-function parseJSON<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
 }
 
 export default function Client() {
@@ -89,30 +56,32 @@ export default function Client() {
   const [emocao, setEmocao] = useState<Emocao | null>(null)
   const [corpo, setCorpo] = useState<Corpo | null>(null)
 
+  const [showCheckin, setShowCheckin] = useState(false)
   const [cursor, setCursor] = useState(0)
   const [seen, setSeen] = useState<string[]>([])
   const [active, setActive] = useState<Suggestion | null>(null)
   const [closed, setClosed] = useState(false)
 
-  const todayKey = useMemo(() => getTodayKey(), [])
-  const seed = useMemo(() => hashStringToInt(todayKey), [todayKey])
+  const day = useMemo(() => todayKey(), [])
+  const seed = useMemo(() => hashToInt(day), [day])
 
-  const LS_CURSOR = `cuidar_de_mim_cursor_${todayKey}`
-  const LS_SEEN = `cuidar_de_mim_seen_${todayKey}`
+  const LS_CURSOR = `cdm_cursor_${day}`
+  const LS_SEEN = `cdm_seen_${day}`
 
-  // init determinístico diário + persistência local (cursor/seen)
   useEffect(() => {
-    const storedCursor = parseInt(safeGetLS(LS_CURSOR) ?? '0', 10)
-    const storedSeen = parseJSON<string[]>(safeGetLS(LS_SEEN), [])
-    setCursor(Number.isFinite(storedCursor) ? storedCursor : 0)
-    setSeen(Array.isArray(storedSeen) ? storedSeen : [])
+    try {
+      const c = Number(localStorage.getItem(LS_CURSOR) || 0)
+      const s = JSON.parse(localStorage.getItem(LS_SEEN) || '[]')
+      setCursor(Number.isFinite(c) ? c : 0)
+      setSeen(Array.isArray(s) ? s : [])
+    } catch {}
   }, [LS_CURSOR, LS_SEEN])
 
   useEffect(() => {
     try {
-      track('cuidar_de_mim.open', { day: todayKey })
+      track('cuidar_de_mim.open', { day })
     } catch {}
-  }, [todayKey])
+  }, [day])
 
   const deck = useMemo(() => {
     const start = seed % (DAILY_SUGGESTIONS.length || 1)
@@ -120,81 +89,50 @@ export default function Client() {
   }, [seed])
 
   const suggestion = useMemo(() => {
-    if (deck.length === 0) return null
-
-    // procura a próxima opção não vista, a partir do cursor
-    const len = deck.length
-    for (let step = 0; step < len; step++) {
-      const idx = (cursor + step) % len
-      const s = deck[idx]
-      if (!seen.includes(s.id)) return s
+    if (!deck.length) return null
+    for (let i = 0; i < deck.length; i++) {
+      const idx = (cursor + i) % deck.length
+      if (!seen.includes(deck[idx].id)) return deck[idx]
     }
-
-    // se todas já foram vistas hoje, volta a permitir (reset seen)
-    // (mas sem UI de coleção, é só mecânica interna)
-    return deck[cursor % len]
+    return deck[cursor % deck.length]
   }, [deck, cursor, seen])
 
-  function persistCursor(next: number) {
-    setCursor(next)
-    safeSetLS(LS_CURSOR, String(next))
+  function persistCursor(v: number) {
+    setCursor(v)
+    try { localStorage.setItem(LS_CURSOR, String(v)) } catch {}
   }
 
-  function persistSeen(nextSeen: string[]) {
-    setSeen(nextSeen)
-    safeSetLS(LS_SEEN, JSON.stringify(nextSeen))
+  function persistSeen(v: string[]) {
+    setSeen(v)
+    try { localStorage.setItem(LS_SEEN, JSON.stringify(v)) } catch {}
   }
 
   function nextOption() {
     if (!deck.length) return
-
     const len = deck.length
-    let nextCursor = (cursor + 1) % len
+    let next = (cursor + 1) % len
 
-    // tenta achar não vista
-    let found = false
-    for (let step = 0; step < len; step++) {
-      const idx = (cursor + 1 + step) % len
-      const s = deck[idx]
-      if (!seen.includes(s.id)) {
-        nextCursor = idx
-        found = true
+    for (let i = 0; i < len; i++) {
+      const idx = (cursor + 1 + i) % len
+      if (!seen.includes(deck[idx].id)) {
+        next = idx
         break
       }
     }
 
-    // se não achou nenhuma (todas vistas), reseta seen do dia e avança
-    if (!found) {
-      persistSeen([])
-      nextCursor = (cursor + 1) % len
-    }
-
-    persistCursor(nextCursor)
-
-    try {
-      track('cuidar_de_mim.other_option', { day: todayKey })
-    } catch {}
+    persistCursor(next)
+    try { track('cuidar_de_mim.other_option', { day }) } catch {}
   }
 
   function openSuggestion(s: Suggestion) {
     setActive(s)
-
-    // marca como vista hoje (anti-repetição real)
-    if (!seen.includes(s.id)) {
-      const nextSeen = [...seen, s.id]
-      persistSeen(nextSeen)
-    }
-
-    try {
-      track('cuidar_de_mim.open_suggestion', { id: s.id, day: todayKey })
-    } catch {}
+    if (!seen.includes(s.id)) persistSeen([...seen, s.id])
+    try { track('cuidar_de_mim.open_suggestion', { id: s.id, day, source: s.source }) } catch {}
   }
 
   function closeHere() {
     setClosed(true)
-    try {
-      track('cuidar_de_mim.close', { day: todayKey })
-    } catch {}
+    try { track('cuidar_de_mim.close', { day }) } catch {}
   }
 
   function saveToMyDay(title: string) {
@@ -203,17 +141,13 @@ export default function Client() {
       origin: 'selfcare',
       source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
     })
-
-    try {
-      track('cuidar_de_mim.save_to_my_day', { day: todayKey, source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM })
-    } catch {}
+    try { track('cuidar_de_mim.save', { day }) } catch {}
   }
 
-  // estilo de botão (mantém visual simples e previsível)
-  function chipClass(active: boolean) {
+  function chip(active: boolean) {
     return [
-      'rounded-full border px-3 py-2 text-[12px] transition text-center',
-      active ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]' : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+      'rounded-full border px-3 py-2 text-[12px] transition',
+      active ? 'bg-[#ffe1f1] border-[#f5d7e5] text-[#2f3a56]' : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#fff0f7]',
     ].join(' ')
   }
 
@@ -222,190 +156,145 @@ export default function Client() {
       data-layout="page-template-v1"
       data-tab="maternar"
       className="
-        min-h-[100dvh]
-        pb-32
-        bg-[#ffe1f1]
+        min-h-[100dvh] pb-32
         bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
       "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+        <div className="mx-auto max-w-6xl px-4 md:px-6">
+          {/* CAPA — PADRÃO HUB */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
-                <span className="mr-1.5 text-lg leading-none">←</span>
-                Voltar para o Maternar
-              </Link>
+            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 mb-2">
+              ← Voltar para o Maternar
+            </Link>
 
-              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight">
-                Um espaço para se respeitar
-              </h1>
+            <SoftCard className="p-6 md:p-7 bg-white/95 border border-[#f5d7e5] rounded-3xl shadow-[0_10px_26px_rgba(184,35,107,0.12)]">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                  <AppIcon name="heart" size={24} className="text-[#fd2597]" />
+                </div>
+                <div className="space-y-1">
+                  <span className="inline-flex rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold text-[#b8236b]">
+                    Para você
+                  </span>
+                  <h1 className="text-xl md:text-2xl font-semibold text-[#2f3a56]">
+                    Cuidar de Mim
+                  </h1>
+                  <p className="text-[13px] text-[#6a6a6a]">
+                    Leve · 3–5 minutos · foco em você
+                  </p>
+                </div>
+              </div>
 
-              <p className="text-sm md:text-base text-white/90 max-w-xl">
-                Se quiser, escolha algo que ajude um pouco. Se não fizer sentido, tudo bem.
+              <p className="mt-4 text-[15px] text-[#545454] max-w-xl">
+                Um espaço de acolhimento e pausas que cabem no seu dia.
               </p>
-            </div>
-          </header>
 
-          <div className="space-y-7 pb-10">
-            {/* FIX INTERAÇÃO: garante clique mesmo se existir overlay externo */}
-            <SoftCard className="relative z-10 pointer-events-auto p-6 rounded-3xl bg-white/95 border border-[#f5d7e5]">
-              <div className="relative z-10 pointer-events-auto">
-                {!active && !closed && (
-                  <div className="space-y-6">
-                    {/* ENTRADA (convite aberto) */}
-                    <div className="space-y-2">
-                      <div className="text-[14px] font-semibold text-[#2f3a56]">
-                        O que você sente que precisa agora?
-                      </div>
-                      <div className="text-[12px] text-[#6a6a6a]">
-                        Se não quiser escolher nada, você pode encerrar por aqui.
-                      </div>
-                    </div>
-
-                    {/* CAMADA 1 — CHECK-IN (opcional, fragmentável) */}
-                    <div className="space-y-4">
-                      <div className="text-[13px] font-semibold text-[#2f3a56]">Se quiser, um check-in</div>
-
-                      {/* Ritmo */}
-                      <div className="space-y-2">
-                        <div className="text-[12px] text-[#6a6a6a]">Ritmo</div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => (
-                            <button key={r} type="button" onClick={() => setRitmo(r)} className={chipClass(ritmo === r)}>
-                              {r}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Energia */}
-                      <div className="space-y-2">
-                        <div className="text-[12px] text-[#6a6a6a]">Energia</div>
-                        <div className="grid grid-cols-3 gap-2">
-                          {(['baixa', 'media', 'alta'] as Energia[]).map((e) => (
-                            <button key={e} type="button" onClick={() => setEnergia(e)} className={chipClass(energia === e)}>
-                              {e}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Emoção */}
-                      <div className="space-y-2">
-                        <div className="text-[12px] text-[#6a6a6a]">Emoção</div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {(['neutra', 'sensivel', 'tensa', 'carente'] as Emocao[]).map((em) => (
-                            <button key={em} type="button" onClick={() => setEmocao(em)} className={chipClass(emocao === em)}>
-                              {em}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Corpo */}
-                      <div className="space-y-2">
-                        <div className="text-[12px] text-[#6a6a6a]">Corpo</div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                          {(['ok', 'tenso', 'cansado', 'pedindo-pausa'] as Corpo[]).map((c) => (
-                            <button key={c} type="button" onClick={() => setCorpo(c)} className={chipClass(corpo === c)}>
-                              {c === 'pedindo-pausa' ? 'pedindo pausa' : c}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* CAMADA 2 — CAMPO DE POSSIBILIDADES (deck determinístico diário + anti-repetição real) */}
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5 space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-[14px] font-semibold text-[#2f3a56]">
-                            {suggestion?.title ?? 'Uma possibilidade agora'}
-                          </div>
-                          <div className="text-[13px] text-[#6a6a6a]">
-                            {suggestion?.description ?? 'Sem obrigação. Só se fizer sentido.'}
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={nextOption}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3 py-2 text-[12px] hover:bg-[#ffe1f1] transition shrink-0"
-                        >
-                          Outra opção
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => (suggestion ? openSuggestion(suggestion) : undefined)}
-                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Quero tentar agora
-                        </button>
-                        <button
-                          type="button"
-                          onClick={closeHere}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Encerrar por aqui
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* CAMADA 3 — EXPERIÊNCIA ÚNICA */}
-                {active && (
-                  <div className="space-y-4">
-                    <div className="text-[16px] font-semibold text-[#2f3a56]">{active.title}</div>
-                    <div className="text-[13px] text-[#6a6a6a]">{active.description}</div>
-
-                    {/* Encerramento não sequencial: sem “próximo passo”, sem série */}
-                    <div className="text-[13px] text-[#6a6a6a]">
-                      Você pode parar aqui. Isso já conta.
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => saveToMyDay(active.title)}
-                        className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                      >
-                        Salvar no Meu Dia
-                      </button>
-                      <button
-                        type="button"
-                        onClick={closeHere}
-                        className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                      >
-                        Encerrar por aqui
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* CAMADA 4 — ENCERRAMENTO GENTIL */}
-                {closed && (
-                  <div className="space-y-3">
-                    <div className="text-[14px] font-semibold text-[#2f3a56]">
-                      Isso já é suficiente por agora.
-                    </div>
-                    <Link
-                      href="/maternar"
-                      className="inline-block rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Voltar ao Maternar
-                    </Link>
-                  </div>
-                )}
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button onClick={() => openSuggestion(suggestion!)}>Começar agora</Button>
+                <Button variant="secondary" onClick={() => setShowCheckin((v) => !v)}>
+                  Ajustar
+                </Button>
               </div>
             </SoftCard>
+          </header>
+
+          <div className="space-y-7">
+            {/* CHECK-IN — COLAPSADO */}
+            {showCheckin && (
+              <SoftCard className="p-5 rounded-2xl bg-white/95 border border-[#f5d7e5]">
+                <div className="space-y-4">
+                  <div className="text-[14px] font-semibold text-[#2f3a56]">Se quiser, um check-in</div>
+
+                  <div className="space-y-2">
+                    <div className="text-[12px] text-[#6a6a6a]">Ritmo</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {(['leve','cansada','animada','sobrecarregada'] as Ritmo[]).map(r => (
+                        <button key={r} onClick={() => setRitmo(r)} className={chip(ritmo===r)}>{r}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[12px] text-[#6a6a6a]">Energia</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['baixa','media','alta'] as Energia[]).map(e => (
+                        <button key={e} onClick={() => setEnergia(e)} className={chip(energia===e)}>{e}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[12px] text-[#6a6a6a]">Emoção</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {(['neutra','sensivel','tensa','carente'] as Emocao[]).map(e => (
+                        <button key={e} onClick={() => setEmocao(e)} className={chip(emocao===e)}>{e}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[12px] text-[#6a6a6a]">Corpo</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {(['ok','tenso','cansado','pedindo-pausa'] as Corpo[]).map(c => (
+                        <button key={c} onClick={() => setCorpo(c)} className={chip(corpo===c)}>
+                          {c === 'pedindo-pausa' ? 'pedindo pausa' : c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </SoftCard>
+            )}
+
+            {/* DECK — SUGESTÃO DO DIA */}
+            {!active && !closed && suggestion && (
+              <SoftCard className="p-5 rounded-2xl bg-white/95 border border-[#f5d7e5]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[15px] font-semibold text-[#2f3a56]">{suggestion.title}</div>
+                    <div className="text-[13px] text-[#6a6a6a]">{suggestion.description}</div>
+                  </div>
+                  <button onClick={nextOption} className="rounded-full border px-3 py-2 text-[12px]">
+                    Outra opção
+                  </button>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <Button onClick={() => openSuggestion(suggestion)}>Quero tentar agora</Button>
+                  <Button variant="secondary" onClick={closeHere}>Encerrar por aqui</Button>
+                </div>
+              </SoftCard>
+            )}
+
+            {/* EXPERIÊNCIA */}
+            {active && (
+              <SoftCard className="p-6 rounded-2xl bg-white/95 border border-[#f5d7e5]">
+                <div className="space-y-3">
+                  <div className="text-[16px] font-semibold text-[#2f3a56]">{active.title}</div>
+                  <div className="text-[13px] text-[#6a6a6a]">{active.description}</div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={() => saveToMyDay(active.title)}>Salvar no Meu Dia</Button>
+                    <Button variant="secondary" onClick={closeHere}>Encerrar</Button>
+                  </div>
+                </div>
+              </SoftCard>
+            )}
+
+            {/* ENCERRAMENTO */}
+            {closed && (
+              <SoftCard className="p-5 rounded-2xl bg-white/95 border border-[#f5d7e5]">
+                <div className="space-y-3">
+                  <div className="text-[14px] font-semibold text-[#2f3a56]">
+                    Isso já é suficiente por agora.
+                  </div>
+                  <Link href="/maternar">
+                    <Button variant="secondary">Voltar ao Maternar</Button>
+                  </Link>
+                </div>
+              </SoftCard>
+            )}
 
             <LegalFooter />
           </div>
