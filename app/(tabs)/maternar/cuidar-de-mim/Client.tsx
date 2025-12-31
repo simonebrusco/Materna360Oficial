@@ -12,6 +12,22 @@ import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+/**
+ * =========================================================
+ * HUB 4.1 — CUIDAR DE MIM (CONTRATO NORMATIVO — DEV ONLY)
+ * =========================================================
+ * 1) Sem trilha, sem sequência, sem progresso, sem histórico visível.
+ * 2) Check-in é OPCIONAL e FRAGMENTÁVEL:
+ *    - nunca bloqueia, nunca valida, nunca mostra “completo”.
+ * 3) Check-in NÃO é decorativo: ele apenas REORDENA preferências de sugestão
+ *    de forma silenciosa (sem feedback causal na UI).
+ * 4) Sempre existe fallback (deck do dia + cursor + seen diário).
+ * 5) "Outra opção" IGNORA contexto do check-in para a próxima sugestão:
+ *    - serve para variar sem o app “insistir” na leitura.
+ * 6) IA futura apenas REFINA a ordem/predição; NÃO muda estrutura nem cria chat.
+ * =========================================================
+ */
+
 type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
 type Energia = 'baixa' | 'media' | 'alta'
 type Emocao = 'neutra' | 'sensivel' | 'tensa' | 'carente'
@@ -112,12 +128,6 @@ function splitLines(s: string) {
     .filter(Boolean)
 }
 
-/**
- * Contexto silencioso, determinístico, auditável:
- * - sem pesos
- * - sem aleatoriedade
- * - apenas uma ordem fixa de preferência por estado
- */
 function preferenceOrderFromCheckin(input: {
   ritmo: Ritmo | null
   energia: Energia | null
@@ -125,31 +135,24 @@ function preferenceOrderFromCheckin(input: {
   corpo: Corpo | null
 }): SuggestionId[] {
   const { ritmo, energia, emocao, corpo } = input
-
-  // base neutra (fallback)
   const base: SuggestionId[] = ['pausa-silencio', 'respirar-curto', 'corpo-apoio', 'nao-agora']
 
-  // prioridade máxima: sobrecarga / pausa corporal / energia baixa
   if (ritmo === 'sobrecarregada' || corpo === 'pedindo-pausa' || energia === 'baixa') {
     return ['nao-agora', 'pausa-silencio', 'respirar-curto', 'corpo-apoio']
   }
 
-  // tensão emocional: tende a respirar primeiro
   if (emocao === 'tensa') {
     return ['respirar-curto', 'pausa-silencio', 'corpo-apoio', 'nao-agora']
   }
 
-  // sensível/carente: permissão e acolhimento antes de qualquer coisa
   if (emocao === 'sensivel' || emocao === 'carente') {
     return ['pausa-silencio', 'nao-agora', 'respirar-curto', 'corpo-apoio']
   }
 
-  // cansada / corpo cansado: pausa ou corpo, depois respirar
   if (ritmo === 'cansada' || corpo === 'cansado') {
     return ['pausa-silencio', 'corpo-apoio', 'respirar-curto', 'nao-agora']
   }
 
-  // animada/energia alta: manter simples com corpo/respirar (sem “produtividade”)
   if (ritmo === 'animada' || energia === 'alta') {
     return ['corpo-apoio', 'respirar-curto', 'pausa-silencio', 'nao-agora']
   }
@@ -157,20 +160,14 @@ function preferenceOrderFromCheckin(input: {
   return base
 }
 
-/**
- * Seleção determinística:
- * 1) aplica preferência do check-in
- * 2) respeita "seen do dia"
- * 3) respeita cursor como ponto de variação manual ("Outra opção")
- * 4) fallback: primeira não vista a partir do cursor
- */
 function pickSuggestion(params: {
   deck: Suggestion[]
   cursor: number
   seen: string[]
   prefer: SuggestionId[]
+  ignorePreference: boolean
 }): Suggestion | null {
-  const { deck, cursor, seen, prefer } = params
+  const { deck, cursor, seen, prefer, ignorePreference } = params
   if (!deck.length) return null
   const len = deck.length
 
@@ -179,17 +176,19 @@ function pickSuggestion(params: {
     orderedFromCursor.push(deck[(cursor + step) % len])
   }
 
-  // 1) preferência + não vista (ordem de preferência fixa)
-  for (const pid of prefer) {
-    const cand = orderedFromCursor.find((s) => s.id === pid && !seen.includes(s.id))
-    if (cand) return cand
+  // 1) preferência (check-in) — apenas quando NÃO estamos em “Outra opção”
+  if (!ignorePreference) {
+    for (const pid of prefer) {
+      const cand = orderedFromCursor.find((s) => s.id === pid && !seen.includes(s.id))
+      if (cand) return cand
+    }
   }
 
-  // 2) fallback: primeira não vista a partir do cursor
+  // 2) fallback: primeira não vista a partir do cursor (neutro)
   const firstUnseen = orderedFromCursor.find((s) => !seen.includes(s.id))
   if (firstUnseen) return firstUnseen
 
-  // 3) se tudo foi visto hoje, permite repetição (sem UI de histórico)
+  // 3) se tudo foi visto hoje, permite repetição (sem UI/histórico)
   return orderedFromCursor[0] ?? deck[cursor % len] ?? deck[0]
 }
 
@@ -201,6 +200,9 @@ export default function Client() {
 
   const [cursor, setCursor] = useState(0)
   const [seen, setSeen] = useState<string[]>([])
+
+  // controla “Outra opção ignora contexto” (apenas para a PRÓXIMA sugestão visível)
+  const [ignorePreferenceOnce, setIgnorePreferenceOnce] = useState(false)
 
   const [active, setActive] = useState<Suggestion | null>(null)
   const [closed, setClosed] = useState(false)
@@ -247,6 +249,10 @@ export default function Client() {
         corpo,
       })
     )
+
+    // Se a usuária mexeu no check-in, não “prendemos” no modo “ignore”
+    // (mas também não mostramos nenhum feedback causal na UI).
+    setIgnorePreferenceOnce(false)
   }, [LS_CHECKIN, ritmo, energia, emocao, corpo])
 
   const deck = useMemo(() => {
@@ -259,10 +265,15 @@ export default function Client() {
     [ritmo, energia, emocao, corpo]
   )
 
-  // agora o check-in influencia de verdade (silencioso, determinístico)
   const suggestion = useMemo(() => {
-    return pickSuggestion({ deck, cursor, seen, prefer })
-  }, [deck, cursor, seen, prefer])
+    return pickSuggestion({
+      deck,
+      cursor,
+      seen,
+      prefer,
+      ignorePreference: ignorePreferenceOnce,
+    })
+  }, [deck, cursor, seen, prefer, ignorePreferenceOnce])
 
   function persistCursor(next: number) {
     setCursor(next)
@@ -278,7 +289,10 @@ export default function Client() {
     if (!deck.length) return
     const len = deck.length
 
-    // avança cursor “manual”
+    // “Outra opção” deve ignorar contexto para a próxima sugestão.
+    setIgnorePreferenceOnce(true)
+
+    // avança cursor determinístico
     const nextCursor = (cursor + 1) % len
     persistCursor(nextCursor)
 
@@ -290,7 +304,9 @@ export default function Client() {
   function openSuggestion(s: Suggestion) {
     setActive(s)
 
-    // anti-repetição real (seen diário)
+    // ao entrar na experiência, não precisamos mais “ignorar contexto”
+    setIgnorePreferenceOnce(false)
+
     if (!seen.includes(s.id)) {
       persistSeen([...seen, s.id])
     }
@@ -303,6 +319,7 @@ export default function Client() {
   function closeHere() {
     setClosed(true)
     setActive(null)
+    setIgnorePreferenceOnce(false)
     try {
       track('cuidar_de_mim.close', { day: todayKey })
     } catch {}
@@ -311,6 +328,7 @@ export default function Client() {
   function backToPossibilities() {
     setClosed(false)
     setActive(null)
+    setIgnorePreferenceOnce(false)
     try {
       track('cuidar_de_mim.back_to_possibilities', { day: todayKey })
     } catch {}
@@ -340,6 +358,11 @@ export default function Client() {
     if (kind === 'primary') {
       return 'rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition'
     }
+    return 'rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition'
+  }
+
+  // Botão “Salvar no Meu Dia” precisa ser lateral (mesma hierarquia de saída)
+  function saveBtnClass() {
     return 'rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition'
   }
 
@@ -400,11 +423,7 @@ export default function Client() {
                       Ver uma possibilidade agora
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={closeHere}
-                      className={actionBtnClass('neutral')}
-                    >
+                    <button type="button" onClick={closeHere} className={actionBtnClass('neutral')}>
                       Encerrar por aqui
                     </button>
                   </div>
@@ -412,12 +431,10 @@ export default function Client() {
 
                 {!closed ? (
                   <>
-                    {/* CAMADA 2 — CHECK-IN (rebaixado visualmente) */}
-                    <div className="rounded-2xl bg-white/70 border border-[#f5d7e5] p-4 space-y-3">
+                    {/* CAMADA 2 — CHECK-IN (visual rebaixado + sem sensação de “resultado”) */}
+                    <div className="rounded-2xl bg-white/60 border border-[#f5d7e5] p-4 space-y-3">
                       <div className="space-y-1">
-                        <div className="text-[12px] font-semibold text-[#2f3a56]">
-                          Se quiser, um check-in
-                        </div>
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Se quiser, um check-in</div>
                         <div className="text-[11px] text-[#6a6a6a]">
                           Pode ser só uma coisa. Pode pular tudo.
                         </div>
@@ -470,13 +487,22 @@ export default function Client() {
                       </div>
                     </div>
 
+                    {/* RESPIRO + SEPARADOR (remove sensação de “resultado imediato”) */}
+                    <div className="pt-2 md:pt-3">
+                      <div className="h-px w-full bg-[#f5d7e5]" />
+                    </div>
+
+                    <div className="pt-2 md:pt-3" />
+
                     {/* CAMADA 3/4 */}
                     {!active ? (
-                      /* CAMADA 3 — SUGESTÃO ÚNICA */
+                      /* CAMADA 3 — SUGESTÃO ÚNICA (parece “uma possibilidade”, não “resultado”) */
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5 space-y-3">
+                        <div className="text-[12px] text-[#6a6a6a]">Se quiser, uma possibilidade agora</div>
+
                         <div>
                           <div className="text-[14px] font-semibold text-[#2f3a56]">
-                            {suggestion?.title ?? 'Se quiser, uma possibilidade agora'}
+                            {suggestion?.title ?? 'Uma possibilidade agora'}
                           </div>
                           <div className="text-[13px] text-[#6a6a6a]">
                             {suggestion?.subtitle ?? 'Sem obrigação. Só se fizer sentido.'}
@@ -502,19 +528,11 @@ export default function Client() {
                             Quero tentar agora
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={nextOption}
-                            className={actionBtnClass('neutral')}
-                          >
+                          <button type="button" onClick={nextOption} className={actionBtnClass('neutral')}>
                             Outra opção
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={closeHere}
-                            className={actionBtnClass('neutral')}
-                          >
+                          <button type="button" onClick={closeHere} className={actionBtnClass('neutral')}>
                             Encerrar por aqui
                           </button>
                         </div>
@@ -536,17 +554,12 @@ export default function Client() {
                             ))}
                           </div>
 
-                          <div className="pt-2 text-[13px] text-[#6a6a6a]">
-                            Isso já é suficiente por agora.
-                          </div>
+                          <div className="pt-2 text-[13px] text-[#6a6a6a]">Isso já é suficiente por agora.</div>
                         </div>
 
+                        {/* Saídas obrigatórias */}
                         <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={backToPossibilities}
-                            className={actionBtnClass('neutral')}
-                          >
+                          <button type="button" onClick={backToPossibilities} className={actionBtnClass('neutral')}>
                             Já está bom por agora
                           </button>
 
@@ -561,21 +574,12 @@ export default function Client() {
                             Ver outra possibilidade
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={closeHere}
-                            className={actionBtnClass('neutral')}
-                          >
+                          <button type="button" onClick={closeHere} className={actionBtnClass('neutral')}>
                             Encerrar por aqui
                           </button>
-                        </div>
 
-                        <div className="pt-2 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => saveToMyDay(active.title)}
-                            className={actionBtnClass('primary')}
-                          >
+                          {/* CAMADA 5 — REGISTROS (lateral, sem cara de “próximo passo”) */}
+                          <button type="button" onClick={() => saveToMyDay(active.title)} className={saveBtnClass()}>
                             Salvar no Meu Dia
                           </button>
                         </div>
@@ -584,12 +588,10 @@ export default function Client() {
                   </>
                 ) : null}
 
-                {/* Encerramento gentil (sem convite) */}
+                {/* Encerramento gentil */}
                 {closed ? (
                   <div className="space-y-3">
-                    <div className="text-[14px] font-semibold text-[#2f3a56]">
-                      Isso já é suficiente por agora.
-                    </div>
+                    <div className="text-[14px] font-semibold text-[#2f3a56]">Isso já é suficiente por agora.</div>
                     <Link
                       href="/maternar"
                       className="inline-block rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
@@ -609,6 +611,7 @@ export default function Client() {
                         setEnergia(null)
                         setEmocao(null)
                         setCorpo(null)
+                        setIgnorePreferenceOnce(false)
                         setClosed(false)
                         setActive(null)
                       }}
