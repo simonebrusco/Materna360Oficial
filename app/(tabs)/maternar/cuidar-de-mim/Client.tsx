@@ -16,8 +16,6 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 type Ritmo = 'leve' | 'animada' | 'cansada' | 'sobrecarregada'
-type FocusMode = '1min' | '3min' | '5min'
-
 type DeckKey = 'respirar' | 'pausar' | 'acolher' | 'organizar' | 'corpo' | 'nada'
 
 type Suggestion = {
@@ -29,13 +27,13 @@ type Suggestion = {
     lines: string[]
     gentleClose: string
   }
-  recommended?: FocusMode
 }
 
 type View = 'hub' | 'experiencia'
 
 const LS_PREFIX = 'm360:cuidar-de-mim:'
 const LS_SAVED = `${LS_PREFIX}saved`
+const LS_SEEN_PREFIX = `${LS_PREFIX}seen:`
 
 function todayKey(): string {
   const d = new Date()
@@ -78,40 +76,59 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
+function seenStorageKey(day: string) {
+  return `${LS_SEEN_PREFIX}${day}`
+}
+
+function getSeenForDay(day: string): DeckKey[] {
+  if (typeof window === 'undefined') return []
+  const raw = localStorage.getItem(seenStorageKey(day))
+  const data = safeParse<DeckKey[]>(raw)
+  return Array.isArray(data) ? (data as DeckKey[]) : []
+}
+
+function setSeenForDay(day: string, keys: DeckKey[]) {
+  try {
+    localStorage.setItem(seenStorageKey(day), JSON.stringify(keys))
+  } catch {
+    // silent
+  }
+}
+
+function addSeen(day: string, key: DeckKey) {
+  const current = getSeenForDay(day)
+  if (current.includes(key)) return
+  const next = [...current, key]
+  setSeenForDay(day, next)
+}
+
+function clearSeen(day: string) {
+  try {
+    localStorage.removeItem(seenStorageKey(day))
+  } catch {
+    // silent
+  }
+}
+
 export default function Client() {
   const [view, setView] = useState<View>('hub')
 
-  // Check-in (opcional e fragmentável)
+  // CAMADA 1 — CHECK-IN (opcional e fragmentável): Ritmo / Energia / Emoção / Corpo
   const [ritmo, setRitmo] = useState<Ritmo | null>(null)
   const [energia, setEnergia] = useState<'baixa' | 'media' | 'alta' | null>(null)
   const [emocao, setEmocao] = useState<'neutra' | 'sensivel' | 'tensa' | 'carente' | null>(null)
   const [corpo, setCorpo] = useState<'tenso' | 'cansado' | 'ok' | 'pedindo-pausa' | null>(null)
-  const [focusMode, setFocusMode] = useState<FocusMode>('1min')
 
-  // Deck diário anti-repetição
+  // Deck diário anti-repetição: seed do dia + cursor + seen diário
   const [deckCursor, setDeckCursor] = useState<number>(0)
+  const [day, setDay] = useState<string>(todayKey())
 
-  // Sugestões
-  const suggestions = useMemo(() => buildDeck({ ritmo, energia, emocao, corpo }), [ritmo, energia, emocao, corpo])
-
-  const rotatedSuggestions = useMemo(() => {
-    const day = todayKey()
-    const baseSeed = hashToInt(`${day}|cuidar-de-mim|${ritmo ?? 'na'}|${energia ?? 'na'}|${emocao ?? 'na'}|${corpo ?? 'na'}`)
-    const start = pickIndex(baseSeed, suggestions.length)
-    const rotated = rotate(suggestions, start)
-    return rotate(rotated, deckCursor)
-  }, [suggestions, deckCursor, ritmo, energia, emocao, corpo])
-
-  const current = rotatedSuggestions[0] ?? suggestions[0]
-
-  const [activeSuggestionKey, setActiveSuggestionKey] = useState<DeckKey | null>(null)
-  const activeSuggestion = useMemo(() => {
-    if (!activeSuggestionKey) return null
-    return suggestions.find((s) => s.key === activeSuggestionKey) ?? null
-  }, [activeSuggestionKey, suggestions])
-
-  // Restore “salvos para mais tarde” (local)
+  // “Salvar para mais tarde” (local) — sem UI de lista
   const [saved, setSaved] = useState<Array<{ key: DeckKey; title: string; ts: number }>>([])
+
+  useEffect(() => {
+    setDay(todayKey())
+  }, [])
 
   useEffect(() => {
     const data = safeParse<Array<{ key: DeckKey; title: string; ts: number }>>(
@@ -124,12 +141,50 @@ export default function Client() {
     track('maternar_cuidar_de_mim_view', { view })
   }, [view])
 
+  const suggestions = useMemo(() => buildDeck(), [])
+
+  const baseRotated = useMemo(() => {
+    // Determinístico por dia (auditável): apenas seed do dia + lista base
+    const seed = hashToInt(`${day}|cuidar-de-mim`)
+    const start = pickIndex(seed, suggestions.length)
+    return rotate(suggestions, start)
+  }, [day, suggestions])
+
+  const cursorRotated = useMemo(() => rotate(baseRotated, deckCursor), [baseRotated, deckCursor])
+
+  const current = useMemo(() => {
+    const seen = getSeenForDay(day)
+    const firstUnseen = cursorRotated.find((s) => !seen.includes(s.key))
+    if (firstUnseen) return firstUnseen
+
+    // Se viu todas hoje, reseta o seen do dia e volta a oferecer (sem “histórico”)
+    clearSeen(day)
+    return cursorRotated[0] ?? suggestions[0]
+  }, [cursorRotated, day, suggestions])
+
+  const [activeSuggestionKey, setActiveSuggestionKey] = useState<DeckKey | null>(null)
+  const activeSuggestion = useMemo(() => {
+    if (!activeSuggestionKey) return null
+    return suggestions.find((s) => s.key === activeSuggestionKey) ?? null
+  }, [activeSuggestionKey, suggestions])
+
+  const heroSubtitle = useMemo(() => {
+    // Ajuste de TOM permitido pelo plano (sem exposição de inferência; sem IA falante)
+    if (ritmo === 'sobrecarregada') return 'Você não precisa fazer nada agora. Se quiser, pode escolher só uma coisa pequena.'
+    if (ritmo === 'cansada') return 'Se quiser, escolha algo que ajude um pouco. Se não fizer sentido, tudo bem.'
+    return 'Se quiser, escolha algo que ajude um pouco. Se não fizer sentido, tudo bem.'
+  }, [ritmo])
+
   function onOtherOption() {
+    // Anti-repetição real: marca a atual como vista antes de girar
+    addSeen(day, current.key)
     setDeckCursor((c) => c + 1)
-    track('maternar_cuidar_de_mim_other_option', {})
+    track('maternar_cuidar_de_mim_other_option', { key: current.key })
   }
 
   function onOpenSuggestion(s: Suggestion) {
+    // Marca como vista no dia (não repetir mecânico)
+    addSeen(day, s.key)
     setActiveSuggestionKey(s.key)
     setView('experiencia')
     track('maternar_cuidar_de_mim_open_experience', { key: s.key })
@@ -142,7 +197,7 @@ export default function Client() {
   }
 
   function onSaveLocal(s: Suggestion) {
-    const next = [{ key: s.key, title: s.title, ts: Date.now() }, ...saved.filter((x) => x.key !== s.key).slice(0, 9)]
+    const next = [{ key: s.key, title: s.title, ts: Date.now() }, ...saved.filter((x) => x.key !== s.key)].slice(0, 20)
     setSaved(next)
     try {
       localStorage.setItem(LS_SAVED, JSON.stringify(next))
@@ -157,29 +212,19 @@ export default function Client() {
     try {
       await addTaskToMyDay({
         title,
+        origin: 'selfcare',
         source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
       })
       track('maternar_cuidar_de_mim_save_my_day', { key: s.key })
     } catch {
-      // silent: sem toast e sem linguagem de falha
+      // silent (sem linguagem de falha)
       track('maternar_cuidar_de_mim_save_my_day_error', { key: s.key })
     }
   }
 
-  const heroSubtitle = useMemo(() => {
-    if (ritmo === 'sobrecarregada') return 'Você não precisa dar conta de tudo agora. Se quiser, escolhe só uma coisa pequena.'
-    if (ritmo === 'cansada') return 'Se quiser, escolhe algo que ajude um pouco. Se não fizer sentido, a gente troca — sem drama.'
-    return 'Se quiser, escolhe algo que ajude um pouco. Se não fizer sentido, a gente troca — sem drama.'
-  }, [ritmo])
-
   return (
     <ClientOnly>
-      <div
-        className={cx(
-          'min-h-screen',
-          'bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]'
-        )}
-      >
+      <div className={cx('min-h-screen', 'bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]')}>
         <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-6">
           <Reveal>
             {/* Top bar */}
@@ -196,7 +241,7 @@ export default function Client() {
 
             {/* Hero */}
             <div className="rounded-3xl bg-[#fd2597] px-6 py-6 text-white shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <h1 className="text-[28px] font-semibold leading-tight">Um cuidado que cabe no seu dia</h1>
+              <h1 className="text-[28px] font-semibold leading-tight">Um espaço para se respeitar</h1>
               <p className="mt-2 text-sm text-white/90">{heroSubtitle}</p>
             </div>
 
@@ -207,9 +252,7 @@ export default function Client() {
                   <div>
                     <p className="text-sm text-[#6A6A6A]">Convite aberto</p>
                     <h2 className="mt-1 text-lg font-semibold text-[#545454]">O que você sente que precisa agora?</h2>
-                    <p className="mt-2 text-sm text-[#6A6A6A]">
-                      Se quiser, escolha algo. Se não quiser, tudo bem — você pode encerrar por aqui.
-                    </p>
+                    <p className="mt-2 text-sm text-[#6A6A6A]">Se não quiser escolher nada, você pode encerrar por aqui.</p>
                   </div>
 
                   <Link href="/maternar" className="shrink-0 text-sm text-[#545454] underline-offset-2 hover:underline">
@@ -217,12 +260,12 @@ export default function Client() {
                   </Link>
                 </div>
 
-                {/* CHECK-IN (OPCIONAL E FRAGMENTÁVEL) */}
+                {/* CAMADA 1 — CHECK-IN (OPCIONAL E FRAGMENTÁVEL) */}
                 <div className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[#ffffff] p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-semibold text-[#b8236b]">SE QUISER AJUSTAR ALGO</p>
-                      <p className="mt-1 text-sm text-[#6A6A6A]">Pode ser só uma coisa. Pode pular tudo. Nada aqui é obrigatório.</p>
+                      <p className="text-xs font-semibold text-[#b8236b]">SE QUISER, UM CHECK-IN</p>
+                      <p className="mt-1 text-sm text-[#6A6A6A]">Pode ser só uma coisa. Pode pular tudo. Não existe “incompleto”.</p>
                     </div>
                     <span className="text-xs text-[#A0A0A0]">opcional</span>
                   </div>
@@ -230,7 +273,7 @@ export default function Client() {
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     <MiniField
                       label="Ritmo"
-                      hint="Só uma referência, não um compromisso."
+                      hint="Só uma referência."
                       options={[
                         { id: 'leve', label: 'Leve' },
                         { id: 'animada', label: 'Animada' },
@@ -241,21 +284,6 @@ export default function Client() {
                       onChange={(v) => {
                         setRitmo(v as Ritmo)
                         track('maternar_cuidar_de_mim_checkin', { key: 'ritmo', value: v })
-                      }}
-                    />
-
-                    <MiniField
-                      label="Quanto cabe agora"
-                      hint="Se for menos, também serve."
-                      options={[
-                        { id: '1min', label: 'Um instante' },
-                        { id: '3min', label: 'Pouco tempo' },
-                        { id: '5min', label: 'Um pouco mais' },
-                      ]}
-                      value={focusMode}
-                      onChange={(v) => {
-                        setFocusMode(v as FocusMode)
-                        track('maternar_cuidar_de_mim_checkin', { key: 'tempo', value: v })
                       }}
                     />
 
@@ -276,7 +304,7 @@ export default function Client() {
 
                     <MiniField
                       label="Emoção"
-                      hint="Se quiser, só um nome simples."
+                      hint="Se quiser, um nome simples."
                       options={[
                         { id: 'neutra', label: 'Neutra' },
                         { id: 'sensivel', label: 'Sensível' },
@@ -292,7 +320,7 @@ export default function Client() {
 
                     <MiniField
                       label="Corpo"
-                      hint="Se quiser, um sinal simples."
+                      hint="Um sinal simples."
                       options={[
                         { id: 'tenso', label: 'Tenso' },
                         { id: 'cansado', label: 'Cansado' },
@@ -310,7 +338,7 @@ export default function Client() {
               </SoftCard>
             </div>
 
-            {/* CAMPO DE POSSIBILIDADES */}
+            {/* CAMADA 2 — CAMPO DE POSSIBILIDADES */}
             <div className="mt-6">
               <SoftCard>
                 <div className="flex items-start justify-between gap-4">
@@ -325,11 +353,9 @@ export default function Client() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" onClick={onOtherOption}>
-                      Outra opção
-                    </Button>
-                  </div>
+                  <Button variant="ghost" onClick={onOtherOption}>
+                    Outra opção
+                  </Button>
                 </div>
 
                 <div className="mt-5 rounded-2xl border border-[var(--color-border-soft)] bg-white p-4">
@@ -343,10 +369,7 @@ export default function Client() {
                   </div>
 
                   <div className="mt-5 flex flex-wrap items-center gap-3">
-                    <Button
-                      onClick={() => onOpenSuggestion(current)}
-                      className="rounded-full bg-[#fd2597] px-6 py-3 text-white shadow-lg"
-                    >
+                    <Button onClick={() => onOpenSuggestion(current)} className="rounded-full bg-[#fd2597] px-6 py-3 text-white shadow-lg">
                       Quero tentar agora
                     </Button>
 
@@ -356,6 +379,7 @@ export default function Client() {
                   </div>
                 </div>
 
+                {/* ações (sem coleção visível) */}
                 <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Button variant="secondary" onClick={() => onSaveLocal(current)}>
@@ -370,32 +394,10 @@ export default function Client() {
                     Voltar ao Maternar
                   </Link>
                 </div>
-
-                {saved.length > 0 && (
-                  <div className="mt-6 border-t border-[var(--color-border-soft)] pt-4">
-                    <p className="text-sm font-semibold text-[#545454]">Guardados para quando fizer sentido</p>
-                    <div className="mt-3 grid gap-2">
-                      {saved.slice(0, 3).map((s) => (
-                        <button
-                          key={s.key}
-                          type="button"
-                          onClick={() => {
-                            const found = suggestions.find((x) => x.key === s.key)
-                            if (found) onOpenSuggestion(found)
-                          }}
-                          className="flex items-center justify-between rounded-2xl border border-[var(--color-border-soft)] bg-white px-4 py-3 text-left transition-all hover:-translate-y-[1px] hover:shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
-                        >
-                          <span className="text-sm font-medium text-[#545454]">{s.title}</span>
-                          <span className="text-xs text-[#6A6A6A]">abrir</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </SoftCard>
             </div>
 
-            {/* EXPERIÊNCIA ÚNICA */}
+            {/* CAMADA 3 — EXPERIÊNCIA ÚNICA + CAMADA 4 — ENCERRAMENTO GENTIL */}
             {view === 'experiencia' && activeSuggestion && (
               <div className="mt-6">
                 <SoftCard>
@@ -403,20 +405,10 @@ export default function Client() {
                     <div>
                       <p className="text-sm text-[#6A6A6A]">Experiência única</p>
                       <h3 className="mt-1 text-lg font-semibold text-[#545454]">{activeSuggestion.title}</h3>
-                      <p className="mt-1 text-sm text-[#6A6A6A]">
-                        {focusMode === '1min'
-                          ? 'Por alguns instantes já está bom.'
-                          : focusMode === '3min'
-                          ? 'Se você quiser ficar um pouco, tudo bem.'
-                          : 'Se couber um pouco mais, ótimo. Se não, tudo bem.'}
-                      </p>
+                      <p className="mt-1 text-sm text-[#6A6A6A]">Você pode parar a qualquer momento.</p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={onCloseHere}
-                      className="text-sm text-[#545454] underline-offset-2 hover:underline"
-                    >
+                    <button type="button" onClick={onCloseHere} className="text-sm text-[#545454] underline-offset-2 hover:underline">
                       Encerrar por aqui
                     </button>
                   </div>
@@ -459,11 +451,7 @@ export default function Client() {
                         Ver outra possibilidade
                       </Button>
 
-                      <button
-                        type="button"
-                        onClick={onCloseHere}
-                        className="text-sm text-[#545454] underline-offset-2 hover:underline"
-                      >
+                      <button type="button" onClick={onCloseHere} className="text-sm text-[#545454] underline-offset-2 hover:underline">
                         Encerrar por aqui
                       </button>
                     </div>
@@ -482,13 +470,15 @@ export default function Client() {
   )
 }
 
-function buildDeck(ctx: {
-  ritmo: Ritmo | null
-  energia: 'baixa' | 'media' | 'alta' | null
-  emocao: 'neutra' | 'sensivel' | 'tensa' | 'carente' | null
-  corpo: 'tenso' | 'cansado' | 'ok' | 'pedindo-pausa' | null
-}): Suggestion[] {
-  const base: Suggestion[] = [
+/**
+ * Deck editorial FIXO (sem pesos, sem contexto, sem reordenação “inteligente”).
+ * A variação vem APENAS de:
+ * - rotação determinística por dia (seed)
+ * - cursor de “Outra opção”
+ * - seen diário (anti-repetição real)
+ */
+function buildDeck(): Suggestion[] {
+  return [
     {
       key: 'respirar',
       title: 'Respirar por alguns instantes',
@@ -502,18 +492,16 @@ function buildDeck(ctx: {
         ],
         gentleClose: 'Isso já é suficiente por agora. Não precisa fazer mais nada.',
       },
-      recommended: '1min',
     },
     {
       key: 'pausar',
       title: 'Pausa sem explicação',
-      subtitle: 'Um minuto de permissão para não responder nada agora.',
+      subtitle: 'Permissão para não responder nada agora.',
       content: {
         heading: 'Uma pausa possível',
         lines: ['Se der, apoie os pés no chão.', 'Olhe para um ponto fixo por alguns segundos.', 'Só isso. Sem interpretar. Sem resolver.'],
-        gentleClose: 'Você pode encerrar aqui. Parar também é cuidado.',
+        gentleClose: 'Você pode parar aqui. Parar também é cuidado.',
       },
-      recommended: '1min',
     },
     {
       key: 'acolher',
@@ -524,18 +512,16 @@ function buildDeck(ctx: {
         lines: ['“Eu posso estar cansada e ainda assim estar fazendo o meu melhor.”', 'Se não fizer sentido, ignore. Se fizer, guarde só um pedaço.'],
         gentleClose: 'Guardar um pedaço já conta. Não precisa completar nada.',
       },
-      recommended: '1min',
     },
     {
       key: 'organizar',
       title: 'Se organizar por dentro',
-      subtitle: 'Uma organização interna curta, sem virar lista de tarefas.',
+      subtitle: 'Nomeie por um instante, sem virar lista de tarefas.',
       content: {
         heading: 'Se quiser, só nomeie',
         lines: ['Uma coisa que está pesando.', 'Uma coisa que pode esperar.', 'Uma coisa pequena que te ajuda agora (mesmo que seja água).'],
         gentleClose: 'Se você só conseguiu nomear, já foi suficiente.',
       },
-      recommended: '3min',
     },
     {
       key: 'corpo',
@@ -546,7 +532,6 @@ function buildDeck(ctx: {
         lines: ['Relaxe os ombros uma vez, bem devagar.', 'Desencoste a língua do céu da boca.', 'Se quiser, boceje ou alongue o pescoço de leve.'],
         gentleClose: 'O corpo entendeu. Você pode parar aqui.',
       },
-      recommended: '1min',
     },
     {
       key: 'nada',
@@ -554,78 +539,11 @@ function buildDeck(ctx: {
       subtitle: 'Sim — isso também é uma escolha válida.',
       content: {
         heading: 'Permissão total',
-        lines: [
-          'Se nada fizer sentido, tudo bem.',
-          'Você pode fechar esta tela e seguir o seu dia.',
-          'Quando (ou se) quiser voltar, o app continua aqui — sem cobrança.',
-        ],
+        lines: ['Se nada fizer sentido, tudo bem.', 'Você pode fechar esta tela e seguir o seu dia.', 'Quando (ou se) quiser voltar, o app continua aqui — sem cobrança.'],
         gentleClose: 'Encerrar agora é completamente válido.',
       },
-      recommended: '1min',
     },
   ]
-
-  const w: Record<DeckKey, number> = {
-    respirar: 1,
-    pausar: 1,
-    acolher: 1,
-    organizar: 1,
-    corpo: 1,
-    nada: 1,
-  }
-
-  if (ctx.ritmo === 'sobrecarregada') {
-    w.nada += 3
-    w.pausar += 2
-    w.respirar += 2
-    w.organizar = Math.max(1, w.organizar - 1)
-  } else if (ctx.ritmo === 'cansada') {
-    w.respirar += 2
-    w.pausar += 2
-    w.corpo += 1
-  } else if (ctx.ritmo === 'animada') {
-    w.organizar += 2
-    w.acolher += 1
-  }
-
-  if (ctx.energia === 'baixa') {
-    w.nada += 2
-    w.pausar += 1
-    w.organizar = Math.max(1, w.organizar - 1)
-  }
-  if (ctx.corpo === 'tenso' || ctx.corpo === 'pedindo-pausa') {
-    w.corpo += 2
-    w.respirar += 1
-  }
-  if (ctx.emocao === 'tensa') {
-    w.pausar += 2
-    w.acolher += 1
-  }
-  if (ctx.emocao === 'carente' || ctx.emocao === 'sensivel') {
-    w.acolher += 2
-  }
-
-  const expanded: Suggestion[] = []
-  for (const s of base) {
-    const count = Math.max(1, Math.min(4, w[s.key] ?? 1))
-    for (let i = 0; i < count; i++) expanded.push(s)
-  }
-
-  const seen = new Set<DeckKey>()
-  const ordered: Suggestion[] = []
-  for (const s of expanded) {
-    if (seen.has(s.key)) continue
-    seen.add(s.key)
-    ordered.push(s)
-  }
-
-  if (ordered.length < base.length) {
-    for (const s of base) {
-      if (!ordered.some((x) => x.key === s.key)) ordered.push(s)
-    }
-  }
-
-  return ordered
 }
 
 function MiniField(props: {
