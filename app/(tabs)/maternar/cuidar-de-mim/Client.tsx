@@ -257,4 +257,337 @@ export default function Client() {
     setClosed(false)
     setActive(null)
     try {
-      track('c
+      track('cuidar_de_mim.back_to_possibilities', { day: todayKey })
+    } catch {}
+  }
+
+  async function saveToMyDay(title: string) {
+    await addTaskToMyDay({
+      title,
+      origin: 'selfcare',
+      source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+    })
+
+    try {
+      track('cuidar_de_mim.save_to_my_day', { day: todayKey, source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM })
+    } catch {}
+  }
+
+  function chipClass(activeChip: boolean) {
+    return [
+      'rounded-full border px-3 py-2 text-[12px] transition text-center',
+      activeChip
+        ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+        : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+    ].join(' ')
+  }
+
+  return (
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="
+        min-h-[100dvh]
+        pb-32
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+      "
+    >
+      <ClientOnly>
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+          {/* CAMADA 0 — CONTEXTO DE ENTRADA (imutável) */}
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+            <div className="space-y-3">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar ao Maternar
+              </Link>
+
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight">
+                Um espaço para se respeitar
+              </h1>
+
+              <p className="text-sm md:text-base text-white/90 max-w-xl">
+                Se quiser, escolha algo que ajude um pouco. Se não fizer sentido, tudo bem.
+              </p>
+            </div>
+          </header>
+
+          <div className="space-y-7 pb-10">
+            <SoftCard className="relative z-10 pointer-events-auto p-6 rounded-3xl bg-white/95 border border-[#f5d7e5] shadow-[0_10px_28px_rgba(184,35,107,0.12)]">
+              <div className="relative z-10 pointer-events-auto space-y-6">
+                {/* CAMADA 1 — CONVITE ABERTO (obrigatória) */}
+                <div className="space-y-1">
+                  <div className="text-[14px] font-semibold text-[#2f3a56]">
+                    O que você sente que precisa agora?
+                  </div>
+                  <div className="text-[12px] text-[#6a6a6a]">
+                    Se não quiser escolher nada, você pode encerrar por aqui.
+                  </div>
+
+                  {/* Ação visível — Encerrar por aqui (sempre) */}
+                  <div className="pt-3">
+                    <button
+                      type="button"
+                      onClick={closeHere}
+                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                    >
+                      Encerrar por aqui
+                    </button>
+                  </div>
+                </div>
+
+                {/* CAMADAS 2–4 (não aparecem se já encerrou) */}
+                {!closed ? (
+                  <>
+                    {/* CAMADA 2 — CHECK-IN OPCIONAL (fragmentável) */}
+                    <div className="space-y-2">
+                      <div className="text-[13px] font-semibold text-[#2f3a56]">Se quiser, um check-in</div>
+                      <div className="text-[12px] text-[#6a6a6a]">
+                        Pode ser só uma coisa. Pode pular tudo. Nada aqui é obrigatório.
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Ritmo */}
+                      <div className="space-y-2">
+                        <div className="text-[12px] text-[#6a6a6a]">Ritmo</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {(['leve', 'animada', 'cansada', 'sobrecarregada'] as Ritmo[]).map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => setRitmo(r)}
+                              className={chipClass(ritmo === r)}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Energia */}
+                      <div className="space-y-2">
+                        <div className="text-[12px] text-[#6a6a6a]">Energia</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(['baixa', 'media', 'alta'] as Energia[]).map((e) => (
+                            <button
+                              key={e}
+                              type="button"
+                              onClick={() => setEnergia(e)}
+                              className={chipClass(energia === e)}
+                            >
+                              {e === 'media' ? 'média' : e}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Emoção */}
+                      <div className="space-y-2">
+                        <div className="text-[12px] text-[#6a6a6a]">Emoção</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {(['neutra', 'sensivel', 'tensa', 'carente'] as Emocao[]).map((em) => (
+                            <button
+                              key={em}
+                              type="button"
+                              onClick={() => setEmocao(em)}
+                              className={chipClass(emocao === em)}
+                            >
+                              {em === 'sensivel' ? 'sensível' : em}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Corpo */}
+                      <div className="space-y-2">
+                        <div className="text-[12px] text-[#6a6a6a]">Corpo</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {(['tenso', 'cansado', 'ok', 'pedindo-pausa'] as Corpo[]).map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setCorpo(c)}
+                              className={chipClass(corpo === c)}
+                            >
+                              {c === 'pedindo-pausa' ? 'pedindo pausa' : c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CAMADA 3/4 */}
+                    {!active ? (
+                      // CAMADA 3 — CAMPO DE POSSIBILIDADES
+                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5 space-y-3">
+                        <div>
+                          <div className="text-[14px] font-semibold text-[#2f3a56]">
+                            {suggestion?.title ?? 'Se quiser, uma possibilidade agora'}
+                          </div>
+                          <div className="text-[13px] text-[#6a6a6a]">
+                            {suggestion?.subtitle ?? ''}
+                          </div>
+
+                          {/* Bloco simples (3–5 linhas) */}
+                          {suggestion ? (
+                            <div className="mt-3 space-y-2">
+                              {splitLines(suggestion.body).slice(0, 5).map((line, i) => (
+                                <p key={`${suggestion.id}-l${i}`} className="text-[13px] text-[#545454] leading-relaxed">
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Ações obrigatórias (sempre visíveis) */}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => (suggestion ? openSuggestion(suggestion) : undefined)}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Quero tentar agora
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={nextOption}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Outra opção
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={closeHere}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Encerrar por aqui
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // CAMADA 4 — EXPERIÊNCIA ÚNICA (quando entra)
+                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6 space-y-4">
+                        <div className="space-y-2">
+                          <div className="text-[12px] text-[#6a6a6a]">Por alguns instantes já está bom.</div>
+
+                          <div className="text-[16px] font-semibold text-[#2f3a56]">
+                            {active.title}
+                          </div>
+                          <div className="text-[13px] text-[#6a6a6a]">
+                            {active.subtitle}
+                          </div>
+
+                          <div className="mt-3 space-y-2">
+                            {splitLines(active.body).slice(0, 5).map((line, i) => (
+                              <p key={`${active.id}-a${i}`} className="text-[13px] text-[#545454] leading-relaxed">
+                                {line}
+                              </p>
+                            ))}
+                          </div>
+
+                          <div className="pt-2 text-[13px] text-[#6a6a6a]">
+                            Isso já é suficiente por agora.
+                          </div>
+                        </div>
+
+                        {/* Saídas obrigatórias */}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={backToPossibilities}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Já está bom por agora
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActive(null)
+                              nextOption()
+                            }}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ver outra possibilidade
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={closeHere}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Encerrar por aqui
+                          </button>
+                        </div>
+
+                        {/* CAMADA 5 — SAÍDAS E REGISTROS (não emocionais) */}
+                        <div className="pt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => saveToMyDay(active.title)}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : null}
+
+                {/* CAMADA 5 — ENCERRAMENTO (sem emoção extra, sem convite) */}
+                {closed ? (
+                  <div className="space-y-3">
+                    <div className="text-[14px] font-semibold text-[#2f3a56]">
+                      Isso já é suficiente por agora.
+                    </div>
+                    <Link
+                      href="/maternar"
+                      className="inline-block rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                    >
+                      Voltar ao Maternar
+                    </Link>
+
+                    {/* limpeza técnica diária opcional (não visível) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // reset apenas do dia corrente (mecânica, invisível)
+                        safeDelLS(LS_CURSOR)
+                        safeDelLS(LS_SEEN)
+                        safeDelLS(LS_CHECKIN)
+                        setCursor(0)
+                        setSeen([])
+                        setRitmo(null)
+                        setEnergia(null)
+                        setEmocao(null)
+                        setCorpo(null)
+                        setClosed(false)
+                        setActive(null)
+                      }}
+                      className="sr-only"
+                      aria-hidden="true"
+                      tabIndex={-1}
+                    >
+                      reset
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </SoftCard>
+
+            <LegalFooter />
+          </div>
+        </div>
+      </ClientOnly>
+    </main>
+  )
+}
