@@ -17,8 +17,10 @@ type Energia = 'baixa' | 'media' | 'alta'
 type Emocao = 'neutra' | 'sensivel' | 'tensa' | 'carente'
 type Corpo = 'tenso' | 'cansado' | 'ok' | 'pedindo-pausa'
 
+type SuggestionId = 'pausa-silencio' | 'respirar-curto' | 'corpo-apoio' | 'nao-agora'
+
 type Suggestion = {
-  id: string
+  id: SuggestionId
   title: string
   subtitle: string
   body: string
@@ -110,6 +112,87 @@ function splitLines(s: string) {
     .filter(Boolean)
 }
 
+/**
+ * Contexto silencioso, determinístico, auditável:
+ * - sem pesos
+ * - sem aleatoriedade
+ * - apenas uma ordem fixa de preferência por estado
+ */
+function preferenceOrderFromCheckin(input: {
+  ritmo: Ritmo | null
+  energia: Energia | null
+  emocao: Emocao | null
+  corpo: Corpo | null
+}): SuggestionId[] {
+  const { ritmo, energia, emocao, corpo } = input
+
+  // base neutra (fallback)
+  const base: SuggestionId[] = ['pausa-silencio', 'respirar-curto', 'corpo-apoio', 'nao-agora']
+
+  // prioridade máxima: sobrecarga / pausa corporal / energia baixa
+  if (ritmo === 'sobrecarregada' || corpo === 'pedindo-pausa' || energia === 'baixa') {
+    return ['nao-agora', 'pausa-silencio', 'respirar-curto', 'corpo-apoio']
+  }
+
+  // tensão emocional: tende a respirar primeiro
+  if (emocao === 'tensa') {
+    return ['respirar-curto', 'pausa-silencio', 'corpo-apoio', 'nao-agora']
+  }
+
+  // sensível/carente: permissão e acolhimento antes de qualquer coisa
+  if (emocao === 'sensivel' || emocao === 'carente') {
+    return ['pausa-silencio', 'nao-agora', 'respirar-curto', 'corpo-apoio']
+  }
+
+  // cansada / corpo cansado: pausa ou corpo, depois respirar
+  if (ritmo === 'cansada' || corpo === 'cansado') {
+    return ['pausa-silencio', 'corpo-apoio', 'respirar-curto', 'nao-agora']
+  }
+
+  // animada/energia alta: manter simples com corpo/respirar (sem “produtividade”)
+  if (ritmo === 'animada' || energia === 'alta') {
+    return ['corpo-apoio', 'respirar-curto', 'pausa-silencio', 'nao-agora']
+  }
+
+  return base
+}
+
+/**
+ * Seleção determinística:
+ * 1) aplica preferência do check-in
+ * 2) respeita "seen do dia"
+ * 3) respeita cursor como ponto de variação manual ("Outra opção")
+ * 4) fallback: primeira não vista a partir do cursor
+ */
+function pickSuggestion(params: {
+  deck: Suggestion[]
+  cursor: number
+  seen: string[]
+  prefer: SuggestionId[]
+}): Suggestion | null {
+  const { deck, cursor, seen, prefer } = params
+  if (!deck.length) return null
+  const len = deck.length
+
+  const orderedFromCursor: Suggestion[] = []
+  for (let step = 0; step < len; step++) {
+    orderedFromCursor.push(deck[(cursor + step) % len])
+  }
+
+  // 1) preferência + não vista (ordem de preferência fixa)
+  for (const pid of prefer) {
+    const cand = orderedFromCursor.find((s) => s.id === pid && !seen.includes(s.id))
+    if (cand) return cand
+  }
+
+  // 2) fallback: primeira não vista a partir do cursor
+  const firstUnseen = orderedFromCursor.find((s) => !seen.includes(s.id))
+  if (firstUnseen) return firstUnseen
+
+  // 3) se tudo foi visto hoje, permite repetição (sem UI de histórico)
+  return orderedFromCursor[0] ?? deck[cursor % len] ?? deck[0]
+}
+
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo | null>(null)
   const [energia, setEnergia] = useState<Energia | null>(null)
@@ -171,18 +254,15 @@ export default function Client() {
     return rotate(DAILY_SUGGESTIONS, start)
   }, [seed])
 
+  const prefer = useMemo(
+    () => preferenceOrderFromCheckin({ ritmo, energia, emocao, corpo }),
+    [ritmo, energia, emocao, corpo]
+  )
+
+  // agora o check-in influencia de verdade (silencioso, determinístico)
   const suggestion = useMemo(() => {
-    if (deck.length === 0) return null
-    const len = deck.length
-
-    for (let step = 0; step < len; step++) {
-      const idx = (cursor + step) % len
-      const s = deck[idx]
-      if (!seen.includes(s.id)) return s
-    }
-
-    return deck[cursor % len]
-  }, [deck, cursor, seen])
+    return pickSuggestion({ deck, cursor, seen, prefer })
+  }, [deck, cursor, seen, prefer])
 
   function persistCursor(next: number) {
     setCursor(next)
@@ -197,24 +277,9 @@ export default function Client() {
   function nextOption() {
     if (!deck.length) return
     const len = deck.length
-    let nextCursor = (cursor + 1) % len
 
-    let found = false
-    for (let step = 0; step < len; step++) {
-      const idx = (cursor + 1 + step) % len
-      const s = deck[idx]
-      if (!seen.includes(s.id)) {
-        nextCursor = idx
-        found = true
-        break
-      }
-    }
-
-    if (!found) {
-      persistSeen([])
-      nextCursor = (cursor + 1) % len
-    }
-
+    // avança cursor “manual”
+    const nextCursor = (cursor + 1) % len
     persistCursor(nextCursor)
 
     try {
@@ -224,10 +289,12 @@ export default function Client() {
 
   function openSuggestion(s: Suggestion) {
     setActive(s)
+
+    // anti-repetição real (seen diário)
     if (!seen.includes(s.id)) {
-      const nextSeen = [...seen, s.id]
-      persistSeen(nextSeen)
+      persistSeen([...seen, s.id])
     }
+
     try {
       track('cuidar_de_mim.open_suggestion', { id: s.id, day: todayKey })
     } catch {}
@@ -260,7 +327,6 @@ export default function Client() {
     } catch {}
   }
 
-  // Chips mais discretos (check-in não pode dominar)
   function chipClass(activeChip: boolean) {
     return [
       'rounded-full border px-2.5 py-1.5 text-[11px] transition text-center',
@@ -270,7 +336,6 @@ export default function Client() {
     ].join(' ')
   }
 
-  // Botões com peso emocional equivalente (neutros e consistentes)
   function actionBtnClass(kind: 'primary' | 'neutral') {
     if (kind === 'primary') {
       return 'rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition'
@@ -324,7 +389,6 @@ export default function Client() {
                     Se não quiser escolher nada, você pode encerrar por aqui.
                   </div>
 
-                  {/* Peso equivalente: Encerrar por aqui não pode parecer “menos” */}
                   <div className="pt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
