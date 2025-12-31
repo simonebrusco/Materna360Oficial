@@ -17,7 +17,6 @@ export const revalidate = 0
 
 type Ritmo = 'leve' | 'animada' | 'cansada' | 'sobrecarregada'
 type FocusMode = '1min' | '3min' | '5min'
-type CheckinKey = 'ritmo' | 'energia' | 'emocao' | 'corpo'
 
 type DeckKey = 'respirar' | 'pausar' | 'acolher' | 'organizar' | 'corpo' | 'nada'
 
@@ -25,13 +24,11 @@ type Suggestion = {
   key: DeckKey
   title: string
   subtitle: string
-  // Conteúdo curto e não-instrucional; sempre opcional e “encerrável”
   content: {
     heading: string
     lines: string[]
     gentleClose: string
   }
-  // rótulo neutro, sem “meta”
   recommended?: FocusMode
 }
 
@@ -49,7 +46,6 @@ function todayKey(): string {
 }
 
 function hashToInt(input: string): number {
-  // hash determinístico simples (sem libs)
   let h = 2166136261
   for (let i = 0; i < input.length; i++) {
     h ^= input.charCodeAt(i)
@@ -95,14 +91,13 @@ export default function Client() {
   // Deck diário anti-repetição
   const [deckCursor, setDeckCursor] = useState<number>(0)
 
-  // Sugestão atual e seleção
+  // Sugestões
   const suggestions = useMemo(() => buildDeck({ ritmo, energia, emocao, corpo }), [ritmo, energia, emocao, corpo])
 
   const rotatedSuggestions = useMemo(() => {
     const day = todayKey()
     const baseSeed = hashToInt(`${day}|cuidar-de-mim|${ritmo ?? 'na'}|${energia ?? 'na'}|${emocao ?? 'na'}|${corpo ?? 'na'}`)
     const start = pickIndex(baseSeed, suggestions.length)
-    // deck determinístico por dia + estado, e o cursor muda “Outra opção”
     const rotated = rotate(suggestions, start)
     return rotate(rotated, deckCursor)
   }, [suggestions, deckCursor, ritmo, energia, emocao, corpo])
@@ -119,7 +114,9 @@ export default function Client() {
   const [saved, setSaved] = useState<Array<{ key: DeckKey; title: string; ts: number }>>([])
 
   useEffect(() => {
-    const data = safeParse<Array<{ key: DeckKey; title: string; ts: number }>>(typeof window !== 'undefined' ? localStorage.getItem(LS_SAVED) : null)
+    const data = safeParse<Array<{ key: DeckKey; title: string; ts: number }>>(
+      typeof window !== 'undefined' ? localStorage.getItem(LS_SAVED) : null
+    )
     if (data && Array.isArray(data)) setSaved(data)
   }, [])
 
@@ -129,7 +126,7 @@ export default function Client() {
 
   function onOtherOption() {
     setDeckCursor((c) => c + 1)
-    track('maternar_cuidar_de_mim_other_option')
+    track('maternar_cuidar_de_mim_other_option', {})
   }
 
   function onOpenSuggestion(s: Suggestion) {
@@ -145,10 +142,7 @@ export default function Client() {
   }
 
   function onSaveLocal(s: Suggestion) {
-    const next = [
-      { key: s.key, title: s.title, ts: Date.now() },
-      ...saved.filter((x) => x.key !== s.key).slice(0, 9),
-    ]
+    const next = [{ key: s.key, title: s.title, ts: Date.now() }, ...saved.filter((x) => x.key !== s.key).slice(0, 9)]
     setSaved(next)
     try {
       localStorage.setItem(LS_SAVED, JSON.stringify(next))
@@ -159,7 +153,6 @@ export default function Client() {
   }
 
   async function onSaveToMyDay(s: Suggestion) {
-    // Não existe note; incorporamos contexto no title (curto, sem cobrança)
     const title = `Cuidar de mim: ${s.title}`
     try {
       await addTaskToMyDay({
@@ -168,13 +161,12 @@ export default function Client() {
       })
       track('maternar_cuidar_de_mim_save_my_day', { key: s.key })
     } catch {
-      // silent: sem toast de “falhou” (proibido)
+      // silent: sem toast e sem linguagem de falha
       track('maternar_cuidar_de_mim_save_my_day_error', { key: s.key })
     }
   }
 
   const heroSubtitle = useMemo(() => {
-    // convite de permissão: sempre antes do check-in
     if (ritmo === 'sobrecarregada') return 'Você não precisa dar conta de tudo agora. Se quiser, escolhe só uma coisa pequena.'
     if (ritmo === 'cansada') return 'Se quiser, escolhe algo que ajude um pouco. Se não fizer sentido, a gente troca — sem drama.'
     return 'Se quiser, escolhe algo que ajude um pouco. Se não fizer sentido, a gente troca — sem drama.'
@@ -185,7 +177,6 @@ export default function Client() {
       <div
         className={cx(
           'min-h-screen',
-          // Gradiente Interno Suave (páginas internas)
           'bg-[radial-gradient(circle_at_top_left,#fdbed7_0%,#ffe1f1_70%,#ffffff_100%)]'
         )}
       >
@@ -200,9 +191,7 @@ export default function Client() {
                 <span>Voltar</span>
               </Link>
 
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white">
-                CUIDAR DE MIM
-              </span>
+              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide text-white">CUIDAR DE MIM</span>
             </div>
 
             {/* Hero */}
@@ -233,15 +222,12 @@ export default function Client() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-xs font-semibold text-[#b8236b]">SE QUISER AJUSTAR ALGO</p>
-                      <p className="mt-1 text-sm text-[#6A6A6A]">
-                        Pode ser só uma coisa. Pode pular tudo. Nada aqui é obrigatório.
-                      </p>
+                      <p className="mt-1 text-sm text-[#6A6A6A]">Pode ser só uma coisa. Pode pular tudo. Nada aqui é obrigatório.</p>
                     </div>
                     <span className="text-xs text-[#A0A0A0]">opcional</span>
                   </div>
 
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {/* Ritmo */}
                     <MiniField
                       label="Ritmo"
                       hint="Só uma referência, não um compromisso."
@@ -258,7 +244,6 @@ export default function Client() {
                       }}
                     />
 
-                    {/* Tempo (modo de foco) – não é meta; só “quanto cabe” */}
                     <MiniField
                       label="Quanto cabe agora"
                       hint="Se for menos, também serve."
@@ -274,7 +259,6 @@ export default function Client() {
                       }}
                     />
 
-                    {/* Energia */}
                     <MiniField
                       label="Energia"
                       hint="Só para o app não pesar."
@@ -290,7 +274,22 @@ export default function Client() {
                       }}
                     />
 
-                    {/* Corpo */}
+                    <MiniField
+                      label="Emoção"
+                      hint="Se quiser, só um nome simples."
+                      options={[
+                        { id: 'neutra', label: 'Neutra' },
+                        { id: 'sensivel', label: 'Sensível' },
+                        { id: 'tensa', label: 'Tensa' },
+                        { id: 'carente', label: 'Carente' },
+                      ]}
+                      value={emocao}
+                      onChange={(v) => {
+                        setEmocao(v as any)
+                        track('maternar_cuidar_de_mim_checkin', { key: 'emocao', value: v })
+                      }}
+                    />
+
                     <MiniField
                       label="Corpo"
                       hint="Se quiser, um sinal simples."
@@ -311,7 +310,7 @@ export default function Client() {
               </SoftCard>
             </div>
 
-            {/* CAMPO DE POSSIBILIDADES (1 sugestão + outra opção + encerrar sempre visível) */}
+            {/* CAMPO DE POSSIBILIDADES */}
             <div className="mt-6">
               <SoftCard>
                 <div className="flex items-start justify-between gap-4">
@@ -372,7 +371,6 @@ export default function Client() {
                   </Link>
                 </div>
 
-                {/* Lista curta de salvos locais (opcional, sem cobrança) */}
                 {saved.length > 0 && (
                   <div className="mt-6 border-t border-[var(--color-border-soft)] pt-4">
                     <p className="text-sm font-semibold text-[#545454]">Guardados para quando fizer sentido</p>
@@ -397,7 +395,7 @@ export default function Client() {
               </SoftCard>
             </div>
 
-            {/* EXPERIÊNCIA ÚNICA (uma tela; sem subfluxo; encerrável) */}
+            {/* EXPERIÊNCIA ÚNICA */}
             {view === 'experiencia' && activeSuggestion && (
               <div className="mt-6">
                 <SoftCard>
@@ -440,7 +438,6 @@ export default function Client() {
                     <div className="mt-5 flex flex-wrap items-center gap-3">
                       <Button
                         onClick={() => {
-                          // Encerramento interno — sem “feito”, sem performance
                           track('maternar_cuidar_de_mim_enough', { key: activeSuggestion.key })
                           setActiveSuggestionKey(null)
                           setView('hub')
@@ -453,7 +450,6 @@ export default function Client() {
                       <Button
                         variant="ghost"
                         onClick={() => {
-                          // Outra opção dentro da experiência: retorna para o hub (sem loop)
                           track('maternar_cuidar_de_mim_back_to_options', { key: activeSuggestion.key })
                           setActiveSuggestionKey(null)
                           setView('hub')
@@ -486,12 +482,6 @@ export default function Client() {
   )
 }
 
-/**
- * Deck editorial + variação determinística
- * - Sem “IA falante”
- * - Sem repetição mecânica
- * - Sem instrução imperativa
- */
 function buildDeck(ctx: {
   ritmo: Ritmo | null
   energia: 'baixa' | 'media' | 'alta' | null
@@ -520,11 +510,7 @@ function buildDeck(ctx: {
       subtitle: 'Um minuto de permissão para não responder nada agora.',
       content: {
         heading: 'Uma pausa possível',
-        lines: [
-          'Se der, apoie os pés no chão.',
-          'Olhe para um ponto fixo por alguns segundos.',
-          'Só isso. Sem interpretar. Sem resolver.',
-        ],
+        lines: ['Se der, apoie os pés no chão.', 'Olhe para um ponto fixo por alguns segundos.', 'Só isso. Sem interpretar. Sem resolver.'],
         gentleClose: 'Você pode encerrar aqui. Parar também é cuidado.',
       },
       recommended: '1min',
@@ -535,10 +521,7 @@ function buildDeck(ctx: {
       subtitle: 'Uma frase que reduz cobrança, antes de qualquer decisão.',
       content: {
         heading: 'Uma frase para agora',
-        lines: [
-          '“Eu posso estar cansada e ainda assim estar fazendo o meu melhor.”',
-          'Se não fizer sentido, ignore. Se fizer, guarde só um pedaço.',
-        ],
+        lines: ['“Eu posso estar cansada e ainda assim estar fazendo o meu melhor.”', 'Se não fizer sentido, ignore. Se fizer, guarde só um pedaço.'],
         gentleClose: 'Guardar um pedaço já conta. Não precisa completar nada.',
       },
       recommended: '1min',
@@ -549,11 +532,7 @@ function buildDeck(ctx: {
       subtitle: 'Uma organização interna curta, sem virar lista de tarefas.',
       content: {
         heading: 'Se quiser, só nomeie',
-        lines: [
-          'Uma coisa que está pesando.',
-          'Uma coisa que pode esperar.',
-          'Uma coisa pequena que te ajuda agora (mesmo que seja água).',
-        ],
+        lines: ['Uma coisa que está pesando.', 'Uma coisa que pode esperar.', 'Uma coisa pequena que te ajuda agora (mesmo que seja água).'],
         gentleClose: 'Se você só conseguiu nomear, já foi suficiente.',
       },
       recommended: '3min',
@@ -564,11 +543,7 @@ function buildDeck(ctx: {
       subtitle: 'Um micro-ajuste físico, sem alongamento “certo”.',
       content: {
         heading: 'Um ajuste simples',
-        lines: [
-          'Relaxe os ombros uma vez, bem devagar.',
-          'Desencoste a língua do céu da boca.',
-          'Se quiser, boceje ou alongue o pescoço de leve.',
-        ],
+        lines: ['Relaxe os ombros uma vez, bem devagar.', 'Desencoste a língua do céu da boca.', 'Se quiser, boceje ou alongue o pescoço de leve.'],
         gentleClose: 'O corpo entendeu. Você pode parar aqui.',
       },
       recommended: '1min',
@@ -590,8 +565,6 @@ function buildDeck(ctx: {
     },
   ]
 
-  // Ajuste fino por contexto (sem “inferência explícita”)
-  // Apenas reordena e suaviza a entrada do deck.
   const w: Record<DeckKey, number> = {
     respirar: 1,
     pausar: 1,
@@ -605,7 +578,7 @@ function buildDeck(ctx: {
     w.nada += 3
     w.pausar += 2
     w.respirar += 2
-    w.organizar -= 1
+    w.organizar = Math.max(1, w.organizar - 1)
   } else if (ctx.ritmo === 'cansada') {
     w.respirar += 2
     w.pausar += 2
@@ -618,7 +591,7 @@ function buildDeck(ctx: {
   if (ctx.energia === 'baixa') {
     w.nada += 2
     w.pausar += 1
-    w.organizar -= 1
+    w.organizar = Math.max(1, w.organizar - 1)
   }
   if (ctx.corpo === 'tenso' || ctx.corpo === 'pedindo-pausa') {
     w.corpo += 2
@@ -632,14 +605,12 @@ function buildDeck(ctx: {
     w.acolher += 2
   }
 
-  // Cria lista com repetição controlada por peso (sem duplicar na UI; apenas prioriza)
   const expanded: Suggestion[] = []
   for (const s of base) {
     const count = Math.max(1, Math.min(4, w[s.key] ?? 1))
     for (let i = 0; i < count; i++) expanded.push(s)
   }
 
-  // Remove duplicatas mantendo a primeira ocorrência (priorizada)
   const seen = new Set<DeckKey>()
   const ordered: Suggestion[] = []
   for (const s of expanded) {
@@ -648,7 +619,6 @@ function buildDeck(ctx: {
     ordered.push(s)
   }
 
-  // Garantia: sempre devolve todas as chaves (fallback)
   if (ordered.length < base.length) {
     for (const s of base) {
       if (!ordered.some((x) => x.key === s.key)) ordered.push(s)
@@ -667,11 +637,9 @@ function MiniField(props: {
 }) {
   return (
     <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[#ffffff] p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-[#545454]">{props.label}</p>
-          <p className="mt-1 text-xs text-[#6A6A6A]">{props.hint}</p>
-        </div>
+      <div>
+        <p className="text-sm font-semibold text-[#545454]">{props.label}</p>
+        <p className="mt-1 text-xs text-[#6A6A6A]">{props.hint}</p>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -684,9 +652,7 @@ function MiniField(props: {
               onClick={() => props.onChange(opt.id)}
               className={cx(
                 'rounded-full px-3 py-1 text-xs font-semibold transition-all',
-                active
-                  ? 'bg-[#fd2597] text-white shadow-[0_6px_22px_rgba(0,0,0,0.06)]'
-                  : 'bg-[#ffe1f1] text-[#545454] hover:-translate-y-[1px]'
+                active ? 'bg-[#fd2597] text-white shadow-[0_6px_22px_rgba(0,0,0,0.06)]' : 'bg-[#ffe1f1] text-[#545454] hover:-translate-y-[1px]'
               )}
             >
               {opt.label}
