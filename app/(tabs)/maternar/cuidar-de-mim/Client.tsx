@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -217,6 +218,8 @@ function getRoutineById(id: string) {
 }
 
 export default function Client() {
+  const router = useRouter()
+
   const [view, setView] = useState<View>('entrada')
   const [focus, setFocus] = useState<FocusMode>('3min')
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
@@ -235,6 +238,13 @@ export default function Client() {
 
   // feedbacks
   const [saveFeedback, setSaveFeedback] = useState<string>('')
+
+  function onExitNow() {
+    try {
+      track('cuidar_de_mim.exit', { view, routineId: routine.id, focus, ritmo, ts: Date.now() })
+    } catch {}
+    router.push('/maternar')
+  }
 
   useEffect(() => {
     try {
@@ -293,7 +303,7 @@ export default function Client() {
     const deckKey = `${LS_DECK_KEY_PREFIX}${todayKey}.${next}`
     const seenKey = `${LS_DECK_SEEN_PREFIX}${todayKey}.${next}`
 
-    let deck = buildDailyDeck(todayKey, next)
+    const deck = buildDailyDeck(todayKey, next)
     safeSetLS(deckKey, JSON.stringify(deck))
     safeSetLS(seenKey, JSON.stringify([]))
 
@@ -399,14 +409,14 @@ export default function Client() {
     setSaveFeedback('')
     try {
       const title = `Cuidar de Mim: ${routine.title}`
-      const note = routine.steps.slice(0, 3).join(' · ')
+      const noteInline = routine.steps.slice(0, 3).join(' · ')
+      const titleFinal = noteInline ? `${title} — ${noteInline}` : title
 
-      const titleFinal = note ? `${title} — ${note}` : title
-await addTaskToMyDay({
-  title: titleFinal,
-  origin: 'selfcare',
-  source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-})
+      await addTaskToMyDay({
+        title: titleFinal,
+        origin: 'selfcare',
+        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+      })
 
       // sinal de continuidade para o Meu Dia (sem conteúdo sensível)
       safeSetLS(
@@ -414,7 +424,7 @@ await addTaskToMyDay({
         JSON.stringify({
           ts: Date.now(),
           origin: 'selfcare',
-          source: 'cuidar-de-mim',
+          source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
         }),
       )
 
@@ -447,18 +457,19 @@ await addTaskToMyDay({
     >
       <div className="page-shell relative z-10 w-full">
         <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-          <Link
-            href="/maternar"
+          <button
+            type="button"
             className="inline-flex items-center gap-2 text-white/90 hover:text-white transition"
             onClick={() => {
               try {
                 track('cuidar_de_mim.back_to_maternar', { ts: Date.now() })
               } catch {}
+              onExitNow()
             }}
           >
             <AppIcon name="arrow-left" size={18} />
             <span className="text-[13px] font-semibold tracking-wide">Voltar</span>
-          </Link>
+          </button>
 
           <div className="mt-4">
             <span className="inline-flex items-center rounded-full border border-white/35 bg-white/12 px-3 py-1 text-[12px] font-semibold tracking-[0.22em] text-white uppercase backdrop-blur-md">
@@ -552,6 +563,12 @@ await addTaskToMyDay({
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                  <Button variant="ghost" className="w-full sm:w-auto" onClick={onExitNow}>
+                    Encerrar por aqui
+                  </Button>
+                </div>
               </div>
             </div>
           </SoftCard>
@@ -630,14 +647,7 @@ await addTaskToMyDay({
                     Quero uma pausa guiada
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    className="md:w-auto"
-                    onClick={() => {
-                      markRoutineSeen(routine.id)
-                      go('fechar')
-                    }}
-                  >
+                  <Button variant="outline" className="md:w-auto" onClick={onExitNow}>
                     Encerrar por aqui
                   </Button>
                 </div>
@@ -653,11 +663,9 @@ await addTaskToMyDay({
                   Salvar no Meu Dia
                 </Button>
 
-                <Link href="/maternar" className="md:ml-auto">
-                  <Button variant="ghost" className="w-full md:w-auto">
-                    Voltar ao Maternar
-                  </Button>
-                </Link>
+                <Button variant="ghost" className="w-full md:w-auto md:ml-auto" onClick={onExitNow}>
+                  Voltar ao Maternar
+                </Button>
               </div>
 
               {saveFeedback ? (
@@ -710,6 +718,15 @@ await addTaskToMyDay({
                   </Button>
 
                   <Button
+                    variant="outline"
+                    className="md:w-auto"
+                    onClick={onExitNow}
+                    title="Voltar para o hub sem precisar concluir nada"
+                  >
+                    Encerrar por aqui
+                  </Button>
+
+                  <Button
                     variant="ghost"
                     className="md:w-auto md:ml-auto"
                     onClick={() => {
@@ -751,9 +768,13 @@ await addTaskToMyDay({
                     Outra opção leve
                   </Button>
 
-                  <Link href="/maternar" className="md:ml-auto">
-                    <Button className="w-full md:w-auto">Voltar ao Maternar</Button>
-                  </Link>
+                  <Button className="w-full md:w-auto md:ml-auto" onClick={onExitNow}>
+                    Voltar ao Maternar
+                  </Button>
+
+                  <Button variant="ghost" className="w-full md:w-auto" onClick={onExitNow}>
+                    Encerrar por aqui
+                  </Button>
                 </div>
 
                 {saveFeedback ? (
