@@ -29,6 +29,7 @@ function MiniTile({ label, href, tag }: MiniTileProps) {
     <Link
       href={href}
       className="
+        relative z-10 pointer-events-auto
         block rounded-2xl
         bg-white/90 hover:bg-white
         border border-[#f5d7e5]
@@ -65,8 +66,9 @@ function MiniTile({ label, href, tag }: MiniTileProps) {
 export default function MaternarClient() {
   useEffect(() => {
     try {
-      track('nav.click', {
+      track('nav.view', {
         tab: 'maternar',
+        page: 'maternar',
         timestamp: new Date().toISOString(),
       })
     } catch {
@@ -122,13 +124,13 @@ export default function MaternarClient() {
               {/* TRILHA DO DIA */}
               <Reveal>
                 <div className="relative">
-                  {/* coluna da trilha */}
-                  <div className="absolute left-0 top-0 bottom-0 w-10 md:w-12 flex justify-center">
+                  {/* coluna da trilha (decorativo: não pode capturar clique) */}
+                  <div className="absolute left-0 top-0 bottom-0 w-10 md:w-12 flex justify-center pointer-events-none">
                     <div className="w-px bg-white/35" />
                   </div>
 
-                  <div className="pl-10 md:pl-12">
-                    <div className="mb-3">
+                  <div className="pl-10 md:pl-12 relative z-10 pointer-events-auto">
+                    <div className="mb-3 relative z-10 pointer-events-auto">
                       <span className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-3 py-1 text-[10px] font-semibold tracking-[0.22em] text-white uppercase backdrop-blur-md">
                         Trilha do dia
                       </span>
@@ -140,7 +142,8 @@ export default function MaternarClient() {
                     <div className="space-y-5 md:space-y-6">
                       {/* 1 — CUIDAR DE MIM */}
                       <div className="relative">
-                        <div className="absolute -left-10 md:-left-12 top-4">
+                        {/* número (decorativo: não pode capturar clique) */}
+                        <div className="absolute -left-10 md:-left-12 top-4 pointer-events-none">
                           <div className="h-7 w-7 rounded-full bg-white/95 border border-[#f5d7e5] shadow-[0_10px_26px_rgba(0,0,0,0.12)] flex items-center justify-center text-[12px] font-semibold text-[#2f3a56]">
                             1
                           </div>
@@ -148,6 +151,7 @@ export default function MaternarClient() {
 
                         <SoftCard
                           className="
+                            relative z-10 pointer-events-auto
                             p-5 md:p-6 rounded-2xl
                             bg-white/95
                             border border-[#f5d7e5]
@@ -163,12 +167,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Para você
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Cuidar de Mim
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Leve · 3–5 minutos · foco em você
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Cuidar de Mim</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Leve · 3–5 minutos · foco em você</p>
                             </div>
                           </div>
 
@@ -176,16 +176,14 @@ export default function MaternarClient() {
                             Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
                           </p>
 
-                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 pointer-events-auto">
                             <MiniTile label="Meu ritmo hoje" href="/maternar/cuidar-de-mim#ritmo" tag="check-in" />
                             <MiniTile label="Pausas rápidas" href="/maternar/cuidar-de-mim#pausas" tag="respirar" />
                           </div>
 
-                          <div className="mt-4 pt-1">
-                            <Link href="/maternar/cuidar-de-mim">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Cuidar de Mim
-                              </Button>
+                          <div className="mt-4 pt-1 relative z-10 pointer-events-auto">
+                            <Link href="/maternar/cuidar-de-mim" className="inline-block">
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Cuidar de Mim</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -193,7 +191,7 @@ export default function MaternarClient() {
 
                       {/* 2 — MEU FILHO */}
                       <div className="relative">
-                        <div className="absolute -left-10 md:-left-12 top-4">
+                        <div className="absolute -left-10 md:-left-12 top-4 pointer-events-none">
                           <div className="h-7 w-7 rounded-full bg-white/95 border border-[#f5d7e5] shadow-[0_10px_26px_rgba(0,0,0,0.12)] flex items-center justify-center text-[12px] font-semibold text-[#2f3a56]">
                             2
                           </div>
@@ -201,6 +199,7 @@ export default function MaternarClient() {
 
                         <SoftCard
                           className="
+                            relative z-10 pointer-events-auto
                             p-5 md:p-6 rounded-2xl
                             bg-white/95
                             border border-[#f5d7e5]
@@ -216,12 +215,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Para o seu filho
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Meu Filho
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Brincadeiras · conexão · desenvolvimento leve
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Meu Filho</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Brincadeiras · conexão · desenvolvimento leve</p>
                             </div>
                           </div>
 
@@ -229,16 +224,14 @@ export default function MaternarClient() {
                             Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
                           </p>
 
-                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 pointer-events-auto">
                             <MiniTile label="Brincadeiras do dia" href="/maternar/meu-filho#brincadeiras" tag="ideias" />
                             <MiniTile label="Gestos de conexão" href="/maternar/meu-filho#conexao" tag="vínculo" />
                           </div>
 
-                          <div className="mt-4 pt-1">
-                            <Link href="/maternar/meu-filho">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Meu Filho
-                              </Button>
+                          <div className="mt-4 pt-1 relative z-10 pointer-events-auto">
+                            <Link href="/maternar/meu-filho" className="inline-block">
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Meu Filho</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -246,7 +239,7 @@ export default function MaternarClient() {
 
                       {/* 3 — MEU DIA LEVE */}
                       <div className="relative">
-                        <div className="absolute -left-10 md:-left-12 top-4">
+                        <div className="absolute -left-10 md:-left-12 top-4 pointer-events-none">
                           <div className="h-7 w-7 rounded-full bg-white/95 border border-[#f5d7e5] shadow-[0_10px_26px_rgba(0,0,0,0.12)] flex items-center justify-center text-[12px] font-semibold text-[#2f3a56]">
                             3
                           </div>
@@ -254,6 +247,7 @@ export default function MaternarClient() {
 
                         <SoftCard
                           className="
+                            relative z-10 pointer-events-auto
                             p-5 md:p-6 rounded-2xl
                             bg-white/95
                             border border-[#f5d7e5]
@@ -269,12 +263,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Para o seu dia
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Meu Dia Leve
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Inspirações · ideias rápidas · leveza
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Meu Dia Leve</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Inspirações · ideias rápidas · leveza</p>
                             </div>
                           </div>
 
@@ -282,16 +272,14 @@ export default function MaternarClient() {
                             Frases, ideias rápidas e sugestões para tornar o dia mais leve.
                           </p>
 
-                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 pointer-events-auto">
                             <MiniTile label="Inspiração do dia" href="/maternar/meu-dia-leve#inspiracao" tag="frase" />
                             <MiniTile label="Ideias rápidas" href="/maternar/meu-dia-leve#ideias" tag="rápido" />
                           </div>
 
-                          <div className="mt-4 pt-1">
-                            <Link href="/maternar/meu-dia-leve">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Meu Dia Leve
-                              </Button>
+                          <div className="mt-4 pt-1 relative z-10 pointer-events-auto">
+                            <Link href="/maternar/meu-dia-leve" className="inline-block">
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Meu Dia Leve</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -299,7 +287,7 @@ export default function MaternarClient() {
 
                       {/* 4 — MINHA JORNADA */}
                       <div className="relative">
-                        <div className="absolute -left-10 md:-left-12 top-4">
+                        <div className="absolute -left-10 md:-left-12 top-4 pointer-events-none">
                           <div className="h-7 w-7 rounded-full bg-white/95 border border-[#f5d7e5] shadow-[0_10px_26px_rgba(0,0,0,0.12)] flex items-center justify-center text-[12px] font-semibold text-[#2f3a56]">
                             4
                           </div>
@@ -307,6 +295,7 @@ export default function MaternarClient() {
 
                         <SoftCard
                           className="
+                            relative z-10 pointer-events-auto
                             p-5 md:p-6 rounded-2xl
                             bg-white/95
                             border border-[#f5d7e5]
@@ -322,12 +311,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Sua caminhada
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Minha Jornada
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Conquistas · símbolos · progresso gentil
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Minha Jornada</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Conquistas · símbolos · progresso gentil</p>
                             </div>
                           </div>
 
@@ -335,16 +320,14 @@ export default function MaternarClient() {
                             Acompanhe seu progresso com leveza, no seu tempo.
                           </p>
 
-                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 relative z-10 pointer-events-auto">
                             <MiniTile label="Painel da jornada" href="/maternar/minha-jornada#painel" tag="visão geral" />
                             <MiniTile label="Missões do dia" href="/maternar/minha-jornada#missoes" tag="pequenos passos" />
                           </div>
 
-                          <div className="mt-4 pt-1">
-                            <Link href="/maternar/minha-jornada">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Minha Jornada
-                              </Button>
+                          <div className="mt-4 pt-1 relative z-10 pointer-events-auto">
+                            <Link href="/maternar/minha-jornada" className="inline-block">
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Minha Jornada</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -359,6 +342,7 @@ export default function MaternarClient() {
             <Reveal>
               <SoftCard
                 className="
+                  relative z-10 pointer-events-auto
                   p-6 md:p-7 rounded-2xl
                   bg-white/98
                   border border-[#f5d7e5]
@@ -374,47 +358,43 @@ export default function MaternarClient() {
                     <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                       Mais ferramentas
                     </span>
-                    <h2 className="text-lg font-semibold text-[#2f3a56]">
-                      Outros espaços do Maternar
-                    </h2>
+                    <h2 className="text-lg font-semibold text-[#2f3a56]">Outros espaços do Maternar</h2>
                     <p className="text-[15px] text-[#545454] leading-relaxed">
                       Acesse quando fizer sentido, sem pesar seu começo do dia.
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-                  <Link href="/maternar/biblioteca-materna">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2 relative z-10 pointer-events-auto">
+                  <Link href="/maternar/biblioteca-materna" className="inline-block">
                     <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Biblioteca Materna
                     </Button>
                   </Link>
 
-                  <Link href="/maternar/ferramentas/ajuda-e-parcerias">
+                  <Link href="/maternar/ferramentas/ajuda-e-parcerias" className="inline-block">
                     <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Ajuda & Parcerias
                     </Button>
                   </Link>
 
-                  <Link href="/maternar/minhas-conquistas">
+                  <Link href="/maternar/minhas-conquistas" className="inline-block">
                     <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Minhas Conquistas
                     </Button>
                   </Link>
 
-                  <Link href="/maternar/materna-plus">
-                    <Button className="w-full text-[12px] md:text-[13px]">
-                      Materna+
-                    </Button>
+                  <Link href="/maternar/materna-plus" className="inline-block">
+                    <Button className="w-full text-[12px] md:text-[13px]">Materna+</Button>
                   </Link>
 
-                  <Link href="/maternar/materna-plus/maternabox">
+                  <Link href="/maternar/materna-plus/maternabox" className="inline-block">
                     <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       MaternaBox
                     </Button>
                   </Link>
 
-                  <Link href="/planos">
+                  <Link href="/planos" className="inline-block">
                     <Button variant="secondary" className="w-full text-[12px] md:text-[13px]">
                       Planos
                     </Button>
