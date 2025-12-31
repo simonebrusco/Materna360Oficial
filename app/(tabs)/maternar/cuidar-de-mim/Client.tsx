@@ -403,7 +403,6 @@ export default function Client() {
 
       await addTaskToMyDay({
         title,
-        note,
         origin: originForCuidarDeMim(),
         source: MY_DAY_SOURCES.cuidar_de_mim ?? 'cuidar_de_mim',
       })
