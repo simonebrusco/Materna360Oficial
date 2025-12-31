@@ -15,9 +15,9 @@ export const revalidate = 0
 type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
 type Energia = 'baixa' | 'media' | 'alta'
 type Emocao = 'neutra' | 'sensivel' | 'tensa' | 'carente'
-type Corpo = 'tenso' | 'cansado' | 'ok' | 'pedindo-pausa'
+type Corpo = 'ok' | 'tenso' | 'cansado' | 'pedindo-pausa'
 
-type Signals = {
+type Checkin = {
   ritmo: Ritmo | null
   energia: Energia | null
   emocao: Emocao | null
@@ -28,58 +28,48 @@ type Suggestion = {
   id: string
   title: string
   subtitle: string
-  lines: string[] // 3–5 linhas
-  // “tags” determinísticas e auditáveis (sem pesos opacos)
-  tags: {
-    ritmo?: Ritmo[]
-    energia?: Energia[]
-    emocao?: Emocao[]
-    corpo?: Corpo[]
-  }
+  body: string[] // 3–5 linhas, permissivas (camada 3)
+  experience: string[] // 3–5 linhas, permissivas (camada 4)
+  signals?: Partial<{
+    ritmo: Ritmo[]
+    energia: Energia[]
+    emocao: Emocao[]
+    corpo: Corpo[]
+  }>
 }
 
-const SUGGESTIONS: Suggestion[] = [
+const DAILY_SUGGESTIONS: Suggestion[] = [
   {
-    id: 'pausa-silencio',
-    title: 'Pausa sem explicação',
-    subtitle: 'Permissão para não responder nada agora.',
-    lines: ['Solte os ombros.', 'Respire uma vez.', 'Ficar aqui já é suficiente.', 'Por alguns instantes já está bom.'],
-    tags: { energia: ['baixa'], emocao: ['sensivel', 'carente'], corpo: ['cansado', 'pedindo-pausa'] },
-  },
-  {
-    id: 'respirar-curto',
-    title: 'Respirar por alguns instantes',
-    subtitle: 'Só perceber a respiração por um momento.',
-    lines: ['Inspire curto.', 'Expire mais longo.', 'Sem meta, sem certo ou errado.', 'Por alguns instantes já está bom.'],
-    tags: { emocao: ['tensa'], corpo: ['tenso'], energia: ['media'] },
-  },
-  {
-    id: 'sentir-corpo',
-    title: 'Sentir o corpo',
-    subtitle: 'Apoie os pés no chão e solte os ombros.',
-    lines: ['Apoie os pés.', 'Solte a mandíbula.', 'Deixe o peito baixar um pouco.', 'Por alguns instantes já está bom.'],
-    tags: { corpo: ['tenso', 'cansado'], emocao: ['tensa', 'sensivel'] },
-  },
-  {
-    id: 'nao-fazer',
-    title: 'Não fazer nada agora',
-    subtitle: 'Ficar aqui já é suficiente.',
-    lines: ['Não precisa decidir nada.', 'Não precisa resolver nada.', 'Só existir por um instante.', 'Por alguns instantes já está bom.'],
-    tags: { ritmo: ['sobrecarregada'], energia: ['baixa'], emocao: ['carente', 'sensivel'] },
-  },
-  {
-    id: 'agua-micro',
+    id: 'agua',
     title: 'Um gole de água',
     subtitle: 'Um gesto pequeno já conta.',
-    lines: ['Se tiver por perto, só um gole.', 'Sem “agora eu vou…”.', 'Só um gesto curto.', 'Por alguns instantes já está bom.'],
-    tags: { energia: ['baixa', 'media'], ritmo: ['cansada', 'sobrecarregada'] },
+    body: ['Se estiver por perto, um gole.', 'Sem “agora eu vou…”.', 'Só um gesto curto.', 'Por alguns instantes, já está bom.'],
+    experience: ['Se tiver água por perto, um gole pode ajudar.', 'Se fizer sentido, bem devagar.', 'Se não fizer, tudo bem.', 'Por alguns instantes, já está bom.'],
+    signals: { energia: ['baixa', 'media'], corpo: ['cansado', 'pedindo-pausa'] },
   },
   {
-    id: 'olhar-janela',
+    id: 'ombros',
+    title: 'Soltar os ombros',
+    subtitle: 'Um pouco de espaço por dentro.',
+    body: ['Talvez soltar os ombros.', 'Sem postura “certa”.', 'Só um micro alívio.', 'Por alguns instantes, já está bom.'],
+    experience: ['Se fizer sentido, deixe os ombros descerem um pouco.', 'Talvez descruze a mandíbula.', 'Sem consertar nada.', 'Por alguns instantes, já está bom.'],
+    signals: { corpo: ['tenso'], emocao: ['tensa'] },
+  },
+  {
+    id: 'ponto-fixo',
     title: 'Olhar um ponto fixo',
     subtitle: 'Trazer o corpo para o presente.',
-    lines: ['Escolha um ponto.', 'Olhe por 5 segundos.', 'Sinta os pés no chão.', 'Por alguns instantes já está bom.'],
-    tags: { emocao: ['tensa'], ritmo: ['sobrecarregada'], energia: ['media', 'alta'] },
+    body: ['Escolha um ponto.', 'Fique com ele um instante.', 'Sem contar tempo.', 'Por alguns instantes, já está bom.'],
+    experience: ['Se quiser, escolha um ponto no ambiente.', 'Só repare nas formas e nas bordas.', 'Sem precisar “esvaziar a mente”.', 'Por alguns instantes, já está bom.'],
+    signals: { emocao: ['tensa', 'sensivel'], ritmo: ['sobrecarregada', 'cansada'] },
+  },
+  {
+    id: 'pausa-sem-explicar',
+    title: 'Pausa sem explicação',
+    subtitle: 'Permissão para não responder nada agora.',
+    body: ['Pode ser só ficar aqui.', 'Sem nomear, sem justificar.', 'Sem “resolver”.', 'Por alguns instantes, já está bom.'],
+    experience: ['Se quiser, fique só aqui.', 'Sem explicação.', 'Sem conversa interna.', 'Por alguns instantes, já está bom.'],
+    signals: { emocao: ['carente', 'sensivel'], ritmo: ['cansada', 'sobrecarregada'] },
   },
 ]
 
@@ -112,13 +102,11 @@ function hashStringToInt(s: string) {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
   return h
 }
-
 function rotate<T>(arr: T[], by: number) {
   if (arr.length === 0) return arr
   const n = ((by % arr.length) + arr.length) % arr.length
   return [...arr.slice(n), ...arr.slice(0, n)]
 }
-
 function parseJSON<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback
   try {
@@ -128,51 +116,43 @@ function parseJSON<T>(raw: string | null, fallback: T): T {
   }
 }
 
-function matchScore(s: Suggestion, signals: Signals) {
-  // Contrato: determinístico, auditável, sem pesos opacos.
-  // Regra: cada campo selecionado que “bate” com as tags soma 1.
-  // Sem seleção => não influencia.
+/**
+ * CONTRATO — CUIDAR DE MIM
+ *
+ * - Estrutura por camadas é FINAL (não adicionar blocos / CTAs fora do checklist).
+ * - Check-in nunca bloqueia sugestões (0, 1 ou todos: sempre funciona).
+ * - Check-in apenas reordena preferências (determinístico e auditável).
+ * - Sempre existe fallback (se nada “combinar”, ainda há uma possibilidade).
+ * - “Outra opção” ignora contexto (não usa check-in; só avança no deck do dia).
+ * - Anti-repetição diária obrigatória (seen diário).
+ * - IA futura apenas refina ordem / seleção, não muda estrutura nem linguagem.
+ */
+
+function matchScore(s: Suggestion, c: Checkin) {
+  // pesos fixos e auditáveis (sem “mágica”)
+  const W = { ritmo: 4, energia: 3, emocao: 2, corpo: 3 } as const
   let score = 0
 
-  if (signals.ritmo && s.tags.ritmo?.includes(signals.ritmo)) score += 1
-  if (signals.energia && s.tags.energia?.includes(signals.energia)) score += 1
-  if (signals.emocao && s.tags.emocao?.includes(signals.emocao)) score += 1
-  if (signals.corpo && s.tags.corpo?.includes(signals.corpo)) score += 1
+  if (c.ritmo && s.signals?.ritmo?.includes(c.ritmo)) score += W.ritmo
+  if (c.energia && s.signals?.energia?.includes(c.energia)) score += W.energia
+  if (c.emocao && s.signals?.emocao?.includes(c.emocao)) score += W.emocao
+  if (c.corpo && s.signals?.corpo?.includes(c.corpo)) score += W.corpo
 
   return score
 }
 
-type SuggestionMode = 'context' | 'sequential'
+function chipClass(active: boolean) {
+  // check-in é “baixo volume”: menos contraste, menos peso
+  return [
+    'rounded-full border px-3 py-2 text-[12px] transition text-center',
+    active
+      ? 'bg-[#ffe1f1] border-[#f5d7e5] text-[#2f3a56]'
+      : 'bg-white/70 border-[#f5d7e5] text-[#6a6a6a] hover:bg-white',
+  ].join(' ')
+}
 
-/**
- * CONTRATO — CUIDAR DE MIM
- *
- * - Check-in nunca bloqueia sugestão
- * - Check-in apenas reordena preferências (determinístico e auditável)
- * - Sempre existe fallback
- * - “Outra opção” ignora contexto (sequencial pelo deck do dia)
- * - Anti-repetição diária é obrigatória
- * - IA futura apenas refina a ordenação (não muda estrutura)
- * - Estrutura do hub é imutável
- */
 export default function Client() {
-  const todayKey = useMemo(() => getTodayKey(), [])
-  const seed = useMemo(() => hashStringToInt(todayKey), [todayKey])
-
-  const LS_CURSOR = `cuidar_de_mim_cursor_${todayKey}`
-  const LS_SEEN = `cuidar_de_mim_seen_${todayKey}`
-  const LS_SIGNALS = `cuidar_de_mim_signals_${todayKey}`
-
-  // “applied” = sinais já assumidos pelo sistema (silencioso)
-  const [applied, setApplied] = useState<Signals>({
-    ritmo: null,
-    energia: null,
-    emocao: null,
-    corpo: null,
-  })
-
-  // “draft” = o que a usuária mexe enquanto o check-in está aberto
-  const [draft, setDraft] = useState<Signals>({
+  const [checkin, setCheckin] = useState<Checkin>({
     ritmo: null,
     energia: null,
     emocao: null,
@@ -185,30 +165,25 @@ export default function Client() {
   const [seen, setSeen] = useState<string[]>([])
   const [active, setActive] = useState<Suggestion | null>(null)
   const [closed, setClosed] = useState(false)
-  const [mode, setMode] = useState<SuggestionMode>('context')
+  const [hasInteracted, setHasInteracted] = useState(false) // “Outra opção” ignora contexto após interação
 
-  // deck determinístico diário (base para anti-repetição e cursor)
-  const deck = useMemo(() => {
-    const start = seed % (SUGGESTIONS.length || 1)
-    return rotate(SUGGESTIONS, start)
-  }, [seed])
+  const todayKey = useMemo(() => getTodayKey(), [])
+  const seed = useMemo(() => hashStringToInt(todayKey), [todayKey])
 
-  // init: cursor + seen + sinais do dia
+  const LS_CURSOR = `cuidar_de_mim_cursor_${todayKey}`
+  const LS_SEEN = `cuidar_de_mim_seen_${todayKey}`
+  const LS_CHECKIN_OPEN = `cuidar_de_mim_checkin_open_${todayKey}`
+
+  // init persistência local (cursor/seen/checkinOpen)
   useEffect(() => {
     const storedCursor = parseInt(safeGetLS(LS_CURSOR) ?? '0', 10)
     const storedSeen = parseJSON<string[]>(safeGetLS(LS_SEEN), [])
-    const storedSignals = parseJSON<Signals>(safeGetLS(LS_SIGNALS), {
-      ritmo: null,
-      energia: null,
-      emocao: null,
-      corpo: null,
-    })
+    const storedOpen = safeGetLS(LS_CHECKIN_OPEN)
 
     setCursor(Number.isFinite(storedCursor) ? storedCursor : 0)
     setSeen(Array.isArray(storedSeen) ? storedSeen : [])
-    setApplied(storedSignals)
-    setDraft(storedSignals)
-  }, [LS_CURSOR, LS_SEEN, LS_SIGNALS])
+    setCheckinOpen(storedOpen === '1') // default fechado; só abre se a pessoa já deixou aberto hoje
+  }, [LS_CURSOR, LS_SEEN, LS_CHECKIN_OPEN])
 
   useEffect(() => {
     try {
@@ -216,31 +191,24 @@ export default function Client() {
     } catch {}
   }, [todayKey])
 
-  function persistCursor(next: number) {
-    setCursor(next)
-    safeSetLS(LS_CURSOR, String(next))
-  }
+  const deck = useMemo(() => {
+    const start = seed % (DAILY_SUGGESTIONS.length || 1)
+    return rotate(DAILY_SUGGESTIONS, start)
+  }, [seed])
 
-  function persistSeen(nextSeen: string[]) {
-    setSeen(nextSeen)
-    safeSetLS(LS_SEEN, JSON.stringify(nextSeen))
-  }
-
-  function persistSignals(nextSignals: Signals) {
-    setApplied(nextSignals)
-    safeSetLS(LS_SIGNALS, JSON.stringify(nextSignals))
-  }
-
-  // CAMADA 3 — seleção de sugestão:
-  // - contexto: escolhe o melhor “match” entre as não vistas (tie-break pelo deck do dia)
-  // - sequential: ignora contexto e apresenta deck[cursor] (próxima não vista)
+  // Sugestão “inteligente” (sem IA visível):
+  // - Antes de interação manual, reordena por matchScore (determinístico).
+  // - Após interação manual (Outra opção), ignora contexto e segue deck/cursor.
   const suggestion = useMemo(() => {
     if (!deck.length) return null
+    const unseen = deck.filter((s) => !seen.includes(s.id))
 
-    const len = deck.length
+    // fallback: se tudo foi visto hoje, permite repetir (mantendo estrutura)
+    const pool = unseen.length ? unseen : deck
 
-    // helper: primeira não vista a partir do cursor (sequencial)
-    const firstUnseenFromCursor = () => {
+    if (hasInteracted) {
+      // ignora contexto: pega próximo pelo cursor no deck, pulando vistos se houver
+      const len = deck.length
       for (let step = 0; step < len; step++) {
         const idx = (cursor + step) % len
         const s = deck[idx]
@@ -249,67 +217,48 @@ export default function Client() {
       return deck[cursor % len]
     }
 
-    if (mode === 'sequential') return firstUnseenFromCursor()
+    // sem interação: reordena por score (auditável) e pega a primeira do pool
+    const scored = [...pool]
+      .map((s) => ({ s, score: matchScore(s, checkin) }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score
+        // desempate determinístico (id)
+        return a.s.id.localeCompare(b.s.id)
+      })
 
-    // context mode: melhor score (determinístico)
-    let best: Suggestion | null = null
-    let bestScore = -1
+    return scored[0]?.s ?? pool[0] ?? null
+  }, [deck, seen, cursor, hasInteracted, checkin])
 
-    // varre na ordem do deck a partir do cursor (tie-break = primeira ocorrência)
-    for (let step = 0; step < len; step++) {
-      const idx = (cursor + step) % len
-      const s = deck[idx]
-      if (seen.includes(s.id)) continue
-
-      const score = matchScore(s, applied)
-      if (score > bestScore) {
-        best = s
-        bestScore = score
-      }
-    }
-
-    // fallback: se tudo já foi visto hoje, volta a permitir (sem UI de coleção/histórico)
-    if (!best) {
-      return deck[cursor % len]
-    }
-
-    return best
-  }, [deck, cursor, seen, applied, mode])
-
-  function closeHere() {
-    setClosed(true)
-    setActive(null)
-    try {
-      track('cuidar_de_mim.close', { day: todayKey })
-    } catch {}
+  function persistCursor(next: number) {
+    setCursor(next)
+    safeSetLS(LS_CURSOR, String(next))
   }
-
-  function resetModeToContext() {
-    setMode('context')
+  function persistSeen(nextSeen: string[]) {
+    setSeen(nextSeen)
+    safeSetLS(LS_SEEN, JSON.stringify(nextSeen))
   }
 
   function nextOption() {
     if (!deck.length) return
-
-    // “Outra opção” ignora contexto => modo sequencial
-    setMode('sequential')
+    setHasInteracted(true)
 
     const len = deck.length
     let nextCursor = (cursor + 1) % len
 
-    // acha a próxima não vista
+    // procura próxima não vista (ignora contexto)
+    let found = false
     for (let step = 0; step < len; step++) {
       const idx = (cursor + 1 + step) % len
       const s = deck[idx]
       if (!seen.includes(s.id)) {
         nextCursor = idx
+        found = true
         break
       }
     }
 
-    // se tudo foi visto, reseta seen do dia (silencioso) e avança
-    const allSeen = deck.every((s) => seen.includes(s.id))
-    if (allSeen) {
+    // se todas vistas, reseta seen e avança
+    if (!found) {
       persistSeen([])
       nextCursor = (cursor + 1) % len
     }
@@ -323,37 +272,40 @@ export default function Client() {
 
   function openSuggestion(s: Suggestion) {
     setActive(s)
-    setClosed(false)
 
-    // marca como vista hoje (anti-repetição real)
     if (!seen.includes(s.id)) {
-      persistSeen([...seen, s.id])
+      const nextSeen = [...seen, s.id]
+      persistSeen(nextSeen)
     }
-
-    // ao entrar na experiência, volta para modo contextual (sem exibir causalidade)
-    resetModeToContext()
 
     try {
       track('cuidar_de_mim.open_suggestion', { id: s.id, day: todayKey })
     } catch {}
   }
 
-  function backToPossibility() {
+  function closeHere() {
+    setClosed(true)
     setActive(null)
-    setClosed(false)
-    // voltar ao campo de possibilidades não deve “parecer sequência”
-    // mantém tudo silencioso; “Outra opção” segue disponível.
     try {
-      track('cuidar_de_mim.back_to_possibility', { day: todayKey })
+      track('cuidar_de_mim.close', { day: todayKey })
     } catch {}
   }
 
-  function alreadyEnough() {
-    // saída gentil (camada 4)
-    setActive(null)
+  function doneForNow() {
+    // “Já está bom por agora” (camada 4)
     setClosed(true)
+    setActive(null)
     try {
-      track('cuidar_de_mim.enough', { day: todayKey })
+      track('cuidar_de_mim.done_for_now', { day: todayKey })
+    } catch {}
+  }
+
+  function seeAnotherPossibility() {
+    // “Ver outra possibilidade” (camada 4)
+    setActive(null)
+    nextOption()
+    try {
+      track('cuidar_de_mim.see_another', { day: todayKey })
     } catch {}
   }
 
@@ -365,56 +317,13 @@ export default function Client() {
     })
 
     try {
-      track('cuidar_de_mim.save_to_my_day', {
-        day: todayKey,
-        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-      })
+      track('cuidar_de_mim.save_to_my_day', { day: todayKey, source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM })
     } catch {}
   }
 
-  // Check-in: colapsável e “silencioso”
-  function toggleCheckin() {
-    const nextOpen = !checkinOpen
-    setCheckinOpen(nextOpen)
-
-    // Ao FECHAR, aplica silenciosamente o que foi selecionado (sem feedback causal explícito)
-    if (checkinOpen && !nextOpen) {
-      persistSignals(draft)
-      resetModeToContext()
-      try {
-        track('cuidar_de_mim.checkin_apply', { day: todayKey })
-      } catch {}
-    }
-
-    // Ao ABRIR, não altera sugestão nem gera efeito visível
-    if (!checkinOpen && nextOpen) {
-      try {
-        track('cuidar_de_mim.checkin_open', { day: todayKey })
-      } catch {}
-    }
-  }
-
-  function chipClass(isOn: boolean) {
-    return [
-      'rounded-full border px-3 py-2 text-[12px] transition text-center',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/50',
-      isOn
-        ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-        : 'bg-white/90 border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#fff7fb]',
-    ].join(' ')
-  }
-
-  function actionPrimaryClass() {
-    return 'rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60'
-  }
-
-  function actionSecondaryClass() {
-    return 'rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#fff7fb] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/40'
-  }
-
-  function actionTertiaryClass() {
-    // “Encerrar por aqui” com peso emocional equivalente (não escondido, mas também não “final”)
-    return 'rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#fff7fb] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/40'
+  function setCheckinOpenPersist(next: boolean) {
+    setCheckinOpen(next)
+    safeSetLS(LS_CHECKIN_OPEN, next ? '1' : '0')
   }
 
   return (
@@ -452,261 +361,302 @@ export default function Client() {
           </header>
 
           <div className="space-y-7 pb-10">
-            {/* Card raiz com clique garantido */}
-            <SoftCard className="relative z-10 pointer-events-auto p-6 md:p-7 rounded-3xl bg-white/95 border border-[#f5d7e5]">
-              <div className="relative z-10 pointer-events-auto">
-                {/* CAMADA 1/2/3 — enquanto não está em experiência e não encerrou */}
-                {!active && !closed && (
-                  <div className="space-y-8">
-                    {/* CAMADA 1 — CONVITE ABERTO (não acionável exceto Encerrar) */}
-                    <div className="space-y-2">
-                      <div className="text-[14px] font-semibold text-[#2f3a56]">
-                        O que você sente que precisa agora?
-                      </div>
-                      <div className="text-[12px] text-[#6a6a6a]">
-                        Se não quiser escolher nada, você pode encerrar por aqui.
-                      </div>
+            <SoftCard className="p-6 md:p-7 rounded-3xl bg-white/95 border border-[#f5d7e5] shadow-[0_18px_45px_rgba(184,35,107,0.12)]">
+              {/* CAMADA 1 — CONVITE ABERTO (SEMPRE VISÍVEL) */}
+              <div className="space-y-2">
+                <div className="text-[14px] font-semibold text-[#2f3a56]">
+                  O que você sente que precisa agora?
+                </div>
+                <div className="text-[12px] text-[#6a6a6a]">
+                  Se não quiser escolher nada, você pode encerrar por aqui.
+                </div>
 
-                      <div className="pt-2">
-                        <button type="button" onClick={closeHere} className={actionTertiaryClass()}>
-                          Encerrar por aqui
-                        </button>
-                      </div>
-                    </div>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={closeHere}
+                    className="
+                      inline-flex items-center justify-center
+                      rounded-full
+                      bg-white border border-[#f5d7e5]
+                      text-[#2f3a56]
+                      px-4 py-2 text-[12px]
+                      hover:bg-[#ffe1f1] transition
+                    "
+                  >
+                    Encerrar por aqui
+                  </button>
+                </div>
+              </div>
 
-                    {/* CAMADA 2 — CHECK-IN (opcional, colapsável, inicia fechado) */}
-                    <div className="rounded-2xl border border-[#f5d7e5] bg-white/80">
-                      <button
-                        type="button"
-                        onClick={toggleCheckin}
-                        className="
-                          w-full flex items-center justify-between
-                          px-4 py-3
-                          text-left
-                          rounded-2xl
-                          hover:bg-[#fff7fb]
-                          transition
-                          focus-visible:outline-none
-                          focus-visible:ring-2 focus-visible:ring-[#fd2597]/35
-                        "
-                        aria-expanded={checkinOpen}
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-[13px] font-semibold text-[#2f3a56]">Se quiser, um check-in</span>
-                        </div>
-                        <span className="text-[12px] text-[#6a6a6a]">{checkinOpen ? 'Fechar' : 'Abrir'}</span>
-                      </button>
-
-                      {checkinOpen && (
-                        <div className="px-4 pb-4 pt-1 space-y-4">
-                          {/* Ritmo */}
-                          <div className="space-y-2">
-                            <div className="text-[12px] text-[#6a6a6a]">Ritmo</div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              {(['leve', 'animada', 'cansada', 'sobrecarregada'] as Ritmo[]).map((r) => (
-                                <button
-                                  key={r}
-                                  type="button"
-                                  onClick={() => setDraft((p) => ({ ...p, ritmo: p.ritmo === r ? null : r }))}
-                                  className={chipClass(draft.ritmo === r)}
-                                >
-                                  {r}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Energia */}
-                          <div className="space-y-2">
-                            <div className="text-[12px] text-[#6a6a6a]">Energia</div>
-                            <div className="grid grid-cols-3 gap-2">
-                              {(['baixa', 'media', 'alta'] as Energia[]).map((e) => (
-                                <button
-                                  key={e}
-                                  type="button"
-                                  onClick={() => setDraft((p) => ({ ...p, energia: p.energia === e ? null : e }))}
-                                  className={chipClass(draft.energia === e)}
-                                >
-                                  {e === 'media' ? 'média' : e}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Emoção */}
-                          <div className="space-y-2">
-                            <div className="text-[12px] text-[#6a6a6a]">Emoção</div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              {(['neutra', 'sensivel', 'tensa', 'carente'] as Emocao[]).map((em) => (
-                                <button
-                                  key={em}
-                                  type="button"
-                                  onClick={() => setDraft((p) => ({ ...p, emocao: p.emocao === em ? null : em }))}
-                                  className={chipClass(draft.emocao === em)}
-                                >
-                                  {em === 'sensivel' ? 'sensível' : em}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Corpo */}
-                          <div className="space-y-2">
-                            <div className="text-[12px] text-[#6a6a6a]">Corpo</div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                              {(['tenso', 'cansado', 'ok', 'pedindo-pausa'] as Corpo[]).map((c) => (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  onClick={() => setDraft((p) => ({ ...p, corpo: p.corpo === c ? null : c }))}
-                                  className={chipClass(draft.corpo === c)}
-                                >
-                                  {c === 'pedindo-pausa' ? 'pedindo pausa' : c}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Nota: sem “aplicar”, sem feedback. A aplicação é silenciosa ao fechar. */}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Espaço deliberado para reduzir causalidade percebida */}
-                    <div className="h-2" />
-
-                    {/* CAMADA 3 — SUGESTÃO ÚNICA (card dominante) */}
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6 md:p-7 shadow-[0_10px_26px_rgba(184,35,107,0.10)]">
-                      <div className="space-y-3">
-                        <div className="text-[12px] text-[#6a6a6a]">Se quiser, uma possibilidade agora</div>
-
-                        <div className="space-y-1">
-                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] leading-tight">
-                            {suggestion?.title ?? 'Uma possibilidade agora'}
-                          </div>
-                          <div className="text-[13px] md:text-[14px] text-[#545454] leading-relaxed">
-                            {suggestion?.subtitle ?? 'Sem obrigação. Só se fizer sentido.'}
-                          </div>
-                        </div>
-
-                        {suggestion?.lines?.length ? (
-                          <div className="pt-2 space-y-1">
-                            {suggestion.lines.slice(0, 4).map((line, i) => (
-                              <div key={i} className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                                {line}
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="pt-5 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => (suggestion ? openSuggestion(suggestion) : undefined)}
-                          className={actionPrimaryClass()}
-                        >
-                          Quero tentar agora
-                        </button>
-
-                        <button type="button" onClick={nextOption} className={actionSecondaryClass()}>
-                          Outra opção
-                        </button>
-
-                        <button type="button" onClick={closeHere} className={actionTertiaryClass()}>
-                          Encerrar por aqui
-                        </button>
-                      </div>
-                    </div>
+              {/* Estados finais (encerramento) */}
+              {closed && (
+                <div className="mt-6 rounded-2xl border border-[#f5d7e5] bg-white/80 p-5">
+                  <div className="text-[14px] font-semibold text-[#2f3a56]">
+                    Isso já é suficiente por agora.
                   </div>
-                )}
-
-                {/* CAMADA 4 — EXPERIÊNCIA ÚNICA */}
-                {active && !closed && (
-                  <div className="space-y-6">
-                    <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6 md:p-7 shadow-[0_10px_26px_rgba(184,35,107,0.10)]">
-                      <div className="space-y-2">
-                        <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56]">
-                          {active.title}
-                        </div>
-                        <div className="text-[13px] md:text-[14px] text-[#545454] leading-relaxed">
-                          {active.subtitle}
-                        </div>
-
-                        <div className="pt-3 space-y-1">
-                          {active.lines.slice(0, 5).map((line, i) => (
-                            <div key={i} className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                              {line}
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="pt-4 text-[13px] text-[#6a6a6a]">
-                          Por alguns instantes já está bom.
-                        </div>
-                      </div>
-
-                      <div className="pt-5 flex flex-wrap gap-2">
-                        <button type="button" onClick={alreadyEnough} className={actionPrimaryClass()}>
-                          Já está bom por agora
-                        </button>
-
-                        <button type="button" onClick={backToPossibility} className={actionSecondaryClass()}>
-                          Ver outra possibilidade
-                        </button>
-
-                        <button type="button" onClick={closeHere} className={actionTertiaryClass()}>
-                          Encerrar por aqui
-                        </button>
-                      </div>
-
-                      {/* CAMADA 5 — REGISTROS LATERAIS E SILENCIOSOS */}
-                      <div className="pt-4">
-                        <button
-                          type="button"
-                          onClick={() => saveToMyDay(active.title)}
-                          className="
-                            inline-flex items-center
-                            text-[12px] font-medium
-                            text-[#2f3a56]
-                            underline decoration-[#f5d7e5]
-                            underline-offset-4
-                            hover:opacity-90
-                            transition
-                            focus-visible:outline-none
-                            focus-visible:ring-2 focus-visible:ring-[#fd2597]/30
-                            rounded
-                          "
-                        >
-                          Salvar no Meu Dia
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Encerramento gentil */}
-                {closed && (
-                  <div className="space-y-3">
-                    <div className="text-[14px] font-semibold text-[#2f3a56]">
-                      Isso já é suficiente por agora.
-                    </div>
+                  <div className="mt-3">
                     <Link
                       href="/maternar"
                       className="
-                        inline-block rounded-full
+                        inline-flex items-center justify-center
+                        rounded-full
                         bg-white border border-[#f5d7e5]
                         text-[#2f3a56]
                         px-4 py-2 text-[12px]
-                        hover:bg-[#fff7fb]
-                        transition
+                        hover:bg-[#ffe1f1] transition
                       "
                     >
                       Voltar ao Maternar
                     </Link>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {!closed && (
+                <>
+                  {/* CAMADA 2 — CHECK-IN (OPCIONAL, COLAPSÁVEL, BAIXO VOLUME) */}
+                  <div className="mt-6 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb]">
+                    <button
+                      type="button"
+                      onClick={() => setCheckinOpenPersist(!checkinOpen)}
+                      className="w-full flex items-center justify-between px-4 py-3"
+                    >
+                      <span className="text-[13px] font-semibold text-[#2f3a56]">
+                        Se quiser, um check-in
+                      </span>
+                      <span className="text-[12px] text-[#6a6a6a]">
+                        {checkinOpen ? 'Fechar' : 'Abrir'}
+                      </span>
+                    </button>
+
+                    {checkinOpen && (
+                      <div className="px-4 pb-4">
+                        <div className="text-[12px] text-[#6a6a6a] mb-3">
+                          Pode ser só uma coisa. Pode pular tudo. Nada aqui é obrigatório.
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <div className="text-[12px] text-[#6a6a6a]">Ritmo</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              {(['leve', 'animada', 'cansada', 'sobrecarregada'] as Ritmo[]).map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setCheckin((c) => ({ ...c, ritmo: c.ritmo === v ? null : v }))}
+                                  className={chipClass(checkin.ritmo === v)}
+                                >
+                                  {v}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="text-[12px] text-[#6a6a6a]">Energia</div>
+                            <div className="grid grid-cols-3 gap-2">
+                              {(['baixa', 'media', 'alta'] as Energia[]).map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setCheckin((c) => ({ ...c, energia: c.energia === v ? null : v }))}
+                                  className={chipClass(checkin.energia === v)}
+                                >
+                                  {v}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="text-[12px] text-[#6a6a6a]">Emoção</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              {(['neutra', 'sensivel', 'tensa', 'carente'] as Emocao[]).map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setCheckin((c) => ({ ...c, emocao: c.emocao === v ? null : v }))}
+                                  className={chipClass(checkin.emocao === v)}
+                                >
+                                  {v}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="text-[12px] text-[#6a6a6a]">Corpo</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                              {(['tenso', 'cansado', 'ok', 'pedindo-pausa'] as Corpo[]).map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setCheckin((c) => ({ ...c, corpo: c.corpo === v ? null : v }))}
+                                  className={chipClass(checkin.corpo === v)}
+                                >
+                                  {v === 'pedindo-pausa' ? 'pedindo pausa' : v}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CAMADA 3 — SUGESTÃO ÚNICA (CARD DOMINANTE) */}
+                  <div className="mt-7">
+                    <div className="rounded-3xl bg-white border border-[#f5d7e5] p-6 md:p-7 shadow-[0_20px_55px_rgba(184,35,107,0.18)]">
+                      {!active && (
+                        <>
+                          <div className="text-[12px] text-[#6a6a6a] mb-2">
+                            Se quiser, uma possibilidade agora
+                          </div>
+
+                          <div className="space-y-2">
+                            <h2 className="text-[20px] md:text-[22px] font-semibold text-[#2f3a56] leading-snug">
+                              {suggestion?.title ?? 'Uma possibilidade agora'}
+                            </h2>
+
+                            <div className="text-[13px] md:text-[14px] text-[#545454]">
+                              {suggestion?.subtitle ?? 'Sem obrigação. Só se fizer sentido.'}
+                            </div>
+
+                            <div className="mt-3 space-y-1.5">
+                              {(suggestion?.body ?? ['Sem obrigação. Só se fizer sentido.']).slice(0, 5).map((line, i) => (
+                                <p key={i} className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Ações obrigatórias e sempre visíveis */}
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => (suggestion ? openSuggestion(suggestion) : undefined)}
+                              className="
+                                rounded-full bg-[#fd2597] text-white
+                                px-4 py-2 text-[12px]
+                                shadow-lg hover:opacity-95 transition
+                              "
+                            >
+                              Quero tentar agora
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={nextOption}
+                              className="
+                                rounded-full bg-white border border-[#f5d7e5]
+                                text-[#2f3a56]
+                                px-4 py-2 text-[12px]
+                                hover:bg-[#ffe1f1] transition
+                              "
+                            >
+                              Outra opção
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={closeHere}
+                              className="
+                                rounded-full bg-white border border-[#f5d7e5]
+                                text-[#2f3a56]
+                                px-4 py-2 text-[12px]
+                                hover:bg-[#ffe1f1] transition
+                              "
+                            >
+                              Encerrar por aqui
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {/* CAMADA 4 — EXPERIÊNCIA ÚNICA (quando entra) */}
+                      {active && (
+                        <>
+                          <div className="space-y-2">
+                            <h2 className="text-[20px] md:text-[22px] font-semibold text-[#2f3a56] leading-snug">
+                              {active.title}
+                            </h2>
+
+                            <div className="text-[13px] md:text-[14px] text-[#545454]">
+                              {active.subtitle}
+                            </div>
+
+                            <div className="mt-3 space-y-1.5">
+                              {active.experience.slice(0, 5).map((line, i) => (
+                                <p key={i} className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+
+                            <div className="mt-3 text-[13px] text-[#6a6a6a]">
+                              Por alguns instantes já está bom.
+                            </div>
+                          </div>
+
+                          {/* Saídas obrigatórias (vocabulário fixo) */}
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={doneForNow}
+                              className="
+                                rounded-full bg-[#fd2597] text-white
+                                px-4 py-2 text-[12px]
+                                shadow-lg hover:opacity-95 transition
+                              "
+                            >
+                              Já está bom por agora
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={seeAnotherPossibility}
+                              className="
+                                rounded-full bg-white border border-[#f5d7e5]
+                                text-[#2f3a56]
+                                px-4 py-2 text-[12px]
+                                hover:bg-[#ffe1f1] transition
+                              "
+                            >
+                              Ver outra possibilidade
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={closeHere}
+                              className="
+                                rounded-full bg-white border border-[#f5d7e5]
+                                text-[#2f3a56]
+                                px-4 py-2 text-[12px]
+                                hover:bg-[#ffe1f1] transition
+                              "
+                            >
+                              Encerrar por aqui
+                            </button>
+                          </div>
+
+                          {/* CAMADA 5 — REGISTROS (discretos e laterais) */}
+                          <div className="mt-3">
+                            <button
+                              type="button"
+                              onClick={() => saveToMyDay(active.title)}
+                              className="text-[12px] text-[#6a6a6a] underline decoration-[#f5d7e5] hover:text-[#2f3a56] transition"
+                            >
+                              Salvar no Meu Dia
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </SoftCard>
 
             <LegalFooter />
