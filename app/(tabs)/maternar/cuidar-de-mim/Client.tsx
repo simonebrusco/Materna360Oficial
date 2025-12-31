@@ -79,7 +79,7 @@ export default function Client() {
   function nextOption() {
     setCursor((c) => c + 1)
     try {
-      track('cuidar_de_mim.other_option')
+      track('cuidar_de_mim.other_option', {})
     } catch {}
   }
 
@@ -93,7 +93,7 @@ export default function Client() {
   function closeHere() {
     setClosed(true)
     try {
-      track('cuidar_de_mim.close')
+     track('cuidar_de_mim.close', {})
     } catch {}
   }
 
