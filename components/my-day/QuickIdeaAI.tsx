@@ -16,10 +16,6 @@ type State =
 
 const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
 
-// P33.4a — key do sinal emocional (contexto fraco, opcional)
-const LS_EMOTIONAL_SIGNAL_KEY = 'm360.my_day.last_signal.v1'
-type EmotionalSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
-
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
   try {
@@ -43,27 +39,6 @@ function safeSetLS(key: string, value: string) {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
   } catch {}
-}
-
-/**
- * P33.4a — lê sinal emocional como contexto fraco:
- * - se não existir key -> retorna null (não enviar)
- * - se existir, valida enum -> heavy/tired/overwhelmed/neutral
- * - se inválido -> fallback obrigatório 'neutral'
- */
-function readEmotionalSignal(): EmotionalSignal | null {
-  const raw = safeGetLS(LS_EMOTIONAL_SIGNAL_KEY)
-  if (!raw) return null
-
-  switch (raw) {
-    case 'heavy':
-    case 'tired':
-    case 'overwhelmed':
-    case 'neutral':
-      return raw
-    default:
-      return 'neutral'
-  }
 }
 
 function normalize(payload: any): Suggestion[] | null {
@@ -104,7 +79,7 @@ function normalize(payload: any): Suggestion[] | null {
 }
 
 function signature(items: Suggestion[]) {
-  return items.map(i => `${i.title}::${i.description ?? ''}`).join('|')
+  return items.map((i) => `${i.title}::${i.description ?? ''}`).join('|')
 }
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -136,12 +111,15 @@ function getSavedFromLS(): Suggestion[] {
   const parsed = safeParse<unknown>(raw)
   if (!Array.isArray(parsed)) return []
   const items = (parsed as any[])
-    .filter(x => x && typeof x.title === 'string' && x.title.trim())
+    .filter((x) => x && typeof x.title === 'string' && x.title.trim())
     .slice(0, 50)
     .map((x, idx) => ({
-      id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
-      title: String(x.title),
-      description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+      id: typeof (x as any).id === 'string' && String((x as any).id).trim() ? String((x as any).id) : `saved-${idx + 1}`,
+      title: String((x as any).title),
+      description:
+        typeof (x as any).description === 'string' && String((x as any).description).trim()
+          ? String((x as any).description)
+          : undefined,
     }))
   return items
 }
@@ -160,28 +138,18 @@ export default function QuickIdeaAI() {
 
   const visibleItems = useMemo(() => {
     if (state.status !== 'done') return []
-    return state.items.filter(i => !dismissed[i.id])
+    return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
   const run = useCallback(async (attempt = 0) => {
     setState({ status: 'loading' })
-
     const nonce = Date.now()
 
     try {
-      // P33.4a — contexto fraco (opcional)
-      const signal = readEmotionalSignal()
-
-      const postPayload: any = { intent: 'quick_idea', nonce }
-      if (signal) {
-        postPayload.memory = { emotional_signal: signal }
-      }
-
-      // POST (preferido)
       const postRes = await fetch('/api/ai/quick-ideas', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(postPayload),
+        body: JSON.stringify({ intent: 'quick_idea', nonce }),
         cache: 'no-store',
       })
 
@@ -190,7 +158,6 @@ export default function QuickIdeaAI() {
       if (postRes.ok) {
         data = await postRes.json().catch(() => null)
       } else {
-        // GET (fallback), com query pra evitar cache
         const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
           method: 'GET',
           cache: 'no-store',
@@ -200,21 +167,17 @@ export default function QuickIdeaAI() {
 
       const normalized = normalize(data)
 
-      // se não veio nada utilizável, usa fallback embaralhado
       const nextItems =
         normalized ??
         shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
 
       const sig = signature(nextItems)
 
-      // se repetiu exatamente e ainda não tentou, tenta mais uma vez
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
 
       lastSigRef.current = sig
-
-      // reseta “dismissed” a cada nova rodada para não “sumir tudo”
       setDismissed({})
       setState({ status: 'done', items: nextItems })
     } catch {
@@ -232,14 +195,13 @@ export default function QuickIdeaAI() {
   }, [])
 
   const dismissOne = useCallback((id: string) => {
-    setDismissed(prev => ({ ...prev, [id]: true }))
+    setDismissed((prev) => ({ ...prev, [id]: true }))
   }, [])
 
   const saveOne = useCallback(
     (item: Suggestion) => {
-      // não duplica por title+description
       const key = `${item.title}::${item.description ?? ''}`.trim()
-      const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
+      const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) return
 
       const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
@@ -252,7 +214,7 @@ export default function QuickIdeaAI() {
 
   const removeSaved = useCallback(
     (id: string) => {
-      const next = saved.filter(s => s.id !== id)
+      const next = saved.filter((s) => s.id !== id)
       setSaved(next)
       setSavedToLS(next)
     },
@@ -294,9 +256,7 @@ export default function QuickIdeaAI() {
           </button>
         ) : null}
 
-        {state.status === 'loading' ? (
-          <p className="text-[13px] text-[#6A6A6A]">Pensando em algo simples…</p>
-        ) : null}
+        {state.status === 'loading' ? <p className="text-[13px] text-[#6A6A6A]">Pensando em algo simples…</p> : null}
 
         {state.status === 'done' ? (
           <div className="space-y-3">
@@ -314,7 +274,7 @@ export default function QuickIdeaAI() {
 
             {visibleItems.length ? (
               <div className="space-y-3">
-                {visibleItems.map(item => (
+                {visibleItems.map((item) => (
                   <div
                     key={item.id}
                     className="
@@ -375,9 +335,7 @@ export default function QuickIdeaAI() {
               </div>
             ) : (
               <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">
-                  Sem pressão. Se quiser, peça outra ideia.
-                </p>
+                <p className="text-[13px] text-[#6A6A6A]">Sem pressão. Se quiser, peça outra ideia.</p>
               </div>
             )}
 
@@ -388,7 +346,7 @@ export default function QuickIdeaAI() {
                 </div>
 
                 <div className="mt-2 space-y-2">
-                  {saved.slice(0, 3).map(item => (
+                  {saved.slice(0, 3).map((item) => (
                     <div
                       key={item.id}
                       className="
@@ -418,9 +376,7 @@ export default function QuickIdeaAI() {
                 </div>
 
                 {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
-                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
-                  </p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
                 ) : null}
               </div>
             ) : null}
