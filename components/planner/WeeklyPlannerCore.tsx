@@ -52,15 +52,6 @@ type MonthCell = {
   inMonth: boolean
 }
 
-// Check-in silencioso: somente estes valores
-type MyDayEmotionalSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
-
-// Modal reutilizado: mantém TaskOrigin para lembretes + um modo local para check-in
-type ReminderModalMode = TaskOrigin | 'checkin'
-
-// Key já existente e usada pela IA leve
-const MY_DAY_LAST_SIGNAL_KEY = 'm360.my_day.last_signal.v1'
-
 // =======================================================
 // HELPERS
 // =======================================================
@@ -302,7 +293,7 @@ function CoachMiniCard({
           </div>
 
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-soft-bg)] border border-[var(--color-soft-strong)]">
-            <span className="text-[12px] font-semibold text-[var(--color-brand)]" />
+            <span className="text-[12px] font-semibold text-[var(--color-brand)]"></span>
           </span>
         </div>
 
@@ -492,32 +483,16 @@ export default function WeeklyPlannerCore() {
   const [monthSheetOpen, setMonthSheetOpen] = useState(false)
   const [monthCursor, setMonthCursor] = useState<Date>(toFirstOfMonth(new Date()))
 
-  // ---------- Reminders UI (SEM prompt do browser) ----------
+  // ---------- Modal reutilizado (lembrete OU check-in silencioso) ----------
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
   const [reminderDraft, setReminderDraft] = useState('')
-  const [reminderOrigin, setReminderOrigin] = useState<ReminderModalMode>('other')
+  const [reminderOrigin, setReminderOrigin] = useState<TaskOrigin>('other')
   const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [editingDraft, setEditingDraft] = useState('')
+  const [isCheckinMode, setIsCheckinMode] = useState(false)
 
-  // Check-in: controla fallback neutral ao fechar sem escolha
-  const [checkinTouched, setCheckinTouched] = useState(false)
-
-  const writeMyDaySignal = useCallback((signal: MyDayEmotionalSignal) => {
-    try {
-      localStorage.setItem(MY_DAY_LAST_SIGNAL_KEY, signal)
-    } catch {}
-  }, [])
-
-  const closeReminderModal = useCallback(() => {
-    // Fallback obrigatório: se abrir check-in e fechar sem escolher -> neutral
-    if (reminderOrigin === 'checkin' && !checkinTouched) {
-      writeMyDaySignal('neutral')
-    }
-    setReminderModalOpen(false)
-  }, [checkinTouched, reminderOrigin, writeMyDaySignal])
-
-  // ---------- Onboarding contextual (NEW) ----------
+  // ---------- Onboarding contextual ----------
   const [coachStep, setCoachStep] = useState<CoachStep | null>(null)
   const [coachEnabled, setCoachEnabled] = useState(false)
   const [isMobileCoach, setIsMobileCoach] = useState(false)
@@ -714,9 +689,7 @@ export default function WeeklyPlannerCore() {
 
       // evita duplicado igual (título + origin)
       const exists = plannerData.tasks.some(
-        (t) =>
-          normalizeText(t.title).toLowerCase() === normalizedTitle.toLowerCase() &&
-          t.origin === origin,
+        (t) => normalizeText(t.title).toLowerCase() === normalizedTitle.toLowerCase() && t.origin === origin,
       )
       if (exists) return
 
@@ -848,38 +821,64 @@ export default function WeeklyPlannerCore() {
   const monthMatrix = useMemo(() => generateMonthMatrix(monthCursor), [monthCursor])
 
   // ======================================================
-  // REMINDER MODAL ACTIONS
+  // REMINDER/CHECK-IN MODAL ACTIONS
   // ======================================================
-  const openReminderModal = (origin: ReminderModalMode, seed?: string) => {
+  const closeReminderModal = useCallback(() => {
+    setReminderModalOpen(false)
+    setReminderDraft('')
+    setIsCheckinMode(false)
+  }, [])
+
+  const openReminderModal = useCallback((origin: TaskOrigin, seed?: string) => {
+    setIsCheckinMode(false)
     setReminderOrigin(origin)
     setReminderDraft(seed ?? '')
     setReminderModalOpen(true)
 
-    // reset do check-in
-    if (origin === 'checkin') {
-      setCheckinTouched(false)
-    }
-
     try {
       track('planner.reminder_modal_opened', { tab: 'meu-dia', origin })
     } catch {}
-  }
+  }, [])
 
-  const submitReminder = () => {
-    // check-in não cria task
-    if (reminderOrigin === 'checkin') return
+  const openCheckinModal = useCallback(() => {
+    setIsCheckinMode(true)
+    setReminderOrigin('selfcare') // não cria origin novo (evita erro de tipos)
+    setReminderDraft('')
+    setReminderModalOpen(true)
 
+    try {
+      track('planner.checkin_opened', { tab: 'meu-dia' })
+    } catch {}
+  }, [])
+
+  const submitReminder = useCallback(() => {
     const text = normalizeText(reminderDraft)
     if (!text) return
-
-    addTask(text, reminderOrigin as TaskOrigin)
+    addTask(text, reminderOrigin)
     setReminderDraft('')
     setReminderModalOpen(false)
 
     try {
       track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
     } catch {}
-  }
+  }, [addTask, reminderDraft, reminderOrigin])
+
+  type CheckinSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
+
+  const commitCheckin = useCallback(
+    (selectedSignal: CheckinSignal) => {
+      try {
+        localStorage.setItem('m360.my_day.last_signal.v1', selectedSignal)
+      } catch {}
+
+      try {
+        track('planner.checkin_selected', { tab: 'meu-dia', value: selectedSignal })
+      } catch {}
+
+      closeReminderModal()
+    },
+    [closeReminderModal],
+  )
 
   // ======================================================
   // COACH CONTENT
@@ -936,7 +935,6 @@ export default function WeeklyPlannerCore() {
   }, [coachStep, markCoachDone, nextCoach])
 
   const onCoachSecondary = useCallback(() => {
-    // fechar (sem marcar como done): caso a mãe feche, não some pra sempre.
     closeCoach()
   }, [closeCoach])
 
@@ -1228,12 +1226,15 @@ export default function WeeklyPlannerCore() {
                   )}
                 </div>
 
-                {/* Atalhos (abrem o mesmo modal leve) */}
+                {/* Atalhos */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() =>
-                      openReminderModal('top3', isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial')
+                      openReminderModal(
+                        'top3',
+                        isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial',
+                      )
                     }
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
@@ -1250,7 +1251,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() => openReminderModal('checkin')}
+                    onClick={openCheckinModal}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelSelfcare}
@@ -1378,6 +1379,7 @@ export default function WeeklyPlannerCore() {
             </div>
           )}
 
+          {/* Card de navegação dia anterior/próximo */}
           <SoftCard
             className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
             onClick={openMonthSheet}
@@ -1423,6 +1425,7 @@ export default function WeeklyPlannerCore() {
         </div>
       </Reveal>
 
+      {/* COACH — mobile bottom sheet */}
       {shouldRenderCoach && isMobileCoach && coachContent ? (
         <CoachBottomSheet
           open={true}
@@ -1436,18 +1439,20 @@ export default function WeeklyPlannerCore() {
         />
       ) : null}
 
-      {/* MODAL: adicionar lembrete (substitui prompt azul) OU check-in silencioso */}
+      {/* MODAL: adicionar lembrete OU check-in silencioso */}
       {reminderModalOpen && (
         <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Modal">
+          {/* Backdrop */}
           <button
             type="button"
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
             onClick={closeReminderModal}
             aria-label="Fechar"
           />
+
           <div className="absolute left-1/2 top-[16%] w-[92%] max-w-md -translate-x-1/2">
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
-              {reminderOrigin === 'checkin' ? (
+              {isCheckinMode ? (
                 <>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -1458,7 +1463,7 @@ export default function WeeklyPlannerCore() {
                         Como você está agora?
                       </h3>
                       <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
-                        Um toque rápido. Sem mensagem. Sem acompanhamento.
+                        Só um toque para se reconhecer. Nada além disso.
                       </p>
                     </div>
 
@@ -1473,27 +1478,37 @@ export default function WeeklyPlannerCore() {
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
-                    {(
-                      [
-                        { label: 'Pesado', value: 'heavy' },
-                        { label: 'Cansada', value: 'tired' },
-                        { label: 'Sobrecarregada', value: 'overwhelmed' },
-                        { label: 'Neutro', value: 'neutral' },
-                      ] as const
-                    ).map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          setCheckinTouched(true)
-                          writeMyDaySignal(opt.value)
-                          setReminderModalOpen(false)
-                        }}
-                        className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('heavy')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Pesado
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('tired')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Cansada
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('overwhelmed')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Sobrecarregada
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('neutral')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Neutro
+                    </button>
                   </div>
 
                   <div className="mt-4 flex items-center justify-end">
@@ -1523,7 +1538,7 @@ export default function WeeklyPlannerCore() {
 
                     <button
                       type="button"
-                      onClick={() => setReminderModalOpen(false)}
+                      onClick={closeReminderModal}
                       className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
                       aria-label="Fechar"
                     >
@@ -1537,7 +1552,7 @@ export default function WeeklyPlannerCore() {
                       onChange={(e) => setReminderDraft(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') submitReminder()
-                        if (e.key === 'Escape') setReminderModalOpen(false)
+                        if (e.key === 'Escape') closeReminderModal()
                       }}
                       placeholder="Ex.: separar 10 min para respirar"
                       className="w-full rounded-2xl border border-[var(--color-soft-strong)] px-3 py-3 text-sm outline-none focus:border-[var(--color-brand)]"
@@ -1547,7 +1562,7 @@ export default function WeeklyPlannerCore() {
                     <div className="flex items-center justify-between gap-2">
                       <button
                         type="button"
-                        onClick={() => setReminderModalOpen(false)}
+                        onClick={closeReminderModal}
                         className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
                       >
                         Cancelar
