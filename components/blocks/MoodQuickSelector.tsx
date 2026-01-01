@@ -47,6 +47,13 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
   const handleMoodSelect = (moodValue: MoodValue) => {
     setSelectedMood(moodValue)
 
+    // P33.4a — Conexão do sinal emocional ao check-in (modo leve Meu Dia)
+    // Valores permitidos: heavy | tired | overwhelmed | neutral
+    const selectedSignal: 'heavy' | 'tired' | 'overwhelmed' | 'neutral' =
+      moodValue === 1 ? 'tired' : moodValue === 0 ? 'overwhelmed' : 'neutral'
+
+    localStorage.setItem('m360.my_day.last_signal.v1', selectedSignal)
+
     // Get today's index in the week
     const today = new Date()
     const dayIndex = (today.getDay() + 6) % 7
