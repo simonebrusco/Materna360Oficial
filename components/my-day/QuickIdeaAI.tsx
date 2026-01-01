@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
+import { addTaskToMyDayAndTrack, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 
 type Suggestion = {
   id: string
@@ -13,33 +14,6 @@ type State =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'done'; item: Suggestion }
-
-const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
-
-function safeParse<T>(raw: string | null): T | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
-
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
 
 function normalizeOne(payload: any): Suggestion | null {
   if (!payload) return null
@@ -98,25 +72,6 @@ function signatureOne(item: Suggestion) {
   return `${item.title}::${item.description ?? ''}`.trim()
 }
 
-function getSavedFromLS(): Suggestion[] {
-  const raw = safeGetLS(LS_SAVED_KEY)
-  const parsed = safeParse<unknown>(raw)
-  if (!Array.isArray(parsed)) return []
-  const items = (parsed as any[])
-    .filter(x => x && typeof x.title === 'string' && x.title.trim())
-    .slice(0, 50)
-    .map((x, idx) => ({
-      id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
-      title: String(x.title),
-      description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-    }))
-  return items
-}
-
-function setSavedToLS(items: Suggestion[]) {
-  safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
-}
-
 /**
  * Meu Dia — resposta curta, aterrissadora e fechada:
  * 1) reconhecimento breve
@@ -132,24 +87,41 @@ function toMeuDiaCopy(item: Suggestion) {
   const oneFocus = `Por agora, fique só com isto: ${focus}`
   const close = 'Só isso já devolve um pouco de chão.'
 
-  return { recognition, oneFocus, close }
+  return { recognition, oneFocus, close, focus }
 }
 
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
-  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
+  const [savedToast, setSavedToast] = useState<'idle' | 'saved' | 'limit'>('idle')
 
   const lastSigRef = useRef<string>('')
   const fallbackSeedRef = useRef<number>(Date.now())
+  const toastTimerRef = useRef<number | null>(null)
+
+  const clearToastTimer = useCallback(() => {
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current)
+      toastTimerRef.current = null
+    }
+  }, [])
+
+  const showToast = useCallback(
+    (kind: 'saved' | 'limit') => {
+      clearToastTimer()
+      setSavedToast(kind)
+      toastTimerRef.current = window.setTimeout(() => setSavedToast('idle'), 2600)
+    },
+    [clearToastTimer]
+  )
 
   const run = useCallback(async (attempt = 0) => {
+    setSavedToast('idle')
     setState({ status: 'loading' })
 
     const nonce = Date.now()
 
     try {
-      // POST (preferido)
-      const postRes = await fetch('/api/ai/quick-ideas', {
+      const res = await fetch('/api/ai/quick-ideas', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ intent: 'quick_idea', nonce }),
@@ -157,25 +129,13 @@ export default function QuickIdeaAI() {
       })
 
       let data: any = null
-
-      if (postRes.ok) {
-        data = await postRes.json().catch(() => null)
-      } else {
-        // GET (fallback), com query pra evitar cache
-        const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
-          method: 'GET',
-          cache: 'no-store',
-        })
-        if (getRes.ok) data = await getRes.json().catch(() => null)
-      }
+      if (res.ok) data = await res.json().catch(() => null)
 
       const normalized = normalizeOne(data)
       const fallbackOne = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17))[0]!
-
       const nextItem = normalized ?? fallbackOne
-      const sig = signatureOne(nextItem)
 
-      // se repetiu exatamente e ainda não tentou, tenta mais uma vez
+      const sig = signatureOne(nextItem)
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
@@ -195,22 +155,45 @@ export default function QuickIdeaAI() {
     }
   }, [])
 
-  const saveCurrent = useCallback(() => {
-    if (state.status !== 'done') return
-    const item = state.item
-
-    const key = `${item.title}::${item.description ?? ''}`.trim()
-    const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
-    if (exists) return
-
-    const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
-    setSaved(next)
-    setSavedToLS(next)
-  }, [saved, state])
-
   const close = useCallback(() => {
+    setSavedToast('idle')
     setState({ status: 'idle' })
   }, [])
+
+  const saveToMyDay = useCallback(() => {
+    if (state.status !== 'done') return
+
+    const { focus } = toMeuDiaCopy(state.item)
+
+    // cria uma tarefa simples no Meu Dia (salvável e visível)
+    const res = addTaskToMyDayAndTrack({
+      title: focus,
+      origin: 'today',
+      source: MY_DAY_SOURCES.MANUAL,
+    })
+
+    if (res.ok && res.created) {
+      // força atualização de listas que escutam storage
+      try {
+        window.dispatchEvent(new Event('storage'))
+      } catch {}
+
+      showToast('saved')
+      return
+    }
+
+    // se bateu limite, avisar sem cobrança
+    if (res.ok && res.limitHit) {
+      showToast('limit')
+      return
+    }
+
+    // ok mas não criou (duplicado): tratar como “guardado” para o usuário, sem ruído
+    if (res.ok && res.created === false) {
+      showToast('saved')
+      return
+    }
+  }, [state, showToast])
 
   const meuDiaText = useMemo(() => {
     if (state.status !== 'done') return null
@@ -271,6 +254,18 @@ export default function QuickIdeaAI() {
               <p className="mt-2 text-[13px] text-[#6A6A6A] leading-relaxed">{meuDiaText.close}</p>
             </div>
 
+            {savedToast === 'saved' ? (
+              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
+                <p className="text-[13px] text-[#6A6A6A]">Guardado no Meu Dia.</p>
+              </div>
+            ) : null}
+
+            {savedToast === 'limit' ? (
+              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
+                <p className="text-[13px] text-[#6A6A6A]">Por hoje, já tem bastante coisa aberta. Está tudo bem deixar assim.</p>
+              </div>
+            ) : null}
+
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
@@ -285,7 +280,10 @@ export default function QuickIdeaAI() {
                   hover:shadow-sm
                   whitespace-nowrap
                 "
-                onClick={close}
+                onClick={() => {
+                  clearToastTimer()
+                  close()
+                }}
               >
                 Ok
               </button>
@@ -303,7 +301,7 @@ export default function QuickIdeaAI() {
                   hover:opacity-95
                   whitespace-nowrap
                 "
-                onClick={saveCurrent}
+                onClick={saveToMyDay}
               >
                 Guardar
               </button>
