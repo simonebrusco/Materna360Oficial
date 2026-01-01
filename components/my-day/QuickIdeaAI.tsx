@@ -14,6 +14,13 @@ type State =
   | { status: 'loading' }
   | { status: 'done'; items: Suggestion[] }
 
+type QuickIdeaMode = 'my_day' | 'cuidar_de_mim'
+
+type QuickIdeaAIProps = {
+  mode?: QuickIdeaMode
+  className?: string
+}
+
 const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
 const LS_RECENT_KEY = 'm360.ai.quick_ideas.recent.v1'
 
@@ -157,7 +164,18 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
-function baseFallback(): Suggestion[] {
+function baseFallbackForMode(mode: QuickIdeaMode): Suggestion[] {
+  if (mode === 'cuidar_de_mim') {
+    return [
+      { id: 'fallback-c-1', title: 'Soltar os ombros (3x)', description: 'Bem leve. Só para o corpo baixar um pouco.' },
+      { id: 'fallback-c-2', title: 'Respirar 4–2–6 (3 voltas)', description: 'Um minuto. Se não der, uma volta já serve.' },
+      { id: 'fallback-c-3', title: 'Água (3 goles)', description: 'Uma âncora rápida, sem pressão.' },
+      { id: 'fallback-c-4', title: 'Olhar pela janela (30s)', description: 'Só para dar um respiro ao pensamento.' },
+      { id: 'fallback-c-5', title: 'Mãos no peito (2 respirações)', description: 'Pequeno e suficiente.' },
+    ]
+  }
+
+  // my_day (fallback atual)
   return [
     { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Só para o corpo voltar para o presente.' },
     { id: 'fallback-2', title: 'Escolher uma coisa pequena', description: 'Uma só. O resto pode esperar.' },
@@ -189,10 +207,10 @@ function setSavedToLS(items: Suggestion[]) {
   safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
 }
 
-export default function QuickIdeaAI() {
+export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIProps) {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
-  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
+  const [saved, setSaved] = useState<Suggestion[]>(() => (mode === 'my_day' ? getSavedFromLS() : []))
 
   const lastSigRef = useRef<string>('')
   const fallbackSeedRef = useRef<number>(Date.now())
@@ -202,84 +220,98 @@ export default function QuickIdeaAI() {
     return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
-  const run = useCallback(async (attempt = 0) => {
-    setState({ status: 'loading' })
+  const run = useCallback(
+    async (attempt = 0) => {
+      setState({ status: 'loading' })
 
-    const nonce = Date.now()
+      const nonce = Date.now()
 
-    // Memória contextual suave (local)
-    const recentIds = getRecentFromLS()
-    const signal = getSoftSignalFromLS()
+      // MY_DAY: memória contextual suave (local)
+      // CUIDAR_DE_MIM: sem memória, sem Eu360, sem histórico
+      const recentIds = mode === 'my_day' ? getRecentFromLS() : []
+      const signal = mode === 'my_day' ? getSoftSignalFromLS() : 'neutral'
 
-    // MODO LEVE (Meu Dia) — compatível com app/api/ai/quick-ideas/route.ts
-    const payload = {
-      intent: 'quick_idea' as const,
-      nonce,
-      locale: 'pt-BR' as const,
-      memory: {
-        recent_suggestion_ids: recentIds,
-        last_signal: signal,
-      },
-    }
+      // Mantém compatibilidade com o endpoint existente
+      // - intent: quick_idea (o backend atual já entende)
+      // - hub: só um hint (se backend ignorar, segue funcionando)
+      const payload: any = {
+        intent: 'quick_idea' as const,
+        hub: mode === 'cuidar_de_mim' ? 'cuidar_de_mim' : 'my_day',
+        nonce,
+        locale: 'pt-BR' as const,
+      }
 
-    try {
-      const postRes = await fetch('/api/ai/quick-ideas', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-        cache: 'no-store',
-      })
+      if (mode === 'my_day') {
+        payload.memory = {
+          recent_suggestion_ids: recentIds,
+          last_signal: signal,
+        }
+      }
 
-      let data: any = null
-      if (postRes.ok) {
-        data = await postRes.json().catch(() => null)
-      } else {
-        // GET fallback (se existir GET futuramente)
-        const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
-          method: 'GET',
+      try {
+        const postRes = await fetch('/api/ai/quick-ideas', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
           cache: 'no-store',
         })
-        if (getRes.ok) data = await getRes.json().catch(() => null)
+
+        let data: any = null
+        if (postRes.ok) {
+          data = await postRes.json().catch(() => null)
+        } else {
+          // GET fallback (se existir GET futuramente)
+          const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
+            method: 'GET',
+            cache: 'no-store',
+          })
+          if (getRes.ok) data = await getRes.json().catch(() => null)
+        }
+
+        const normalized = normalize(data)
+        const nextItems =
+          normalized ??
+          shuffle(
+            baseFallbackForMode(mode),
+            (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'cuidar_de_mim' ? 11 : 17))
+          ).slice(0, 3)
+
+        // MY_DAY: atualiza memória recente
+        // CUIDAR_DE_MIM: não grava nada
+        if (mode === 'my_day' && nextItems[0]?.id) {
+          pushRecentId(nextItems[0].id)
+        }
+
+        const sig = signature(nextItems)
+        if (sig && sig === lastSigRef.current && attempt < 1) {
+          return await run(attempt + 1)
+        }
+
+        lastSigRef.current = sig
+        setDismissed({})
+        setState({ status: 'done', items: nextItems })
+      } catch {
+        const nextItems = shuffle(
+          baseFallbackForMode(mode),
+          (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'cuidar_de_mim' ? 13 : 23))
+        ).slice(0, 3)
+
+        if (mode === 'my_day' && nextItems[0]?.id) {
+          pushRecentId(nextItems[0].id)
+        }
+
+        const sig = signature(nextItems)
+        if (sig && sig === lastSigRef.current && attempt < 1) {
+          return await run(attempt + 1)
+        }
+
+        lastSigRef.current = sig
+        setDismissed({})
+        setState({ status: 'done', items: nextItems })
       }
-
-      const normalized = normalize(data)
-
-      const nextItems =
-        normalized ??
-        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
-
-      // Atualiza memória recente com o primeiro item exibido (modo leve retorna 1)
-      if (nextItems[0]?.id) {
-        pushRecentId(nextItems[0].id)
-      }
-
-      const sig = signature(nextItems)
-
-      if (sig && sig === lastSigRef.current && attempt < 1) {
-        return await run(attempt + 1)
-      }
-
-      lastSigRef.current = sig
-      setDismissed({})
-      setState({ status: 'done', items: nextItems })
-    } catch {
-      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 3)
-
-      if (nextItems[0]?.id) {
-        pushRecentId(nextItems[0].id)
-      }
-
-      const sig = signature(nextItems)
-
-      if (sig && sig === lastSigRef.current && attempt < 1) {
-        return await run(attempt + 1)
-      }
-
-      lastSigRef.current = sig
-      setDismissed({})
-      setState({ status: 'done', items: nextItems })
-    }
-  }, [])
+    },
+    [mode]
+  )
 
   const dismissOne = useCallback((id: string) => {
     setDismissed((prev) => ({ ...prev, [id]: true }))
@@ -287,6 +319,12 @@ export default function QuickIdeaAI() {
 
   const saveOne = useCallback(
     (item: Suggestion) => {
+      // Guardar só existe no MY_DAY
+      if (mode !== 'my_day') {
+        dismissOne(item.id)
+        return
+      }
+
       const key = `${item.title}::${item.description ?? ''}`.trim()
       const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) return
@@ -296,20 +334,45 @@ export default function QuickIdeaAI() {
       setSavedToLS(next)
       dismissOne(item.id)
     },
-    [saved, dismissOne]
+    [saved, dismissOne, mode]
   )
 
   const removeSaved = useCallback(
     (id: string) => {
+      if (mode !== 'my_day') return
       const next = saved.filter((s) => s.id !== id)
       setSaved(next)
       setSavedToLS(next)
     },
-    [saved]
+    [saved, mode]
   )
 
+  const ui = useMemo(() => {
+    if (mode === 'cuidar_de_mim') {
+      return {
+        ctaIdle: 'Se quiser, eu te sugiro um cuidado bem pequeno agora',
+        loading: 'Pensando em algo bem leve…',
+        headerDone: 'Um cuidado pequeno para agora (opcional)',
+        refresh: 'Outra sugestão',
+        dismiss: 'Não agora',
+        save: 'Ok',
+        empty: 'Sem pressão. Se quiser, pode pedir outra sugestão.',
+      }
+    }
+
+    return {
+      ctaIdle: 'Me dá uma ideia simples para agora',
+      loading: 'Pensando em algo leve…',
+      headerDone: 'Ideias simples para este momento',
+      refresh: 'Outra ideia',
+      dismiss: 'Não agora',
+      save: 'Guardar',
+      empty: 'Sem pressão. Se quiser, peça outra ideia.',
+    }
+  }, [mode])
+
   return (
-    <div className="mt-6 md:mt-8">
+    <div className={['mt-6 md:mt-8', className ?? ''].join(' ')}>
       <div
         className="
           bg-white
@@ -336,26 +399,26 @@ export default function QuickIdeaAI() {
             "
             onClick={() => void run()}
           >
-            <span className="text-[14px] font-semibold">Me dá uma ideia simples para agora</span>
+            <span className="text-[14px] font-semibold">{ui.ctaIdle}</span>
             <span className="h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
               <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
             </span>
           </button>
         ) : null}
 
-        {state.status === 'loading' ? <p className="text-[13px] text-[#6A6A6A]">Pensando em algo leve…</p> : null}
+        {state.status === 'loading' ? <p className="text-[13px] text-[#6A6A6A]">{ui.loading}</p> : null}
 
         {state.status === 'done' ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] text-[#6A6A6A]">Ideias simples para este momento</p>
+              <p className="text-[13px] text-[#6A6A6A]">{ui.headerDone}</p>
 
               <button
                 type="button"
                 className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
                 onClick={() => void run()}
               >
-                Outra ideia
+                {ui.refresh}
               </button>
             </div>
 
@@ -395,7 +458,7 @@ export default function QuickIdeaAI() {
                           "
                           onClick={() => dismissOne(item.id)}
                         >
-                          Não agora
+                          {ui.dismiss}
                         </button>
 
                         <button
@@ -413,7 +476,7 @@ export default function QuickIdeaAI() {
                           "
                           onClick={() => saveOne(item)}
                         >
-                          Guardar
+                          {ui.save}
                         </button>
                       </div>
                     </div>
@@ -422,11 +485,12 @@ export default function QuickIdeaAI() {
               </div>
             ) : (
               <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">Sem pressão. Se quiser, peça outra ideia.</p>
+                <p className="text-[13px] text-[#6A6A6A]">{ui.empty}</p>
               </div>
             )}
 
-            {saved.length ? (
+            {/* Guardadas só no MY_DAY */}
+            {mode === 'my_day' && saved.length ? (
               <div className="pt-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[13px] text-[#6A6A6A]">Guardadas</p>
@@ -463,7 +527,9 @@ export default function QuickIdeaAI() {
                 </div>
 
                 {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
+                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
+                  </p>
                 ) : null}
               </div>
             ) : null}
