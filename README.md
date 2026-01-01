@@ -1,277 +1,227 @@
-# 🌸 Materna360 — App Premium de Parentalidade Inteligente  
-**Versão Oficial do README · Março/2025**
+# Materna360
 
-**Branch ativa:** `cosmos-verse`  
-**Produção:** Vercel  
-**Status atual:** 🟢 Estável · **Fase 3: Inteligência + Layout Premium Consolidado + Mini-Hubs Inteligentes**
+## Visão Geral
 
----
+**Materna360** é um aplicativo emocional para mães. Não é um app de produtividade, nem um app terapêutico tradicional. Ele foi concebido para oferecer **acolhimento antes de orientação**, **clareza sem cobrança** e **valor real sem exigir continuidade**.
 
-# 🧭 Visão Geral
+O projeto parte de um princípio central:
 
-O **Materna360** é um web app premium criado para apoiar mães reais na rotina, nas emoções e na organização da vida familiar.  
-Ele combina:
+> **Mães não precisam de mais pressão. Precisam de apoio inteligente, respeitoso e contextual.**
 
-- 🌿 Mini-hubs temáticos inteligentes  
-- 🧠 IA aplicada (brincadeiras, receitas, insights emocionais)  
-- 📘 Conteúdos educativos (PDFs, trilhas, guias)  
-- ✨ Design system premium  
-- 🎮 Gamificação leve  
-- 💗 Tom acolhedor e seguro  
-
-Todo o projeto é estruturado para entregar **clareza, leveza e orientação**, sem julgamentos.
+Materna360 entrega suporte emocional, reflexão, organização mínima e leitura inteligente da jornada materna, respeitando o tempo emocional de cada usuária.
 
 ---
 
-# 🏛 Arquitetura Principal
+## Princípios Fundamentais (Não Negociáveis)
 
-Baseado em **Next.js 14 (App Router)** com:
+Estes princípios guiam **todas** as decisões de produto, UX, IA e engenharia.
 
-- React + TypeScript  
-- Tailwind CSS (Design System Materna360)  
-- Camada de IA via API Routes  
-- Vercel (deploy, preview, produção)  
-- Builder.io para edição controlada de telas  
-- Telemetria unificada  
-- Persistência local (atual) → migração opcional para DB no futuro  
+* Acolher antes de orientar
+* Orientar sem pressionar
+* Reduzir carga mental (nunca aumentá-la)
+* Não gerar culpa
+* Não criar cobrança explícita ou implícita
+* Premium invisível (free nunca frustrante)
+* Menos é sempre mais
+* Silêncio também é UX (quando apropriado)
 
-📌 **System Design completo**:  
-`docs/SYSTEM_DESIGN_v0.4.pdf`  
-:contentReference[oaicite:0]{index=0}
+### Linguagem proibida no produto
 
----
+É terminantemente proibido o uso de:
 
-# 🧩 Estrutura das Abas do App
-
-O Materna360 tem **3 eixos principais**:
-
-| Aba | Função |
-|-----|--------|
-| **Meu Dia** | Planner, Rotina Leve, Como Estou Hoje |
-| **Maternar** | Mini-hubs principais |
-| **Eu360** | Perfil completo da mãe + dados-chave |
-
-As abas **Cuidar** e **Descobrir** existem apenas como **rotas técnicas legadas** (não criar nada novo nelas).
+* “Você falhou”
+* “Você precisa”
+* “Dias perdidos”
+* “Streak quebrado”
+* “Você sumiu”
 
 ---
 
-# 🧱 Mini-Hubs Oficiais
+## Estrutura Geral do App
 
-### **1. Meu Dia**
-- `/meu-dia/rotina-leve` – Organização do dia  
-- `/meu-dia/como-estou-hoje` – Humor & energia  
-- `/meu-dia/minhas-conquistas` – Gamificação leve  
-- `/meu-dia` – Planner premium  
+O Materna360 é organizado em **abas principais** e **hubs internos**, cada um com papel emocional próprio.
 
-### **2. Maternar**
-- `/maternar/cuidar-com-amor`  
-- `/cuidar/meu-bem-estar` (Autocuidado Inteligente)  
-- `/maternar/biblioteca-materna`  
-- `/maternar/minhas-conquistas`  
-- `/maternar/materna-plus` (assinatura futura)
+### Abas Principais
 
-### **3. Eu360**
-- `/eu360` – Formulário premium + figurinha + dados de personalização  
+#### Meu Dia
 
-📌 **Matriz completa do que vai para onde**:  
-`docs/MINI_HUB_MATRIX.pdf`
+* Porta de entrada do app
+* Função: aterrissagem emocional
+* Organiza o agora com um único foco
+* Não aprofunda, não resolve, não planeja
 
----
+#### Maternar
 
-# 🎨 Design System Premium
+* Espaço de sustentação emocional
+* Permite conversa mais aberta
+* Não corrige, não avalia
 
-Todos os mini-hubs seguem o **Materna360 Premium Layout**, composto por:
+#### Eu360
 
-- `<PageTemplate>`  
-- `<SectionWrapper>`  
-- Grid 1x1 (mobile) / 2x2 (desktop)  
-- SoftCards (bordas 3XL, sombras leves)  
-- Ícones em ameixa  
-- Tags em rosa  
-- Tom de voz materno, curto, acolhedor  
-
-📌 **Guia visual oficial**:  
-`docs/VISUAL_STYLE_GUIDE.pdf`  
-📌 **Copy e microcopy**:  
-`docs/COPY_PLAYBOOK.pdf`  
-📌 **Tone of Voice**:  
-`docs/TONE_OF_VOICE_MASTER_GUIDE.pdf`  
+* Camada de integração e leitura
+* Consolida dados, registros e métricas
+* Entrega relatórios interpretativos (sem julgamento)
 
 ---
 
-# 🤖 Inteligência (IA)
+### Hubs Internos
 
-### IA implementada / simulada:
-- Sugestões de planejamento (Rotina Leve)  
-- Ideias rápidas com contexto  
-- Recomendações de leveza  
+#### Cuidar de Mim
 
-### IA em desenvolvimento:
-- Brincadeiras personalizadas  
-- Receitas inteligentes por ingredientes  
-- Insights emocionais semanais  
-- Desenvolvimento infantil guiado
+* Regulação emocional leve
+* Acolhe sem virar terapia
 
-### IA & Personalização
+#### Meu Filho
 
-Todos os endpoints de IA do Materna360 (ex.: `/api/ai/rotina`, `/api/ai/emocional`, etc.)
-devem seguir as regras descritas em:
+* Compreensão parental
+* Ajuda a entender situações sem diagnóstico ou correção
 
-- `docs/AI_PERSONALIZATION_MODEL.md`
+#### Meu Dia Leve
 
-Esse documento define o tom de voz, regras de segurança emocional e formatos de resposta.
+* Descompressão
+* Sugestões pequenas, opcionais e sem obrigação
 
+#### Minha Jornada
 
-📌 **System Design — Camada de IA**  
-`docs/SYSTEM_DESIGN_v0.4.pdf`  
-:contentReference[oaicite:1]{index=1}
+* Registro do vivido
+* Gamificação consciente
+* Reconhecimento sem comparação ou punição
 
 ---
 
-# 🎮 Gamificação
+## Arquitetura Emocional da IA
 
-O app possui:
+A IA do Materna360 **não é genérica**.
 
-- Selos  
-- XP diário  
-- Missões leves  
-- Progresso mensal  
-- Medalhas futuras (Fase 4)  
+Ela possui comportamento específico por aba e hub, definido por **prompts canônicos controlados por governança**.
 
-Documento oficial:  
-`docs/MINI_HUB_MATRIX.pdf`
+### O que a IA faz
 
----
+* Ajusta tom, profundidade e estrutura conforme o contexto
+* Respeita limites emocionais de cada espaço
+* Gera respostas sempre salváveis
 
-# 📚 Biblioteca Materna
+### O que a IA não faz
 
-A Biblioteca reúne:
-
-- PDFs  
-- E-books  
-- Guias educativos  
-- Trilhas de desenvolvimento  
-- Conteúdos filtrados por idade, tema e formato  
-
-**20 novos PDFs** estão planejados para Fase 3.
+* Não diagnostica
+* Não corrige
+* Não compara usuárias
+* Não cria dependência
+* Não mede valor pessoal
 
 ---
 
-# 🧪 Telemetria & Observabilidade
+## Gamificação e Métricas
 
-Telemetria ativa para:
+O Materna360 utiliza **gamificação consciente**.
 
-- page_view  
-- nav_click  
-- card_click  
-- coach_*  
-- pdf_*  
-- plan_*  
-- emotion_trend  
-- inactivity_*  
+### Permitido
 
-Painel interno:  
-`/admin/insights` (somente local)
+* Pontos
+* Marcos
+* Conquistas
+* Contagens
+* Relatórios no Eu360
 
----
+### Proibido
 
-# 🛠 Como Contribuir (DEV & Builder)
+* Rankings
+* Comparações entre usuárias
+* Punição por ausência
+* Streaks rígidos
+* Linguagem de desempenho
 
-Guia completo de contribuição:  
-`docs/CONTRIBUTING_GUIDE.pdf`  
-:contentReference[oaicite:2]{index=2}
-
-Regra de ouro:  
-> **Nunca criar novos layouts. Sempre copiar o layout oficial do mini-hub.**
-
-### Arquivos proibidos de alterar:
-- `app/layout.tsx`  
-- `BottomNav.tsx`  
-- `PageHeader.tsx`  
-- `SoftCard.tsx`  
-- `AppIcon.tsx`  
-- `lib/telemetry.ts`  
-- `app/api/*`  
-
-### Comandos
-pnpm install
-pnpm dev
-pnpm typecheck
-pnpm lint
-pnpm build
-
-markdown
-Copiar código
+**Registrar, tentar e estar presente já contam.**
 
 ---
 
-# 🗂 Documentação Interna (Kit Materna360)
+## Governança do Projeto
 
-Todos os documentos internos estão na pasta `/docs`:
+O projeto segue um modelo rígido de governança para evitar desvios.
 
-- **Product Strategy One-Pager**  
-- **Macro Fases**  
-- **Mini-Hub Matrix**  
-- **Tone of Voice Master Guide**  
-- **Visual Style Guide**  
-- **Copy Playbook & Layout System**  
-- **System Design v0.4**  
-- **Builder Guidelines**  
-- **Builder Prompt Template**  
-- **Contributing Guide**  
-- **Checklist Vivo**  
-- **Experience Playbook** (CX + UX)
+### Regra das 4 Camadas (Obrigatória)
 
----
+Nenhuma P (fase) pode ser encerrada sem passar por:
 
-# 📈 Roadmap 2025
+1. **Intenção** – papel emocional claro
+2. **Mapeamento** – fluxos e estados
+3. **Execução técnica** – código e prompts
+4. **Validação profunda** – emocional e funcional
 
-De acordo com o documento de Macro Fases:
+### Regras adicionais
 
-| Fase | Período | Foco |
-|------|---------|------|
-| **Fase 1** | Fev–Mar | Layout Premium + Mini-Hubs |
-| **Fase 2** | Mar–Abr | IA Inteligente |
-| **Fase 3** | Abr–Jun | Biblioteca + Conteúdos |
-| **Fase 4** | Jun–Ago | Gamificação Avançada |
-| **Fase 5** | Set–Dez | Onboarding + Materna+ + Marketing |
+* Checklists só aparecem na Camada 4
+* Prints e fluxos vêm antes de código
+* Se algo parecer raso, a P continua aberta
+* A sensação de “agora sim está bem feito” é critério válido
 
 ---
 
-# 📌 Status Atual (Março/2025)
+## Modelo de Ps (Fases)
 
-- Layout Premium → **98% pronto**  
-- Hub Maternar → **pronto e refinado**  
-- Mini-Hubs → **todos estruturados**  
-- Planner → aguardando polimento final  
-- Formulário Eu360 → layout premium pendente  
-- IA → em fase de integração  
-- Biblioteca → pronta para receber PDFs  
-- Materna+ → aguardando estruturação de planos  
-- Footer Premium → pronto  
-- Telemetria → unificada  
-- Código → limpo e estável  
+O projeto é organizado em Ps numeradas (P25, P26, P33.4 etc.).
 
----
+Cada P possui:
 
-# 💗 Criadora
+* escopo fechado
+* objetivo claro
+* checklist próprio
 
-**Simone Brusco**  
-Pedagoga, mãe e idealizadora do Materna360.  
-_"A aventura de ser pai e mãe começa aqui."_
+É proibido:
+
+* iniciar nova P sem encerrar a anterior
+* reinterpretar Ps já encerradas
 
 ---
 
-# 📝 Observação Final
+## Governança de Prompts
 
-Este README reflete:
+Os prompts da IA são tratados como **contratos vivos**.
 
-- Arquitetura real  
-- Documentação oficial  
-- Fase atual de desenvolvimento  
-- Padrões de escrita e design Materna360  
-- Segurança no desenvolvimento  
-- Direção futura do app  
+### Cláusula de Evolução Controlada
 
-Qualquer alteração deve respeitar o **Kit Interno Materna360**.
+Um prompt pode evoluir apenas se:
 
+* a motivação estiver clara
+* o ganho de produto for explícito
+* o impacto emocional for avaliado
+* a governança aprovar explicitamente
+
+É proibido ao executor:
+
+* improvisar
+* otimizar por conta própria
+* reinterpretar comportamento
+
+---
+
+## O que este repositório NÃO é
+
+* Não é um app de produtividade
+* Não é um app terapêutico clínico
+* Não é um experimento rápido
+* Não é um produto orientado a métricas agressivas
+
+---
+
+## Objetivo Final do Materna360
+
+Construir um produto que:
+
+* respeita a complexidade emocional da maternidade
+* entrega inteligência sem opressão
+* evolui com consciência
+* cria vínculo sem dependência
+
+> **Materna360 não tenta fazer a mãe ser melhor.
+> Ele cria espaço para que ela exista com mais clareza e menos peso.**
+
+---
+
+## Status do Projeto
+
+* Projeto em evolução contínua
+* Governança ativa
+* Execução técnica controlada
+
+Qualquer alteração relevante deve respeitar integralmente este README.
