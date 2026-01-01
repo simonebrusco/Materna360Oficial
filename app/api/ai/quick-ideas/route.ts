@@ -74,7 +74,6 @@ function clamp01(n: number) {
  */
 function sampleWithoutReplacement<T>(arr: T[], k: number): T[] {
   const a = [...arr]
-  // Fisher–Yates parcial
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
@@ -94,8 +93,6 @@ function pickSuggestions(
   k: number
 ) {
   const w = clamp01(weightSoft)
-
-  // Decide se começamos pelo soft ou pelo neutral, mas sem determinismo rígido
   const startWithSoft = Math.random() < w
 
   const first = startWithSoft ? softPool : neutralPool
@@ -131,40 +128,70 @@ export async function POST(req: Request) {
 
       const signal = normalizeSignal(lite.memory?.emotional_signal)
 
-      // Viés fraco (não determinístico, não bloqueia)
+      /**
+       * Viés fraco (não determinístico, não bloqueia).
+       * - neutral ainda aparece bastante (autonomia / variedade)
+       * - soft sobe quando o sinal está pesado
+       */
       const softWeight =
-        signal === 'overwhelmed' ? 0.7 : signal === 'heavy' ? 0.6 : signal === 'tired' ? 0.5 : 0.25
+        signal === 'overwhelmed' ? 0.72 : signal === 'heavy' ? 0.62 : signal === 'tired' ? 0.52 : 0.34
 
-      // Pool neutro (leve, sem cobrança, sem “faça isso depois”)
+      /**
+       * Materna360 — POOLS
+       * - Sem cobrança, sem “você precisa”, sem tarefa futura.
+       * - 1ª pessoa permitida.
+       * - “Sem verbo” permitido.
+       * - Mistura: alívio + autonomia gentil + reconhecimento + micro-movimento possível.
+       */
+
       const neutralPool = [
-        { id: 'n-1', title: 'Respirar por 1 minuto', description: 'Só para dar espaço por dentro.' },
-        { id: 'n-2', title: 'Escolher uma prioridade pequena', description: 'Uma coisa de cada vez já serve.' },
-        { id: 'n-3', title: 'Beber um copo de água', description: 'Um gesto simples para ancorar o corpo.' },
-        { id: 'n-4', title: 'Abrir a janela por 30 segundos', description: 'Ar e luz também ajudam.' },
-        { id: 'n-5', title: 'Alongar ombros e pescoço', description: 'Sem pressa, só soltando a tensão.' },
-        { id: 'n-6', title: 'Diminuir o tamanho do agora', description: 'Hoje pode caber em passos menores.' },
-        { id: 'n-7', title: 'Fazer uma pausa curta', description: 'Um minuto já muda o ritmo.' },
-        { id: 'n-8', title: 'Organizar só um cantinho', description: 'Pequeno o suficiente para não pesar.' },
-        { id: 'n-9', title: 'Escrever uma frase para você', description: 'Algo como “eu estou fazendo o possível”.' },
-        { id: 'n-10', title: 'Pedir ajuda com uma frase', description: 'Uma frase curta já resolve muita coisa.' },
-        { id: 'n-11', title: 'Colocar uma música baixinha', description: 'Só para suavizar o ambiente.' },
-        { id: 'n-12', title: 'Sentar por 60 segundos', description: 'Sem meta — só presença.' },
+        { id: 'n-01', title: 'Um minuto para respirar', description: 'Só isso. Sem decidir nada agora.' },
+        { id: 'n-02', title: 'Eu escolho o mínimo suficiente', description: 'Hoje, o mínimo já é cuidado.' },
+        { id: 'n-03', title: 'Uma coisa de cada vez', description: 'Eu posso reduzir o tamanho do agora.' },
+        { id: 'n-04', title: 'Um copo de água', description: 'Um gesto simples para o corpo sentir apoio.' },
+        { id: 'n-05', title: 'Pés no chão', description: '10 segundos para voltar para mim.' },
+        { id: 'n-06', title: 'Uma frase de verdade', description: '“Eu estou fazendo o possível.”' },
+        { id: 'n-07', title: 'Abrir a janela', description: 'Ar e luz, mesmo que por pouco tempo.' },
+        { id: 'n-08', title: 'Eu não preciso resolver tudo', description: 'Eu posso escolher só uma parte.' },
+        { id: 'n-09', title: 'Um alongamento bem pequeno', description: 'Ombros e pescoço, sem pressa.' },
+        { id: 'n-10', title: 'Organizar só um cantinho', description: 'Pequeno o bastante para não pesar.' },
+        { id: 'n-11', title: 'Eu posso pedir ajuda', description: 'Uma frase curta já muda muita coisa.' },
+        { id: 'n-12', title: 'Uma pausa de 60 segundos', description: 'Só para o corpo desacelerar junto.' },
+        { id: 'n-13', title: 'Hoje pode ser simples', description: 'Eu não preciso “dar conta” de tudo.' },
+        { id: 'n-14', title: 'Eu volto para o que importa', description: 'Uma prioridade pequena, agora.' },
+        { id: 'n-15', title: 'Respirar mais lento', description: 'Inspirar 3… expirar 4… por um minuto.' },
+        { id: 'n-16', title: 'Um momento sem barulho', description: 'Mesmo que o mundo siga ao redor.' },
+        { id: 'n-17', title: 'Eu aceito o ritmo de hoje', description: 'Sem comparação, sem cobrança.' },
+        { id: 'n-18', title: 'Uma música baixinha', description: 'Só para deixar o ambiente mais gentil.' },
+        { id: 'n-19', title: 'Eu escolho um próximo passo', description: 'Pequeno, possível, suficiente.' },
+        { id: 'n-20', title: 'Eu me reconheço aqui', description: 'Estar presente já é muito.' },
+        { id: 'n-21', title: 'Um “não” protetor', description: 'Hoje eu posso recusar o que pesa.' },
+        { id: 'n-22', title: 'Um “sim” para mim', description: 'Nem que seja por 2 minutos.' },
       ]
 
-      // Pool “soft” (mais passivo/acolhedor; ainda sem mencionar estado)
       const softPool = [
-        { id: 's-1', title: 'Pausa de 60 segundos', description: 'Sem decidir nada agora.' },
-        { id: 's-2', title: 'Um gesto de cuidado pequeno', description: 'Algo mínimo, só para você.' },
-        { id: 's-3', title: 'Luz mais baixa por um instante', description: 'Deixar o ambiente mais gentil.' },
-        { id: 's-4', title: 'Soltar o maxilar e os ombros', description: 'Só relaxar onde der.' },
-        { id: 's-5', title: 'Escolher o “mínimo suficiente”', description: 'Hoje não precisa ser completo.' },
-        { id: 's-6', title: 'Um copo de água com calma', description: 'Dois goles já contam.' },
-        { id: 's-7', title: 'Um minuto de silêncio', description: 'Mesmo com barulho ao redor.' },
-        { id: 's-8', title: 'Permitir que algo fique para depois', description: 'Sem explicar, sem justificar.' },
-        { id: 's-9', title: 'Encostar os pés no chão', description: 'Só sentir o corpo por 10 segundos.' },
-        { id: 's-10', title: 'Uma frase de reconhecimento', description: '“Eu estou aqui. Isso já é muito.”' },
-        { id: 's-11', title: 'Beber algo quente', description: 'Se tiver — um pequeno conforto.' },
-        { id: 's-12', title: 'Respirar mais lento', description: 'Inspirar 3… expirar 4…' },
+        { id: 's-01', title: 'Nada para provar agora', description: 'Eu só preciso atravessar este momento.' },
+        { id: 's-02', title: 'Pausa sem explicação', description: 'Eu posso parar um pouco, do meu jeito.' },
+        { id: 's-03', title: 'Eu não estou atrasada', description: 'Eu estou vivendo um dia real.' },
+        { id: 's-04', title: 'Eu posso diminuir as expectativas', description: 'Hoje, menos é cuidado.' },
+        { id: 's-05', title: 'Um minuto de silêncio', description: 'Mesmo que seja interno.' },
+        { id: 's-06', title: 'Eu solto o que não dá', description: 'Só por agora.' },
+        { id: 's-07', title: 'O corpo pede gentileza', description: 'O mínimo já ajuda.' },
+        { id: 's-08', title: 'Eu me dou permissão', description: 'Para não fazer tudo hoje.' },
+        { id: 's-09', title: 'Respirar e encostar os pés no chão', description: 'Duas âncoras simples.' },
+        { id: 's-10', title: 'Eu me trato como amiga', description: 'O tom importa mais do que o plano.' },
+        { id: 's-11', title: 'Uma frase de acolhimento', description: '“Isso está pesado, e faz sentido.”' },
+        { id: 's-12', title: 'Eu posso ficar no presente', description: 'Sem puxar o amanhã para cima de mim.' },
+        { id: 's-13', title: 'Um gesto de conforto', description: 'Algo quente, uma manta, um canto.' },
+        { id: 's-14', title: 'Eu não preciso “dar conta”', description: 'Eu preciso respirar.' },
+        { id: 's-15', title: 'Hoje eu vou no suave', description: 'O ritmo certo é o possível.' },
+        { id: 's-16', title: 'Eu não tenho que compensar nada', description: 'Eu só preciso continuar.' },
+        { id: 's-17', title: 'Um minuto com a mão no peito', description: 'Só para lembrar que eu estou aqui.' },
+        { id: 's-18', title: 'Eu reconheço o cansaço', description: 'E ainda assim, eu mereço cuidado.' },
+        { id: 's-19', title: 'Eu posso pedir menos de mim', description: 'Pelo resto do dia.' },
+        { id: 's-20', title: 'Um passo invisível', description: 'Ninguém precisa ver para valer.' },
+        { id: 's-21', title: 'Eu escolho uma gentileza', description: 'Uma só. E está tudo bem.' },
+        { id: 's-22', title: 'Eu posso ficar quieta por um instante', description: 'Sem justificar, sem explicar.' },
       ]
 
       const suggestions = pickSuggestions(softPool, neutralPool, softWeight, 3)
