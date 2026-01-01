@@ -1,0 +1,19 @@
+diff --git a/app/lib/myDayTasks.client.ts b/app/lib/myDayTasks.client.ts
+index 0000000..1111111 100644
+--- a/app/lib/myDayTasks.client.ts
++++ b/app/lib/myDayTasks.client.ts
+@@ -235,999 +235,0 @@
+-  /* ---------- render ---------- */
+-
+-  return (
+-    <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
+-      {!hasAny ? (
+-        <div className="bg-white rounded-3xl p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)] border border-[var(--color-border-soft)]">
+-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Parece que hoje está começando vazio.</h4>
+-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
+-            Você não precisa organizar tudo agora.
+-          </p>
+-        </div>
+-      ) : null}
+-    </section>
+-  )
