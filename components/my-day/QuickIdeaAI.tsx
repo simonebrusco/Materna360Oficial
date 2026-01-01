@@ -15,26 +15,12 @@ type State =
   | { status: 'done'; items: Suggestion[] }
 
 const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
+const LS_RECENT_KEY = 'm360.ai.quick_ideas.recent.v1'
 
-// Memória contextual suave (não é “perfil”, é só histórico local)
-const LS_MEMORY_KEY = 'm360.ai.quick_ideas.memory.v1'
-const MEMORY_MAX_SEEN = 20
-const MEMORY_MAX_DISMISSED = 30
-const DISMISS_TTL_DAYS = 7
+// Sinal suave (pode ser setado por outro hub, ex.: check-in)
+const LS_SIGNAL_KEY = 'm360.my_day.last_signal.v1'
 
-type MemoryState = {
-  seen: Array<{ id: string; at: number }>
-  dismissed: Array<{ id: string; at: number }>
-  savedIds: string[]
-}
-
-function nowMs() {
-  return Date.now()
-}
-
-function daysToMs(days: number) {
-  return days * 24 * 60 * 60 * 1000
-}
+type SoftSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
 
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
@@ -61,63 +47,48 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
-function getTodBucket() {
-  const h = new Date().getHours()
-  if (h >= 5 && h <= 11) return 'morning'
-  if (h >= 12 && h <= 17) return 'afternoon'
-  return 'night'
+function isValidSignal(v: any): v is SoftSignal {
+  return v === 'heavy' || v === 'tired' || v === 'overwhelmed' || v === 'neutral'
 }
 
-function baseFallback(): Suggestion[] {
-  return [
-    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Só para o corpo voltar para o presente.' },
-    { id: 'fallback-2', title: 'Escolher uma coisa pequena', description: 'Uma só. O resto pode esperar.' },
-    { id: 'fallback-3', title: 'Fazer o próximo passo mais simples', description: 'Bem simples — só para destravar.' },
-    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Uma âncora rápida para agora.' },
-    { id: 'fallback-5', title: 'Pedir ajuda com uma frase curta', description: 'Uma frase resolve mais do que parece.' },
-  ]
+function getSoftSignalFromLS(): SoftSignal {
+  const raw = safeGetLS(LS_SIGNAL_KEY)
+  if (!raw) return 'neutral'
+  const v = raw.trim()
+  return isValidSignal(v) ? v : 'neutral'
 }
 
-function signature(items: Suggestion[]) {
-  return items.map((i) => `${i.title}::${i.description ?? ''}`).join('|')
+function getRecentFromLS(): string[] {
+  const raw = safeGetLS(LS_RECENT_KEY)
+  const parsed = safeParse<unknown>(raw)
+  if (!Array.isArray(parsed)) return []
+  return (parsed as any[])
+    .filter((x) => typeof x === 'string' && x.trim())
+    .map((x) => String(x).trim())
+    .slice(0, 10)
 }
 
-function shuffle<T>(arr: T[], seed: number) {
-  const a = [...arr]
-  let m = a.length
-  let s = seed
-  while (m) {
-    s = (s * 9301 + 49297) % 233280
-    const rnd = s / 233280
-    const i = Math.floor(rnd * m--)
-    ;[a[m], a[i]] = [a[i], a[m]]
-  }
-  return a
+function setRecentToLS(ids: string[]) {
+  safeSetLS(LS_RECENT_KEY, JSON.stringify(ids.slice(0, 10)))
+}
+
+function pushRecentId(id: string) {
+  const current = getRecentFromLS()
+  const next = [id, ...current.filter((x) => x !== id)].slice(0, 10)
+  setRecentToLS(next)
+  return next
 }
 
 /**
  * Normaliza múltiplos formatos de resposta:
- * - Formato leve (Meu Dia):   { suggestions: [{id,title,description}] }
  * - Formato legado (catálogo): { access, ideas: [{id,title,summary,...}] }
+ * - Formato leve (Meu Dia):   { suggestions: [{id,title,description}] }
  * - Formato alternativo:      { title/body }
  */
 function normalize(payload: any): Suggestion[] | null {
   if (!payload) return null
 
-  // Formato leve: { suggestions: [...] }
-  if (Array.isArray(payload?.suggestions)) {
-    const items = payload.suggestions
-      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
-      .slice(0, 3)
-      .map((x: any, idx: number) => ({
-        id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
-        title: String(x.title),
-        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-      }))
-    return items.length ? items : null
-  }
-
-  // Formato legado: { ideas: [...] }
+  // Formato legado: { ideas: QuickIdea[] }
   if (Array.isArray(payload?.ideas)) {
     const items = payload.ideas
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -131,6 +102,19 @@ function normalize(payload: any): Suggestion[] | null {
             : typeof x.description === 'string' && x.description.trim()
               ? String(x.description)
               : undefined,
+      }))
+    return items.length ? items : null
+  }
+
+  // Formato leve: { suggestions: [{id,title,description}] }
+  if (Array.isArray(payload?.suggestions)) {
+    const items = payload.suggestions
+      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
+      .slice(0, 3)
+      .map((x: any, idx: number) => ({
+        id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
+        title: String(x.title),
+        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
       }))
     return items.length ? items : null
   }
@@ -156,6 +140,33 @@ function normalize(payload: any): Suggestion[] | null {
   return null
 }
 
+function signature(items: Suggestion[]) {
+  return items.map((i) => `${i.title}::${i.description ?? ''}`).join('|')
+}
+
+function shuffle<T>(arr: T[], seed: number) {
+  const a = [...arr]
+  let m = a.length
+  let s = seed
+  while (m) {
+    s = (s * 9301 + 49297) % 233280
+    const rnd = s / 233280
+    const i = Math.floor(rnd * m--)
+    ;[a[m], a[i]] = [a[i], a[m]]
+  }
+  return a
+}
+
+function baseFallback(): Suggestion[] {
+  return [
+    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Só para o corpo voltar para o presente.' },
+    { id: 'fallback-2', title: 'Escolher uma coisa pequena', description: 'Uma só. O resto pode esperar.' },
+    { id: 'fallback-3', title: 'Fazer o próximo passo mais simples', description: 'Bem simples — só para destravar.' },
+    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Uma âncora rápida para agora.' },
+    { id: 'fallback-5', title: 'Pedir ajuda com uma frase curta', description: 'Uma frase resolve mais do que parece.' },
+  ]
+}
+
 function getSavedFromLS(): Suggestion[] {
   const raw = safeGetLS(LS_SAVED_KEY)
   const parsed = safeParse<unknown>(raw)
@@ -178,63 +189,6 @@ function setSavedToLS(items: Suggestion[]) {
   safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
 }
 
-function getMemoryFromLS(): MemoryState {
-  const raw = safeGetLS(LS_MEMORY_KEY)
-  const parsed = safeParse<unknown>(raw)
-
-  const fallback: MemoryState = { seen: [], dismissed: [], savedIds: [] }
-  if (!parsed || typeof parsed !== 'object') return fallback
-
-  const p = parsed as any
-  const seen = Array.isArray(p.seen) ? p.seen : []
-  const dismissed = Array.isArray(p.dismissed) ? p.dismissed : []
-  const savedIds = Array.isArray(p.savedIds) ? p.savedIds : []
-
-  return {
-    seen: seen
-      .filter((x: any) => x && typeof x.id === 'string' && typeof x.at === 'number')
-      .slice(-MEMORY_MAX_SEEN),
-    dismissed: dismissed
-      .filter((x: any) => x && typeof x.id === 'string' && typeof x.at === 'number')
-      .slice(-MEMORY_MAX_DISMISSED),
-    savedIds: savedIds.filter((x: any) => typeof x === 'string').slice(0, 50),
-  }
-}
-
-function setMemoryToLS(mem: MemoryState) {
-  safeSetLS(LS_MEMORY_KEY, JSON.stringify(mem))
-}
-
-function pruneMemory(mem: MemoryState) {
-  const cutoff = nowMs() - daysToMs(DISMISS_TTL_DAYS)
-  const dismissed = mem.dismissed.filter((x) => x.at >= cutoff)
-
-  return {
-    ...mem,
-    seen: mem.seen.slice(-MEMORY_MAX_SEEN),
-    dismissed: dismissed.slice(-MEMORY_MAX_DISMISSED),
-    savedIds: mem.savedIds.slice(0, 50),
-  }
-}
-
-function touchSeen(mem: MemoryState, ids: string[]) {
-  const t = nowMs()
-  const next = {
-    ...mem,
-    seen: [...mem.seen, ...ids.map((id) => ({ id, at: t }))].slice(-MEMORY_MAX_SEEN),
-  }
-  return pruneMemory(next)
-}
-
-function touchDismissed(mem: MemoryState, id: string) {
-  const t = nowMs()
-  const next = {
-    ...mem,
-    dismissed: [...mem.dismissed.filter((x) => x.id !== id), { id, at: t }].slice(-MEMORY_MAX_DISMISSED),
-  }
-  return pruneMemory(next)
-}
-
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
@@ -253,25 +207,20 @@ export default function QuickIdeaAI() {
 
     const nonce = Date.now()
 
-    const mem = pruneMemory(getMemoryFromLS())
-    const tod = getTodBucket()
-    const dow = new Date().getDay()
-    const tz_offset_min = new Date().getTimezoneOffset()
+    // Memória contextual suave (local)
+    const recentIds = getRecentFromLS()
+    const signal = getSoftSignalFromLS()
 
+    // MODO LEVE (Meu Dia) — compatível com app/api/ai/quick-ideas/route.ts
     const payload = {
-      intent: 'quick_idea',
+      intent: 'quick_idea' as const,
       nonce,
-      locale: 'pt-BR',
+      locale: 'pt-BR' as const,
       memory: {
-        // “suave”: só IDs e contexto automático
-        seen_ids: mem.seen.map((x) => x.id),
-        dismissed_ids: mem.dismissed.map((x) => x.id),
-        saved_ids: mem.savedIds,
-        tod,
-        dow,
-        tz_offset_min,
+        recent_suggestion_ids: recentIds,
+        last_signal: signal,
       },
-    } as const
+    }
 
     try {
       const postRes = await fetch('/api/ai/quick-ideas', {
@@ -285,6 +234,7 @@ export default function QuickIdeaAI() {
       if (postRes.ok) {
         data = await postRes.json().catch(() => null)
       } else {
+        // GET fallback (se existir GET futuramente)
         const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
           method: 'GET',
           cache: 'no-store',
@@ -293,34 +243,37 @@ export default function QuickIdeaAI() {
       }
 
       const normalized = normalize(data)
+
       const nextItems =
         normalized ??
-        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 1)
+        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
+
+      // Atualiza memória recente com o primeiro item exibido (modo leve retorna 1)
+      if (nextItems[0]?.id) {
+        pushRecentId(nextItems[0].id)
+      }
 
       const sig = signature(nextItems)
 
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
-
-      // Atualiza memória: “viu”
-      const nextMem = touchSeen(mem, nextItems.map((x) => x.id))
-      setMemoryToLS(nextMem)
 
       lastSigRef.current = sig
       setDismissed({})
       setState({ status: 'done', items: nextItems })
     } catch {
-      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 1)
+      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 3)
+
+      if (nextItems[0]?.id) {
+        pushRecentId(nextItems[0].id)
+      }
+
       const sig = signature(nextItems)
 
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
-
-      const mem = pruneMemory(getMemoryFromLS())
-      const nextMem = touchSeen(mem, nextItems.map((x) => x.id))
-      setMemoryToLS(nextMem)
 
       lastSigRef.current = sig
       setDismissed({})
@@ -330,9 +283,6 @@ export default function QuickIdeaAI() {
 
   const dismissOne = useCallback((id: string) => {
     setDismissed((prev) => ({ ...prev, [id]: true }))
-
-    const mem = pruneMemory(getMemoryFromLS())
-    setMemoryToLS(touchDismissed(mem, id))
   }, [])
 
   const saveOne = useCallback(
@@ -344,11 +294,6 @@ export default function QuickIdeaAI() {
       const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
       setSaved(next)
       setSavedToLS(next)
-
-      const mem = pruneMemory(getMemoryFromLS())
-      const savedIds = Array.from(new Set([item.id, ...mem.savedIds])).slice(0, 50)
-      setMemoryToLS({ ...mem, savedIds })
-
       dismissOne(item.id)
     },
     [saved, dismissOne]
@@ -398,9 +343,7 @@ export default function QuickIdeaAI() {
           </button>
         ) : null}
 
-        {state.status === 'loading' ? (
-          <p className="text-[13px] text-[#6A6A6A]">Pensando em algo leve…</p>
-        ) : null}
+        {state.status === 'loading' ? <p className="text-[13px] text-[#6A6A6A]">Pensando em algo leve…</p> : null}
 
         {state.status === 'done' ? (
           <div className="space-y-3">
@@ -520,9 +463,7 @@ export default function QuickIdeaAI() {
                 </div>
 
                 {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
-                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
-                  </p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
                 ) : null}
               </div>
             ) : null}
