@@ -57,10 +57,10 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as EmotionalRequestBody
     const feature = body?.feature
-
     if (!feature) return jsonError('Parâmetro "feature" é obrigatório.', 400)
 
     const origin = safeString(body?.origin) ?? 'como-estou-hoje'
+    const isMaternar = origin === 'maternar-hub'
 
     // Contexto “unificado” (prioriza body.context; mantém compat com campos antigos)
     const context: WeeklyInsightContext = {
@@ -74,10 +74,13 @@ export async function POST(request: Request) {
       slot: safeString(body?.context?.slot) ?? null,
     }
 
-    // Prompt base alinhado ao tom Materna360
-    const systemMessage = `
+    /**
+     * SYSTEM BASE: tom Materna360 (geral)
+     * Observação: Para o Maternar, aplicamos um addendum com regras canônicas.
+     */
+    const systemBase = `
 Você é a IA emocional do Materna360, um app para mães que combina organização leve com apoio emocional.
-Sua missão é oferecer reflexões curtas, acolhedoras e sem julgamentos, sempre no TOM DE VOZ Materna360:
+Sua missão é oferecer textos curtos, acolhedores e sem julgamentos, sempre no TOM DE VOZ Materna360:
 - gentil, humano, realista, sem frases motivacionais vazias
 - reconhece o cansaço SEM culpabilizar
 - traz alívio e não mais cobrança
@@ -90,7 +93,35 @@ Regras:
 - Respeite SEMPRE o formato JSON pedido (sem texto fora do JSON).
 `.trim()
 
-    // Contexto do usuário (a IA usa isso para calibrar tom e sugestões)
+    /**
+     * ADDENDUM CANÔNICO — MATERNAR (P33.4)
+     * Regra: Maternar sustenta, não ensina.
+     */
+    const systemMaternarAddendum = `
+Você está respondendo DENTRO DA ABA "MATERNAR".
+Aqui a IA atua como presença acolhedora e estável: escuta organizada e tradução de sentimentos.
+PROIBIDO em Maternar:
+- dar conselhos diretos
+- sugerir técnicas, métodos ou exercícios
+- usar linguagem de melhoria ("tente", "faça", "o ideal", "você precisa")
+- transformar emoção em tarefa
+- induzir ação futura, CTA, desafio, plano, lista de passos
+- empurrar para outro hub explicitamente
+
+Estrutura que deve aparecer naturalmente no texto (sem enumerar):
+- reconhecimento emocional claro
+- nomeação/organização do sentimento
+- normalização da experiência
+- fechamento acolhedor sem tarefa
+
+Importante:
+- Evite verbos no imperativo.
+- Se precisar “oferecer algo”, ofereça PERMISSÃO e linguagem de cuidado (não instrução).
+`.trim()
+
+    const systemMessage = (isMaternar ? `${systemBase}\n\n${systemMaternarAddendum}` : systemBase).trim()
+
+    // Contexto do usuário (a IA usa isso para calibrar tom e conteúdo)
     const userContext = {
       origem: origin,
       firstName: context.firstName ?? null,
@@ -105,13 +136,14 @@ Regras:
       resumoNotas: safeString(body?.notesPreview) ?? null,
     }
 
+    /**
+     * Nota:
+     * - Em Maternar, NÃO usamos “micro-desafio” nem orientação baseada em persona.
+     * - Fora do Maternar, mantemos seu comportamento atual.
+     */
     const userMessageCommon = `
 Dados de contexto (podem estar vazios):
 ${JSON.stringify(userContext, null, 2)}
-
-Ajuste o tom para a persona, se existir:
-- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
-- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
 `.trim()
 
     // Schemas (Structured Outputs strict)
@@ -178,7 +210,21 @@ Ajuste o tom para a persona, se existir:
 
     if (feature === 'weekly_overview') {
       schemaToUse = weeklySchema
-      inputText = `
+
+      if (isMaternar) {
+        // Maternar: manter schema por compatibilidade, mas sem “passos práticos”.
+        inputText = `
+Gere um insight emocional da semana para a mãe, a partir do contexto fornecido.
+Requisitos:
+- "title": curto e acolhedor.
+- "summary": 3 a 5 linhas, sem julgar, sem orientar.
+- "suggestions": 2 a 5 frases de permissão/acolhimento (NÃO passos, NÃO tarefas, NÃO técnicas).
+- "highlights.bestDay": quando a semana flui melhor (sem culpa).
+- "highlights.toughDays": quando pesa mais + lembrete de gentileza.
+${userMessageCommon}
+`.trim()
+      } else {
+        inputText = `
 Gere um insight emocional da semana da mãe a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
@@ -186,28 +232,50 @@ Requisitos:
 - "suggestions": 2 a 5 passos pequenos, práticos e realistas.
 - "highlights.bestDay": quando a semana flui melhor (sem culpa).
 - "highlights.toughDays": quando pesa mais + lembrete de gentileza.
+
+Ajuste o tom para a persona, se existir:
+- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
+- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
 ${userMessageCommon}
 `.trim()
+      }
     } else if (feature === 'daily_inspiration') {
       schemaToUse = dailySchema
-      inputText = `
+
+      if (isMaternar) {
+        // Maternar: manter schema, mas “ritual” não pode virar técnica/exercício.
+        inputText = `
+Gere um apoio emocional para o dia da mãe, considerando humor, energia e foco.
+Requisitos:
+- "phrase": 1 linha acolhedora, sem imperativo.
+- "care": 3 a 6 linhas, acolhimento concreto, sem instruções, sem métodos.
+- "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
+${userMessageCommon}
+`.trim()
+      } else {
+        inputText = `
 Gere uma inspiração emocional para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
 - "phrase": 1 linha.
 - "care": 3 a 6 linhas, acolhedor e concreto.
 - "ritual": 1 sugestão prática (cabe num dia corrido).
+
+Ajuste o tom para a persona, se existir:
+- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
+- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
 ${userMessageCommon}
 `.trim()
+      }
     } else {
       return jsonError('Feature inválida para IA emocional.', 400)
     }
 
     // Telemetria básica (sem dados sensíveis)
     try {
-      // Se você preferir, pode plugar seu track server-side aqui.
       console.log('[IA Emocional] request', {
         feature,
         origin,
+        isMaternar,
         hasPersona: Boolean(context.persona || context.personaLabel),
       })
     } catch {}
@@ -230,7 +298,6 @@ ${userMessageCommon}
           { role: 'user', content: inputText },
         ],
         temperature: 0.7,
-        // Structured Outputs no Responses API usa text.format (não response_format) :contentReference[oaicite:1]{index=1}
         text: {
           format: {
             type: 'json_schema',
@@ -251,9 +318,7 @@ ${userMessageCommon}
 
     const response = await openAiRes.json()
 
-    // Responses API costuma disponibilizar "output_text" como atalho em SDKs,
-    // mas no fetch bruto pode vir em "output" com itens.
-    // Para ser robusto: tenta extrair um texto e fazer parse JSON.
+    // Robustez: extrai texto e faz parse JSON
     const rawText: string =
       response?.output_text?.trim?.() ||
       (() => {
@@ -269,7 +334,6 @@ ${userMessageCommon}
       })() ||
       '{}'
 
-    // Parse seguro do JSON
     let parsed: any
     try {
       parsed = JSON.parse(rawText)
