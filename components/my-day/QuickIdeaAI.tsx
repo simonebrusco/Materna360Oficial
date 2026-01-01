@@ -1,190 +1,55 @@
-'use client'
+import { NextResponse } from 'next/server'
 
-import { useCallback, useMemo, useRef, useState } from 'react'
-import AppIcon from '@/components/ui/AppIcon'
-import type { AISuggestion } from '@/app/lib/ai/orchestrator.types'
+import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog'
+import { track } from '@/app/lib/telemetry'
+import type {
+  QuickIdea,
+  QuickIdeasAgeBucket,
+  QuickIdeasBadge,
+  QuickIdeasLocation,
+  QuickIdeasEnergy,
+} from '@/app/types/quickIdeas'
 
-type Suggestion = {
-  id: string
-  title: string
-  description?: string
-}
+export const runtime = 'edge'
 
-type State =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'done'; items: Suggestion[] }
-
-const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
-
-// P33.4a — sinal emocional (contexto fraco)
-const LS_SIGNAL_KEY = 'm360.my_day.last_signal.v1'
 type EmotionalSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
 
-// P33.4b — rotação/autonomia (cache técnico local)
-const LS_SEEN_KEY = 'm360.my_day.quick_idea.seen.v1'
-const LS_COUNT_KEY = 'm360.my_day.quick_idea.count.v1'
-const DAILY_SOFT_BUDGET = 10 // invisível; não bloqueia, apenas relaxa anti-repetição depois disso
-
-function safeParse<T>(raw: string | null): T | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return null
+/**
+ * Payload do Meu Dia (modo leve) — IA leve.
+ * Retorna { suggestions: [...] } para o client normalizar.
+ */
+type QuickIdeasRequestLite = {
+  intent: 'quick_idea'
+  nonce?: number
+  memory?: {
+    emotional_signal?: EmotionalSignal
   }
+  locale?: 'pt-BR'
 }
 
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
+/**
+ * Payload legado (catálogo por criança / contexto).
+ * Mantido integralmente para não quebrar consumidores existentes.
+ */
+type QuickIdeasRequestLegacy = {
+  plan: 'free' | 'essencial' | 'premium'
+  profile: {
+    active_child_id: string | null
+    mode: 'single' | 'all'
+    children: Array<{ id: string; name?: string; age_bucket: QuickIdeasAgeBucket }>
   }
-}
-
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
-
-function normalize(payload: any): Suggestion[] | null {
-  if (!payload) return null
-
-  // Formato A: { suggestions: [{id,title,description}] }
-  if (Array.isArray(payload?.suggestions)) {
-    const items = payload.suggestions
-      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
-      .slice(0, 3)
-      .map((x: any, idx: number) => ({
-        id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
-        title: String(x.title),
-        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-      }))
-    return items.length ? items : null
+  context: {
+    location: QuickIdeasLocation
+    time_window_min: number
+    energy: QuickIdeasEnergy
   }
-
-  // Formato B: { title, body } (legado)
-  if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
-    const raw = String(payload?.body ?? '')
-      .split('\n')
-      .map((s: string) => s.trim())
-      .filter(Boolean)
-      .slice(0, 3)
-
-    const items = (raw.length ? raw : [payload?.title].filter(Boolean))
-      .slice(0, 3)
-      .map((line: any, idx: number) => ({
-        id: `ai-${idx + 1}`,
-        title: String(line),
-      }))
-
-    return items.length ? items : null
-  }
-
-  return null
+  locale?: 'pt-BR'
 }
 
-function signature(items: Suggestion[]) {
-  return items.map((i) => `${i.title}::${i.description ?? ''}`).join('|')
-}
+type QuickIdeasRequest = QuickIdeasRequestLite | QuickIdeasRequestLegacy
 
-function itemKey(i: Suggestion) {
-  return `${i.title}::${i.description ?? ''}`.trim()
-}
-
-function shuffle<T>(arr: T[], seed: number) {
-  const a = [...arr]
-  let m = a.length
-  let s = seed
-  while (m) {
-    // pseudo-random determinístico por seed
-    s = (s * 9301 + 49297) % 233280
-    const rnd = s / 233280
-    const i = Math.floor(rnd * m--)
-    ;[a[m], a[i]] = [a[i], a[m]]
-  }
-  return a
-}
-
-function baseFallback(): Suggestion[] {
-  return [
-    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Uma pausa curta já ajuda a reorganizar.' },
-    { id: 'fallback-2', title: 'Escolher só uma prioridade', description: 'O resto pode esperar.' },
-    { id: 'fallback-3', title: 'Fazer algo simples', description: 'Algo pequeno já é suficiente por agora.' },
-    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Só para ancorar o corpo no presente.' },
-    { id: 'fallback-5', title: 'Pedir ajuda com uma frase', description: 'Uma frase curta já resolve muita coisa.' },
-  ]
-}
-
-function getSavedFromLS(): Suggestion[] {
-  const raw = safeGetLS(LS_SAVED_KEY)
-  const parsed = safeParse<unknown>(raw)
-  if (!Array.isArray(parsed)) return []
-  const items = (parsed as any[])
-    .filter((x) => x && typeof x.title === 'string' && x.title.trim())
-    .slice(0, 50)
-    .map((x, idx) => ({
-      id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
-      title: String(x.title),
-      description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-    }))
-  return items
-}
-
-function setSavedToLS(items: Suggestion[]) {
-  safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
-}
-
-// ===== P33.4b helpers: dia, vistos, orçamento suave =====
-
-function todayKey() {
-  // YYYY-MM-DD (local)
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-type SeenState = { dayKey: string; seen: string[] }
-
-function getSeenState(): SeenState {
-  const raw = safeGetLS(LS_SEEN_KEY)
-  const parsed = safeParse<SeenState>(raw)
-  const key = todayKey()
-
-  if (!parsed || typeof parsed !== 'object') return { dayKey: key, seen: [] }
-  if (parsed.dayKey !== key) return { dayKey: key, seen: [] }
-  if (!Array.isArray(parsed.seen)) return { dayKey: key, seen: [] }
-
-  // limit defensivo
-  const seen = parsed.seen.filter((s) => typeof s === 'string' && s.trim()).slice(0, 80)
-  return { dayKey: key, seen }
-}
-
-function setSeenState(next: SeenState) {
-  safeSetLS(LS_SEEN_KEY, JSON.stringify({ dayKey: next.dayKey, seen: next.seen.slice(0, 80) }))
-}
-
-type CountState = { dayKey: string; count: number }
-
-function getCountState(): CountState {
-  const raw = safeGetLS(LS_COUNT_KEY)
-  const parsed = safeParse<CountState>(raw)
-  const key = todayKey()
-
-  if (!parsed || typeof parsed !== 'object') return { dayKey: key, count: 0 }
-  if (parsed.dayKey !== key) return { dayKey: key, count: 0 }
-  const count = Number.isFinite(parsed.count) ? Number(parsed.count) : 0
-  return { dayKey: key, count: Math.max(0, Math.min(200, count)) }
-}
-
-function setCountState(next: CountState) {
-  safeSetLS(LS_COUNT_KEY, JSON.stringify({ dayKey: next.dayKey, count: Math.max(0, Math.min(200, next.count)) }))
+function badRequest(message: string, details?: unknown) {
+  return NextResponse.json({ error: message, details }, { status: 400 })
 }
 
 function normalizeSignal(input: unknown): EmotionalSignal {
@@ -199,356 +64,207 @@ function normalizeSignal(input: unknown): EmotionalSignal {
   }
 }
 
-function getSignalFromLS(): EmotionalSignal {
-  const raw = safeGetLS(LS_SIGNAL_KEY)
-  return normalizeSignal(raw)
+function clamp01(n: number) {
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(1, n))
 }
 
-function filterUnseen(items: Suggestion[], seen: Set<string>) {
-  return items.filter((i) => !seen.has(itemKey(i)))
+/**
+ * Amostragem aleatória sem reposição.
+ */
+function sampleWithoutReplacement<T>(arr: T[], k: number): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a.slice(0, Math.max(0, Math.min(k, a.length)))
 }
 
-function fillToThree(primary: Suggestion[], fallbackSeed: number) {
-  if (primary.length >= 3) return primary.slice(0, 3)
-  const existing = new Set(primary.map(itemKey))
-  const filler = shuffle(baseFallback(), fallbackSeed)
-    .filter((x) => !existing.has(itemKey(x)))
-    .slice(0, 3 - primary.length)
-  return [...primary, ...filler].slice(0, 3)
+/**
+ * Mistura pools soft e neutral sem bloquear nada.
+ */
+function pickSuggestions(
+  softPool: Array<{ id: string; title: string; description?: string }>,
+  neutralPool: Array<{ id: string; title: string; description?: string }>,
+  weightSoft: number,
+  k: number
+) {
+  const w = clamp01(weightSoft)
+  const startWithSoft = Math.random() < w
+
+  const first = startWithSoft ? softPool : neutralPool
+  const second = startWithSoft ? neutralPool : softPool
+
+  const pickedFirst = sampleWithoutReplacement(first, k)
+  const remaining = k - pickedFirst.length
+  if (remaining <= 0) return pickedFirst
+
+  const pickedSecond = sampleWithoutReplacement(
+    second.filter((x) => !pickedFirst.some((p) => p.id === x.id)),
+    remaining
+  )
+
+  return [...pickedFirst, ...pickedSecond].slice(0, k)
 }
 
-export default function QuickIdeaAI() {
-  const [state, setState] = useState<State>({ status: 'idle' })
-  const [dismissed, setDismissed] = useState<Record<string, true>>({})
-  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
-
-  const lastSigRef = useRef<string>('')
-  const fallbackSeedRef = useRef<number>(Date.now())
-
-  const visibleItems = useMemo(() => {
-    if (state.status !== 'done') return []
-    return state.items.filter((i) => !dismissed[i.id])
-  }, [state, dismissed])
-
-  const run = useCallback(async (attempt = 0) => {
-    setState({ status: 'loading' })
-
-    const nonce = Date.now()
-
-    // P33.4b: orçamento suave por dia (invisível)
-    const countState = getCountState()
-    const nextCount = countState.count + 1
-    setCountState({ dayKey: countState.dayKey, count: nextCount })
-
-    // Quanto mais “pede outra”, mais relaxamos a anti-repetição (sem bloquear).
-    const strictRotation = nextCount <= DAILY_SOFT_BUDGET
-
-    // P33.4b: vistos do dia (cache técnico)
-    const seenState = getSeenState()
-    const seenSet = new Set(seenState.seen)
-
-    // P33.4a: sinal emocional como contexto fraco
-    const emotionalSignal = getSignalFromLS()
-
-    try {
-      // POST (preferido)
-      const postRes = await fetch('/api/ai/quick-ideas', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          intent: 'quick_idea',
-          nonce,
-          memory: { emotional_signal: emotionalSignal },
-        }),
-        cache: 'no-store',
-      })
-
-      let data: any = null
-
-      if (postRes.ok) {
-        data = await postRes.json().catch(() => null)
-      } else {
-        // GET (fallback), com query pra evitar cache
-        const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
-          method: 'GET',
-          cache: 'no-store',
-        })
-        if (getRes.ok) data = await getRes.json().catch(() => null)
-      }
-
-      const normalized = normalize(data)
-
-      // Se não veio nada utilizável, usa fallback embaralhado
-      const rawItems =
-        normalized ??
-        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
-
-      // P33.4b: anti-repetição invisível (quando ainda “vale” manter variedade)
-      const candidates = strictRotation ? filterUnseen(rawItems, seenSet) : rawItems
-
-      // Se ficou fraco demais (ex.: 1 item sobrando) e ainda não tentamos, tenta mais uma vez
-      // para evitar sensação de “travado”, mas sem loop infinito.
-      if (strictRotation && candidates.length < 3 && attempt < 1) {
-        return await run(attempt + 1)
-      }
-
-      // Completa para 3, sem inventar UX; apenas evita silêncio
-      const nextItems = fillToThree(
-        candidates.length ? candidates : rawItems,
-        (fallbackSeedRef.current = fallbackSeedRef.current + 19)
-      )
-
-      const sig = signature(nextItems)
-
-      // Se repetiu exatamente e ainda não tentou (e ainda estamos em rotação “estrita”), tenta mais uma vez
-      if (strictRotation && sig && sig === lastSigRef.current && attempt < 1) {
-        return await run(attempt + 1)
-      }
-
-      lastSigRef.current = sig
-
-      // P33.4b: marca como vistos do dia (cache técnico)
-      const nextSeen = [...seenState.seen]
-      for (const it of nextItems) {
-        const k = itemKey(it)
-        if (k && !nextSeen.includes(k)) nextSeen.unshift(k)
-      }
-      setSeenState({ dayKey: seenState.dayKey, seen: nextSeen.slice(0, 80) })
-
-      // Reseta “dismissed” a cada nova rodada para não “sumir tudo”
-      setDismissed({})
-      setState({ status: 'done', items: nextItems })
-    } catch {
-      const rawItems = shuffle(
-        baseFallback(),
-        (fallbackSeedRef.current = fallbackSeedRef.current + 23)
-      ).slice(0, 3)
-
-      const candidates = strictRotation ? filterUnseen(rawItems, seenSet) : rawItems
-
-      if (strictRotation && candidates.length < 3 && attempt < 1) {
-        return await run(attempt + 1)
-      }
-
-      const nextItems = fillToThree(
-        candidates.length ? candidates : rawItems,
-        (fallbackSeedRef.current = fallbackSeedRef.current + 29)
-      )
-
-      const sig = signature(nextItems)
-
-      if (strictRotation && sig && sig === lastSigRef.current && attempt < 1) {
-        return await run(attempt + 1)
-      }
-
-      lastSigRef.current = sig
-
-      const nextSeen = [...seenState.seen]
-      for (const it of nextItems) {
-        const k = itemKey(it)
-        if (k && !nextSeen.includes(k)) nextSeen.unshift(k)
-      }
-      setSeenState({ dayKey: seenState.dayKey, seen: nextSeen.slice(0, 80) })
-
-      setDismissed({})
-      setState({ status: 'done', items: nextItems })
+export async function POST(req: Request) {
+  try {
+    const body = (await req.json()) as QuickIdeasRequest | null
+    if (!body) {
+      track('audio.select', { reason: 'missing_fields' })
+      return badRequest('Missing required fields')
     }
-  }, [])
 
-  const dismissOne = useCallback((id: string) => {
-    setDismissed((prev) => ({ ...prev, [id]: true }))
-  }, [])
+    /**
+     * =========================
+     * 1) MEU DIA — IA LEVE
+     * =========================
+     */
+    if ((body as QuickIdeasRequestLite).intent === 'quick_idea') {
+      const lite = body as QuickIdeasRequestLite
+      const signal = normalizeSignal(lite.memory?.emotional_signal)
 
-  const saveOne = useCallback(
-    (item: Suggestion) => {
-      // não duplica por title+description
-      const key = `${item.title}::${item.description ?? ''}`.trim()
-      const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
-      if (exists) return
+      const softWeight =
+        signal === 'overwhelmed' ? 0.72 : signal === 'heavy' ? 0.62 : signal === 'tired' ? 0.52 : 0.34
 
-      const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
-      setSaved(next)
-      setSavedToLS(next)
-      dismissOne(item.id)
-    },
-    [saved, dismissOne]
-  )
+      const neutralPool = [
+        { id: 'n-01', title: 'Um minuto para respirar', description: 'Só isso. Sem decidir nada agora.' },
+        { id: 'n-02', title: 'Eu escolho o mínimo suficiente', description: 'Hoje, o mínimo já é cuidado.' },
+        { id: 'n-03', title: 'Uma coisa de cada vez', description: 'Eu posso reduzir o tamanho do agora.' },
+        { id: 'n-04', title: 'Um copo de água', description: 'Um gesto simples para o corpo sentir apoio.' },
+        { id: 'n-05', title: 'Pés no chão', description: '10 segundos para voltar para mim.' },
+        { id: 'n-06', title: 'Uma frase de verdade', description: '“Eu estou fazendo o possível.”' },
+        { id: 'n-07', title: 'Abrir a janela', description: 'Ar e luz, mesmo que por pouco tempo.' },
+        { id: 'n-08', title: 'Eu não preciso resolver tudo', description: 'Eu posso escolher só uma parte.' },
+        { id: 'n-09', title: 'Um alongamento bem pequeno', description: 'Ombros e pescoço, sem pressa.' },
+        { id: 'n-10', title: 'Hoje pode ser simples', description: 'Eu não preciso “dar conta” de tudo.' },
+      ]
 
-  const removeSaved = useCallback(
-    (id: string) => {
-      const next = saved.filter((s) => s.id !== id)
-      setSaved(next)
-      setSavedToLS(next)
-    },
-    [saved]
-  )
+      const softPool = [
+        { id: 's-01', title: 'Nada para provar agora', description: 'Eu só preciso atravessar este momento.' },
+        { id: 's-02', title: 'Pausa sem explicação', description: 'Eu posso parar um pouco, do meu jeito.' },
+        { id: 's-03', title: 'Eu não estou atrasada', description: 'Eu estou vivendo um dia real.' },
+        { id: 's-04', title: 'Eu posso diminuir as expectativas', description: 'Hoje, menos é cuidado.' },
+        { id: 's-05', title: 'Um minuto de silêncio', description: 'Mesmo que seja interno.' },
+        { id: 's-06', title: 'Eu solto o que não dá', description: 'Só por agora.' },
+        { id: 's-07', title: 'O corpo pede gentileza', description: 'O mínimo já ajuda.' },
+        { id: 's-08', title: 'Eu me dou permissão', description: 'Para não fazer tudo hoje.' },
+      ]
 
-  return (
-    <div className="mt-6 md:mt-8">
-      <div
-        className="
-          bg-white
-          rounded-3xl
-          p-5 md:p-6
-          shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-          border border-[#F5D7E5]
-        "
-      >
-        {state.status === 'idle' ? (
-          <button
-            type="button"
-            className="
-              w-full
-              flex items-center justify-between
-              gap-3
-              rounded-2xl
-              px-4 py-3
-              bg-white
-              border border-[#F5D7E5]/70
-              text-[#2f3a56]
-              hover:shadow-sm
-              transition
-            "
-            onClick={() => void run()}
-          >
-            <span className="text-[14px] font-semibold">Me dá uma ideia rápida</span>
-            <span className="h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-              <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
-            </span>
-          </button>
-        ) : null}
+      const suggestions = pickSuggestions(softPool, neutralPool, softWeight, 3)
 
-        {state.status === 'loading' ? (
-          <p className="text-[13px] text-[#6A6A6A]">Pensando em algo simples…</p>
-        ) : null}
+      track('audio.select', { mode: 'quick_idea' })
+      return NextResponse.json({ suggestions })
+    }
 
-        {state.status === 'done' ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] text-[#6A6A6A]">Ideias simples para agora</p>
+    /**
+     * =========================
+     * 2) CATÁLOGO LEGADO
+     * =========================
+     */
+    const legacy = body as QuickIdeasRequestLegacy
 
-              <button
-                type="button"
-                className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
-                onClick={() => void run()}
-              >
-                Outra ideia
-              </button>
-            </div>
+    if (!legacy.plan || !legacy.profile || !legacy.context) {
+      track('audio.select', { reason: 'missing_fields' })
+      return badRequest('Missing required fields: plan, profile, context')
+    }
 
-            {visibleItems.length ? (
-              <div className="space-y-3">
-                {visibleItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="
-                      rounded-2xl
-                      border border-[#F5D7E5]/70
-                      bg-white
-                      px-4 py-3
-                    "
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
-                        {item.description ? (
-                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
-                        ) : null}
-                      </div>
+    if (!Array.isArray(legacy.profile.children)) {
+      track('audio.select', { reason: 'children_not_array' })
+      return badRequest('Invalid profile.children')
+    }
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          className="
-                            rounded-full
-                            bg-white
-                            border border-[#F5D7E5]/70
-                            text-[#545454]
-                            px-3 py-1.5
-                            text-[12px]
-                            transition
-                            hover:shadow-sm
-                            whitespace-nowrap
-                          "
-                          onClick={() => dismissOne(item.id)}
-                        >
-                          Não agora
-                        </button>
+    if (legacy.plan === 'free') {
+      const res = {
+        access: {
+          denied: true,
+          limited_to_one: false,
+          message: 'Disponível nos planos Essencial e Premium.',
+        },
+        query_echo: {
+          plan: legacy.plan,
+          location: legacy.context.location,
+          time_window_min: legacy.context.time_window_min,
+          energy: legacy.context.energy,
+          age_buckets: legacy.profile.children.map((child) => child.age_bucket),
+        },
+        ideas: [] as unknown[],
+        aggregates: { materials_consolidated: [] as string[] },
+      }
+      track('audio.select', { plan: legacy.plan })
+      return NextResponse.json(res)
+    }
 
-                        <button
-                          type="button"
-                          className="
-                            rounded-full
-                            bg-[#fd2597]
-                            text-white
-                            px-3 py-1.5
-                            text-[12px]
-                            font-semibold
-                            transition
-                            hover:opacity-95
-                            whitespace-nowrap
-                          "
-                          onClick={() => saveOne(item)}
-                        >
-                          Guardar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">Sem pressão. Se quiser, peça outra ideia.</p>
-              </div>
-            )}
+    const resolvedBucket =
+      legacy.profile.mode === 'all'
+        ? youngestBucket(legacy.profile.children)
+        : legacy.profile.children.find((c) => c.id === legacy.profile.active_child_id)?.age_bucket ??
+          legacy.profile.children[0]?.age_bucket
 
-            {saved.length ? (
-              <div className="pt-2">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[13px] text-[#6A6A6A]">Guardadas</p>
-                </div>
+    const bucket: QuickIdeasAgeBucket = resolvedBucket ?? '2-3'
 
-                <div className="mt-2 space-y-2">
-                  {saved.slice(0, 3).map((item) => (
-                    <div
-                      key={item.id}
-                      className="
-                        rounded-2xl
-                        border border-[#F5D7E5]/50
-                        bg-white
-                        px-4 py-3
-                        flex items-start justify-between gap-3
-                      "
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
-                        {item.description ? (
-                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
-                        ) : null}
-                      </div>
+    const badges: QuickIdeasBadge[] = ['curta', 'linguagem']
+    const ageAdaptations: Partial<Record<QuickIdeasAgeBucket, string>> = {
+      [bucket]: 'Adapte o tempo e as falas à idade.',
+    }
 
-                      <button
-                        type="button"
-                        className="text-[12px] font-semibold text-[#6A6A6A] hover:opacity-90 transition whitespace-nowrap"
-                        onClick={() => removeSaved(item.id)}
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  ))}
-                </div>
+    const baseIdea: QuickIdea = {
+      id: 'cabana-lencois-10min',
+      title: 'Cabana de Lençóis Aconchegante',
+      summary: 'Montem uma cabaninha e contem uma história curta.',
+      time_total_min: Math.min(10, Number(legacy.context.time_window_min || 10)),
+      location: legacy.context.location,
+      materials: ['lençóis', 'cadeiras', 'lanterna'],
+      steps: [
+        'Estenda os lençóis entre as cadeiras para formar a cabana.',
+        'Entrem com a lanterna e contem uma história curtinha.',
+      ],
+      age_adaptations: ageAdaptations,
+      safety_notes: [
+        'Supervisão constante; evite prender lençol em locais altos.',
+        'Lanterna sem peças pequenas soltas.',
+      ],
+      badges,
+      planner_payload: { type: 'idea', duration_min: 10, materials: ['lençóis', 'cadeiras', 'lanterna'] },
+      rationale: 'Poucos materiais, cabe no tempo disponível e na energia atual.',
+    }
 
-                {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
-                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  )
+    const ideas =
+      legacy.plan === 'essencial'
+        ? [baseIdea]
+        : [
+            baseIdea,
+            { ...baseIdea, id: 'pintura-com-agua', title: 'Pintura com Água no Quintal' },
+            { ...baseIdea, id: 'caixa-tesouros', title: 'Caixa de Tesouros Sensorial' },
+          ]
+
+    const response = {
+      access: {
+        denied: false,
+        limited_to_one: legacy.plan === 'essencial',
+        message: legacy.plan === 'essencial' ? 'Plano Essencial: 1 ideia por vez.' : '',
+      },
+      query_echo: {
+        plan: legacy.plan,
+        location: legacy.context.location,
+        time_window_min: legacy.context.time_window_min,
+        energy: legacy.context.energy,
+        age_buckets: legacy.profile.children.map((child) => child.age_bucket),
+      },
+      ideas,
+      aggregates: { materials_consolidated: consolidateMaterials(ideas) },
+    }
+
+    track('audio.select', {
+      plan: legacy.plan,
+      location: legacy.context.location,
+      energy: legacy.context.energy,
+    })
+
+    return NextResponse.json(response)
+  } catch (err) {
+    track('audio.end', { error: String(err) })
+    return badRequest('Invalid JSON payload', String(err))
+  }
 }

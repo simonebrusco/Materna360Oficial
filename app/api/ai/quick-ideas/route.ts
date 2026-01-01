@@ -82,9 +82,7 @@ function sampleWithoutReplacement<T>(arr: T[], k: number): T[] {
 }
 
 /**
- * Mistura dois pools sem bloquear nada:
- * - weightSoft: chance de puxar do pool "soft" primeiro
- * - sempre cai para neutral se precisar
+ * Mistura pools soft e neutral sem bloquear nada.
  */
 function pickSuggestions(
   softPool: Array<{ id: string; title: string; description?: string }>,
@@ -120,29 +118,15 @@ export async function POST(req: Request) {
 
     /**
      * =========================
-     * 1) Meu Dia — modo leve
+     * 1) MEU DIA — IA LEVE
      * =========================
      */
     if ((body as QuickIdeasRequestLite).intent === 'quick_idea') {
       const lite = body as QuickIdeasRequestLite
-
       const signal = normalizeSignal(lite.memory?.emotional_signal)
 
-      /**
-       * Viés fraco (não determinístico, não bloqueia).
-       * - neutral ainda aparece bastante (autonomia / variedade)
-       * - soft sobe quando o sinal está pesado
-       */
       const softWeight =
         signal === 'overwhelmed' ? 0.72 : signal === 'heavy' ? 0.62 : signal === 'tired' ? 0.52 : 0.34
-
-      /**
-       * Materna360 — POOLS
-       * - Sem cobrança, sem “você precisa”, sem tarefa futura.
-       * - 1ª pessoa permitida.
-       * - “Sem verbo” permitido.
-       * - Mistura: alívio + autonomia gentil + reconhecimento + micro-movimento possível.
-       */
 
       const neutralPool = [
         { id: 'n-01', title: 'Um minuto para respirar', description: 'Só isso. Sem decidir nada agora.' },
@@ -154,19 +138,7 @@ export async function POST(req: Request) {
         { id: 'n-07', title: 'Abrir a janela', description: 'Ar e luz, mesmo que por pouco tempo.' },
         { id: 'n-08', title: 'Eu não preciso resolver tudo', description: 'Eu posso escolher só uma parte.' },
         { id: 'n-09', title: 'Um alongamento bem pequeno', description: 'Ombros e pescoço, sem pressa.' },
-        { id: 'n-10', title: 'Organizar só um cantinho', description: 'Pequeno o bastante para não pesar.' },
-        { id: 'n-11', title: 'Eu posso pedir ajuda', description: 'Uma frase curta já muda muita coisa.' },
-        { id: 'n-12', title: 'Uma pausa de 60 segundos', description: 'Só para o corpo desacelerar junto.' },
-        { id: 'n-13', title: 'Hoje pode ser simples', description: 'Eu não preciso “dar conta” de tudo.' },
-        { id: 'n-14', title: 'Eu volto para o que importa', description: 'Uma prioridade pequena, agora.' },
-        { id: 'n-15', title: 'Respirar mais lento', description: 'Inspirar 3… expirar 4… por um minuto.' },
-        { id: 'n-16', title: 'Um momento sem barulho', description: 'Mesmo que o mundo siga ao redor.' },
-        { id: 'n-17', title: 'Eu aceito o ritmo de hoje', description: 'Sem comparação, sem cobrança.' },
-        { id: 'n-18', title: 'Uma música baixinha', description: 'Só para deixar o ambiente mais gentil.' },
-        { id: 'n-19', title: 'Eu escolho um próximo passo', description: 'Pequeno, possível, suficiente.' },
-        { id: 'n-20', title: 'Eu me reconheço aqui', description: 'Estar presente já é muito.' },
-        { id: 'n-21', title: 'Um “não” protetor', description: 'Hoje eu posso recusar o que pesa.' },
-        { id: 'n-22', title: 'Um “sim” para mim', description: 'Nem que seja por 2 minutos.' },
+        { id: 'n-10', title: 'Hoje pode ser simples', description: 'Eu não preciso “dar conta” de tudo.' },
       ]
 
       const softPool = [
@@ -178,33 +150,17 @@ export async function POST(req: Request) {
         { id: 's-06', title: 'Eu solto o que não dá', description: 'Só por agora.' },
         { id: 's-07', title: 'O corpo pede gentileza', description: 'O mínimo já ajuda.' },
         { id: 's-08', title: 'Eu me dou permissão', description: 'Para não fazer tudo hoje.' },
-        { id: 's-09', title: 'Respirar e encostar os pés no chão', description: 'Duas âncoras simples.' },
-        { id: 's-10', title: 'Eu me trato como amiga', description: 'O tom importa mais do que o plano.' },
-        { id: 's-11', title: 'Uma frase de acolhimento', description: '“Isso está pesado, e faz sentido.”' },
-        { id: 's-12', title: 'Eu posso ficar no presente', description: 'Sem puxar o amanhã para cima de mim.' },
-        { id: 's-13', title: 'Um gesto de conforto', description: 'Algo quente, uma manta, um canto.' },
-        { id: 's-14', title: 'Eu não preciso “dar conta”', description: 'Eu preciso respirar.' },
-        { id: 's-15', title: 'Hoje eu vou no suave', description: 'O ritmo certo é o possível.' },
-        { id: 's-16', title: 'Eu não tenho que compensar nada', description: 'Eu só preciso continuar.' },
-        { id: 's-17', title: 'Um minuto com a mão no peito', description: 'Só para lembrar que eu estou aqui.' },
-        { id: 's-18', title: 'Eu reconheço o cansaço', description: 'E ainda assim, eu mereço cuidado.' },
-        { id: 's-19', title: 'Eu posso pedir menos de mim', description: 'Pelo resto do dia.' },
-        { id: 's-20', title: 'Um passo invisível', description: 'Ninguém precisa ver para valer.' },
-        { id: 's-21', title: 'Eu escolho uma gentileza', description: 'Uma só. E está tudo bem.' },
-        { id: 's-22', title: 'Eu posso ficar quieta por um instante', description: 'Sem justificar, sem explicar.' },
       ]
 
       const suggestions = pickSuggestions(softPool, neutralPool, softWeight, 3)
 
-      // Sem telemetria nova (não logar signal).
       track('audio.select', { mode: 'quick_idea' })
-
       return NextResponse.json({ suggestions })
     }
 
     /**
      * =========================
-     * 2) Legado — catálogo
+     * 2) CATÁLOGO LEGADO
      * =========================
      */
     const legacy = body as QuickIdeasRequestLegacy
@@ -240,10 +196,10 @@ export async function POST(req: Request) {
       return NextResponse.json(res)
     }
 
-    const resolvedBucket: QuickIdeasAgeBucket | undefined =
+    const resolvedBucket =
       legacy.profile.mode === 'all'
         ? youngestBucket(legacy.profile.children)
-        : legacy.profile.children.find((child) => child.id === legacy.profile.active_child_id)?.age_bucket ??
+        : legacy.profile.children.find((c) => c.id === legacy.profile.active_child_id)?.age_bucket ??
           legacy.profile.children[0]?.age_bucket
 
     const bucket: QuickIdeasAgeBucket = resolvedBucket ?? '2-3'
@@ -274,7 +230,7 @@ export async function POST(req: Request) {
       rationale: 'Poucos materiais, cabe no tempo disponível e na energia atual.',
     }
 
-    const ideas: QuickIdea[] =
+    const ideas =
       legacy.plan === 'essencial'
         ? [baseIdea]
         : [
