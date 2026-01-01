@@ -53,11 +53,16 @@ type QuickIdeasLightMemory = {
 }
 
 /**
- * Payload leve para Meu Dia (P33.4):
- * 1 foco, sem parentalidade, sem plano, sem lista.
+ * Payload leve (P33.4):
+ * - 1 foco
+ * - sem plano
+ * - sem lista longa
+ *
+ * NOTA: "hub" é opcional e compatível com clientes antigos.
  */
 type QuickIdeasRequestLight = {
   intent: 'quick_idea'
+  hub?: 'my_day' | 'cuidar_de_mim'
   nonce?: number
   locale?: 'pt-BR'
   memory?: QuickIdeasLightMemory
@@ -108,7 +113,7 @@ function sanitizeTimeWindowMin(v: any): QuickIdeasTimeWindow {
   return 20
 }
 
-/** ---------- modo leve (Meu Dia) ---------- */
+/** ---------- modo leve (Meu Dia / Cuidar de Mim) ---------- */
 
 function myDaySuggestions(): Suggestion[] {
   return [
@@ -117,6 +122,25 @@ function myDaySuggestions(): Suggestion[] {
     { id: 'md-3', title: 'Faça um passo pequeno', description: 'Algo simples já organiza por dentro.' },
     { id: 'md-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
     { id: 'md-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
+  ]
+}
+
+/**
+ * Cuidar de Mim (Prompt Canônico):
+ * - reconhecimento leve
+ * - cuidado pequeno e opcional
+ * - normaliza o não fazer
+ * - encerra sem expectativa
+ *
+ * Importante: sem memória, sem "progresso", sem "guardar", sem plano.
+ */
+function cuidarDeMimSuggestions(): Suggestion[] {
+  return [
+    { id: 'cdm-1', title: 'Solte os ombros (3 vezes)', description: 'Bem leve. Só para baixar um pouco o corpo.' },
+    { id: 'cdm-2', title: 'Respire 4–2–6 (3 voltas)', description: 'Se não der, uma volta já serve.' },
+    { id: 'cdm-3', title: 'Água (3 goles)', description: 'Uma âncora rápida, sem pressão.' },
+    { id: 'cdm-4', title: 'Olhe pela janela (30 segundos)', description: 'Só para dar um respiro ao pensamento.' },
+    { id: 'cdm-5', title: 'Mãos no peito (2 respirações)', description: 'Pequeno e suficiente.' },
   ]
 }
 
@@ -139,7 +163,7 @@ function isValidSignal(v: any): v is QuickIdeasLightMemory['last_signal'] {
 }
 
 /**
- * Memória contextual suave:
+ * Memória contextual suave (somente Meu Dia):
  * 1) remove itens vistos recentemente (recent_suggestion_ids)
  * 2) aplica uma “tendência” leve por sinal (se existir)
  * 3) se tudo for excluído, volta ao catálogo completo
@@ -163,7 +187,6 @@ function chooseWithSoftMemory(opts: {
   if (!pool.length) pool = opts.suggestions
 
   // Tendência bem suave por sinal (se existir)
-  // (não muda texto, só aumenta chance de cair em algo mais adequado)
   if (signal) {
     const preferredIds =
       signal === 'heavy'
@@ -178,8 +201,6 @@ function chooseWithSoftMemory(opts: {
       const preferred = pool.filter((s) => preferredIds.has(s.id))
       const others = pool.filter((s) => !preferredIds.has(s.id))
 
-      // Se houver preferidos, fazemos “peso” leve duplicando o pool preferido
-      // (mantém determinismo pelo seed)
       if (preferred.length) {
         pool = [...preferred, ...preferred, ...others]
       }
@@ -187,7 +208,6 @@ function chooseWithSoftMemory(opts: {
   }
 
   const one = chooseOne(opts.seed, pool)
-
   return { one, excludedCount, memoryUsed: hasMemory, signal }
 }
 
@@ -196,13 +216,36 @@ export async function POST(req: Request) {
     const body = (await req.json()) as QuickIdeasRequestLegacy | QuickIdeasRequestLight | null
 
     /**
-     * MODO LEVE (Meu Dia)
-     * Retorna no formato esperado pelo QuickIdeaAI: { suggestions: [...] }
-     * Apenas 1 sugestão.
+     * MODO LEVE (P33.4)
+     * - Meu Dia: usa memória suave opcional
+     * - Cuidar de Mim: SEM memória (contrato do hub)
      */
     if (isLightRequest(body)) {
       const seed = typeof body.nonce === 'number' ? body.nonce : Date.now()
+      const hub = body.hub === 'cuidar_de_mim' ? 'cuidar_de_mim' : 'my_day'
 
+      if (hub === 'cuidar_de_mim') {
+        const base = cuidarDeMimSuggestions()
+        const one = chooseOne(seed, base)
+
+        try {
+          track('ai.quick_ideas.light', {
+            intent: body.intent,
+            hub,
+            locale: body.locale ?? 'pt-BR',
+            memory_used: false,
+            excluded_count: 0,
+            signal: 'none',
+          })
+        } catch {}
+
+        return NextResponse.json({
+          suggestions: [one],
+          meta: { mode: 'cuidar_de_mim_light' as const },
+        })
+      }
+
+      // default: my_day (com memória suave)
       const base = myDaySuggestions()
       const { one, excludedCount, memoryUsed, signal } = chooseWithSoftMemory({
         seed,
@@ -213,6 +256,7 @@ export async function POST(req: Request) {
       try {
         track('ai.quick_ideas.light', {
           intent: body.intent,
+          hub,
           locale: body.locale ?? 'pt-BR',
           memory_used: memoryUsed,
           excluded_count: excludedCount,
