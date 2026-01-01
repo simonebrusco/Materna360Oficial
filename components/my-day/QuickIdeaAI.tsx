@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import { addTaskToMyDayAndTrack, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 type Suggestion = {
   id: string
@@ -13,46 +13,97 @@ type Suggestion = {
 type State =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; item: Suggestion }
+  | { status: 'done'; items: Suggestion[] }
 
-function normalizeOne(payload: any): Suggestion | null {
+const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
+
+function safeParse<T>(raw: string | null): T | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
+/**
+ * Normaliza múltiplos formatos de resposta:
+ * - Formato atual do endpoint: { access, ideas: [{id,title,summary,...}] }
+ * - Formato alternativo/legado: { suggestions: [...] } ou { title/body }
+ */
+function normalize(payload: any): Suggestion[] | null {
   if (!payload) return null
+
+  // Formato "route.ts" atual: { ideas: QuickIdea[] }
+  if (Array.isArray(payload?.ideas)) {
+    const items = payload.ideas
+      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
+      .slice(0, 3)
+      .map((x: any, idx: number) => ({
+        id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
+        title: String(x.title),
+        description:
+          typeof x.summary === 'string' && x.summary.trim()
+            ? String(x.summary)
+            : typeof x.description === 'string' && x.description.trim()
+              ? String(x.description)
+              : undefined,
+      }))
+    return items.length ? items : null
+  }
 
   // Formato A: { suggestions: [{id,title,description}] }
   if (Array.isArray(payload?.suggestions)) {
-    const first = payload.suggestions.find((x: any) => x && typeof x.title === 'string' && x.title.trim())
-    if (!first) return null
-    return {
-      id: typeof first.id === 'string' && first.id.trim() ? first.id : 'ai-1',
-      title: String(first.title),
-      description: typeof first.description === 'string' && first.description.trim() ? String(first.description) : undefined,
-    }
+    const items = payload.suggestions
+      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
+      .slice(0, 3)
+      .map((x: any, idx: number) => ({
+        id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
+        title: String(x.title),
+        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+      }))
+    return items.length ? items : null
   }
 
   // Formato B: { title, body } (legado)
   if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
-    const rawLines = String(payload?.body ?? '')
+    const raw = String(payload?.body ?? '')
       .split('\n')
       .map((s: string) => s.trim())
       .filter(Boolean)
+      .slice(0, 3)
 
-    const firstLine = rawLines[0] ?? (typeof payload?.title === 'string' ? payload.title : '')
-    if (!firstLine || !String(firstLine).trim()) return null
+    const items = (raw.length ? raw : [payload?.title].filter(Boolean))
+      .slice(0, 3)
+      .map((line: any, idx: number) => ({
+        id: `ai-${idx + 1}`,
+        title: String(line),
+      }))
 
-    return { id: 'ai-1', title: String(firstLine).trim() }
+    return items.length ? items : null
   }
 
   return null
 }
 
-function baseFallback(): Suggestion[] {
-  return [
-    { id: 'fallback-1', title: 'Respire por 1 minuto', description: 'Só para o corpo entender que você chegou.' },
-    { id: 'fallback-2', title: 'Escolha só uma coisa para agora', description: 'O resto pode esperar um pouco.' },
-    { id: 'fallback-3', title: 'Faça um passo pequeno', description: 'Algo simples já organiza por dentro.' },
-    { id: 'fallback-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
-    { id: 'fallback-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
-  ]
+function signature(items: Suggestion[]) {
+  return items.map((i) => `${i.title}::${i.description ?? ''}`).join('|')
 }
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -68,137 +119,168 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
-function signatureOne(item: Suggestion) {
-  return `${item.title}::${item.description ?? ''}`.trim()
+function baseFallback(): Suggestion[] {
+  return [
+    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Só para o corpo voltar para o presente.' },
+    { id: 'fallback-2', title: 'Escolher uma coisa pequena', description: 'Uma só. O resto pode esperar.' },
+    { id: 'fallback-3', title: 'Fazer o próximo passo mais simples', description: 'Bem simples — só para destravar.' },
+    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Uma âncora rápida para agora.' },
+    { id: 'fallback-5', title: 'Pedir ajuda com uma frase curta', description: 'Uma frase resolve mais do que parece.' },
+  ]
 }
 
-/**
- * Meu Dia — resposta curta, aterrissadora e fechada:
- * 1) reconhecimento breve
- * 2) 1 foco
- * 3) encerramento calmo
- */
-function toMeuDiaCopy(item: Suggestion) {
-  const focus = item.description?.trim()
-    ? `${item.title.trim()}. ${item.description.trim()}`
-    : item.title.trim()
+function getSavedFromLS(): Suggestion[] {
+  const raw = safeGetLS(LS_SAVED_KEY)
+  const parsed = safeParse<unknown>(raw)
+  if (!Array.isArray(parsed)) return []
+  const items = (parsed as any[])
+    .filter((x) => x && typeof x.title === 'string' && x.title.trim())
+    .slice(0, 50)
+    .map((x, idx) => ({
+      id: typeof (x as any).id === 'string' && String((x as any).id).trim() ? String((x as any).id) : `saved-${idx + 1}`,
+      title: String((x as any).title),
+      description:
+        typeof (x as any).description === 'string' && String((x as any).description).trim()
+          ? String((x as any).description)
+          : undefined,
+    }))
+  return items
+}
 
-  const recognition = 'Parece que hoje está com muita coisa ao mesmo tempo.'
-  const oneFocus = `Por agora, fique só com isto: ${focus}`
-  const close = 'Só isso já devolve um pouco de chão.'
+function setSavedToLS(items: Suggestion[]) {
+  safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
+}
 
-  return { recognition, oneFocus, close, focus }
+function planFromTier(tier: string): 'free' | 'essencial' | 'premium' {
+  // Mantemos o mapeamento conservador:
+  // - premium => premium
+  // - qualquer outro => free (não inventa)
+  if (tier === 'premium') return 'premium'
+  if (tier === 'essencial' || tier === 'essential') return 'essencial'
+  return 'free'
 }
 
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
-  const [savedToast, setSavedToast] = useState<'idle' | 'saved' | 'limit'>('idle')
+  const [dismissed, setDismissed] = useState<Record<string, true>>({})
+  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
 
   const lastSigRef = useRef<string>('')
   const fallbackSeedRef = useRef<number>(Date.now())
-  const toastTimerRef = useRef<number | null>(null)
 
-  const clearToastTimer = useCallback(() => {
-    if (toastTimerRef.current) {
-      window.clearTimeout(toastTimerRef.current)
-      toastTimerRef.current = null
-    }
-  }, [])
-
-  const showToast = useCallback(
-    (kind: 'saved' | 'limit') => {
-      clearToastTimer()
-      setSavedToast(kind)
-      toastTimerRef.current = window.setTimeout(() => setSavedToast('idle'), 2600)
-    },
-    [clearToastTimer]
-  )
+  const visibleItems = useMemo(() => {
+    if (state.status !== 'done') return []
+    return state.items.filter((i) => !dismissed[i.id])
+  }, [state, dismissed])
 
   const run = useCallback(async (attempt = 0) => {
-    setSavedToast('idle')
     setState({ status: 'loading' })
 
     const nonce = Date.now()
 
+    // Payload compatível com app/api/ai/quick-ideas/route.ts
+    const tier = (() => {
+      try {
+        return getExperienceTier()
+      } catch {
+        return 'free'
+      }
+    })()
+
+    const plan = planFromTier(String(tier))
+
+    // defaults deliberadamente “seguros” (sem depender de outros hubs)
+    const payload = {
+      plan,
+      profile: {
+        active_child_id: null,
+        mode: 'all',
+        children: [],
+      },
+      context: {
+        location: 'home',
+        time_window_min: 10,
+        energy: 'low',
+      },
+      locale: 'pt-BR',
+      nonce,
+    } as any
+
     try {
-      const res = await fetch('/api/ai/quick-ideas', {
+      const postRes = await fetch('/api/ai/quick-ideas', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ intent: 'quick_idea', nonce }),
+        body: JSON.stringify(payload),
         cache: 'no-store',
       })
 
       let data: any = null
-      if (res.ok) data = await res.json().catch(() => null)
+      if (postRes.ok) {
+        data = await postRes.json().catch(() => null)
+      } else {
+        // GET fallback com nonce (se existir GET futuramente)
+        const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
+          method: 'GET',
+          cache: 'no-store',
+        })
+        if (getRes.ok) data = await getRes.json().catch(() => null)
+      }
 
-      const normalized = normalizeOne(data)
-      const fallbackOne = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17))[0]!
-      const nextItem = normalized ?? fallbackOne
+      const normalized = normalize(data)
 
-      const sig = signatureOne(nextItem)
+      const nextItems =
+        normalized ??
+        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
+
+      const sig = signature(nextItems)
+
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
 
       lastSigRef.current = sig
-      setState({ status: 'done', item: nextItem })
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
     } catch {
-      const nextItem = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23))[0]!
-      const sig = signatureOne(nextItem)
+      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 3)
+      const sig = signature(nextItems)
 
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
 
       lastSigRef.current = sig
-      setState({ status: 'done', item: nextItem })
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
     }
   }, [])
 
-  const close = useCallback(() => {
-    setSavedToast('idle')
-    setState({ status: 'idle' })
+  const dismissOne = useCallback((id: string) => {
+    setDismissed((prev) => ({ ...prev, [id]: true }))
   }, [])
 
-  const saveToMyDay = useCallback(() => {
-    if (state.status !== 'done') return
+  const saveOne = useCallback(
+    (item: Suggestion) => {
+      const key = `${item.title}::${item.description ?? ''}`.trim()
+      const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
+      if (exists) return
 
-    const { focus } = toMeuDiaCopy(state.item)
+      const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
+      setSaved(next)
+      setSavedToLS(next)
+      dismissOne(item.id)
+    },
+    [saved, dismissOne]
+  )
 
-    // cria uma tarefa simples no Meu Dia (salvável e visível)
-    const res = addTaskToMyDayAndTrack({
-      title: focus,
-      origin: 'today',
-      source: MY_DAY_SOURCES.MANUAL,
-    })
-
-    if (res.ok && res.created) {
-      // força atualização de listas que escutam storage
-      try {
-        window.dispatchEvent(new Event('storage'))
-      } catch {}
-
-      showToast('saved')
-      return
-    }
-
-    // se bateu limite, avisar sem cobrança
-    if (res.ok && res.limitHit) {
-      showToast('limit')
-      return
-    }
-
-    // ok mas não criou (duplicado): tratar como “guardado” para o usuário, sem ruído
-    if (res.ok && res.created === false) {
-      showToast('saved')
-      return
-    }
-  }, [state, showToast])
-
-  const meuDiaText = useMemo(() => {
-    if (state.status !== 'done') return null
-    return toMeuDiaCopy(state.item)
-  }, [state])
+  const removeSaved = useCallback(
+    (id: string) => {
+      const next = saved.filter((s) => s.id !== id)
+      setSaved(next)
+      setSavedToLS(next)
+    },
+    [saved]
+  )
 
   return (
     <div className="mt-6 md:mt-8">
@@ -228,7 +310,7 @@ export default function QuickIdeaAI() {
             "
             onClick={() => void run()}
           >
-            <span className="text-[14px] font-semibold">Me dá uma ideia rápida</span>
+            <span className="text-[14px] font-semibold">Me dá uma ideia simples para agora</span>
             <span className="h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
               <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
             </span>
@@ -236,76 +318,131 @@ export default function QuickIdeaAI() {
         ) : null}
 
         {state.status === 'loading' ? (
-          <p className="text-[13px] text-[#6A6A6A]">Pensando em algo simples…</p>
+          <p className="text-[13px] text-[#6A6A6A]">Pensando em algo leve…</p>
         ) : null}
 
-        {state.status === 'done' && meuDiaText ? (
+        {state.status === 'done' ? (
           <div className="space-y-3">
-            <div
-              className="
-                rounded-2xl
-                border border-[#F5D7E5]/70
-                bg-white
-                px-4 py-3
-              "
-            >
-              <p className="text-[13px] text-[#6A6A6A] leading-relaxed">{meuDiaText.recognition}</p>
-              <p className="mt-2 text-[14px] font-semibold text-[#2f3a56] leading-relaxed">{meuDiaText.oneFocus}</p>
-              <p className="mt-2 text-[13px] text-[#6A6A6A] leading-relaxed">{meuDiaText.close}</p>
-            </div>
-
-            {savedToast === 'saved' ? (
-              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">Guardado no Meu Dia.</p>
-              </div>
-            ) : null}
-
-            {savedToast === 'limit' ? (
-              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">Por hoje, já tem bastante coisa aberta. Está tudo bem deixar assim.</p>
-              </div>
-            ) : null}
-
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                className="
-                  rounded-full
-                  bg-white
-                  border border-[#F5D7E5]/70
-                  text-[#545454]
-                  px-4 py-2
-                  text-[12px]
-                  transition
-                  hover:shadow-sm
-                  whitespace-nowrap
-                "
-                onClick={() => {
-                  clearToastTimer()
-                  close()
-                }}
-              >
-                Ok
-              </button>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[13px] text-[#6A6A6A]">Ideias simples para este momento</p>
 
               <button
                 type="button"
-                className="
-                  rounded-full
-                  bg-[#fd2597]
-                  text-white
-                  px-4 py-2
-                  text-[12px]
-                  font-semibold
-                  transition
-                  hover:opacity-95
-                  whitespace-nowrap
-                "
-                onClick={saveToMyDay}
+                className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
+                onClick={() => void run()}
               >
-                Guardar
+                Outra ideia
               </button>
             </div>
+
+            {visibleItems.length ? (
+              <div className="space-y-3">
+                {visibleItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="
+                      rounded-2xl
+                      border border-[#F5D7E5]/70
+                      bg-white
+                      px-4 py-3
+                    "
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
+                        {item.description ? (
+                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          className="
+                            rounded-full
+                            bg-white
+                            border border-[#F5D7E5]/70
+                            text-[#545454]
+                            px-3 py-1.5
+                            text-[12px]
+                            transition
+                            hover:shadow-sm
+                            whitespace-nowrap
+                          "
+                          onClick={() => dismissOne(item.id)}
+                        >
+                          Não agora
+                        </button>
+
+                        <button
+                          type="button"
+                          className="
+                            rounded-full
+                            bg-[#fd2597]
+                            text-white
+                            px-3 py-1.5
+                            text-[12px]
+                            font-semibold
+                            transition
+                            hover:opacity-95
+                            whitespace-nowrap
+                          "
+                          onClick={() => saveOne(item)}
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
+                <p className="text-[13px] text-[#6A6A6A]">Sem pressão. Se quiser, peça outra ideia.</p>
+              </div>
+            )}
+
+            {saved.length ? (
+              <div className="pt-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[13px] text-[#6A6A6A]">Guardadas</p>
+                </div>
+
+                <div className="mt-2 space-y-2">
+                  {saved.slice(0, 3).map((item) => (
+                    <div
+                      key={item.id}
+                      className="
+                        rounded-2xl
+                        border border-[#F5D7E5]/50
+                        bg-white
+                        px-4 py-3
+                        flex items-start justify-between gap-3
+                      "
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
+                        {item.description ? (
+                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
+                        ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="text-[12px] font-semibold text-[#6A6A6A] hover:opacity-90 transition whitespace-nowrap"
+                        onClick={() => removeSaved(item.id)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {saved.length > 3 ? (
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
