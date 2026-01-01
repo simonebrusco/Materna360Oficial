@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import AppIcon from '@/components/ui/AppIcon'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
@@ -32,25 +31,6 @@ export const revalidate = 0
 
 type ContinuityLine = { text: string; phraseId: string }
 
-// P26 — continuidade Meu Dia Leve -> Meu Dia (sem conteúdo sensível)
-type MeuDiaLeveRecentSave = {
-  ts: number
-  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
-  source: string
-}
-
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
-const LS_ACK_PREFIX = 'm360.meu_dia_leve_ack.' // + dateKey
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
-
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
@@ -67,23 +47,6 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
-function safeRemoveLS(key: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(key)
-  } catch {}
-}
-
-function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
-  if (!v || typeof v !== 'object') return false
-  const o = v as any
-  const okOrigin =
-    o.origin === 'today' || o.origin === 'family' || o.origin === 'selfcare' || o.origin === 'home' || o.origin === 'other'
-  const okTs = typeof o.ts === 'number' && Number.isFinite(o.ts)
-  const okSource = typeof o.source === 'string' && !!o.source.trim()
-  return okOrigin && okTs && okSource
-}
-
 function getFirstName(fullName: string | null | undefined) {
   const n = (fullName ?? '').trim()
   if (!n) return ''
@@ -98,14 +61,6 @@ function withName(baseGreeting: string, firstName: string) {
   return g ? `${g}, ${f}` : `Bom dia, ${f}`
 }
 
-function originLabel(origin: MeuDiaLeveRecentSave['origin']) {
-  if (origin === 'family') return 'Família'
-  if (origin === 'selfcare') return 'Autocuidado'
-  if (origin === 'home') return 'Casa'
-  if (origin === 'today') return 'Para hoje'
-  return 'Outros'
-}
-
 export default function MeuDiaClient() {
   const { name } = useProfile()
   const firstName = useMemo(() => getFirstName(name), [name])
@@ -118,9 +73,6 @@ export default function MeuDiaClient() {
 
   // P13 — micro-frase de continuidade (no máximo 1 por dia)
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
-
-  // P26 — CTA discreto: “voltar ao Meu Dia Leve” (1x por dia, só quando houve save recente)
-  const [meuDiaLevePrompt, setMeuDiaLevePrompt] = useState<MeuDiaLeveRecentSave | null>(null)
 
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
@@ -225,63 +177,13 @@ export default function MeuDiaClient() {
     }
   }, [todayKey])
 
-  /**
-   * P26 — Se o usuário salvou algo no Meu Dia Leve:
-   * - mostrar um CTA discreto no Meu Dia
-   * - não repetir mais de 1x por dia (ack)
-   * - sem expor conteúdo (apenas origem e “salvo”)
-   */
-  const refreshMeuDiaLeveContinuity = useCallback(() => {
-    try {
-      if (typeof window === 'undefined') return
-
-      const ackKey = `${LS_ACK_PREFIX}${todayKey}`
-      const ack = safeGetLS(ackKey)
-      if (ack === '1') {
-        setMeuDiaLevePrompt(null)
-        return
-      }
-
-      const raw = safeGetLS(LS_RECENT_SAVE)
-      const parsed = safeParseJSON<unknown>(raw)
-      if (!isRecentSavePayload(parsed)) {
-        setMeuDiaLevePrompt(null)
-        return
-      }
-
-      // janela de recência: 30 minutos (discreto, mas ainda faz sentido)
-      const ageMs = Date.now() - parsed.ts
-      const RECENT_WINDOW_MS = 30 * 60 * 1000
-
-      if (ageMs < 0 || ageMs > RECENT_WINDOW_MS) {
-        setMeuDiaLevePrompt(null)
-        return
-      }
-
-      setMeuDiaLevePrompt(parsed)
-
-      try {
-        track('meu_dia_leve.continuity_prompt.view', {
-          dateKey: todayKey,
-          ageMs,
-          origin: parsed.origin,
-          source: parsed.source,
-        })
-      } catch {}
-    } catch {
-      setMeuDiaLevePrompt(null)
-    }
-  }, [todayKey])
-
   useEffect(() => {
     refreshAiContextAndContinuity()
     refreshPremiumState()
-    refreshMeuDiaLeveContinuity()
 
     const onStorage = () => {
       refreshAiContextAndContinuity()
       refreshPremiumState()
-      refreshMeuDiaLeveContinuity()
     }
 
     const onCustomPersona = () => refreshAiContextAndContinuity()
@@ -296,7 +198,7 @@ export default function MeuDiaClient() {
       window.removeEventListener('eu360:persona-updated', onCustomPersona as EventListener)
       window.removeEventListener('m360:plan-updated', onPlanUpdated as EventListener)
     }
-  }, [refreshAiContextAndContinuity, refreshPremiumState, refreshMeuDiaLeveContinuity])
+  }, [refreshAiContextAndContinuity, refreshPremiumState])
 
   return (
     <main
@@ -317,9 +219,7 @@ export default function MeuDiaClient() {
             MEU DIA
           </span>
 
-          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
-            Seu dia, do seu jeito
-          </h1>
+          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Seu dia, do seu jeito</h1>
 
           <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl lg:max-w-3xl">
             Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
@@ -342,94 +242,6 @@ export default function MeuDiaClient() {
               </p>
             ) : null}
           </div>
-
-          {/* P26 — continuidade discreta (aparece só quando veio do Meu Dia Leve) */}
-          {meuDiaLevePrompt ? (
-            <div className="mt-5">
-              <div
-                className="
-                  bg-white
-                  rounded-3xl
-                  p-6
-                  shadow-[0_2px_14px_rgba(0,0,0,0.05)]
-                  border border-[#F5D7E5]
-                "
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="text-[12px] text-[#6A6A6A]">
-                        Salvo no Meu Dia a partir do Meu Dia Leve • {originLabel(meuDiaLevePrompt.origin)}
-                      </div>
-                      <div className="mt-1 text-[14px] text-[#545454] leading-relaxed max-w-2xl lg:max-w-3xl">
-                        Se quiser, pegue mais um próximo passo pronto — sem inventar nada.
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <a
-                      href="/maternar/meu-dia-leve"
-                      className="
-                        rounded-full
-                        bg-[#fd2597] hover:opacity-95
-                        text-white
-                        px-4 py-2
-                        text-[12px]
-                        font-semibold
-                        shadow-lg transition
-                        whitespace-nowrap
-                      "
-                      onClick={() => {
-                        try {
-                          track('meu_dia_leve.continuity_prompt.click', {
-                            dateKey: todayKey,
-                            origin: meuDiaLevePrompt.origin,
-                            source: meuDiaLevePrompt.source,
-                          })
-                        } catch {}
-
-                        // ack 1x/dia + limpar payload para não “grudar”
-                        safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        safeRemoveLS(LS_RECENT_SAVE)
-                      }}
-                    >
-                      Voltar ao Meu Dia Leve
-                    </a>
-
-                    <button
-                      type="button"
-                      className="
-                        rounded-full
-                        bg-white
-                        border border-[#F5D7E5]/70
-                        text-[#545454]
-                        px-4 py-2
-                        text-[12px]
-                        transition
-                        hover:shadow-sm
-                        whitespace-nowrap
-                      "
-                      onClick={() => {
-                        safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        safeRemoveLS(LS_RECENT_SAVE)
-                        setMeuDiaLevePrompt(null)
-                        try {
-                          track('meu_dia_leve.continuity_prompt.dismiss', { dateKey: todayKey })
-                        } catch {}
-                      }}
-                    >
-                      Ok
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </header>
 
         <MyDayGroups aiContext={aiContext} />
