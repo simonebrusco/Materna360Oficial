@@ -12,12 +12,12 @@ type Suggestion = {
 type State =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; items: Suggestion[] }
+  | { status: 'done'; items: Suggestion[]; meta?: Record<string, any> }
 
-type QuickIdeaMode = 'my_day' | 'cuidar_de_mim'
+type QuickIdeaAIMode = 'my_day' | 'cuidar_de_mim'
 
-type QuickIdeaAIProps = {
-  mode?: QuickIdeaMode
+type Props = {
+  mode?: QuickIdeaAIMode
   className?: string
 }
 
@@ -89,10 +89,10 @@ function pushRecentId(id: string) {
 /**
  * Normaliza múltiplos formatos de resposta:
  * - Formato legado (catálogo): { access, ideas: [{id,title,summary,...}] }
- * - Formato leve (Meu Dia):   { suggestions: [{id,title,description}] }
- * - Formato alternativo:      { title/body }
+ * - Formato leve (hubs):       { suggestions: [{id,title,description}], meta? }
+ * - Formato alternativo:       { title/body }
  */
-function normalize(payload: any): Suggestion[] | null {
+function normalize(payload: any): { items: Suggestion[]; meta?: Record<string, any> } | null {
   if (!payload) return null
 
   // Formato legado: { ideas: QuickIdea[] }
@@ -110,10 +110,10 @@ function normalize(payload: any): Suggestion[] | null {
               ? String(x.description)
               : undefined,
       }))
-    return items.length ? items : null
+    return items.length ? { items } : null
   }
 
-  // Formato leve: { suggestions: [{id,title,description}] }
+  // Formato leve: { suggestions: [{id,title,description}], meta }
   if (Array.isArray(payload?.suggestions)) {
     const items = payload.suggestions
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -123,7 +123,7 @@ function normalize(payload: any): Suggestion[] | null {
         title: String(x.title),
         description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
       }))
-    return items.length ? items : null
+    return items.length ? { items, meta: payload?.meta && typeof payload.meta === 'object' ? payload.meta : undefined } : null
   }
 
   // Formato alternativo: { title, body }
@@ -141,7 +141,7 @@ function normalize(payload: any): Suggestion[] | null {
         title: String(line),
       }))
 
-    return items.length ? items : null
+    return items.length ? { items } : null
   }
 
   return null
@@ -164,24 +164,13 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
-function baseFallbackForMode(mode: QuickIdeaMode): Suggestion[] {
-  if (mode === 'cuidar_de_mim') {
-    return [
-      { id: 'fallback-c-1', title: 'Soltar os ombros (3x)', description: 'Bem leve. Só para o corpo baixar um pouco.' },
-      { id: 'fallback-c-2', title: 'Respirar 4–2–6 (3 voltas)', description: 'Um minuto. Se não der, uma volta já serve.' },
-      { id: 'fallback-c-3', title: 'Água (3 goles)', description: 'Uma âncora rápida, sem pressão.' },
-      { id: 'fallback-c-4', title: 'Olhar pela janela (30s)', description: 'Só para dar um respiro ao pensamento.' },
-      { id: 'fallback-c-5', title: 'Mãos no peito (2 respirações)', description: 'Pequeno e suficiente.' },
-    ]
-  }
-
-  // my_day (fallback atual)
+function baseFallback(): Suggestion[] {
   return [
-    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Só para o corpo voltar para o presente.' },
-    { id: 'fallback-2', title: 'Escolher uma coisa pequena', description: 'Uma só. O resto pode esperar.' },
-    { id: 'fallback-3', title: 'Fazer o próximo passo mais simples', description: 'Bem simples — só para destravar.' },
-    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Uma âncora rápida para agora.' },
-    { id: 'fallback-5', title: 'Pedir ajuda com uma frase curta', description: 'Uma frase resolve mais do que parece.' },
+    { id: 'fallback-1', title: 'Pés no chão por 10 segundos', description: 'Só um apoio. Se não servir, tudo bem.' },
+    { id: 'fallback-2', title: 'Soltar os ombros uma vez', description: 'Um “descer” pequeno já conta.' },
+    { id: 'fallback-3', title: 'Uma frase: “um passo por vez”', description: 'Sem resolver o resto agora.' },
+    { id: 'fallback-4', title: 'Um gole de água consciente', description: 'Uma âncora rápida para o presente.' },
+    { id: 'fallback-5', title: 'Escolher o próximo passo menor', description: 'Reduzir é cuidado também.' },
   ]
 }
 
@@ -207,9 +196,11 @@ function setSavedToLS(items: Suggestion[]) {
   safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
 }
 
-export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIProps) {
+export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
+
+  // Saved só faz sentido no modo Meu Dia
   const [saved, setSaved] = useState<Suggestion[]>(() => (mode === 'my_day' ? getSavedFromLS() : []))
 
   const lastSigRef = useRef<string>('')
@@ -220,33 +211,36 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
     return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
+  const hub = mode === 'cuidar_de_mim' ? 'cuidar_de_mim' : 'my_day'
+
   const run = useCallback(
     async (attempt = 0) => {
       setState({ status: 'loading' })
 
       const nonce = Date.now()
 
-      // MY_DAY: memória contextual suave (local)
-      // CUIDAR_DE_MIM: sem memória, sem Eu360, sem histórico
+      // Meu Dia: memória contextual suave
       const recentIds = mode === 'my_day' ? getRecentFromLS() : []
       const signal = mode === 'my_day' ? getSoftSignalFromLS() : 'neutral'
 
-      // Mantém compatibilidade com o endpoint existente
-      // - intent: quick_idea (o backend atual já entende)
-      // - hub: só um hint (se backend ignorar, segue funcionando)
-      const payload: any = {
-        intent: 'quick_idea' as const,
-        hub: mode === 'cuidar_de_mim' ? 'cuidar_de_mim' : 'my_day',
-        nonce,
-        locale: 'pt-BR' as const,
-      }
-
-      if (mode === 'my_day') {
-        payload.memory = {
-          recent_suggestion_ids: recentIds,
-          last_signal: signal,
-        }
-      }
+      const payload =
+        mode === 'my_day'
+          ? {
+              intent: 'quick_idea' as const,
+              hub: 'my_day' as const,
+              nonce,
+              locale: 'pt-BR' as const,
+              memory: {
+                recent_suggestion_ids: recentIds,
+                last_signal: signal,
+              },
+            }
+          : {
+              intent: 'quick_idea' as const,
+              hub: 'cuidar_de_mim' as const,
+              nonce,
+              locale: 'pt-BR' as const,
+            }
 
       try {
         const postRes = await fetch('/api/ai/quick-ideas', {
@@ -260,47 +254,37 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
         if (postRes.ok) {
           data = await postRes.json().catch(() => null)
         } else {
-          // GET fallback (se existir GET futuramente)
-          const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
-            method: 'GET',
-            cache: 'no-store',
-          })
+          const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, { method: 'GET', cache: 'no-store' })
           if (getRes.ok) data = await getRes.json().catch(() => null)
         }
 
         const normalized = normalize(data)
-        const nextItems =
-          normalized ??
-          shuffle(
-            baseFallbackForMode(mode),
-            (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'cuidar_de_mim' ? 11 : 17))
-          ).slice(0, 3)
 
-        // MY_DAY: atualiza memória recente
-        // CUIDAR_DE_MIM: não grava nada
+        const nextItems =
+          normalized?.items ??
+          shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'my_day' ? 17 : 23))).slice(
+            0,
+            3
+          )
+
+        // Meu Dia: atualiza memória recente com o primeiro item exibido
         if (mode === 'my_day' && nextItems[0]?.id) {
           pushRecentId(nextItems[0].id)
         }
 
         const sig = signature(nextItems)
+
         if (sig && sig === lastSigRef.current && attempt < 1) {
           return await run(attempt + 1)
         }
 
         lastSigRef.current = sig
         setDismissed({})
-        setState({ status: 'done', items: nextItems })
+        setState({ status: 'done', items: nextItems, meta: normalized?.meta })
       } catch {
-        const nextItems = shuffle(
-          baseFallbackForMode(mode),
-          (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'cuidar_de_mim' ? 13 : 23))
-        ).slice(0, 3)
-
-        if (mode === 'my_day' && nextItems[0]?.id) {
-          pushRecentId(nextItems[0].id)
-        }
-
+        const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 29)).slice(0, 3)
         const sig = signature(nextItems)
+
         if (sig && sig === lastSigRef.current && attempt < 1) {
           return await run(attempt + 1)
         }
@@ -317,14 +301,19 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
     setDismissed((prev) => ({ ...prev, [id]: true }))
   }, [])
 
+  const dismissAll = useCallback(() => {
+    if (state.status !== 'done') return
+    const ids = state.items.map((i) => i.id)
+    setDismissed((prev) => {
+      const next = { ...prev }
+      ids.forEach((id) => (next[id] = true))
+      return next
+    })
+  }, [state])
+
   const saveOne = useCallback(
     (item: Suggestion) => {
-      // Guardar só existe no MY_DAY
-      if (mode !== 'my_day') {
-        dismissOne(item.id)
-        return
-      }
-
+      if (mode !== 'my_day') return
       const key = `${item.title}::${item.description ?? ''}`.trim()
       const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) return
@@ -334,7 +323,7 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
       setSavedToLS(next)
       dismissOne(item.id)
     },
-    [saved, dismissOne, mode]
+    [mode, saved, dismissOne]
   )
 
   const removeSaved = useCallback(
@@ -344,44 +333,33 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
       setSaved(next)
       setSavedToLS(next)
     },
-    [saved, mode]
+    [mode, saved]
   )
 
-  const ui = useMemo(() => {
-    if (mode === 'cuidar_de_mim') {
-      return {
-        ctaIdle: 'Se quiser, eu te sugiro um cuidado bem pequeno agora',
-        loading: 'Pensando em algo bem leve…',
-        headerDone: 'Um cuidado pequeno para agora (opcional)',
-        refresh: 'Outra sugestão',
-        dismiss: 'Não agora',
-        save: 'Ok',
-        empty: 'Sem pressão. Se quiser, pode pedir outra sugestão.',
-      }
-    }
+  const themeLabel =
+    state.status === 'done' && state.meta && typeof state.meta === 'object' ? (state.meta as any).day_theme_label : null
 
-    return {
-      ctaIdle: 'Me dá uma ideia simples para agora',
-      loading: 'Pensando em algo leve…',
-      headerDone: 'Ideias simples para este momento',
-      refresh: 'Outra ideia',
-      dismiss: 'Não agora',
-      save: 'Guardar',
-      empty: 'Sem pressão. Se quiser, peça outra ideia.',
-    }
-  }, [mode])
+  const containerClasses =
+    mode === 'cuidar_de_mim'
+      ? `
+        bg-white/95
+        rounded-3xl
+        p-5 md:p-6
+        shadow-[0_10px_28px_rgba(184,35,107,0.10)]
+        border border-white/25
+        backdrop-blur-xl
+      `
+      : `
+        bg-white
+        rounded-3xl
+        p-5 md:p-6
+        shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+        border border-[#F5D7E5]
+      `
 
   return (
-    <div className={['mt-6 md:mt-8', className ?? ''].join(' ')}>
-      <div
-        className="
-          bg-white
-          rounded-3xl
-          p-5 md:p-6
-          shadow-[0_6px_22px_rgba(0,0,0,0.06)]
-          border border-[#F5D7E5]
-        "
-      >
+    <div className={['mt-0', className ?? ''].join(' ')}>
+      <div className={containerClasses}>
         {state.status === 'idle' ? (
           <button
             type="button"
@@ -399,27 +377,52 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
             "
             onClick={() => void run()}
           >
-            <span className="text-[14px] font-semibold">{ui.ctaIdle}</span>
+            <span className="text-[14px] font-semibold">
+              {mode === 'cuidar_de_mim' ? 'Me sugira um cuidado possível agora' : 'Me dá uma ideia simples para agora'}
+            </span>
             <span className="h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
               <AppIcon name="sparkles" size={18} className="text-[#fd2597]" />
             </span>
           </button>
         ) : null}
 
-        {state.status === 'loading' ? <p className="text-[13px] text-[#6A6A6A]">{ui.loading}</p> : null}
+        {state.status === 'loading' ? (
+          <p className="text-[13px] text-[#6A6A6A]">{mode === 'cuidar_de_mim' ? 'Pensando num cuidado possível…' : 'Pensando em algo leve…'}</p>
+        ) : null}
 
         {state.status === 'done' ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] text-[#6A6A6A]">{ui.headerDone}</p>
+              <div className="min-w-0">
+                <p className="text-[13px] text-[#6A6A6A]">
+                  {mode === 'cuidar_de_mim' ? 'Um cuidado possível para este momento' : 'Ideias simples para este momento'}
+                </p>
+                {mode === 'cuidar_de_mim' && themeLabel ? (
+                  <p className="mt-1 text-[12px] text-[#6A6A6A]">
+                    Hoje: <span className="font-semibold text-[#2f3a56]">{String(themeLabel)}</span>
+                  </p>
+                ) : null}
+              </div>
 
-              <button
-                type="button"
-                className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
-                onClick={() => void run()}
-              >
-                {ui.refresh}
-              </button>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
+                  onClick={() => void run()}
+                >
+                  {mode === 'cuidar_de_mim' ? 'Outra proposta' : 'Outra ideia'}
+                </button>
+
+                {mode === 'cuidar_de_mim' ? (
+                  <button
+                    type="button"
+                    className="text-[12px] font-semibold text-[#6A6A6A] hover:opacity-90 transition"
+                    onClick={dismissAll}
+                  >
+                    Hoje não
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             {visibleItems.length ? (
@@ -458,26 +461,28 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
                           "
                           onClick={() => dismissOne(item.id)}
                         >
-                          {ui.dismiss}
+                          Não agora
                         </button>
 
-                        <button
-                          type="button"
-                          className="
-                            rounded-full
-                            bg-[#fd2597]
-                            text-white
-                            px-3 py-1.5
-                            text-[12px]
-                            font-semibold
-                            transition
-                            hover:opacity-95
-                            whitespace-nowrap
-                          "
-                          onClick={() => saveOne(item)}
-                        >
-                          {ui.save}
-                        </button>
+                        {mode === 'my_day' ? (
+                          <button
+                            type="button"
+                            className="
+                              rounded-full
+                              bg-[#fd2597]
+                              text-white
+                              px-3 py-1.5
+                              text-[12px]
+                              font-semibold
+                              transition
+                              hover:opacity-95
+                              whitespace-nowrap
+                            "
+                            onClick={() => saveOne(item)}
+                          >
+                            Guardar
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -485,11 +490,12 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
               </div>
             ) : (
               <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">{ui.empty}</p>
+                <p className="text-[13px] text-[#6A6A6A]">
+                  {mode === 'cuidar_de_mim' ? 'Tudo bem. Você pode fechar por aqui.' : 'Sem pressão. Se quiser, peça outra ideia.'}
+                </p>
               </div>
             )}
 
-            {/* Guardadas só no MY_DAY */}
             {mode === 'my_day' && saved.length ? (
               <div className="pt-2">
                 <div className="flex items-center justify-between gap-3">
@@ -527,11 +533,15 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: QuickIdeaAIP
                 </div>
 
                 {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
-                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
-                  </p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
                 ) : null}
               </div>
+            ) : null}
+
+            {mode === 'cuidar_de_mim' ? (
+              <p className="pt-1 text-[12px] text-[#6A6A6A]">
+                Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+              </p>
             ) : null}
           </div>
         ) : null}
