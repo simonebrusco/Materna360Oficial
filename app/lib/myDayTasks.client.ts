@@ -1,563 +1,367 @@
 'use client'
 
+import * as React from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
+import {
+  groupTasks,
+  listMyDayTasks,
+  type GroupedTasks,
+  type MyDayTaskItem,
+  removeTask,
+  snoozeTask,
+  unsnoozeTask,
+} from '@/app/lib/myDayTasks.client'
+import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
+import { getExperienceTier } from '@/app/lib/experience/experienceTier'
+import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
-import { load, save } from '@/app/lib/persist'
+import { consumeRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
-/**
- * P7/P8/P12 — Meu Dia Tasks (client-only)
- * Fonte: LocalStorage
- *
- * Compatibilidade:
- * - Padrão novo: persist.ts (prefixo "m360:" aplicado automaticamente)
- * - Legado: chave sem prefixo (localStorage direto)
- *
- * Estratégia segura:
- * - LER: prioridade no prefixado (persist), fallback no legado
- * - ESCREVER: prefixado (persist) + espelha no legado (compat total)
- * - MIGRAR silenciosamente: se achar só no legado, replica no prefixado
- */
+type GroupId = keyof GroupedTasks
+type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
-/** Sources (telemetria + agrupamento fino no futuro) */
-export const MY_DAY_SOURCES = {
-  MATERNAR_MEU_FILHO: 'maternar.meu-filho',
-  MATERNAR_MEU_DIA_LEVE: 'maternar.meu-dia-leve',
-  MATERNAR_CUIDAR_DE_MIM: 'maternar.cuidar-de-mim',
-  PLANNER: 'planner',
-  MANUAL: 'manual',
-  UNKNOWN: 'unknown',
-} as const
+const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
+const DEFAULT_LIMIT = 5
 
-export type MyDaySource = (typeof MY_DAY_SOURCES)[keyof typeof MY_DAY_SOURCES]
+/* =========================
+   Helpers base
+========================= */
 
-/**
- * Origem/Intenção
- * Inclui origens do Planner + origens do Meu Dia.
- */
-export type TaskOrigin =
-  | 'today'
-  | 'top3'
-  | 'agenda'
-  | 'family'
-  | 'selfcare'
-  | 'home'
-  | 'other'
-  | 'custom'
-
-/**
- * Shape do PLANNER (não mudar):
- * WeeklyPlannerCore cria TaskItem com "done".
- */
-export type TaskItem = {
-  id: string
-  title: string
-  origin: TaskOrigin
-  done: boolean
+function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
+  if ((t as any).status) return (t as any).status
+  if ((t as any).done === true) return 'done'
+  return 'active'
 }
 
-/**
- * Shape do MEU DIA (evolutivo):
- * Mantém compatibilidade com dados antigos.
- */
-export type TaskStatus = 'active' | 'done' | 'snoozed'
-
-export type MyDayTaskItem = {
-  id: string
-  title: string
-  origin: TaskOrigin
-
-  /** legado (Planner) — pode existir em dados antigos */
-  done?: boolean
-
-  /** P8+ */
-  status?: TaskStatus
-  snoozeUntil?: string // YYYY-MM-DD
-  createdAt?: string // ISO
-  source?: MyDaySource
+function timeOf(t: MyDayTaskItem): number {
+  const iso = (t as any).createdAt
+  const n = iso ? Date.parse(iso) : NaN
+  return Number.isFinite(n) ? n : 0
 }
 
-/** Entrada padrão para salvar no Meu Dia */
-export type AddToMyDayInput = {
-  title: string
-  origin: TaskOrigin
-  date?: Date
-  source?: MyDaySource
-}
+// (P28) evita bug de timezone: parse manual para YYYY-MM-DD
+function formatSnoozeUntil(raw: unknown): string | null {
+  const s = typeof raw === 'string' ? raw : ''
+  if (!s) return null
 
-/** Resultado compatível com o que os Clients precisam (created + dateKey) */
-export type AddToMyDayResult = {
-  ok: boolean
-  id?: string
-  created?: boolean
-  dateKey?: string
-
-  /**
-   * Guardrail: se bater limite de “tarefas abertas”, não criamos nova.
-   * Mantido como campo opcional para não quebrar callers antigos.
-   */
-  limitHit?: boolean
-}
-
-type GroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
-
-export type GroupedTasks = Record<
-  GroupId,
-  {
-    id: GroupId
-    title: string
-    items: MyDayTaskItem[]
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (m) {
+    const y = Number(m[1])
+    const mo = Number(m[2])
+    const d = Number(m[3])
+    const dt = new Date(y, mo - 1, d) // local time (seguro p/ BR)
+    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   }
->
 
-/**
- * Guardrail (P26+):
- * Quantas tarefas “abertas” (active + snoozed) podem existir no dia.
- * Observação: "done" não conta para o limite.
- */
-const OPEN_TASKS_LIMIT_PER_DAY = 18
+  const t = Date.parse(s)
+  if (!Number.isFinite(t)) return s
 
-/** ---------- Helpers ---------- */
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  if (!raw) return null
   try {
-    return JSON.parse(raw) as T
+    return new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   } catch {
-    return null
+    return s
   }
 }
 
-function safeStringifyJSON(value: unknown): string {
-  try {
-    return JSON.stringify(value)
-  } catch {
-    return '[]'
+/* =========================
+   Persona segura
+========================= */
+
+function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
+  const p: any = (aiContext as any)?.persona
+  if (p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao') {
+    return p
   }
+  if (typeof p === 'object' && p?.persona) return p.persona
+  return undefined
 }
 
-function makeDateKey(d: Date = new Date()): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
+/* =========================
+   Ordenação contextual
+========================= */
 
-/**
- * Chave “limpa” (persist.ts aplica m360:)
- * E também é a chave legada (sem prefixo) no localStorage cru.
- */
-function storageKeyForDateKey(dateKey: string) {
-  return `planner/tasks/${dateKey}`
-}
+function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?: PersonaId }) {
+  const { premium, persona } = opts
 
-function isTaskOrigin(v: unknown): v is TaskOrigin {
-  return (
-    v === 'today' ||
-    v === 'top3' ||
-    v === 'agenda' ||
-    v === 'family' ||
-    v === 'selfcare' ||
-    v === 'home' ||
-    v === 'other' ||
-    v === 'custom'
-  )
-}
-
-function isTaskStatus(v: unknown): v is TaskStatus {
-  return v === 'active' || v === 'done' || v === 'snoozed'
-}
-
-function isMyDaySource(v: unknown): v is MyDaySource {
-  return typeof v === 'string' && (Object.values(MY_DAY_SOURCES) as string[]).includes(v)
-}
-
-function makeId(): string {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `t_${Math.random().toString(16).slice(2)}_${Date.now()}`
-}
-
-function statusOf(t: MyDayTaskItem): TaskStatus {
-  const s = t.status
-  if (s === 'active' || s === 'done' || s === 'snoozed') return s
-  return t.done ? 'done' : 'active'
-}
-
-function countOpenTasks(tasks: MyDayTaskItem[]): number {
-  let n = 0
-  for (const t of tasks) {
+  const statusRank = (t: MyDayTaskItem) => {
     const s = statusOf(t)
-    if (s === 'active' || s === 'snoozed') n += 1
-  }
-  return n
-}
-
-/**
- * Normaliza tarefas vindas do storage (que pode conter):
- * - TaskItem do Planner (done)
- * - MyDayTaskItem do Meu Dia (status)
- *
- * Retorna também se houve normalização (para persistir no próximo write).
- */
-function normalizeStoredTask(it: any, nowISO: string): { item: MyDayTaskItem | null; changed: boolean } {
-  if (!it) return { item: null, changed: false }
-
-  let changed = false
-
-  const title = typeof it.title === 'string' ? it.title : ''
-  if (!title) return { item: null, changed: false }
-
-  const origin: TaskOrigin = isTaskOrigin(it.origin) ? it.origin : 'other'
-  if (!isTaskOrigin(it.origin)) changed = true
-
-  // se não tiver id → gerar e persistir
-  let id = typeof it.id === 'string' ? it.id : ''
-  if (!id) {
-    id = makeId()
-    changed = true
+    return s === 'active' ? 0 : s === 'snoozed' ? 1 : 2
   }
 
-  const doneLegacy: boolean | undefined = typeof it.done === 'boolean' ? it.done : undefined
-  const statusRaw: TaskStatus | undefined = isTaskStatus(it.status) ? it.status : undefined
-  const snoozeUntil = typeof it.snoozeUntil === 'string' ? it.snoozeUntil : undefined
-  const createdAtRaw = typeof it.createdAt === 'string' ? it.createdAt : undefined
-  const source: MyDaySource | undefined = isMyDaySource(it.source) ? it.source : undefined
-
-  // se não tiver status → inferir
-  const computedStatus: TaskStatus =
-    statusRaw ?? (doneLegacy === true ? 'done' : doneLegacy === false ? 'active' : 'active')
-
-  if (statusRaw !== computedStatus) changed = true
-
-  // se não tiver createdAt → now
-  const createdAt = createdAtRaw ?? nowISO
-  if (!createdAtRaw) changed = true
-
-  // coerência mínima status <-> done
-  let done: boolean | undefined = doneLegacy
-  if (computedStatus === 'done' && doneLegacy !== true) {
-    done = true
-    changed = true
-  }
-  if (computedStatus !== 'done' && doneLegacy === true) {
-    done = false
-    changed = true
-  }
-
-  const item: MyDayTaskItem = {
-    id,
-    title,
-    origin,
-    done,
-    status: computedStatus,
-    snoozeUntil,
-    createdAt,
-    source,
-  }
-
-  return { item, changed }
-}
-
-/**
- * Leitura com prioridade:
- * 1) persist.ts (prefixado m360:)
- * 2) legado (localStorage cru sem prefixo)
- *
- * Se vier só do legado, migra silenciosamente para o persist.
- */
-function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
-  if (typeof window === 'undefined') return []
-
-  const key = storageKeyForDateKey(dateKey)
-
-  // 1) novo padrão: persist.ts
-  const fromPersist = load<unknown[] | null>(key, null)
-  if (Array.isArray(fromPersist)) {
-    const nowISO = new Date().toISOString()
-    let changed = false
-    const normalized: MyDayTaskItem[] = []
-
-    for (const raw of fromPersist) {
-      const r = normalizeStoredTask(raw, nowISO)
-      if (r.item) normalized.push(r.item)
-      if (r.changed) changed = true
+  return [...items].sort((a, b) => {
+    // Premium invisível: organiza por recência para sobrevivência/organização
+    if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
+      const sa = timeOf(a)
+      const sb = timeOf(b)
+      if (sa !== sb) return sb - sa
     }
 
-    if (changed) {
-      // escreve no persist e espelha no legado
-      writeTasksByDateKey(dateKey, normalized)
-    }
-    return normalized
-  }
+    const ra = statusRank(a)
+    const rb = statusRank(b)
+    if (ra !== rb) return ra - rb
 
-  // 2) legado: localStorage cru sem prefixo
-  const rawLegacy = safeParseJSON<unknown>(window.localStorage.getItem(key))
-  if (!Array.isArray(rawLegacy)) return []
-
-  const nowISO = new Date().toISOString()
-  let changed = false
-  const normalized: MyDayTaskItem[] = []
-
-  for (const raw of rawLegacy) {
-    const r = normalizeStoredTask(raw, nowISO)
-    if (r.item) normalized.push(r.item)
-    if (r.changed) changed = true
-  }
-
-  // migração silenciosa: achou só no legado → replica no persist
-  writeTasksByDateKey(dateKey, normalized)
-
-  // se normalizou, já persistiu acima
-  return normalized
-}
-
-function writeTasksByDateKey(dateKey: string, tasks: MyDayTaskItem[]) {
-  if (typeof window === 'undefined') return
-
-  const key = storageKeyForDateKey(dateKey)
-
-  // fonte oficial: persist.ts (m360:)
-  try {
-    save(key, tasks)
-  } catch {}
-
-  // espelha no legado (sem prefixo)
-  try {
-    window.localStorage.setItem(key, safeStringifyJSON(tasks))
-  } catch {}
-}
-
-/** ---------- API pública ---------- */
-
-export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
-  try {
-    const dk = makeDateKey(input.date ?? new Date())
-    const tasks = readTasksByDateKey(dk)
-
-    const title = (input.title ?? '').trim()
-    const origin = input.origin ?? 'other'
-    const source = input.source ?? MY_DAY_SOURCES.UNKNOWN
-    if (!title) return { ok: false }
-
-    // anti-duplicação
-    const exists = tasks.some((t) => t.title.trim().toLowerCase() === title.toLowerCase() && t.origin === origin)
-    if (exists) return { ok: true, created: false, dateKey: dk }
-
-    // guardrail (bola de neve)
-    const openCount = countOpenTasks(tasks)
-    if (openCount >= OPEN_TASKS_LIMIT_PER_DAY) {
-      try {
-        track('my_day.task.limit_hit', { dateKey: dk, openCount, limit: OPEN_TASKS_LIMIT_PER_DAY, origin, source })
-      } catch {}
-      return { ok: true, created: false, dateKey: dk, limitHit: true }
-    }
-
-    const id = makeId()
-    const nowISO = new Date().toISOString()
-
-    const next: MyDayTaskItem[] = [
-      ...tasks,
-      {
-        id,
-        title,
-        origin,
-        status: 'active',
-        createdAt: nowISO,
-        source,
-      },
-    ]
-
-    writeTasksByDateKey(dk, next)
-    return { ok: true, id, created: true, dateKey: dk }
-  } catch {
-    return { ok: false }
-  }
-}
-
-export function addTaskToMyDayAndTrack(input: AddToMyDayInput & { source: MyDaySource }) {
-  const res = addTaskToMyDay(input)
-  try {
-    track('my_day.task.add', {
-      ok: !!res.ok,
-      created: !!res.created,
-      origin: input.origin,
-      source: input.source,
-      dateKey: res.dateKey,
-      limitHit: !!res.limitHit,
-    })
-  } catch {}
-  return res
-}
-
-/**
- * Leitura do dia com auto-normalização:
- * - Se estava snoozed e o snoozeUntil chegou/venceu, volta para active.
- * - Persistimos só se houver mudança real.
- */
-export function listMyDayTasks(date?: Date): MyDayTaskItem[] {
-  const dk = makeDateKey(date ?? new Date())
-  const tasks = readTasksByDateKey(dk)
-
-  let changed = false
-
-  const next: MyDayTaskItem[] = tasks.map((t): MyDayTaskItem => {
-    const status: TaskStatus = (t.status ?? (t.done ? 'done' : 'active')) as TaskStatus
-
-    // auto-unsnooze quando o dia chegou
-    if (status === 'snoozed' && t.snoozeUntil && dk >= t.snoozeUntil) {
-      changed = true
-      return { ...t, status: 'active', snoozeUntil: undefined, done: false }
-    }
-
-    // coerência mínima status <-> done
-    if (t.done === true && status !== 'done') {
-      changed = true
-      return { ...t, status: 'done' }
-    }
-
-    if (t.done === false && status === 'done') {
-      changed = true
-      return { ...t, done: true }
-    }
-
-    if (t.status !== status) changed = true
-    return { ...t, status }
+    return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
   })
-
-  if (changed) writeTasksByDateKey(dk, next)
-  return next
 }
 
-export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
-  try {
-    const dk = makeDateKey(date ?? new Date())
-    const tasks = readTasksByDateKey(dk)
+/* =========================
+   Continuidade
+========================= */
 
-    const next: MyDayTaskItem[] = tasks.map((t) => {
-      if (t.id !== taskId) return t
-      const baseStatus = t.status ?? (t.done ? 'done' : 'active')
-      const nextStatus: TaskStatus = baseStatus === 'done' ? 'active' : 'done'
-      return { ...t, status: nextStatus, done: nextStatus === 'done' }
-    })
-
-    writeTasksByDateKey(dk, next)
-    try {
-      track('my_day.task.toggle_done', { ok: true })
-    } catch {}
-    return { ok: true }
-  } catch {
-    try {
-      track('my_day.task.toggle_done', { ok: false })
-    } catch {}
-    return { ok: false }
-  }
+function groupIdFromOrigin(origin: string): GroupId {
+  if (origin === 'today') return 'para-hoje'
+  if (origin === 'family') return 'familia'
+  if (origin === 'selfcare') return 'autocuidado'
+  if (origin === 'home') return 'rotina-casa'
+  return 'outros'
 }
 
-/**
- * P8/P12 — Snooze: empurra a tarefa para frente (não some, só “não agora”).
- * Export obrigatório (MyDayGroups importa isso).
- */
-export function snoozeTask(taskId: string, days = 1, date?: Date): { ok: boolean; snoozeUntil?: string } {
-  try {
-    const base = date ?? new Date()
-    const dk = makeDateKey(base)
+/* =========================
+   COMPONENTE
+========================= */
 
-    const until = new Date(base)
-    until.setDate(until.getDate() + Math.max(1, days))
-    const untilKey = makeDateKey(until)
+export default function MyDayGroups({
+  aiContext,
+  initialDate,
+}: {
+  aiContext?: AiLightContext
+  initialDate?: Date
+}) {
+  const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [highlightGroup, setHighlightGroup] = useState<GroupId | null>(null)
 
-    const tasks = readTasksByDateKey(dk)
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+  const [experienceTier, setExperienceTier] = useState(() => getExperienceTier())
+  const [densityLevel, setDensityLevel] = useState(() => getDensityLevel())
 
-    const next: MyDayTaskItem[] = tasks.map((t) => {
-      if (t.id !== taskId) return t
-      return { ...t, status: 'snoozed', snoozeUntil: untilKey, done: false }
-    })
+  const isPremiumExperience = experienceTier === 'premium'
+  const personaId = getPersonaId(aiContext)
 
-    writeTasksByDateKey(dk, next)
-    try {
-      track('my_day.task.snooze', { ok: true, days })
-    } catch {}
-    return { ok: true, snoozeUntil: untilKey }
-  } catch {
-    try {
-      track('my_day.task.snooze', { ok: false, days })
-    } catch {}
-    return { ok: false }
-  }
-}
+  const grouped = useMemo(() => groupTasks(tasks), [tasks])
+  const hasAny = tasks.length > 0
 
-/**
- * P8/P12 — Unsnooze: “Voltar para hoje”.
- * Export obrigatório (MyDayGroups importa isso).
- */
-export function unsnoozeTask(taskId: string, date?: Date): { ok: boolean } {
-  try {
-    const dk = makeDateKey(date ?? new Date())
-    const tasks = readTasksByDateKey(dk)
+  const effectiveLimit = useMemo(() => {
+    const raw = Number((euSignal as any)?.listLimit)
+    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
 
-    const next: MyDayTaskItem[] = tasks.map((t) => {
-      if (t.id !== taskId) return t
-      return { ...t, status: 'active', snoozeUntil: undefined, done: false }
-    })
+    if (densityLevel === 'normal') {
+      return Math.max(5, Math.min(6, resolved))
+    }
+    return Math.max(3, Math.min(4, resolved))
+  }, [euSignal, densityLevel])
 
-    writeTasksByDateKey(dk, next)
-    try {
-      track('my_day.task.unsnooze', { ok: true })
-    } catch {}
-    return { ok: true }
-  } catch {
-    try {
-      track('my_day.task.unsnooze', { ok: false })
-    } catch {}
-    return { ok: false }
-  }
-}
-
-/**
- * Remove definitivo.
- * Export obrigatório (MyDayGroups importa isso).
- */
-export function removeTask(taskId: string, date?: Date): { ok: boolean } {
-  try {
-    const dk = makeDateKey(date ?? new Date())
-    const tasks = readTasksByDateKey(dk)
-
-    const next: MyDayTaskItem[] = tasks.filter((t) => t.id !== taskId)
-    writeTasksByDateKey(dk, next)
-
-    try {
-      track('my_day.task.remove', { ok: true })
-    } catch {}
-    return { ok: true }
-  } catch {
-    try {
-      track('my_day.task.remove', { ok: false })
-    } catch {}
-    return { ok: false }
-  }
-}
-
-/**
- * Agrupamento por intenção/origin.
- * - top3 e agenda entram em "Para hoje"
- * - custom cai em "Outros" (lembrete livre)
- */
-export function groupTasks(tasks: MyDayTaskItem[]): GroupedTasks {
-  const grouped: GroupedTasks = {
-    'para-hoje': { id: 'para-hoje', title: 'Para hoje (simples e real)', items: [] },
-    familia: { id: 'familia', title: 'Família & conexão', items: [] },
-    autocuidado: { id: 'autocuidado', title: 'Autocuidado', items: [] },
-    'rotina-casa': { id: 'rotina-casa', title: 'Rotina & casa', items: [] },
-    outros: { id: 'outros', title: 'Outros', items: [] },
+  function refresh() {
+    setTasks(listMyDayTasks(initialDate))
   }
 
-  for (const t of tasks) {
-    const origin = t.origin ?? 'other'
-    if (origin === 'today' || origin === 'top3' || origin === 'agenda') grouped['para-hoje'].items.push(t)
-    else if (origin === 'family') grouped.familia.items.push(t)
-    else if (origin === 'selfcare') grouped.autocuidado.items.push(t)
-    else if (origin === 'home') grouped['rotina-casa'].items.push(t)
-    else grouped.outros.items.push(t)
+  function toggleGroup(groupId: GroupId) {
+    setExpanded((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
   }
 
-  return grouped
+  /* ---------- bootstrap ---------- */
+
+  useEffect(() => {
+    refresh()
+    setEuSignal(getEu360Signal())
+    setExperienceTier(getExperienceTier())
+    setDensityLevel(getDensityLevel())
+
+    const sync = () => {
+      setEuSignal(getEu360Signal())
+      setExperienceTier(getExperienceTier())
+      setDensityLevel(getDensityLevel())
+      refresh()
+    }
+
+    window.addEventListener('storage', sync)
+    window.addEventListener('m360:plan-updated', sync as EventListener)
+    window.addEventListener('eu360:persona-updated', sync as EventListener)
+
+    return () => {
+      window.removeEventListener('storage', sync)
+      window.removeEventListener('m360:plan-updated', sync as EventListener)
+      window.removeEventListener('eu360:persona-updated', sync as EventListener)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /* ---------- continuidade silenciosa ---------- */
+
+  useEffect(() => {
+    try {
+      const payload = consumeRecentMyDaySave()
+      if (!payload) return
+
+      const gid = groupIdFromOrigin(payload.origin)
+      setExpanded((prev) => ({ ...prev, [gid]: true }))
+      setHighlightGroup(gid)
+
+      window.setTimeout(() => {
+        try {
+          document.getElementById(`myday-group-${gid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } catch {}
+      }, 60)
+
+      window.setTimeout(() => setHighlightGroup(null), 6500)
+
+      try {
+        track('my_day.continuity.applied', { origin: payload.origin, source: payload.source })
+      } catch {}
+    } catch {}
+  }, [])
+
+  /* ---------- ações ---------- */
+
+  async function onDone(t: MyDayTaskItem) {
+    const res = removeTask(t.id, initialDate)
+    if (res.ok) refresh()
+  }
+
+  async function onRemove(t: MyDayTaskItem) {
+    const res = removeTask(t.id, initialDate)
+    if (res.ok) refresh()
+  }
+
+  async function onSnooze(t: MyDayTaskItem) {
+    const res = snoozeTask(t.id, 1, initialDate)
+    if (res.ok) refresh()
+  }
+
+  async function onUnsnooze(t: MyDayTaskItem) {
+    const res = unsnoozeTask(t.id, initialDate)
+    if (res.ok) refresh()
+  }
+
+  /* ---------- render ---------- */
+
+  return (
+    <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
+      {!hasAny ? (
+        <div className="bg-white rounded-3xl p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)] border border-[var(--color-border-soft)]">
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Parece que hoje está começando vazio.</h4>
+
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">Por agora, você pode ficar só com uma coisa pequena.</p>
+
+          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">Só isso já é suficiente para devolver um pouco de chão.</p>
+        </div>
+      ) : (
+        <div className="space-y-4 md:space-y-5">
+          {GROUP_ORDER.map((groupId) => {
+            const group = grouped[groupId]
+            if (!group || group.items.length === 0) return null
+
+            const sorted = sortForGroup(group.items, {
+              premium: isPremiumExperience,
+              persona: personaId,
+            })
+
+            const isExpanded = !!expanded[groupId]
+            const visible = isExpanded ? sorted : sorted.slice(0, effectiveLimit)
+            const hasMore = sorted.length > effectiveLimit
+            const isHighlighted = highlightGroup === groupId
+
+            return (
+              <div
+                key={groupId}
+                id={`myday-group-${groupId}`}
+                className={[
+                  'bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[var(--color-border-soft)]',
+                  isHighlighted ? 'ring-1 ring-[#fd2597]/20 border-[#fd2597]/25 bg-[rgba(253,37,151,0.03)]' : '',
+                ].join(' ')}
+              >
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">{group.title}</h4>
+
+                  {hasMore ? (
+                    <button
+                      onClick={() => toggleGroup(groupId)}
+                      className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                    >
+                      {isExpanded ? 'Recolher' : 'Ver tudo'}
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {visible.map((t) => {
+                    const st = statusOf(t)
+                    const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
+
+                    return (
+                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3 items-stretch sm:items-center">
+                          <div className="min-w-0">
+                            <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>
+
+                            {st === 'snoozed' ? (
+                              <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
+                                Deixado para depois{snoozeLabel ? ` • até ${snoozeLabel}` : ''}.
+                              </p>
+                            ) : null}
+                          </div>
+
+                          <div className="shrink-0 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-2">
+                            {st === 'active' ? (
+                              <>
+                                <button
+                                  onClick={() => onDone(t)}
+                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
+                                >
+                                  Feito
+                                </button>
+
+                                <button
+                                  onClick={() => onSnooze(t)}
+                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                                >
+                                  Deixar para depois
+                                </button>
+
+                                <button
+                                  onClick={() => onRemove(t)}
+                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                                >
+                                  Remover
+                                </button>
+                              </>
+                            ) : st === 'snoozed' ? (
+                              <>
+                                <button
+                                  onClick={() => onUnsnooze(t)}
+                                  className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
+                                >
+                                  Trazer de volta
+                                </button>
+
+                                <button
+                                  onClick={() => onRemove(t)}
+                                  className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                                >
+                                  Remover
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => onRemove(t)}
+                                className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
+                              >
+                                Remover
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
 }
