@@ -7,7 +7,7 @@ import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
 
-//  usar o shape evolutivo do Meu Dia (compatível com Planner)
+// usar o shape evolutivo do Meu Dia (compatível com Planner)
 import type { MyDayTaskItem, TaskOrigin, TaskStatus } from '@/app/lib/myDayTasks.client'
 import { MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 
@@ -179,7 +179,7 @@ function normalizeText(s: string) {
   return (s ?? '').trim().replace(/\s+/g, ' ')
 }
 
-//  normaliza tasks antigas (que podem vir apenas com `done`)
+// normaliza tasks antigas (que podem vir apenas com `done`)
 function normalizeLoadedTasks(raw: any[]): MyDayTaskItem[] {
   const nowISO = new Date().toISOString()
 
@@ -440,7 +440,7 @@ export default function WeeklyPlannerCore() {
 
   const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
   const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
-  const shortcutLabelSelfcare = isGentleTone ? 'Um respiro pequeno' : 'Pequenos gestos de autocuidado'
+  const shortcutLabelSelfcare = 'Como estou agora'
   const shortcutLabelFamily = isGentleTone ? 'Um cuidado importante' : 'Momentos e cuidados importantes'
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
@@ -483,15 +483,16 @@ export default function WeeklyPlannerCore() {
   const [monthSheetOpen, setMonthSheetOpen] = useState(false)
   const [monthCursor, setMonthCursor] = useState<Date>(toFirstOfMonth(new Date()))
 
-  // ---------- Reminders UI (SEM prompt do browser) ----------
+  // ---------- Modal reutilizado (lembrete OU check-in silencioso) ----------
   const [reminderModalOpen, setReminderModalOpen] = useState(false)
   const [reminderDraft, setReminderDraft] = useState('')
   const [reminderOrigin, setReminderOrigin] = useState<TaskOrigin>('other')
   const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [editingDraft, setEditingDraft] = useState('')
+  const [isCheckinMode, setIsCheckinMode] = useState(false)
 
-  // ---------- Onboarding contextual (NEW) ----------
+  // ---------- Onboarding contextual ----------
   const [coachStep, setCoachStep] = useState<CoachStep | null>(null)
   const [coachEnabled, setCoachEnabled] = useState(false)
   const [isMobileCoach, setIsMobileCoach] = useState(false)
@@ -820,9 +821,16 @@ export default function WeeklyPlannerCore() {
   const monthMatrix = useMemo(() => generateMonthMatrix(monthCursor), [monthCursor])
 
   // ======================================================
-  // REMINDER MODAL ACTIONS
+  // REMINDER/CHECK-IN MODAL ACTIONS
   // ======================================================
-  const openReminderModal = (origin: TaskOrigin, seed?: string) => {
+  const closeReminderModal = useCallback(() => {
+    setReminderModalOpen(false)
+    setReminderDraft('')
+    setIsCheckinMode(false)
+  }, [])
+
+  const openReminderModal = useCallback((origin: TaskOrigin, seed?: string) => {
+    setIsCheckinMode(false)
     setReminderOrigin(origin)
     setReminderDraft(seed ?? '')
     setReminderModalOpen(true)
@@ -830,9 +838,20 @@ export default function WeeklyPlannerCore() {
     try {
       track('planner.reminder_modal_opened', { tab: 'meu-dia', origin })
     } catch {}
-  }
+  }, [])
 
-  const submitReminder = () => {
+  const openCheckinModal = useCallback(() => {
+    setIsCheckinMode(true)
+    setReminderOrigin('selfcare') // não cria origin novo (evita erro de tipos)
+    setReminderDraft('')
+    setReminderModalOpen(true)
+
+    try {
+      track('planner.checkin_opened', { tab: 'meu-dia' })
+    } catch {}
+  }, [])
+
+  const submitReminder = useCallback(() => {
     const text = normalizeText(reminderDraft)
     if (!text) return
     addTask(text, reminderOrigin)
@@ -842,7 +861,24 @@ export default function WeeklyPlannerCore() {
     try {
       track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
     } catch {}
-  }
+  }, [addTask, reminderDraft, reminderOrigin])
+
+  type CheckinSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
+
+  const commitCheckin = useCallback(
+    (selectedSignal: CheckinSignal) => {
+      try {
+        localStorage.setItem('m360.my_day.last_signal.v1', selectedSignal)
+      } catch {}
+
+      try {
+        track('planner.checkin_selected', { tab: 'meu-dia', value: selectedSignal })
+      } catch {}
+
+      closeReminderModal()
+    },
+    [closeReminderModal],
+  )
 
   // ======================================================
   // COACH CONTENT
@@ -899,7 +935,6 @@ export default function WeeklyPlannerCore() {
   }, [coachStep, markCoachDone, nextCoach])
 
   const onCoachSecondary = useCallback(() => {
-    // fechar (sem marcar como done): caso a mãe feche, não some pra sempre.
     closeCoach()
   }, [closeCoach])
 
@@ -962,7 +997,6 @@ export default function WeeklyPlannerCore() {
                   </button>
                 </div>
 
-                {/* ⓘ do calendário (apenas na 1ª vez / enquanto onboarding ativo) */}
                 <InfoDot
                   hidden={!shouldRenderCoach || coachStep !== 'planner' ? true : false}
                   onClick={() => openCoach('planner')}
@@ -971,7 +1005,6 @@ export default function WeeklyPlannerCore() {
               </div>
             </div>
 
-            {/* MINI-CARD (desktop) — Planner */}
             {shouldRenderCoach && coachStep === 'planner' && !isMobileCoach && coachContent ? (
               <CoachMiniCard
                 title={coachContent.title}
@@ -1010,12 +1043,10 @@ export default function WeeklyPlannerCore() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* ⓘ do card Lembretes (apenas na 1ª vez / enquanto onboarding ativo) */}
                     {shouldRenderCoach && (
                       <InfoDot onClick={() => openCoach('reminders')} label="Como usar lembretes" />
                     )}
 
-                    {/* + abre modal interno (sem prompt do browser) */}
                     <button
                       type="button"
                       onClick={() => openReminderModal('other')}
@@ -1027,7 +1058,6 @@ export default function WeeklyPlannerCore() {
                   </div>
                 </div>
 
-                {/* MINI-CARD (desktop) — Lembretes */}
                 {shouldRenderCoach && coachStep === 'reminders' && !isMobileCoach && coachContent ? (
                   <CoachMiniCard
                     title={coachContent.title}
@@ -1196,12 +1226,15 @@ export default function WeeklyPlannerCore() {
                   )}
                 </div>
 
-                {/* Atalhos (abrem o mesmo modal leve) */}
+                {/* Atalhos */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() =>
-                      openReminderModal('top3', isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial')
+                      openReminderModal(
+                        'top3',
+                        isGentleTone ? 'Ex.: separar 10 min para respirar' : 'Ex.: resolver uma coisa essencial',
+                      )
                     }
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
@@ -1218,7 +1251,7 @@ export default function WeeklyPlannerCore() {
 
                   <button
                     type="button"
-                    onClick={() => openReminderModal('selfcare', 'Ex.: água, banho com calma, alongar 2 min…')}
+                    onClick={openCheckinModal}
                     className="rounded-2xl bg-white/80 border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
                   >
                     {shortcutLabelSelfcare}
@@ -1252,7 +1285,6 @@ export default function WeeklyPlannerCore() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* ⓘ do card Compromissos (apenas na 1ª vez / enquanto onboarding ativo) */}
                     {shouldRenderCoach && (
                       <InfoDot onClick={() => openCoach('appointments')} label="Como usar compromissos" />
                     )}
@@ -1268,7 +1300,6 @@ export default function WeeklyPlannerCore() {
                   </div>
                 </div>
 
-                {/* MINI-CARD (desktop) — Compromissos */}
                 {shouldRenderCoach && coachStep === 'appointments' && !isMobileCoach && coachContent ? (
                   <CoachMiniCard
                     title={coachContent.title}
@@ -1282,8 +1313,9 @@ export default function WeeklyPlannerCore() {
 
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {sortedAppointments.length === 0 ? (
-                    <p className="text-xs text-[var(--color-text-muted)]">Nenhum compromisso por aqui hoje.
-Se fizer sentido, você pode registrar algo — ou só deixar assim.</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      Nenhum compromisso por aqui hoje. Se fizer sentido, você pode registrar algo — ou só deixar assim.
+                    </p>
                   ) : (
                     (() => {
                       const limit = Math.max(1, Number(euSignal.listLimit) || 5)
@@ -1347,7 +1379,7 @@ Se fizer sentido, você pode registrar algo — ou só deixar assim.</p>
             </div>
           )}
 
-          {/* Card de navegação dia anterior/próximo (agora com propósito: abre calendário no centro) */}
+          {/* Card de navegação dia anterior/próximo */}
           <SoftCard
             className="rounded-3xl bg-white/95 border border-[var(--color-soft-strong)] p-4 md:p-6 cursor-pointer hover:bg-white/100 transition-colors"
             onClick={openMonthSheet}
@@ -1407,71 +1439,146 @@ Se fizer sentido, você pode registrar algo — ou só deixar assim.</p>
         />
       ) : null}
 
-      {/* MODAL: adicionar lembrete (substitui prompt azul) */}
+      {/* MODAL: adicionar lembrete OU check-in silencioso */}
       {reminderModalOpen && (
-        <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Adicionar lembrete">
+        <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Modal">
+          {/* Backdrop */}
           <button
             type="button"
             className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
-            onClick={() => setReminderModalOpen(false)}
+            onClick={closeReminderModal}
             aria-label="Fechar"
           />
+
           <div className="absolute left-1/2 top-[16%] w-[92%] max-w-md -translate-x-1/2">
             <SoftCard className="rounded-3xl bg-white border border-[var(--color-soft-strong)] p-4 md:p-5 shadow-[0_16px_60px_rgba(0,0,0,0.18)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                    Lembrete
-                  </p>
-                  <h3 className="text-base font-semibold text-[var(--color-text-main)]">
-                    O que você quer registrar?
-                  </h3>
-                  <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
-                    Uma frase curta já ajuda. Sem perfeição.
-                  </p>
-                </div>
+              {isCheckinMode ? (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                        Check-in
+                      </p>
+                      <h3 className="text-base font-semibold text-[var(--color-text-main)]">
+                        Como você está agora?
+                      </h3>
+                      <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                        Só um toque para se reconhecer. Nada além disso.
+                      </p>
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={() => setReminderModalOpen(false)}
-                  className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
-                  aria-label="Fechar"
-                >
-                  ✕
-                </button>
-              </div>
+                    <button
+                      type="button"
+                      onClick={closeReminderModal}
+                      className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                      aria-label="Fechar"
+                    >
+                      ✕
+                    </button>
+                  </div>
 
-              <div className="mt-3 space-y-2">
-                <input
-                  value={reminderDraft}
-                  onChange={(e) => setReminderDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') submitReminder()
-                    if (e.key === 'Escape') setReminderModalOpen(false)
-                  }}
-                  placeholder="Ex.: separar 10 min para respirar"
-                  className="w-full rounded-2xl border border-[var(--color-soft-strong)] px-3 py-3 text-sm outline-none focus:border-[var(--color-brand)]"
-                  autoFocus
-                />
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('heavy')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Pesado
+                    </button>
 
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setReminderModalOpen(false)}
-                    className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
-                  >
-                    Cancelar
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('tired')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Cansada
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={submitReminder}
-                    className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
-                  >
-                    Salvar
-                  </button>
-                </div>
-              </div>
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('overwhelmed')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Sobrecarregada
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => commitCheckin('neutral')}
+                      className="rounded-2xl bg-white border border-[var(--color-soft-strong)] px-3 py-3 text-sm font-semibold text-[var(--color-text-main)] hover:border-[var(--color-brand)]/60"
+                    >
+                      Neutro
+                    </button>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={closeReminderModal}
+                      className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
+                        Lembrete
+                      </p>
+                      <h3 className="text-base font-semibold text-[var(--color-text-main)]">
+                        O que você quer registrar?
+                      </h3>
+                      <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                        Uma frase curta já ajuda. Sem perfeição.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={closeReminderModal}
+                      className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
+                      aria-label="Fechar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <input
+                      value={reminderDraft}
+                      onChange={(e) => setReminderDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') submitReminder()
+                        if (e.key === 'Escape') closeReminderModal()
+                      }}
+                      placeholder="Ex.: separar 10 min para respirar"
+                      className="w-full rounded-2xl border border-[var(--color-soft-strong)] px-3 py-3 text-sm outline-none focus:border-[var(--color-brand)]"
+                      autoFocus
+                    />
+
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={closeReminderModal}
+                        className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)]"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={submitReminder}
+                        className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.35)] hover:bg-[#e00070]"
+                      >
+                        Salvar
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </SoftCard>
           </div>
         </div>

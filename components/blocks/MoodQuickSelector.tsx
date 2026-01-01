@@ -24,9 +24,20 @@ const MOODS: Mood[] = [
 
 interface MoodQuickSelectorProps {
   onMoodSelect?: (value: MoodValue, dayIndex: number) => void
+
+  /**
+   * P33.5 — Quando true, não mostra toast nem feedback explícito.
+   * Usado no check-in emocional dentro do modal existente do planner.
+   */
+  silent?: boolean
+
+  /**
+   * Callback opcional para fechar o modal/fluxo após a seleção.
+   */
+  onDone?: () => void
 }
 
-export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
+export function MoodQuickSelector({ onMoodSelect, silent = false, onDone }: MoodQuickSelectorProps) {
   const [selectedMood, setSelectedMood] = useState<MoodValue | null>(null)
 
   // Load today's mood on mount
@@ -47,12 +58,22 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
   const handleMoodSelect = (moodValue: MoodValue) => {
     setSelectedMood(moodValue)
 
+feature/p33-4a-emotional-signal-checkin
     // P33.4a — Conexão do sinal emocional ao check-in (modo leve Meu Dia)
+
+    // P33.4a / P33.5 — Conexão do sinal emocional ao check-in (modo leve Meu Dia)
+
     // Valores permitidos: heavy | tired | overwhelmed | neutral
     const selectedSignal: 'heavy' | 'tired' | 'overwhelmed' | 'neutral' =
       moodValue === 1 ? 'tired' : moodValue === 0 ? 'overwhelmed' : 'neutral'
 
+feature/p33-4a-emotional-signal-checkin
     localStorage.setItem('m360.my_day.last_signal.v1', selectedSignal)
+
+    try {
+      localStorage.setItem('m360.my_day.last_signal.v1', selectedSignal)
+    } catch {}
+
 
     // Get today's index in the week
     const today = new Date()
@@ -76,13 +97,18 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
       dayIndex,
     })
 
-    // Show toast
-    toast.success('Humor registrado! Um passo de cada vez é o suficiente.')
+    // Feedback explícito SOMENTE quando não estiver em modo silencioso
+    if (!silent) {
+      toast.success('Humor registrado! Um passo de cada vez é o suficiente.')
+    }
 
     // Callback if provided
     if (onMoodSelect) {
       onMoodSelect(moodValue, dayIndex)
     }
+
+    // Fechamento do fluxo (modal) quando aplicável
+    if (onDone) onDone()
   }
 
   return (
@@ -102,11 +128,7 @@ export function MoodQuickSelector({ onMoodSelect }: MoodQuickSelectorProps) {
             title={mood.label}
             type="button"
           >
-            <AppIcon
-              name={mood.iconName as any}
-              size={16}
-              variant={isActive ? 'brand' : 'default'}
-            />
+            <AppIcon name={mood.iconName as any} size={16} variant={isActive ? 'brand' : 'default'} />
             <span className="font-medium">{mood.label}</span>
           </button>
         )
