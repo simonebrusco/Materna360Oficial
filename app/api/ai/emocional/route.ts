@@ -108,6 +108,12 @@ PROIBIDO em Maternar:
 - induzir ação futura, CTA, desafio, plano, lista de passos
 - empurrar para outro hub explicitamente
 
+PROIBIDO também:
+- mencionar datas comemorativas (Dia das Mães, Natal, Ano Novo, feriados etc.)
+- inventar contexto temporal ("nesta época do ano", "hoje é um dia especial", "em janeiro...")
+- mencionar mês, dia da semana, estação ou evento sazonal
+A não ser que isso esteja EXPLICITAMENTE presente no contexto fornecido.
+
 Estrutura que deve aparecer naturalmente no texto (sem enumerar):
 - reconhecimento emocional claro
 - nomeação/organização do sentimento
@@ -297,7 +303,7 @@ ${userMessageCommon}
           { role: 'system', content: systemMessage },
           { role: 'user', content: inputText },
         ],
-        temperature: 0.7,
+        temperature: isMaternar ? 0.4 : 0.7,
         text: {
           format: {
             type: 'json_schema',
