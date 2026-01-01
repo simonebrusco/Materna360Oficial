@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import type { AISuggestion } from '@/app/lib/ai/orchestrator.types'
 
 type Suggestion = {
   id: string
@@ -16,6 +15,10 @@ type State =
   | { status: 'done'; items: Suggestion[] }
 
 const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
+
+// P33.4a — key do sinal emocional (contexto fraco, opcional)
+const LS_EMOTIONAL_SIGNAL_KEY = 'm360.my_day.last_signal.v1'
+type EmotionalSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
 
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
@@ -40,6 +43,27 @@ function safeSetLS(key: string, value: string) {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(key, value)
   } catch {}
+}
+
+/**
+ * P33.4a — lê sinal emocional como contexto fraco:
+ * - se não existir key -> retorna null (não enviar)
+ * - se existir, valida enum -> heavy/tired/overwhelmed/neutral
+ * - se inválido -> fallback obrigatório 'neutral'
+ */
+function readEmotionalSignal(): EmotionalSignal | null {
+  const raw = safeGetLS(LS_EMOTIONAL_SIGNAL_KEY)
+  if (!raw) return null
+
+  switch (raw) {
+    case 'heavy':
+    case 'tired':
+    case 'overwhelmed':
+    case 'neutral':
+      return raw
+    default:
+      return 'neutral'
+  }
 }
 
 function normalize(payload: any): Suggestion[] | null {
@@ -145,11 +169,19 @@ export default function QuickIdeaAI() {
     const nonce = Date.now()
 
     try {
+      // P33.4a — contexto fraco (opcional)
+      const signal = readEmotionalSignal()
+
+      const postPayload: any = { intent: 'quick_idea', nonce }
+      if (signal) {
+        postPayload.memory = { emotional_signal: signal }
+      }
+
       // POST (preferido)
       const postRes = await fetch('/api/ai/quick-ideas', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ intent: 'quick_idea', nonce }),
+        body: JSON.stringify(postPayload),
         cache: 'no-store',
       })
 
