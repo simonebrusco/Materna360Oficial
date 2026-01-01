@@ -17,6 +17,15 @@ type State =
 
 const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
 
+// P33.4a — sinal emocional (contexto fraco)
+const LS_SIGNAL_KEY = 'm360.my_day.last_signal.v1'
+type EmotionalSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
+
+// P33.4b — rotação/autonomia (cache técnico local)
+const LS_SEEN_KEY = 'm360.my_day.quick_idea.seen.v1'
+const LS_COUNT_KEY = 'm360.my_day.quick_idea.count.v1'
+const DAILY_SOFT_BUDGET = 10 // invisível; não bloqueia, apenas relaxa anti-repetição depois disso
+
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
   try {
@@ -80,7 +89,11 @@ function normalize(payload: any): Suggestion[] | null {
 }
 
 function signature(items: Suggestion[]) {
-  return items.map(i => `${i.title}::${i.description ?? ''}`).join('|')
+  return items.map((i) => `${i.title}::${i.description ?? ''}`).join('|')
+}
+
+function itemKey(i: Suggestion) {
+  return `${i.title}::${i.description ?? ''}`.trim()
 }
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -112,7 +125,7 @@ function getSavedFromLS(): Suggestion[] {
   const parsed = safeParse<unknown>(raw)
   if (!Array.isArray(parsed)) return []
   const items = (parsed as any[])
-    .filter(x => x && typeof x.title === 'string' && x.title.trim())
+    .filter((x) => x && typeof x.title === 'string' && x.title.trim())
     .slice(0, 50)
     .map((x, idx) => ({
       id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
@@ -126,6 +139,84 @@ function setSavedToLS(items: Suggestion[]) {
   safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
 }
 
+// ===== P33.4b helpers: dia, vistos, orçamento suave =====
+
+function todayKey() {
+  // YYYY-MM-DD (local)
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+type SeenState = { dayKey: string; seen: string[] }
+
+function getSeenState(): SeenState {
+  const raw = safeGetLS(LS_SEEN_KEY)
+  const parsed = safeParse<SeenState>(raw)
+  const key = todayKey()
+
+  if (!parsed || typeof parsed !== 'object') return { dayKey: key, seen: [] }
+  if (parsed.dayKey !== key) return { dayKey: key, seen: [] }
+  if (!Array.isArray(parsed.seen)) return { dayKey: key, seen: [] }
+
+  // limit defensivo
+  const seen = parsed.seen.filter((s) => typeof s === 'string' && s.trim()).slice(0, 80)
+  return { dayKey: key, seen }
+}
+
+function setSeenState(next: SeenState) {
+  safeSetLS(LS_SEEN_KEY, JSON.stringify({ dayKey: next.dayKey, seen: next.seen.slice(0, 80) }))
+}
+
+type CountState = { dayKey: string; count: number }
+
+function getCountState(): CountState {
+  const raw = safeGetLS(LS_COUNT_KEY)
+  const parsed = safeParse<CountState>(raw)
+  const key = todayKey()
+
+  if (!parsed || typeof parsed !== 'object') return { dayKey: key, count: 0 }
+  if (parsed.dayKey !== key) return { dayKey: key, count: 0 }
+  const count = Number.isFinite(parsed.count) ? Number(parsed.count) : 0
+  return { dayKey: key, count: Math.max(0, Math.min(200, count)) }
+}
+
+function setCountState(next: CountState) {
+  safeSetLS(LS_COUNT_KEY, JSON.stringify({ dayKey: next.dayKey, count: Math.max(0, Math.min(200, next.count)) }))
+}
+
+function normalizeSignal(input: unknown): EmotionalSignal {
+  switch (input) {
+    case 'heavy':
+    case 'tired':
+    case 'overwhelmed':
+    case 'neutral':
+      return input
+    default:
+      return 'neutral'
+  }
+}
+
+function getSignalFromLS(): EmotionalSignal {
+  const raw = safeGetLS(LS_SIGNAL_KEY)
+  return normalizeSignal(raw)
+}
+
+function filterUnseen(items: Suggestion[], seen: Set<string>) {
+  return items.filter((i) => !seen.has(itemKey(i)))
+}
+
+function fillToThree(primary: Suggestion[], fallbackSeed: number) {
+  if (primary.length >= 3) return primary.slice(0, 3)
+  const existing = new Set(primary.map(itemKey))
+  const filler = shuffle(baseFallback(), fallbackSeed)
+    .filter((x) => !existing.has(itemKey(x)))
+    .slice(0, 3 - primary.length)
+  return [...primary, ...filler].slice(0, 3)
+}
+
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
@@ -136,7 +227,7 @@ export default function QuickIdeaAI() {
 
   const visibleItems = useMemo(() => {
     if (state.status !== 'done') return []
-    return state.items.filter(i => !dismissed[i.id])
+    return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
   const run = useCallback(async (attempt = 0) => {
@@ -144,12 +235,31 @@ export default function QuickIdeaAI() {
 
     const nonce = Date.now()
 
+    // P33.4b: orçamento suave por dia (invisível)
+    const countState = getCountState()
+    const nextCount = countState.count + 1
+    setCountState({ dayKey: countState.dayKey, count: nextCount })
+
+    // Quanto mais “pede outra”, mais relaxamos a anti-repetição (sem bloquear).
+    const strictRotation = nextCount <= DAILY_SOFT_BUDGET
+
+    // P33.4b: vistos do dia (cache técnico)
+    const seenState = getSeenState()
+    const seenSet = new Set(seenState.seen)
+
+    // P33.4a: sinal emocional como contexto fraco
+    const emotionalSignal = getSignalFromLS()
+
     try {
       // POST (preferido)
       const postRes = await fetch('/api/ai/quick-ideas', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ intent: 'quick_idea', nonce }),
+        body: JSON.stringify({
+          intent: 'quick_idea',
+          nonce,
+          memory: { emotional_signal: emotionalSignal },
+        }),
         cache: 'no-store',
       })
 
@@ -168,46 +278,92 @@ export default function QuickIdeaAI() {
 
       const normalized = normalize(data)
 
-      // se não veio nada utilizável, usa fallback embaralhado
-      const nextItems =
+      // Se não veio nada utilizável, usa fallback embaralhado
+      const rawItems =
         normalized ??
         shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
 
+      // P33.4b: anti-repetição invisível (quando ainda “vale” manter variedade)
+      const candidates = strictRotation ? filterUnseen(rawItems, seenSet) : rawItems
+
+      // Se ficou fraco demais (ex.: 1 item sobrando) e ainda não tentamos, tenta mais uma vez
+      // para evitar sensação de “travado”, mas sem loop infinito.
+      if (strictRotation && candidates.length < 3 && attempt < 1) {
+        return await run(attempt + 1)
+      }
+
+      // Completa para 3, sem inventar UX; apenas evita silêncio
+      const nextItems = fillToThree(
+        candidates.length ? candidates : rawItems,
+        (fallbackSeedRef.current = fallbackSeedRef.current + 19)
+      )
+
       const sig = signature(nextItems)
 
-      // se repetiu exatamente e ainda não tentou, tenta mais uma vez
-      if (sig && sig === lastSigRef.current && attempt < 1) {
+      // Se repetiu exatamente e ainda não tentou (e ainda estamos em rotação “estrita”), tenta mais uma vez
+      if (strictRotation && sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
 
       lastSigRef.current = sig
 
-      // reseta “dismissed” a cada nova rodada para não “sumir tudo”
+      // P33.4b: marca como vistos do dia (cache técnico)
+      const nextSeen = [...seenState.seen]
+      for (const it of nextItems) {
+        const k = itemKey(it)
+        if (k && !nextSeen.includes(k)) nextSeen.unshift(k)
+      }
+      setSeenState({ dayKey: seenState.dayKey, seen: nextSeen.slice(0, 80) })
+
+      // Reseta “dismissed” a cada nova rodada para não “sumir tudo”
       setDismissed({})
       setState({ status: 'done', items: nextItems })
     } catch {
-      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 3)
+      const rawItems = shuffle(
+        baseFallback(),
+        (fallbackSeedRef.current = fallbackSeedRef.current + 23)
+      ).slice(0, 3)
+
+      const candidates = strictRotation ? filterUnseen(rawItems, seenSet) : rawItems
+
+      if (strictRotation && candidates.length < 3 && attempt < 1) {
+        return await run(attempt + 1)
+      }
+
+      const nextItems = fillToThree(
+        candidates.length ? candidates : rawItems,
+        (fallbackSeedRef.current = fallbackSeedRef.current + 29)
+      )
+
       const sig = signature(nextItems)
 
-      if (sig && sig === lastSigRef.current && attempt < 1) {
+      if (strictRotation && sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
 
       lastSigRef.current = sig
+
+      const nextSeen = [...seenState.seen]
+      for (const it of nextItems) {
+        const k = itemKey(it)
+        if (k && !nextSeen.includes(k)) nextSeen.unshift(k)
+      }
+      setSeenState({ dayKey: seenState.dayKey, seen: nextSeen.slice(0, 80) })
+
       setDismissed({})
       setState({ status: 'done', items: nextItems })
     }
   }, [])
 
   const dismissOne = useCallback((id: string) => {
-    setDismissed(prev => ({ ...prev, [id]: true }))
+    setDismissed((prev) => ({ ...prev, [id]: true }))
   }, [])
 
   const saveOne = useCallback(
     (item: Suggestion) => {
       // não duplica por title+description
       const key = `${item.title}::${item.description ?? ''}`.trim()
-      const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
+      const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) return
 
       const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
@@ -220,7 +376,7 @@ export default function QuickIdeaAI() {
 
   const removeSaved = useCallback(
     (id: string) => {
-      const next = saved.filter(s => s.id !== id)
+      const next = saved.filter((s) => s.id !== id)
       setSaved(next)
       setSavedToLS(next)
     },
@@ -282,7 +438,7 @@ export default function QuickIdeaAI() {
 
             {visibleItems.length ? (
               <div className="space-y-3">
-                {visibleItems.map(item => (
+                {visibleItems.map((item) => (
                   <div
                     key={item.id}
                     className="
@@ -343,9 +499,7 @@ export default function QuickIdeaAI() {
               </div>
             ) : (
               <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">
-                  Sem pressão. Se quiser, peça outra ideia.
-                </p>
+                <p className="text-[13px] text-[#6A6A6A]">Sem pressão. Se quiser, peça outra ideia.</p>
               </div>
             )}
 
@@ -356,7 +510,7 @@ export default function QuickIdeaAI() {
                 </div>
 
                 <div className="mt-2 space-y-2">
-                  {saved.slice(0, 3).map(item => (
+                  {saved.slice(0, 3).map((item) => (
                     <div
                       key={item.id}
                       className="
