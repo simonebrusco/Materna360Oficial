@@ -5,10 +5,12 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
+import { ClientOnly } from '@/components/common/ClientOnly'
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -30,6 +32,22 @@ type Routine = {
   next: string
 }
 
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
 function stepIndex(s: Step) {
   return s === 'ritmo' ? 1 : s === 'mini-rotina' ? 2 : s === 'pausas' ? 3 : 4
 }
@@ -41,37 +59,37 @@ function focusLabel(f: FocusMode) {
 }
 
 function focusTitle(f: FocusMode) {
-  if (f === '1min') return 'Bem curtinho'
-  if (f === '3min') return 'Um respiro'
-  return 'Com um pouco mais de calma'
+  if (f === '1min') return 'Reset rápido'
+  if (f === '3min') return 'Recarregar'
+  return 'Cuidar com calma'
 }
 
 function focoHint(f: FocusMode) {
-  if (f === '1min') return 'Só para abaixar o volume um pouco, sem compromisso.'
-  if (f === '3min') return 'Um cuidado pequeno que cabe sem parar o mundo.'
-  return 'Um cuidado leve, do seu tamanho, sem precisar “render” nada.'
+  if (f === '1min') return 'Para quando você só precisa baixar o volume e seguir.'
+  if (f === '3min') return 'Para quando dá para fazer um pequeno reset e continuar.'
+  return 'Para quando você consegue se organizar por dentro com um pouco mais de calma.'
 }
 
 function ritmoTitle(r: Ritmo) {
-  if (r === 'leve') return 'Entendi: hoje dá para manter leve.'
-  if (r === 'animada') return 'Que bom: vamos só estabilizar, sem exagero.'
-  if (r === 'cansada') return 'Entendi: hoje está puxado.'
-  return 'Entendi: hoje está pesado.'
+  if (r === 'leve') return 'Ok, vamos manter leve.'
+  if (r === 'animada') return 'Boa. Vamos estabilizar sem exagerar.'
+  if (r === 'cansada') return 'Entendido. Vamos recuperar fôlego.'
+  return 'Entendido. Vamos reduzir pressão primeiro.'
 }
 
 function ritmoHint(r: Ritmo) {
-  if (r === 'leve') return 'Aqui a ideia é só te dar um apoio pequeno — se fizer sentido.'
-  if (r === 'animada') return 'Um cuidado curto para você seguir bem, sem virar cobrança.'
-  if (r === 'cansada') return 'Vamos de algo curto e possível, sem exigir nada de você.'
-  return 'Vamos reduzir pressão com um passo pequeno — e pode parar quando quiser.'
+  if (r === 'leve') return 'A meta é simples: seguir bem, sem inventar muito.'
+  if (r === 'animada') return 'A meta é manter o ritmo bom sem virar sobrecarga.'
+  if (r === 'cansada') return 'A meta é recuperar um pouco de energia com algo curto e certeiro.'
+  return 'A meta é destravar: um passo pequeno agora já muda o resto do dia.'
 }
 
 const ROUTINES: Routine[] = [
   {
     id: 'r1',
     focus: '1min',
-    title: 'Reset de 60s (respirar e seguir)',
-    subtitle: 'Um minuto para baixar o ruído interno, só isso.',
+    title: 'Reset 60s (respirar e seguir)',
+    subtitle: 'Um minuto para reduzir o ruído e voltar pro próximo passo.',
     steps: ['Inspire 4', 'Segure 2', 'Solte 6', 'Repita 3x'],
     pauseDeck: [
       { label: 'Respirar 1 min', min: 1 },
@@ -79,14 +97,14 @@ const ROUTINES: Routine[] = [
       { label: 'Ombros para baixo (3x)', min: 1 },
       { label: 'Olhar pela janela (30s)', min: 1 },
     ],
-    close: 'Pronto. Se isso já te ajudou um pouco, já valeu.',
-    next: 'Você pode encerrar por aqui — ou escolher outra pausa, se quiser.',
+    close: 'Pronto. Você já fez o necessário para seguir melhor.',
+    next: 'Agora escolha a próxima coisa real do seu dia.',
   },
   {
     id: 'r2',
     focus: '3min',
-    title: 'Reset de 3 min (água + pescoço + foco)',
-    subtitle: 'Três minutos para você se recompor por dentro, sem pressa.',
+    title: 'Reset 3 min (água + pescoço + foco)',
+    subtitle: 'Três minutos para retomar o controle do próximo passo.',
     steps: ['Água: 3–5 goles', 'Pescoço: 3 giros leves', 'Respire: 4 lentas', 'Escolha 1 próxima ação pequena'],
     pauseDeck: [
       { label: 'Água + pausa', min: 1 },
@@ -94,14 +112,14 @@ const ROUTINES: Routine[] = [
       { label: 'Respirar 1 min', min: 1 },
       { label: 'Alongar mãos (30s)', min: 1 },
     ],
-    close: 'Feito. Um respiro curto já muda o tom do resto.',
-    next: 'Se quiser, pare aqui. Se quiser, faça mais uma pausa curta.',
+    close: 'Feito. Você se deu um reinício sem parar o mundo.',
+    next: 'Se quiser, faça mais 1 pausa rápida — ou siga para o seu dia.',
   },
   {
     id: 'r3',
     focus: '5min',
     title: 'Cuidar 5 min (corpo + ambiente mínimo)',
-    subtitle: 'Cinco minutos para você sentir mais espaço, sem “arrumar a vida”.',
+    subtitle: 'Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.',
     steps: ['Hidratante nas mãos (30s)', 'Braços: alongar 30s', 'Mão no peito: 4 respirações', '1 item no lugar'],
     pauseDeck: [
       { label: 'Hidratante (2 min)', min: 2 },
@@ -109,10 +127,24 @@ const ROUTINES: Routine[] = [
       { label: 'Respirar 1 min', min: 1 },
       { label: 'Água + pausa', min: 1 },
     ],
-    close: 'Pronto. Um cuidado pequeno, do seu jeito.',
-    next: 'Você pode encerrar agora — ou repetir algo bem curto, se fizer sentido.',
+    close: 'Pronto. Isso já deixa o resto do dia mais fácil.',
+    next: 'Agora você decide: seguir, repetir, ou ir para Meu Filho.',
   },
 ]
+
+function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
+  const focusRaw = safeGetLS('eu360_focus_time')
+  const ritmoRaw = safeGetLS('eu360_ritmo')
+
+  const focus: FocusMode = focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
+  const ritmo: Ritmo =
+    ritmoRaw === 'leve' || ritmoRaw === 'cansada' || ritmoRaw === 'animada' || ritmoRaw === 'sobrecarregada'
+      ? ritmoRaw
+      : 'cansada'
+
+  if (ritmo === 'sobrecarregada') return { focus: '1min', ritmo }
+  return { focus, ritmo }
+}
 
 function pickRoutine(focus: FocusMode) {
   return ROUTINES.find((r) => r.focus === focus) ?? ROUTINES[1]
@@ -123,8 +155,7 @@ function originForCuidarDeMim(): TaskOrigin {
 }
 
 export default function Client() {
-  // Começa pelo reconhecimento (sem inferência / sem memória)
-  const [step, setStep] = useState<Step>('ritmo')
+  const [step, setStep] = useState<Step>('mini-rotina')
   const [focus, setFocus] = useState<FocusMode>('3min')
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [checked, setChecked] = useState<boolean[]>([false, false, false, false])
@@ -139,10 +170,14 @@ export default function Client() {
   }, [])
 
   useEffect(() => {
+    const inferred = inferFromEu360()
+    setFocus(inferred.focus)
+    setRitmo(inferred.ritmo)
+    setStep('mini-rotina')
+
     try {
-      track('cuidar_de_mim.open', { focus, ritmo })
+      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo })
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const routine = useMemo(() => pickRoutine(focus), [focus])
@@ -163,6 +198,7 @@ export default function Client() {
 
   function onSelectFocus(next: FocusMode) {
     setFocus(next)
+    safeSetLS('eu360_focus_time', next)
     try {
       track('cuidar_de_mim.focus.select', { focus: next })
     } catch {}
@@ -170,9 +206,12 @@ export default function Client() {
 
   function onSelectRitmo(next: Ritmo) {
     setRitmo(next)
+    safeSetLS('eu360_ritmo', next)
 
-    // Se estiver pesado, sugere automaticamente o menor tempo — mas sem travar escolha
-    if (next === 'sobrecarregada') setFocus('1min')
+    if (next === 'sobrecarregada') {
+      setFocus('1min')
+      safeSetLS('eu360_focus_time', '1min')
+    }
 
     try {
       track('cuidar_de_mim.ritmo.select', { ritmo: next })
@@ -206,7 +245,7 @@ export default function Client() {
     })
 
     if (res.created) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Isso já estava no Meu Dia.')
+    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
 
     try {
       track('cuidar_de_mim.save_to_my_day', {
@@ -221,379 +260,406 @@ export default function Client() {
   }
 
   const chips = [
-    { id: 'ritmo' as const, label: 'Como estou' },
-    { id: 'mini-rotina' as const, label: 'Um cuidado' },
+    { id: 'ritmo' as const, label: 'Ritmo' },
+    { id: 'mini-rotina' as const, label: 'Ação' },
     { id: 'pausas' as const, label: 'Pausa' },
     { id: 'para-voce' as const, label: 'Fechar' },
   ]
 
   return (
-    <div className="space-y-7 md:space-y-8 pb-10">
-      <div
-        className="
-          rounded-3xl
-          bg-white/10
-          border border-white/35
-          backdrop-blur-xl
-          shadow-[0_18px_45px_rgba(184,35,107,0.25)]
-          p-4 md:p-6
-          space-y-6
-        "
-      >
-        <Reveal>
-          <div
-            className="
-              rounded-3xl
-              bg-white/10
-              border border-white/25
-              shadow-[0_14px_40px_rgba(0,0,0,0.12)]
-              p-4 md:p-5
-            "
-          >
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
-              <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
-                <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
-                  <AppIcon name="heart" size={22} className="text-white" />
-                </div>
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="
+        min-h-[100dvh]
+        pb-32
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+      "
+    >
+      <ClientOnly>
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+            <div className="space-y-3">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar para o Maternar
+              </Link>
 
-                <div className="space-y-1">
-                  <div className="text-[12px] text-white/85">
-                    Passo {stepIndex(step)}/4 • {focusTitle(focus)}
-                  </div>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Cuidar de Mim
+              </h1>
 
-                  <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                    Um cuidado possível para agora: {routine.title}
-                  </div>
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Você entra sem clareza e sai com um reset curto e prático para seguir melhor — sem precisar pensar muito.
+              </p>
+            </div>
+          </header>
 
-                  <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">{routine.subtitle}</div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <button
-                  onClick={() => go('ritmo')}
+          <div className="space-y-7 md:space-y-8 pb-10">
+            <div
+              className="
+                rounded-3xl
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                p-4 md:p-6
+                space-y-6
+              "
+            >
+              <Reveal>
+                <div
                   className="
-                    rounded-full
-                    bg-white/90 hover:bg-white
-                    text-[#2f3a56]
-                    px-4 py-2
-                    text-[12px]
-                    shadow-[0_6px_18px_rgba(0,0,0,0.12)]
-                    transition
+                    rounded-3xl
+                    bg-white/10
+                    border border-white/25
+                    shadow-[0_14px_40px_rgba(0,0,0,0.12)]
+                    p-4 md:p-5
                   "
                 >
-                  Ajustar
-                </button>
-                <button
-                  onClick={() => go('mini-rotina')}
-                  className="
-                    rounded-full
-                    bg-[#fd2597]
-                    text-white
-                    px-4 py-2
-                    text-[12px]
-                    shadow-[0_10px_26px_rgba(253,37,151,0.35)]
-                    hover:opacity-95
-                    transition
-                  "
-                >
-                  Abrir
-                </button>
-              </div>
-            </div>
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
+                    <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
+                      <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                        <AppIcon name="heart" size={22} className="text-white" />
+                      </div>
 
-            <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-              {chips.map((it) => {
-                const active = step === it.id
-                return (
-                  <button
-                    key={it.id}
-                    onClick={() => go(it.id)}
-                    className={[
-                      'rounded-full px-3.5 py-2 text-[12px] border transition',
-                      active
-                        ? 'bg-white/95 border-white/40 text-[#2f3a56]'
-                        : 'bg-white/20 border-white/30 text-white/90 hover:bg-white/25',
-                    ].join(' ')}
-                  >
-                    {it.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </Reveal>
+                      <div className="space-y-1">
+                        <div className="text-[12px] text-white/85">
+                          Passo {stepIndex(step)}/4 • {focusTitle(focus)} • {ritmo}
+                        </div>
 
-        <Reveal>
-          <SoftCard
-            className="
-              p-5 md:p-6 rounded-3xl
-              bg-white/95
-              border border-[#f5d7e5]
-              shadow-[0_10px_28px_rgba(184,35,107,0.12)]
-            "
-          >
-            {saveFeedback ? (
-              <div className="mb-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] px-4 py-3 text-[12px] text-[#2f3a56]">
-                {saveFeedback}
-              </div>
-            ) : null}
+                        <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                          Sugestão pronta para agora: {routine.title}
+                        </div>
 
-            {step === 'ritmo' ? (
-              <div className="space-y-4">
-                <div className="text-[14px] text-[#2f3a56] font-semibold">Como você está agora?</div>
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">{routine.subtitle}</div>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
-                    const active = ritmo === r
-                    return (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                       <button
-                        key={r}
-                        onClick={() => onSelectRitmo(r)}
-                        className={[
-                          'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
-                          active
-                            ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                            : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
-                        ].join(' ')}
+                        onClick={() => go('ritmo')}
+                        className="
+                          rounded-full
+                          bg-white/90 hover:bg-white
+                          text-[#2f3a56]
+                          px-4 py-2
+                          text-[12px]
+                          shadow-[0_6px_18px_rgba(0,0,0,0.12)]
+                          transition
+                        "
                       >
-                        {r}
+                        Ajustar
                       </button>
-                    )
-                  })}
-                </div>
+                      <button
+                        onClick={() => go('mini-rotina')}
+                        className="
+                          rounded-full
+                          bg-[#fd2597]
+                          text-white
+                          px-4 py-2
+                          text-[12px]
+                          shadow-[0_10px_26px_rgba(253,37,151,0.35)]
+                          hover:opacity-95
+                          transition
+                        "
+                      >
+                        Começar
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                  <div className="text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
-                  <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
-
-                  <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Quanto tempo cabe agora?</div>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
-                    {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
-                      const active = focus === f
+                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+                    {chips.map((it) => {
+                      const active = step === it.id
                       return (
                         <button
-                          key={f}
-                          onClick={() => onSelectFocus(f)}
+                          key={it.id}
+                          onClick={() => go(it.id)}
                           className={[
-                            'rounded-2xl border p-3 text-left transition',
-                            active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                            'rounded-full px-3.5 py-2 text-[12px] border transition',
+                            active
+                              ? 'bg-white/95 border-white/40 text-[#2f3a56]'
+                              : 'bg-white/20 border-white/30 text-white/90 hover:bg-white/25',
                           ].join(' ')}
                         >
-                          <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
+                          {it.label}
                         </button>
                       )
                     })}
                   </div>
-
-                  <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
-
-                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                    <button
-                      onClick={() => go('mini-rotina')}
-                      className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                    >
-                      Ver o cuidado sugerido
-                    </button>
-                    <button
-                      onClick={() => go('pausas')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Só uma pausa rápida
-                    </button>
-                    <button
-                      onClick={() => go('para-voce')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Fechar por aqui
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ) : null}
+              </Reveal>
 
-            {step === 'mini-rotina' ? (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[14px] text-[#2f3a56] font-semibold">Um cuidado pequeno para agora</div>
-                    <div className="text-[12px] text-[#6a6a6a]">
-                      Se quiser, faça um passo. Se não quiser, tudo bem.
+              {/* IA (modo Cuidar de Mim) — abaixo do card principal rosa */}
+              <Reveal>
+                <QuickIdeaAI mode="cuidar_de_mim" className="mt-0 md:mt-0" />
+              </Reveal>
+
+              <Reveal>
+                <SoftCard
+                  className="
+                    p-5 md:p-6 rounded-3xl
+                    bg-white/95
+                    border border-[#f5d7e5]
+                    shadow-[0_10px_28px_rgba(184,35,107,0.12)]
+                  "
+                >
+                  {saveFeedback ? (
+                    <div className="mb-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] px-4 py-3 text-[12px] text-[#2f3a56]">
+                      {saveFeedback}
                     </div>
-                  </div>
+                  ) : null}
 
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <button
-                      onClick={() => go('pausas')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Trocar por uma pausa
-                    </button>
-                    <button
-                      onClick={() => go('para-voce')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Fechar por aqui
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {routine.steps.slice(0, 4).map((s, i) => (
-                    <button
-                      key={`${routine.id}-${s}`}
-                      onClick={() => toggleStep(i)}
-                      className={[
-                        'rounded-3xl border p-4 text-left transition',
-                        checked[i] ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                      ].join(' ')}
-                    >
-                      <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                        passo {i + 1}
+                  {step === 'ritmo' ? (
+                    <div className="space-y-4">
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">
+                        Ajuste rápido (pra eu pensar melhor por você)
                       </div>
-                      <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
-                      <div className="text-[12px] text-[#6a6a6a] mt-3">
-                        {checked[i] ? 'marcado ✓' : 'marcar (se quiser)'}
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
+                          const active = ritmo === r
+                          return (
+                            <button
+                              key={r}
+                              onClick={() => onSelectRitmo(r)}
+                              className={[
+                                'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
+                                active
+                                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                  : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                              ].join(' ')}
+                            >
+                              {r}
+                            </button>
+                          )
+                        })}
                       </div>
-                    </button>
-                  ))}
-                </div>
 
-                <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                  <div className="text-[13px] text-[#2f3a56] font-semibold">Se hoje não der:</div>
-                  <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                    Você pode parar aqui sem “terminar”. Mesmo um pouquinho já conta.
-                  </div>
+                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                        <div className="text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
 
-                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                    <button
-                      onClick={() => saveToMyDay(routine.title)}
-                      className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                    >
-                      Salvar no Meu Dia (se quiser)
-                    </button>
+                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Quanto tempo dá agora?</div>
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
+                            const active = focus === f
+                            return (
+                              <button
+                                key={f}
+                                onClick={() => onSelectFocus(f)}
+                                className={[
+                                  'rounded-2xl border p-3 text-left transition',
+                                  active
+                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                ].join(' ')}
+                              >
+                                <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
+                                <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
+                              </button>
+                            )
+                          })}
+                        </div>
 
-                    <button
-                      onClick={() => go('pausas')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Ver pausas rápidas
-                    </button>
+                        <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
 
-                    <button
-                      onClick={() => go('para-voce')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Fechar por aqui
-                    </button>
-                  </div>
-                </div>
+                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+                          <button
+                            onClick={() => go('mini-rotina')}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Aplicar e começar
+                          </button>
+                          <button
+                            onClick={() => go('pausas')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Só uma pausa rápida
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
-                <div className="text-[12px] text-[#6a6a6a]">
-                  Progresso visível só para você: {progress}/4. Se não der hoje, tudo bem.
-                </div>
-              </div>
-            ) : null}
+                  {step === 'mini-rotina' ? (
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="text-[14px] text-[#2f3a56] font-semibold">Faça isso agora</div>
+                          <div className="text-[12px] text-[#6a6a6a]">
+                            Progresso: <span className="font-semibold text-[#2f3a56]">{progress}</span>/4
+                          </div>
+                        </div>
 
-            {step === 'pausas' ? (
-              <div className="space-y-4">
-                <div className="text-[14px] text-[#2f3a56] font-semibold">Uma pausa curtinha (se quiser)</div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <button
+                            onClick={() => go('pausas')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Preciso pausar
+                          </button>
+                          <button
+                            onClick={() => go('para-voce')}
+                            className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Concluir
+                          </button>
+                        </div>
+                      </div>
 
-                <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                  <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
-                  <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                    {routine.pauseDeck[pauseIndex]?.label}
-                  </div>
-                  <div className="text-[12px] text-[#6a6a6a] mt-2">
-                    Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
-                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {routine.steps.slice(0, 4).map((s, i) => (
+                          <button
+                            key={`${routine.id}-${s}`}
+                            onClick={() => toggleStep(i)}
+                            className={[
+                              'rounded-3xl border p-4 text-left transition',
+                              checked[i]
+                                ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                            ].join(' ')}
+                          >
+                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                              passo {i + 1}
+                            </div>
+                            <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
+                            <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
+                          </button>
+                        ))}
+                      </div>
 
-                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                    <button
-                      onClick={nextPause}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition w-full sm:w-auto"
-                    >
-                      Outra pausa
-                    </button>
+                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
+                        <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
+                          Faça só o passo 1. Isso já ajuda.
+                        </div>
 
-                    <button
-                      onClick={() => saveToMyDay(routine.pauseDeck[pauseIndex]?.label ?? routine.title)}
-                      className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                    >
-                      Salvar no Meu Dia (se quiser)
-                    </button>
+                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+                          <button
+                            onClick={() => saveToMyDay(routine.title)}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
 
-                    <button
-                      onClick={() => go('mini-rotina')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Voltar para o cuidado
-                    </button>
+                          <button
+                            onClick={() => go('pausas')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ir para Pausas rápidas
+                          </button>
 
-                    <button
-                      onClick={() => go('para-voce')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Fechar por aqui
-                    </button>
-                  </div>
-                </div>
+                          <button
+                            onClick={() => go('para-voce')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Finalizar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
 
-                <div className="text-[12px] text-[#6a6a6a]">Uma pausa já conta. E se não der agora, tudo bem.</div>
-              </div>
-            ) : null}
+                  {step === 'pausas' ? (
+                    <div className="space-y-4">
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">Escolha uma pausa (curta)</div>
 
-            {step === 'para-voce' ? (
-              <div className="space-y-4">
-                <div className="text-[14px] text-[#2f3a56] font-semibold">Fechamento</div>
+                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
+                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
+                          {routine.pauseDeck[pauseIndex]?.label}
+                        </div>
+                        <div className="text-[12px] text-[#6a6a6a] mt-2">
+                          Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
+                        </div>
 
-                <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                  <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">pronto</div>
-                  <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                    {routine.close}
-                  </div>
-                  <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
+                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+                          <button
+                            onClick={nextPause}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition w-full sm:w-auto"
+                          >
+                            Outra pausa
+                          </button>
 
-                  <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                    <button
-                      onClick={() => saveToMyDay(routine.title)}
-                      className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                    >
-                      Salvar no Meu Dia (se quiser)
-                    </button>
+                          <button
+                            onClick={() => saveToMyDay(routine.pauseDeck[pauseIndex]?.label ?? routine.title)}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
 
-                    <button
-                      onClick={() => go('mini-rotina')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Ver de novo
-                    </button>
+                          <button
+                            onClick={() => go('mini-rotina')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Voltar para a ação
+                          </button>
+                        </div>
+                      </div>
 
-                    <Link
-                      href="/maternar/meu-filho"
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Ir para Meu Filho
-                    </Link>
+                      <div className="text-[12px] text-[#6a6a6a]">Regra do Materna: uma pausa já conta. Não precisa fazer tudo.</div>
+                    </div>
+                  ) : null}
 
-                    <button
-                      onClick={() => go('ritmo')}
-                      className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                    >
-                      Ajustar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </SoftCard>
-        </Reveal>
-      </div>
+                  {step === 'para-voce' ? (
+                    <div className="space-y-4">
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">Fechamento</div>
 
-      <div className="mt-4">
-        <LegalFooter />
-      </div>
-    </div>
+                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
+                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
+                          {routine.close}
+                        </div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
+
+                        <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+                          <button
+                            onClick={() => saveToMyDay(routine.title)}
+                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          >
+                            Salvar no Meu Dia
+                          </button>
+
+                          <button
+                            onClick={() => go('mini-rotina')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Repetir (mesma opção)
+                          </button>
+
+                          <Link
+                            href="/maternar/meu-filho"
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ir para Meu Filho
+                          </Link>
+
+                          <button
+                            onClick={() => go('ritmo')}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ajustar e trocar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </SoftCard>
+              </Reveal>
+            </div>
+
+            <div className="mt-4">
+              <LegalFooter />
+            </div>
+          </div>
+        </div>
+      </ClientOnly>
+    </main>
   )
 }
