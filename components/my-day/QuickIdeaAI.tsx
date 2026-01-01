@@ -43,14 +43,14 @@ function safeSetLS(key: string, value: string) {
 
 /**
  * Normaliza múltiplos formatos de resposta:
- * - Formato legado/catalogo: { access, ideas: [{id,title,summary,...}] }
- * - Formato Meu Dia leve (P33.4): { suggestions: [...] }
- * - Formato alternativo: { title/body }
+ * - Formato legado (catálogo): { access, ideas: [{id,title,summary,...}] }
+ * - Formato leve (Meu Dia):   { suggestions: [{id,title,description}] }
+ * - Formato alternativo:      { title/body }
  */
 function normalize(payload: any): Suggestion[] | null {
   if (!payload) return null
 
-  // Formato "catálogo": { ideas: QuickIdea[] }
+  // Formato legado: { ideas: QuickIdea[] }
   if (Array.isArray(payload?.ideas)) {
     const items = payload.ideas
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -68,7 +68,7 @@ function normalize(payload: any): Suggestion[] | null {
     return items.length ? items : null
   }
 
-  // Formato Meu Dia leve: { suggestions: [{id,title,description}] }
+  // Formato leve: { suggestions: [{id,title,description}] }
   if (Array.isArray(payload?.suggestions)) {
     const items = payload.suggestions
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -76,7 +76,8 @@ function normalize(payload: any): Suggestion[] | null {
       .map((x: any, idx: number) => ({
         id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
         title: String(x.title),
-        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+        description:
+          typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
       }))
     return items.length ? items : null
   }
@@ -137,7 +138,10 @@ function getSavedFromLS(): Suggestion[] {
     .filter((x) => x && typeof x.title === 'string' && x.title.trim())
     .slice(0, 50)
     .map((x, idx) => ({
-      id: typeof (x as any).id === 'string' && String((x as any).id).trim() ? String((x as any).id) : `saved-${idx + 1}`,
+      id:
+        typeof (x as any).id === 'string' && String((x as any).id).trim()
+          ? String((x as any).id)
+          : `saved-${idx + 1}`,
       title: String((x as any).title),
       description:
         typeof (x as any).description === 'string' && String((x as any).description).trim()
@@ -164,15 +168,12 @@ export default function QuickIdeaAI() {
     return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
-  /**
-   * P33.4 (Meu Dia) — sempre modo leve:
-   * body: { intent:'quick_idea', nonce, locale:'pt-BR' }
-   */
   const run = useCallback(async (attempt = 0) => {
     setState({ status: 'loading' })
 
     const nonce = Date.now()
 
+    // MODO LEVE (Meu Dia) — compatível com app/api/ai/quick-ideas/route.ts
     const payload = {
       intent: 'quick_idea',
       nonce,
@@ -191,7 +192,7 @@ export default function QuickIdeaAI() {
       if (postRes.ok) {
         data = await postRes.json().catch(() => null)
       } else {
-        // GET fallback (caso exista no futuro)
+        // GET fallback (se existir GET futuramente)
         const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
           method: 'GET',
           cache: 'no-store',
