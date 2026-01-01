@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import type { AISuggestion } from '@/app/lib/ai/orchestrator.types'
 
 type Suggestion = {
   id: string
@@ -13,7 +12,7 @@ type Suggestion = {
 type State =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; items: Suggestion[] }
+  | { status: 'done'; item: Suggestion }
 
 const LS_SAVED_KEY = 'm360.ai.quick_ideas.saved.v1'
 
@@ -42,45 +41,44 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
-function normalize(payload: any): Suggestion[] | null {
+function normalizeOne(payload: any): Suggestion | null {
   if (!payload) return null
 
   // Formato A: { suggestions: [{id,title,description}] }
   if (Array.isArray(payload?.suggestions)) {
-    const items = payload.suggestions
-      .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
-      .slice(0, 3)
-      .map((x: any, idx: number) => ({
-        id: typeof x.id === 'string' && x.id.trim() ? x.id : `ai-${idx + 1}`,
-        title: String(x.title),
-        description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-      }))
-    return items.length ? items : null
+    const first = payload.suggestions.find((x: any) => x && typeof x.title === 'string' && x.title.trim())
+    if (!first) return null
+    return {
+      id: typeof first.id === 'string' && first.id.trim() ? first.id : 'ai-1',
+      title: String(first.title),
+      description: typeof first.description === 'string' && first.description.trim() ? String(first.description) : undefined,
+    }
   }
 
   // Formato B: { title, body } (legado)
   if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
-    const raw = String(payload?.body ?? '')
+    const rawLines = String(payload?.body ?? '')
       .split('\n')
       .map((s: string) => s.trim())
       .filter(Boolean)
-      .slice(0, 3)
 
-    const items = (raw.length ? raw : [payload?.title].filter(Boolean))
-      .slice(0, 3)
-      .map((line: any, idx: number) => ({
-        id: `ai-${idx + 1}`,
-        title: String(line),
-      }))
+    const firstLine = rawLines[0] ?? (typeof payload?.title === 'string' ? payload.title : '')
+    if (!firstLine || !String(firstLine).trim()) return null
 
-    return items.length ? items : null
+    return { id: 'ai-1', title: String(firstLine).trim() }
   }
 
   return null
 }
 
-function signature(items: Suggestion[]) {
-  return items.map(i => `${i.title}::${i.description ?? ''}`).join('|')
+function baseFallback(): Suggestion[] {
+  return [
+    { id: 'fallback-1', title: 'Respire por 1 minuto', description: 'Só para o corpo entender que você chegou.' },
+    { id: 'fallback-2', title: 'Escolha só uma coisa para agora', description: 'O resto pode esperar um pouco.' },
+    { id: 'fallback-3', title: 'Faça um passo pequeno', description: 'Algo simples já organiza por dentro.' },
+    { id: 'fallback-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
+    { id: 'fallback-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
+  ]
 }
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -88,7 +86,6 @@ function shuffle<T>(arr: T[], seed: number) {
   let m = a.length
   let s = seed
   while (m) {
-    // pseudo-random determinístico por seed
     s = (s * 9301 + 49297) % 233280
     const rnd = s / 233280
     const i = Math.floor(rnd * m--)
@@ -97,14 +94,8 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
-function baseFallback(): Suggestion[] {
-  return [
-    { id: 'fallback-1', title: 'Respirar por 1 minuto', description: 'Uma pausa curta já ajuda a reorganizar.' },
-    { id: 'fallback-2', title: 'Escolher só uma prioridade', description: 'O resto pode esperar.' },
-    { id: 'fallback-3', title: 'Fazer algo simples', description: 'Algo pequeno já é suficiente por agora.' },
-    { id: 'fallback-4', title: 'Beber um copo de água', description: 'Só para ancorar o corpo no presente.' },
-    { id: 'fallback-5', title: 'Pedir ajuda com uma frase', description: 'Uma frase curta já resolve muita coisa.' },
-  ]
+function signatureOne(item: Suggestion) {
+  return `${item.title}::${item.description ?? ''}`.trim()
 }
 
 function getSavedFromLS(): Suggestion[] {
@@ -126,18 +117,30 @@ function setSavedToLS(items: Suggestion[]) {
   safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
 }
 
+/**
+ * Meu Dia — resposta curta, aterrissadora e fechada:
+ * 1) reconhecimento breve
+ * 2) 1 foco
+ * 3) encerramento calmo
+ */
+function toMeuDiaCopy(item: Suggestion) {
+  const focus = item.description?.trim()
+    ? `${item.title.trim()}. ${item.description.trim()}`
+    : item.title.trim()
+
+  const recognition = 'Parece que hoje está com muita coisa ao mesmo tempo.'
+  const oneFocus = `Por agora, fique só com isto: ${focus}`
+  const close = 'Só isso já devolve um pouco de chão.'
+
+  return { recognition, oneFocus, close }
+}
+
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
-  const [dismissed, setDismissed] = useState<Record<string, true>>({})
   const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
 
   const lastSigRef = useRef<string>('')
   const fallbackSeedRef = useRef<number>(Date.now())
-
-  const visibleItems = useMemo(() => {
-    if (state.status !== 'done') return []
-    return state.items.filter(i => !dismissed[i.id])
-  }, [state, dismissed])
 
   const run = useCallback(async (attempt = 0) => {
     setState({ status: 'loading' })
@@ -166,14 +169,11 @@ export default function QuickIdeaAI() {
         if (getRes.ok) data = await getRes.json().catch(() => null)
       }
 
-      const normalized = normalize(data)
+      const normalized = normalizeOne(data)
+      const fallbackOne = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17))[0]!
 
-      // se não veio nada utilizável, usa fallback embaralhado
-      const nextItems =
-        normalized ??
-        shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 17)).slice(0, 3)
-
-      const sig = signature(nextItems)
+      const nextItem = normalized ?? fallbackOne
+      const sig = signatureOne(nextItem)
 
       // se repetiu exatamente e ainda não tentou, tenta mais uma vez
       if (sig && sig === lastSigRef.current && attempt < 1) {
@@ -181,51 +181,41 @@ export default function QuickIdeaAI() {
       }
 
       lastSigRef.current = sig
-
-      // reseta “dismissed” a cada nova rodada para não “sumir tudo”
-      setDismissed({})
-      setState({ status: 'done', items: nextItems })
+      setState({ status: 'done', item: nextItem })
     } catch {
-      const nextItems = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23)).slice(0, 3)
-      const sig = signature(nextItems)
+      const nextItem = shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + 23))[0]!
+      const sig = signatureOne(nextItem)
 
       if (sig && sig === lastSigRef.current && attempt < 1) {
         return await run(attempt + 1)
       }
 
       lastSigRef.current = sig
-      setDismissed({})
-      setState({ status: 'done', items: nextItems })
+      setState({ status: 'done', item: nextItem })
     }
   }, [])
 
-  const dismissOne = useCallback((id: string) => {
-    setDismissed(prev => ({ ...prev, [id]: true }))
+  const saveCurrent = useCallback(() => {
+    if (state.status !== 'done') return
+    const item = state.item
+
+    const key = `${item.title}::${item.description ?? ''}`.trim()
+    const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
+    if (exists) return
+
+    const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
+    setSaved(next)
+    setSavedToLS(next)
+  }, [saved, state])
+
+  const close = useCallback(() => {
+    setState({ status: 'idle' })
   }, [])
 
-  const saveOne = useCallback(
-    (item: Suggestion) => {
-      // não duplica por title+description
-      const key = `${item.title}::${item.description ?? ''}`.trim()
-      const exists = saved.some(s => `${s.title}::${s.description ?? ''}`.trim() === key)
-      if (exists) return
-
-      const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
-      setSaved(next)
-      setSavedToLS(next)
-      dismissOne(item.id)
-    },
-    [saved, dismissOne]
-  )
-
-  const removeSaved = useCallback(
-    (id: string) => {
-      const next = saved.filter(s => s.id !== id)
-      setSaved(next)
-      setSavedToLS(next)
-    },
-    [saved]
-  )
+  const meuDiaText = useMemo(() => {
+    if (state.status !== 'done') return null
+    return toMeuDiaCopy(state.item)
+  }, [state])
 
   return (
     <div className="mt-6 md:mt-8">
@@ -266,132 +256,58 @@ export default function QuickIdeaAI() {
           <p className="text-[13px] text-[#6A6A6A]">Pensando em algo simples…</p>
         ) : null}
 
-        {state.status === 'done' ? (
+        {state.status === 'done' && meuDiaText ? (
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[13px] text-[#6A6A6A]">Ideias simples para agora</p>
+            <div
+              className="
+                rounded-2xl
+                border border-[#F5D7E5]/70
+                bg-white
+                px-4 py-3
+              "
+            >
+              <p className="text-[13px] text-[#6A6A6A] leading-relaxed">{meuDiaText.recognition}</p>
+              <p className="mt-2 text-[14px] font-semibold text-[#2f3a56] leading-relaxed">{meuDiaText.oneFocus}</p>
+              <p className="mt-2 text-[13px] text-[#6A6A6A] leading-relaxed">{meuDiaText.close}</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="
+                  rounded-full
+                  bg-white
+                  border border-[#F5D7E5]/70
+                  text-[#545454]
+                  px-4 py-2
+                  text-[12px]
+                  transition
+                  hover:shadow-sm
+                  whitespace-nowrap
+                "
+                onClick={close}
+              >
+                Ok
+              </button>
 
               <button
                 type="button"
-                className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
-                onClick={() => void run()}
+                className="
+                  rounded-full
+                  bg-[#fd2597]
+                  text-white
+                  px-4 py-2
+                  text-[12px]
+                  font-semibold
+                  transition
+                  hover:opacity-95
+                  whitespace-nowrap
+                "
+                onClick={saveCurrent}
               >
-                Outra ideia
+                Guardar
               </button>
             </div>
-
-            {visibleItems.length ? (
-              <div className="space-y-3">
-                {visibleItems.map(item => (
-                  <div
-                    key={item.id}
-                    className="
-                      rounded-2xl
-                      border border-[#F5D7E5]/70
-                      bg-white
-                      px-4 py-3
-                    "
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
-                        {item.description ? (
-                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
-                        ) : null}
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          className="
-                            rounded-full
-                            bg-white
-                            border border-[#F5D7E5]/70
-                            text-[#545454]
-                            px-3 py-1.5
-                            text-[12px]
-                            transition
-                            hover:shadow-sm
-                            whitespace-nowrap
-                          "
-                          onClick={() => dismissOne(item.id)}
-                        >
-                          Não agora
-                        </button>
-
-                        <button
-                          type="button"
-                          className="
-                            rounded-full
-                            bg-[#fd2597]
-                            text-white
-                            px-3 py-1.5
-                            text-[12px]
-                            font-semibold
-                            transition
-                            hover:opacity-95
-                            whitespace-nowrap
-                          "
-                          onClick={() => saveOne(item)}
-                        >
-                          Guardar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6A6A6A]">
-                  Sem pressão. Se quiser, peça outra ideia.
-                </p>
-              </div>
-            )}
-
-            {saved.length ? (
-              <div className="pt-2">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[13px] text-[#6A6A6A]">Guardadas</p>
-                </div>
-
-                <div className="mt-2 space-y-2">
-                  {saved.slice(0, 3).map(item => (
-                    <div
-                      key={item.id}
-                      className="
-                        rounded-2xl
-                        border border-[#F5D7E5]/50
-                        bg-white
-                        px-4 py-3
-                        flex items-start justify-between gap-3
-                      "
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
-                        {item.description ? (
-                          <p className="mt-1 text-[12px] text-[#6A6A6A] leading-relaxed">{item.description}</p>
-                        ) : null}
-                      </div>
-
-                      <button
-                        type="button"
-                        className="text-[12px] font-semibold text-[#6A6A6A] hover:opacity-90 transition whitespace-nowrap"
-                        onClick={() => removeSaved(item.id)}
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
-                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
           </div>
         ) : null}
       </div>
