@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
-import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 type Suggestion = {
   id: string
@@ -44,13 +43,14 @@ function safeSetLS(key: string, value: string) {
 
 /**
  * Normaliza múltiplos formatos de resposta:
- * - Formato atual do endpoint: { access, ideas: [{id,title,summary,...}] }
- * - Formato alternativo/legado: { suggestions: [...] } ou { title/body }
+ * - Formato legado/catalogo: { access, ideas: [{id,title,summary,...}] }
+ * - Formato Meu Dia leve (P33.4): { suggestions: [...] }
+ * - Formato alternativo: { title/body }
  */
 function normalize(payload: any): Suggestion[] | null {
   if (!payload) return null
 
-  // Formato "route.ts" atual: { ideas: QuickIdea[] }
+  // Formato "catálogo": { ideas: QuickIdea[] }
   if (Array.isArray(payload?.ideas)) {
     const items = payload.ideas
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -68,7 +68,7 @@ function normalize(payload: any): Suggestion[] | null {
     return items.length ? items : null
   }
 
-  // Formato A: { suggestions: [{id,title,description}] }
+  // Formato Meu Dia leve: { suggestions: [{id,title,description}] }
   if (Array.isArray(payload?.suggestions)) {
     const items = payload.suggestions
       .filter((x: any) => x && typeof x.title === 'string' && x.title.trim())
@@ -81,7 +81,7 @@ function normalize(payload: any): Suggestion[] | null {
     return items.length ? items : null
   }
 
-  // Formato B: { title, body } (legado)
+  // Formato alternativo: { title, body }
   if (typeof payload?.title === 'string' || typeof payload?.body === 'string') {
     const raw = String(payload?.body ?? '')
       .split('\n')
@@ -151,15 +151,6 @@ function setSavedToLS(items: Suggestion[]) {
   safeSetLS(LS_SAVED_KEY, JSON.stringify(items.slice(0, 50)))
 }
 
-function planFromTier(tier: string): 'free' | 'essencial' | 'premium' {
-  // Mantemos o mapeamento conservador:
-  // - premium => premium
-  // - qualquer outro => free (não inventa)
-  if (tier === 'premium') return 'premium'
-  if (tier === 'essencial' || tier === 'essential') return 'essencial'
-  return 'free'
-}
-
 export default function QuickIdeaAI() {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
@@ -173,38 +164,20 @@ export default function QuickIdeaAI() {
     return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
+  /**
+   * P33.4 (Meu Dia) — sempre modo leve:
+   * body: { intent:'quick_idea', nonce, locale:'pt-BR' }
+   */
   const run = useCallback(async (attempt = 0) => {
     setState({ status: 'loading' })
 
     const nonce = Date.now()
 
-    // Payload compatível com app/api/ai/quick-ideas/route.ts
-    const tier = (() => {
-      try {
-        return getExperienceTier()
-      } catch {
-        return 'free'
-      }
-    })()
-
-    const plan = planFromTier(String(tier))
-
-    // defaults deliberadamente “seguros” (sem depender de outros hubs)
     const payload = {
-      plan,
-      profile: {
-        active_child_id: null,
-        mode: 'all',
-        children: [],
-      },
-      context: {
-        location: 'home',
-        time_window_min: 10,
-        energy: 'low',
-      },
-      locale: 'pt-BR',
+      intent: 'quick_idea',
       nonce,
-    } as any
+      locale: 'pt-BR',
+    } as const
 
     try {
       const postRes = await fetch('/api/ai/quick-ideas', {
@@ -218,7 +191,7 @@ export default function QuickIdeaAI() {
       if (postRes.ok) {
         data = await postRes.json().catch(() => null)
       } else {
-        // GET fallback com nonce (se existir GET futuramente)
+        // GET fallback (caso exista no futuro)
         const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, {
           method: 'GET',
           cache: 'no-store',
@@ -439,7 +412,9 @@ export default function QuickIdeaAI() {
                 </div>
 
                 {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
+                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
+                  </p>
                 ) : null}
               </div>
             ) : null}
