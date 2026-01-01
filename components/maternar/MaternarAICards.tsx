@@ -4,6 +4,11 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
+import {
+  MY_DAY_SOURCES,
+  addTaskToMyDayAndTrack,
+} from '@/app/lib/myDayTasks.client'
+import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
 type Suggestion = {
   id: string
@@ -76,37 +81,41 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
+/**
+ * Fallback alinhado ao Prompt Canônico — MATERNAR:
+ * acolhe, nomeia, normaliza e fecha sem tarefa.
+ */
 function baseFallback(): Suggestion[] {
   return [
     {
       id: 'fb-1',
       tag: 'frase',
       title: 'Hoje, o suficiente já é muito.',
-      description: 'Sem corrida. Sem dívida emocional.',
+      description: 'Sem corrida. Sem dívida emocional. Só presença possível.',
     },
     {
       id: 'fb-2',
       tag: 'cuidado',
-      title: 'Um cuidado pequeno por você',
-      description: 'Água, respiração, um minuto de silêncio. Só o que couber.',
+      title: 'Você não precisa estar “bem” para merecer cuidado.',
+      description: 'Quando o dia pesa, o corpo e o coração só pedem um pouco de gentileza.',
     },
     {
       id: 'fb-3',
       tag: 'ritual',
-      title: 'Um ritual de 60 segundos',
-      description: 'Inspire 4, segure 2, solte 6. Uma vez. E pronto.',
+      title: 'Às vezes, o que falta não é força.',
+      description: 'É só um pouco de respiro, do jeito que der.',
     },
     {
       id: 'fb-4',
       tag: 'limites',
-      title: 'Uma frase curta para limites',
-      description: '“Eu te ouço. E ainda assim, agora não.” Sem justificar demais.',
+      title: 'Limites também podem ser amor.',
+      description: 'Dizer “não” pode ser um jeito de proteger o que importa — sem culpa.',
     },
     {
       id: 'fb-5',
       tag: 'cansaço',
-      title: 'Troque “dar conta” por “caber”',
-      description: 'Pergunta de hoje: o que cabe — de verdade — nesse momento?',
+      title: 'Quando tudo parece demais, é comum se sentir assim.',
+      description: 'Nem sempre cabe tudo — e isso não é falha.',
     },
   ]
 }
@@ -114,7 +123,7 @@ function baseFallback(): Suggestion[] {
 function normalizeFromEmocional(payload: any): Suggestion[] | null {
   if (!payload) return null
 
-  // Novo schema: { inspiration: { phrase, care, ritual } }
+  // Schema: { inspiration: { phrase, care, ritual } }
   if (payload?.inspiration) {
     const phrase = typeof payload.inspiration.phrase === 'string' ? payload.inspiration.phrase.trim() : ''
     const care = typeof payload.inspiration.care === 'string' ? payload.inspiration.care.trim() : ''
@@ -127,11 +136,10 @@ function normalizeFromEmocional(payload: any): Suggestion[] | null {
     }
 
     if (care) {
-      // care pode vir 3–6 linhas: preserva, mas deixa leve
       items.push({
         id: 'inspo-care',
         tag: 'cuidado',
-        title: 'Um cuidado para hoje',
+        title: 'Um cuidado que acolhe',
         description: care,
       })
     }
@@ -140,7 +148,7 @@ function normalizeFromEmocional(payload: any): Suggestion[] | null {
       items.push({
         id: 'inspo-ritual',
         tag: 'ritual',
-        title: 'Um ritual simples',
+        title: 'Um gesto simples de presença',
         description: ritual,
       })
     }
@@ -206,7 +214,9 @@ export default function MaternarAICards() {
 
   const dismissOne = useCallback(
     (id: string) => {
-      persistDismiss({ ...dismissed, [id]: true })
+      // FIX TS: preservar Record<string, true>
+      const next: Record<string, true> = { ...dismissed, [id]: true as true }
+      persistDismiss(next)
     },
     [dismissed, persistDismiss]
   )
@@ -220,9 +230,32 @@ export default function MaternarAICards() {
         return
       }
 
+      // 1) mantém comportamento atual do Maternar (guardadas)
       const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
       setSaved(next)
       setSavedToLS(next)
+
+      // 2) P33.5a — conexão indireta e opcional com Meu Dia (silenciosa)
+      try {
+        const title = (item.title ?? '').trim()
+        if (title) {
+          addTaskToMyDayAndTrack({
+            title,
+            origin: 'selfcare',
+            source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+          })
+
+          // marca continuidade para o Meu Dia abrir no grupo certo (sem CTA / sem navegação)
+          markRecentMyDaySave({
+            origin: 'selfcare',
+            source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+          })
+        }
+      } catch {
+        // nunca quebrar fluxo do Maternar
+      }
+
+      // 3) fecha o item da leva atual (permite “não agora” implícito)
       dismissOne(item.id)
     },
     [saved, dismissOne]
@@ -251,8 +284,6 @@ export default function MaternarAICards() {
           body: JSON.stringify({
             feature: 'daily_inspiration',
             origin: 'maternar-hub',
-            // Contexto pode vir vazio; a rota é robusta e mantém tom Materna360.
-            // No futuro, podemos plugar personaLabel / firstName daqui com segurança.
             context: {},
           }),
         })
@@ -309,10 +340,10 @@ export default function MaternarAICards() {
                 Para agora
               </span>
               <h2 className="text-[16px] md:text-[17px] font-semibold text-[#2f3a56]">
-                Um conteúdo pronto, sem esforço
+                Um apoio para este momento
               </h2>
               <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                Se fizer sentido, você usa. Se não fizer, você ignora — sem peso.
+                Se fizer sentido, fica. Se não fizer, tudo bem também.
               </p>
             </div>
           </div>
@@ -324,7 +355,7 @@ export default function MaternarAICards() {
               </Button>
             ) : (
               <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
-                Outra leva
+                Ver outro apoio
               </Button>
             )}
           </div>
