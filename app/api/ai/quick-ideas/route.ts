@@ -33,6 +33,26 @@ type QuickIdeasRequestLegacy = {
 }
 
 /**
+ * Memória contextual suave (modo leve):
+ * - apenas para reduzir repetição e “tendenciar” de leve a escolha
+ * - opcional e compatível com clientes que não enviam nada
+ */
+type QuickIdeasLightMemory = {
+  /**
+   * IDs mostrados recentemente (ex.: últimos 3–10).
+   * O endpoint tenta não repetir.
+   */
+  recent_suggestion_ids?: string[]
+
+  /**
+   * Sinal leve do estado atual (se o app tiver essa info).
+   * Ex.: vindo do Meu Dia / emocional, etc.
+   * Opcional; se não vier, não interfere.
+   */
+  last_signal?: 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
+}
+
+/**
  * Payload leve para Meu Dia (P33.4):
  * 1 foco, sem parentalidade, sem plano, sem lista.
  */
@@ -40,6 +60,7 @@ type QuickIdeasRequestLight = {
   intent: 'quick_idea'
   nonce?: number
   locale?: 'pt-BR'
+  memory?: QuickIdeasLightMemory
 }
 
 type Suggestion = { id: string; title: string; description?: string }
@@ -89,12 +110,6 @@ function sanitizeTimeWindowMin(v: any): QuickIdeasTimeWindow {
 
 /** ---------- modo leve (Meu Dia) ---------- */
 
-function chooseOne(seed: number, items: Suggestion[]) {
-  const safeSeed = Number.isFinite(seed) ? seed : Date.now()
-  const idx = Math.abs(safeSeed) % items.length
-  return items[idx]!
-}
-
 function myDaySuggestions(): Suggestion[] {
   return [
     { id: 'md-1', title: 'Respire por 1 minuto', description: 'Só para o corpo entender que você chegou.' },
@@ -103,6 +118,77 @@ function myDaySuggestions(): Suggestion[] {
     { id: 'md-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
     { id: 'md-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
   ]
+}
+
+function chooseOne(seed: number, items: Suggestion[]) {
+  const safeSeed = Number.isFinite(seed) ? seed : Date.now()
+  const idx = Math.abs(safeSeed) % items.length
+  return items[idx]!
+}
+
+function sanitizeRecentIds(v: any): string[] {
+  if (!Array.isArray(v)) return []
+  return v
+    .filter((x) => typeof x === 'string' && x.trim())
+    .map((x) => x.trim())
+    .slice(0, 10)
+}
+
+function isValidSignal(v: any): v is QuickIdeasLightMemory['last_signal'] {
+  return v === 'heavy' || v === 'tired' || v === 'overwhelmed' || v === 'neutral'
+}
+
+/**
+ * Memória contextual suave:
+ * 1) remove itens vistos recentemente (recent_suggestion_ids)
+ * 2) aplica uma “tendência” leve por sinal (se existir)
+ * 3) se tudo for excluído, volta ao catálogo completo
+ */
+function chooseWithSoftMemory(opts: {
+  seed: number
+  suggestions: Suggestion[]
+  memory?: QuickIdeasLightMemory
+}): { one: Suggestion; excludedCount: number; memoryUsed: boolean; signal?: QuickIdeasLightMemory['last_signal'] } {
+  const recent = sanitizeRecentIds(opts.memory?.recent_suggestion_ids)
+  const signal = isValidSignal(opts.memory?.last_signal) ? opts.memory?.last_signal : undefined
+
+  const hasMemory = recent.length > 0 || !!signal
+  const excludedSet = new Set(recent)
+
+  // Filtra repetição recente
+  let pool = opts.suggestions.filter((s) => !excludedSet.has(s.id))
+  const excludedCount = opts.suggestions.length - pool.length
+
+  // Se excluiu tudo, volta ao catálogo completo (sem bloqueio)
+  if (!pool.length) pool = opts.suggestions
+
+  // Tendência bem suave por sinal (se existir)
+  // (não muda texto, só aumenta chance de cair em algo mais adequado)
+  if (signal) {
+    const preferredIds =
+      signal === 'heavy'
+        ? new Set(['md-5', 'md-2'])
+        : signal === 'tired'
+          ? new Set(['md-1', 'md-4'])
+          : signal === 'overwhelmed'
+            ? new Set(['md-2', 'md-3'])
+            : new Set<string>()
+
+    if (preferredIds.size) {
+      const preferred = pool.filter((s) => preferredIds.has(s.id))
+      const others = pool.filter((s) => !preferredIds.has(s.id))
+
+      // Se houver preferidos, fazemos “peso” leve duplicando o pool preferido
+      // (mantém determinismo pelo seed)
+      if (preferred.length) {
+        pool = [...preferred, ...preferred, ...others]
+      }
+    }
+  }
+
+  const one = chooseOne(opts.seed, pool)
+
+  return { one, excludedCount, memoryUsed: hasMemory, signal }
 }
 
 export async function POST(req: Request) {
@@ -116,12 +202,21 @@ export async function POST(req: Request) {
      */
     if (isLightRequest(body)) {
       const seed = typeof body.nonce === 'number' ? body.nonce : Date.now()
-      const one = chooseOne(seed, myDaySuggestions())
+
+      const base = myDaySuggestions()
+      const { one, excludedCount, memoryUsed, signal } = chooseWithSoftMemory({
+        seed,
+        suggestions: base,
+        memory: body.memory,
+      })
 
       try {
         track('ai.quick_ideas.light', {
           intent: body.intent,
           locale: body.locale ?? 'pt-BR',
+          memory_used: memoryUsed,
+          excluded_count: excludedCount,
+          signal: signal ?? 'none',
         })
       } catch {}
 
@@ -238,7 +333,10 @@ export async function POST(req: Request) {
       time_total_min: Math.min(10, safeTimeWindow),
       location: body.context.location,
       materials: ['lençóis', 'cadeiras', 'lanterna'],
-      steps: ['Estenda os lençóis entre as cadeiras para formar a cabana.', 'Entrem com a lanterna e contem uma história curtinha.'],
+      steps: [
+        'Estenda os lençóis entre as cadeiras para formar a cabana.',
+        'Entrem com a lanterna e contem uma história curtinha.',
+      ],
       age_adaptations: ageAdaptations,
       safety_notes: ['Supervisão constante; evite prender lençol em locais altos.', 'Lanterna sem peças pequenas soltas.'],
       badges,
