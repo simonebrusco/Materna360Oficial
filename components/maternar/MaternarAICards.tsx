@@ -77,7 +77,8 @@ function shuffle<T>(arr: T[], seed: number) {
 }
 
 /**
- * Fallback alinhado ao Prompt Canônico — MATERNAR
+ * Fallback alinhado ao Prompt Canônico — MATERNAR:
+ * acolhe, nomeia, normaliza e fecha sem tarefa.
  */
 function baseFallback(): Suggestion[] {
   return [
@@ -103,63 +104,70 @@ function baseFallback(): Suggestion[] {
       id: 'fb-4',
       tag: 'limites',
       title: 'Limites também podem ser amor.',
-      description: 'Dizer “não” pode ser apenas um jeito de proteger o que importa.',
+      description: 'Dizer “não” pode ser um jeito de proteger o que importa — sem culpa.',
     },
     {
       id: 'fb-5',
       tag: 'cansaço',
-      title: 'Quando tudo parece demais, é natural se sentir assim.',
+      title: 'Quando tudo parece demais, é comum se sentir assim.',
       description: 'Nem sempre cabe tudo — e isso não é falha.',
     },
   ]
 }
 
 function normalizeFromEmocional(payload: any): Suggestion[] | null {
-  if (!payload?.inspiration) return null
+  if (!payload) return null
 
-  const { phrase, care, ritual } = payload.inspiration
+  // Schema: { inspiration: { phrase, care, ritual } }
+  if (payload?.inspiration) {
+    const phrase = typeof payload.inspiration.phrase === 'string' ? payload.inspiration.phrase.trim() : ''
+    const care = typeof payload.inspiration.care === 'string' ? payload.inspiration.care.trim() : ''
+    const ritual = typeof payload.inspiration.ritual === 'string' ? payload.inspiration.ritual.trim() : ''
 
-  const items: Suggestion[] = []
+    const items: Suggestion[] = []
 
-  if (typeof phrase === 'string' && phrase.trim()) {
-    items.push({ id: 'inspo-phrase', tag: 'frase', title: phrase.trim() })
+    if (phrase) {
+      items.push({ id: 'inspo-phrase', tag: 'frase', title: phrase })
+    }
+
+    if (care) {
+      items.push({
+        id: 'inspo-care',
+        tag: 'cuidado',
+        title: 'Um cuidado que acolhe',
+        description: care,
+      })
+    }
+
+    if (ritual) {
+      items.push({
+        id: 'inspo-ritual',
+        tag: 'ritual',
+        title: 'Um gesto simples de presença',
+        description: ritual,
+      })
+    }
+
+    return items.length ? items.slice(0, 3) : null
   }
 
-  if (typeof care === 'string' && care.trim()) {
-    items.push({
-      id: 'inspo-care',
-      tag: 'cuidado',
-      title: 'Um cuidado que acolhe',
-      description: care.trim(),
-    })
-  }
-
-  if (typeof ritual === 'string' && ritual.trim()) {
-    items.push({
-      id: 'inspo-ritual',
-      tag: 'ritual',
-      title: 'Um gesto simples de presença',
-      description: ritual.trim(),
-    })
-  }
-
-  return items.length ? items.slice(0, 3) : null
+  return null
 }
 
 function getSavedFromLS(): Suggestion[] {
   const raw = safeGetLS(LS_SAVED_KEY)
   const parsed = safeParse<unknown>(raw)
   if (!Array.isArray(parsed)) return []
-
-  return (parsed as any[])
-    .filter(x => x && typeof x.title === 'string')
+  const items = (parsed as any[])
+    .filter(x => x && typeof x.title === 'string' && x.title.trim())
     .slice(0, 50)
     .map((x, idx) => ({
-      id: x.id || `saved-${idx}`,
+      id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
       title: String(x.title),
-      description: x.description ? String(x.description) : undefined,
-      tag: x.tag ? String(x.tag) : undefined,
+      description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
+      tag: typeof x.tag === 'string' && x.tag.trim() ? String(x.tag) : undefined,
     }))
+  return items
 }
 
 function setSavedToLS(items: Suggestion[]) {
@@ -169,7 +177,7 @@ function setSavedToLS(items: Suggestion[]) {
 function getDismissedToday(todayKey: string): Record<string, true> {
   const raw = safeGetLS(`${LS_DISMISS_KEY_PREFIX}${todayKey}`)
   const parsed = safeParse<Record<string, true>>(raw)
-  return parsed || {}
+  return parsed && typeof parsed === 'object' ? parsed : {}
 }
 
 function setDismissedToday(todayKey: string, value: Record<string, true>) {
@@ -179,117 +187,317 @@ function setDismissedToday(todayKey: string, value: Record<string, true>) {
 export default function MaternarAICards() {
   const todayKey = useMemo(() => brazilDateKey(new Date()), [])
 
-  const [state, setState] = useState<State>({ status: 'idle' })
-  const [saved, setSaved] = useState<Suggestion[]>(getSavedFromLS)
-  const [dismissed, setDismissed] = useState<Record<string, true>>(getDismissedToday(todayKey))
+  const [state, setState] = useState<State>(() => ({ status: 'idle' }))
+  const [saved, setSaved] = useState<Suggestion[]>(() => getSavedFromLS())
+  const [dismissed, setDismissed] = useState<Record<string, true>>(() => getDismissedToday(todayKey))
 
-  const lastSigRef = useRef('')
-  const seedRef = useRef(Date.now())
+  const lastSigRef = useRef<string>('')
+  const seedRef = useRef<number>(Date.now())
 
-  const visibleItems = useMemo(
-    () => (state.status === 'done' ? state.items.filter(i => !dismissed[i.id]) : []),
-    [state, dismissed]
+  const visibleItems = useMemo(() => {
+    if (state.status !== 'done') return []
+    return state.items.filter(i => !dismissed[i.id])
+  }, [state, dismissed])
+
+  const persistDismiss = useCallback(
+    (next: Record<string, true>) => {
+      setDismissed(next)
+      setDismissedToday(todayKey, next)
+    },
+    [todayKey]
   )
 
-  const dismissOne = (id: string) => {
-    const next = { ...dismissed, [id]: true }
-    setDismissed(next)
-    setDismissedToday(todayKey, next)
-  }
+  const dismissOne = useCallback(
+    (id: string) => {
+      // FIX TS: garantir Record<string, true>
+      const next: Record<string, true> = { ...dismissed, [id]: true as true }
+      persistDismiss(next)
+    },
+    [dismissed, persistDismiss]
+  )
 
-  const saveOne = (item: Suggestion) => {
-    const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
-    setSaved(next)
-    setSavedToLS(next)
-    dismissOne(item.id)
-  }
+  const saveOne = useCallback(
+    (item: Suggestion) => {
+      const key = `${item.tag ?? ''}::${item.title}::${item.description ?? ''}`.trim()
+      const exists = saved.some(s => `${s.tag ?? ''}::${s.title}::${s.description ?? ''}`.trim() === key)
+      if (exists) {
+        dismissOne(item.id)
+        return
+      }
 
-  const fetchCards = useCallback(async (attempt = 0) => {
-    setState({ status: 'loading' })
+      const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
+      setSaved(next)
+      setSavedToLS(next)
+      dismissOne(item.id)
+    },
+    [saved, dismissOne]
+  )
 
-    try {
-      const res = await fetch('/api/ai/emocional', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feature: 'daily_inspiration',
-          origin: 'maternar-hub',
-          context: {},
-        }),
-      })
+  const removeSaved = useCallback(
+    (id: string) => {
+      const next = saved.filter(s => s.id !== id)
+      setSaved(next)
+      setSavedToLS(next)
+    },
+    [saved]
+  )
 
-      const data = res.ok ? await res.json() : null
-      const normalized = normalizeFromEmocional(data)
-      const items =
-        normalized ??
-        shuffle(baseFallback(), (seedRef.current += 19)).slice(0, 3)
+  const fetchCards = useCallback(
+    async (attempt = 0) => {
+      setState({ status: 'loading' })
 
-      const sig = signature(items)
-      if (sig === lastSigRef.current && attempt < 1) return fetchCards(attempt + 1)
+      const nonce = Date.now()
 
-      lastSigRef.current = sig
-      setState({ status: 'done', items })
-    } catch {
-      const items = shuffle(baseFallback(), (seedRef.current += 31)).slice(0, 3)
-      setState({ status: 'done', items })
-    }
-  }, [])
+      try {
+        const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            feature: 'daily_inspiration',
+            origin: 'maternar-hub',
+            context: {},
+          }),
+        })
+
+        let data: any = null
+        if (res.ok) data = await res.json().catch(() => null)
+
+        const normalized = normalizeFromEmocional(data)
+        const nextItems =
+          normalized ??
+          shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
+
+        const sig = signature(nextItems)
+
+        if (sig && sig === lastSigRef.current && attempt < 1) {
+          return await fetchCards(attempt + 1)
+        }
+
+        lastSigRef.current = sig
+        setState({ status: 'done', items: nextItems })
+      } catch {
+        const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
+        const sig = signature(nextItems)
+
+        if (sig && sig === lastSigRef.current && attempt < 1) {
+          return await fetchCards(attempt + 1)
+        }
+
+        lastSigRef.current = sig
+        setState({ status: 'done', items: nextItems })
+      }
+    },
+    []
+  )
 
   return (
     <div className="space-y-4">
-      <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5]">
+      <SoftCard
+        className="
+          p-5 md:p-6 rounded-2xl
+          bg-white/95
+          border border-[#f5d7e5]
+          shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+        "
+      >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center">
+            <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
               <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
             </div>
 
             <div className="space-y-1">
-              <span className="inline-flex rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold text-[#b8236b]">
+              <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                 Para agora
               </span>
               <h2 className="text-[16px] md:text-[17px] font-semibold text-[#2f3a56]">
                 Um apoio para este momento
               </h2>
-              <p className="text-[13px] text-[#6a6a6a]">
+              <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
                 Se fizer sentido, fica. Se não fizer, tudo bem também.
               </p>
             </div>
           </div>
 
-          <Button
-            variant={state.status === 'idle' ? 'default' : 'secondary'}
-            className="px-4"
-            onClick={() => fetchCards()}
-          >
-            {state.status === 'idle' ? 'Ver um apoio' : 'Ver outro apoio'}
-          </Button>
+          <div className="shrink-0">
+            {state.status === 'idle' ? (
+              <Button className="px-4" onClick={() => void fetchCards()}>
+                Ver sugestões
+              </Button>
+            ) : (
+              <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
+                Ver outro apoio
+              </Button>
+            )}
+          </div>
         </div>
 
-        {state.status === 'loading' && (
-          <p className="mt-4 text-[13px] text-[#6a6a6a]">Carregando…</p>
-        )}
+        {state.status === 'loading' ? (
+          <div className="mt-4 rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3">
+            <p className="text-[13px] text-[#6a6a6a]">Carregando…</p>
+          </div>
+        ) : null}
 
-        {state.status === 'done' && (
+        {state.status === 'done' ? (
           <div className="mt-4 space-y-3">
-            {visibleItems.map(item => (
-              <div key={item.id} className="rounded-2xl border px-4 py-3">
-                <span className="text-[10px] font-semibold text-[#b8236b] uppercase">
-                  {item.tag}
-                </span>
-                <p className="mt-1 font-semibold">{item.title}</p>
-                {item.description && (
-                  <p className="mt-1 text-[12px] text-[#6a6a6a]">{item.description}</p>
-                )}
-                <div className="mt-2 flex gap-2">
-                  <button onClick={() => dismissOne(item.id)}>Não agora</button>
-                  <button onClick={() => saveOne(item)}>Guardar</button>
+            {visibleItems.length ? (
+              visibleItems.map(item => (
+                <div
+                  key={item.id}
+                  className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      {item.tag ? (
+                        <span className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          {item.tag}
+                        </span>
+                      ) : null}
+
+                      <p className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
+                      {item.description ? (
+                        <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">
+                          {item.description}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        className="
+                          rounded-full
+                          bg-white
+                          border border-[#f5d7e5]/70
+                          text-[#545454]
+                          px-3 py-1.5
+                          text-[12px]
+                          transition
+                          hover:shadow-sm
+                          whitespace-nowrap
+                        "
+                        onClick={() => dismissOne(item.id)}
+                      >
+                        Não agora
+                      </button>
+
+                      <button
+                        type="button"
+                        className="
+                          rounded-full
+                          bg-[#fd2597]
+                          text-white
+                          px-3 py-1.5
+                          text-[12px]
+                          font-semibold
+                          transition
+                          hover:opacity-95
+                          whitespace-nowrap
+                        "
+                        onClick={() => saveOne(item)}
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3">
+                <p className="text-[13px] text-[#6a6a6a]">
+                  Sem pressão. Se quiser, peça outra leva.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </SoftCard>
+
+      {saved.length ? (
+        <SoftCard
+          className="
+            p-5 md:p-6 rounded-2xl
+            bg-white/95
+            border border-[#f5d7e5]
+            shadow-[0_6px_18px_rgba(184,35,107,0.09)]
+          "
+        >
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+              <AppIcon name="bookmark" size={20} className="text-[#fd2597]" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                Guardadas
+              </span>
+              <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                Só para você. Sem virar tarefa, sem virar cobrança.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {saved.slice(0, 3).map(item => (
+              <div
+                key={item.id}
+                className="
+                  rounded-2xl
+                  border border-[#f5d7e5]/50
+                  bg-white
+                  px-4 py-3
+                  flex items-start justify-between gap-3
+                "
+              >
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
+                  {item.description ? (
+                    <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">
+                      {item.description}
+                    </p>
+                  ) : null}
+                </div>
+
+                <button
+                  type="button"
+                  className="text-[12px] font-semibold text-[#6a6a6a] hover:opacity-90 transition whitespace-nowrap"
+                  onClick={() => removeSaved(item.id)}
+                >
+                  Remover
+                </button>
               </div>
             ))}
           </div>
-        )}
-      </SoftCard>
+
+          {saved.length > 3 ? (
+            <p className="mt-3 text-[12px] text-[#6a6a6a]">
+              Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
+            </p>
+          ) : null}
+
+          <div className="mt-3">
+            <button
+              type="button"
+              className="text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
+              onClick={() => {
+                setSaved([])
+                setSavedToLS([])
+              }}
+            >
+              Limpar guardadas
+            </button>
+          </div>
+        </SoftCard>
+      ) : null}
+
+      {/* higiene: botão invisível (sem UI) para eventual reset manual no futuro */}
+      <button
+        type="button"
+        className="hidden"
+        onClick={() => safeRemoveLS(`${LS_DISMISS_KEY_PREFIX}${todayKey}`)}
+        aria-hidden="true"
+      />
     </div>
   )
 }
