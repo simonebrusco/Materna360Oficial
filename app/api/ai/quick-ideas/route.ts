@@ -14,6 +14,7 @@ export const runtime = 'edge'
 
 type EmotionalSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
 
+// Payload do catálogo (estruturado)
 type QuickIdeasRequest = {
   plan: 'free' | 'essencial' | 'premium'
   profile: {
@@ -27,6 +28,16 @@ type QuickIdeasRequest = {
     energy: QuickIdeasEnergy
   }
   // Contexto fraco (opcional) — não é persistido nem logado
+  memory?: {
+    emotional_signal?: EmotionalSignal
+  }
+  locale?: 'pt-BR'
+}
+
+// Payload do Meu Dia (IA leve) — já usado no client QuickIdeaAI.tsx
+type QuickIdeasMyDayRequest = {
+  intent: 'quick_idea'
+  nonce?: number
   memory?: {
     emotional_signal?: EmotionalSignal
   }
@@ -60,7 +71,48 @@ function pickWithSoftBias<T>(softOption: T, neutralOption: T, weightBetween0and1
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as QuickIdeasRequest | null
+    const raw = (await req.json()) as unknown
+    const maybeIntent = (raw as any)?.intent
+
+    // =========================
+    // MODO LEVE — MEU DIA (P33.4a)
+    // Aceita { intent:'quick_idea', memory? } e retorna { suggestions: [...] }
+    // =========================
+    if (maybeIntent === 'quick_idea') {
+      const body = raw as QuickIdeasMyDayRequest
+
+      const signal: EmotionalSignal = normalizeSignal(body?.memory?.emotional_signal)
+      const softWeight =
+        signal === 'overwhelmed' ? 0.8 : signal === 'heavy' ? 0.7 : signal === 'tired' ? 0.6 : 0
+
+      const suggestionsNeutral = [
+        { id: 'qi-1', title: 'Respirar por 1 minuto', description: 'Uma pausa curta já ajuda a reorganizar.' },
+        { id: 'qi-2', title: 'Escolher só uma prioridade', description: 'O resto pode esperar.' },
+        { id: 'qi-3', title: 'Beber um copo de água', description: 'Só para ancorar o corpo no presente.' },
+      ]
+
+      const suggestionsSoft = [
+        { id: 'qi-1', title: 'Fazer uma pausa de 60 segundos', description: 'Só para baixar o volume do dia.' },
+        { id: 'qi-2', title: 'Diminuir o “tamanho do agora”', description: 'Uma coisa de cada vez já é suficiente.' },
+        { id: 'qi-3', title: 'Alongar ombros e pescoço', description: 'Bem leve, sem pressa, por alguns segundos.' },
+      ]
+
+      const suggestions =
+        softWeight > 0
+          ? pickWithSoftBias(suggestionsSoft, suggestionsNeutral, Math.min(0.75, softWeight))
+          : suggestionsNeutral
+
+      // Sem telemetria nova e sem incluir signal
+      track('audio.select', { reason: 'my_day_quick_idea' })
+
+      // Formato A compatível com normalize() do client
+      return NextResponse.json({ suggestions })
+    }
+
+    // =========================
+    // CATÁLOGO ESTRUTURADO (EXISTENTE)
+    // =========================
+    const body = raw as QuickIdeasRequest | null
 
     if (!body || !body.plan || !body.profile || !body.context) {
       track('audio.select', { reason: 'missing_fields' })
