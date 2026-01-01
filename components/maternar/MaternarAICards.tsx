@@ -76,37 +76,43 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
+/**
+ * Fallback precisa respeitar o Prompt Canônico do Maternar:
+ * - acolhe, nomeia e normaliza
+ * - não vira técnica/método
+ * - não vira “faça/tente/ideal”
+ */
 function baseFallback(): Suggestion[] {
   return [
     {
       id: 'fb-1',
       tag: 'frase',
       title: 'Hoje, o suficiente já é muito.',
-      description: 'Sem corrida. Sem dívida emocional.',
+      description: 'Sem corrida. Sem dívida emocional. Só presença possível.',
     },
     {
       id: 'fb-2',
       tag: 'cuidado',
-      title: 'Um cuidado pequeno por você',
-      description: 'Água, respiração, um minuto de silêncio. Só o que couber.',
+      title: 'Você não precisa estar “bem” para merecer cuidado.',
+      description: 'Quando o dia pesa, o corpo e o coração só pedem um pouco de gentileza.',
     },
     {
       id: 'fb-3',
       tag: 'ritual',
-      title: 'Um ritual de 60 segundos',
-      description: 'Inspire 4, segure 2, solte 6. Uma vez. E pronto.',
+      title: 'Às vezes, o que falta não é força. É respiro.',
+      description: 'Se o corpo pedir uma pausa, ela pode existir do jeito que der — sem regra.',
     },
     {
       id: 'fb-4',
       tag: 'limites',
-      title: 'Uma frase curta para limites',
-      description: '“Eu te ouço. E ainda assim, agora não.” Sem justificar demais.',
+      title: 'Limites também podem ser amor.',
+      description: 'Dizer “não” pode ser só um jeito de proteger o que importa — sem culpa.',
     },
     {
       id: 'fb-5',
       tag: 'cansaço',
-      title: 'Troque “dar conta” por “caber”',
-      description: 'Pergunta de hoje: o que cabe — de verdade — nesse momento?',
+      title: 'Quando tudo parece demais, é comum querer “dar conta”.',
+      description: 'E ainda assim, o que você sente faz sentido. Nem sempre cabe tudo.',
     },
   ]
 }
@@ -127,11 +133,10 @@ function normalizeFromEmocional(payload: any): Suggestion[] | null {
     }
 
     if (care) {
-      // care pode vir 3–6 linhas: preserva, mas deixa leve
       items.push({
         id: 'inspo-care',
         tag: 'cuidado',
-        title: 'Um cuidado para hoje',
+        title: 'Um cuidado que acolhe',
         description: care,
       })
     }
@@ -140,7 +145,7 @@ function normalizeFromEmocional(payload: any): Suggestion[] | null {
       items.push({
         id: 'inspo-ritual',
         tag: 'ritual',
-        title: 'Um ritual simples',
+        title: 'Um gesto simples de presença',
         description: ritual,
       })
     }
@@ -251,8 +256,6 @@ export default function MaternarAICards() {
           body: JSON.stringify({
             feature: 'daily_inspiration',
             origin: 'maternar-hub',
-            // Contexto pode vir vazio; a rota é robusta e mantém tom Materna360.
-            // No futuro, podemos plugar personaLabel / firstName daqui com segurança.
             context: {},
           }),
         })
