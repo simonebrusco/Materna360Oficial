@@ -8,11 +8,16 @@ import type {
   QuickIdeasBadge,
   QuickIdeasLocation,
   QuickIdeasEnergy,
+  QuickIdeasTimeWindow,
 } from '@/app/types/quickIdeas'
 
 export const runtime = 'edge'
 
-type QuickIdeasRequest = {
+/**
+ * Payload legado (catálogo por criança / contexto).
+ * Mantido integralmente para não quebrar consumidores existentes.
+ */
+type QuickIdeasRequestLegacy = {
   plan: 'free' | 'essencial' | 'premium'
   profile: {
     active_child_id: string | null
@@ -27,30 +32,166 @@ type QuickIdeasRequest = {
   locale?: 'pt-BR'
 }
 
+/**
+ * Payload leve para Meu Dia (P33.4):
+ * 1 foco, sem parentalidade, sem plano, sem lista.
+ */
+type QuickIdeasRequestLight = {
+  intent: 'quick_idea'
+  nonce?: number
+  locale?: 'pt-BR'
+}
+
+type Suggestion = { id: string; title: string; description?: string }
+
 function badRequest(message: string, details?: unknown) {
   return NextResponse.json({ error: message, details }, { status: 400 })
 }
 
+function isLegacyRequest(body: any): body is QuickIdeasRequestLegacy {
+  return !!body && typeof body === 'object' && !!body.plan && !!body.profile && !!body.context
+}
+
+function isLightRequest(body: any): body is QuickIdeasRequestLight {
+  return !!body && typeof body === 'object' && body.intent === 'quick_idea'
+}
+
+/** ---------- validações fortes (legado) ---------- */
+
+const LOCATION_SET = new Set<QuickIdeasLocation>(['casa', 'parque', 'escola', 'area_externa'])
+const ENERGY_SET = new Set<QuickIdeasEnergy>(['exausta', 'normal', 'animada'])
+const MODE_SET = new Set<'single' | 'all'>(['single', 'all'])
+const PLAN_SET = new Set<'free' | 'essencial' | 'premium'>(['free', 'essencial', 'premium'])
+
+function isValidLocation(v: any): v is QuickIdeasLocation {
+  return typeof v === 'string' && LOCATION_SET.has(v as QuickIdeasLocation)
+}
+
+function isValidEnergy(v: any): v is QuickIdeasEnergy {
+  return typeof v === 'string' && ENERGY_SET.has(v as QuickIdeasEnergy)
+}
+
+function isValidMode(v: any): v is 'single' | 'all' {
+  return typeof v === 'string' && MODE_SET.has(v as any)
+}
+
+function isValidPlan(v: any): v is 'free' | 'essencial' | 'premium' {
+  return typeof v === 'string' && PLAN_SET.has(v as any)
+}
+
+function sanitizeTimeWindowMin(v: any): QuickIdeasTimeWindow {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return 10
+  if (n <= 5) return 5
+  if (n <= 10) return 10
+  return 20
+}
+
+/** ---------- modo leve (Meu Dia) ---------- */
+
+function chooseOne(seed: number, items: Suggestion[]) {
+  const safeSeed = Number.isFinite(seed) ? seed : Date.now()
+  const idx = Math.abs(safeSeed) % items.length
+  return items[idx]!
+}
+
+function myDaySuggestions(): Suggestion[] {
+  return [
+    { id: 'md-1', title: 'Respire por 1 minuto', description: 'Só para o corpo entender que você chegou.' },
+    { id: 'md-2', title: 'Escolha só uma coisa para agora', description: 'O resto pode esperar um pouco.' },
+    { id: 'md-3', title: 'Faça um passo pequeno', description: 'Algo simples já organiza por dentro.' },
+    { id: 'md-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
+    { id: 'md-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
+  ]
+}
+
 export async function POST(req: Request) {
-  const t0 = Date.now()
-
   try {
-    const body = (await req.json()) as QuickIdeasRequest | null
+    const body = (await req.json()) as QuickIdeasRequestLegacy | QuickIdeasRequestLight | null
 
-    track('ai.quick_ideas.request', {
-      ok: !!body,
-      at: new Date().toISOString(),
-    })
+    /**
+     * MODO LEVE (Meu Dia)
+     * Retorna no formato esperado pelo QuickIdeaAI: { suggestions: [...] }
+     * Apenas 1 sugestão.
+     */
+    if (isLightRequest(body)) {
+      const seed = typeof body.nonce === 'number' ? body.nonce : Date.now()
+      const one = chooseOne(seed, myDaySuggestions())
 
-    if (!body || !body.plan || !body.profile || !body.context) {
-      track('ai.quick_ideas.bad_request', { reason: 'missing_fields' })
+      try {
+        track('ai.quick_ideas.light', {
+          intent: body.intent,
+          locale: body.locale ?? 'pt-BR',
+        })
+      } catch {}
+
+      return NextResponse.json({
+        suggestions: [one],
+        meta: { mode: 'my_day_light' as const },
+      })
+    }
+
+    /**
+     * MODO LEGADO (Catálogo completo)
+     * Mantido, mas com validação forte para evitar payload inválido.
+     */
+    if (!isLegacyRequest(body)) {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'missing_fields' })
+      } catch {}
       return badRequest('Missing required fields: plan, profile, context')
     }
 
+    if (!isValidPlan(body.plan)) {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'invalid_plan', plan: String(body.plan) })
+      } catch {}
+      return badRequest('Invalid plan')
+    }
+
+    if (!body.profile || typeof body.profile !== 'object') {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'invalid_profile' })
+      } catch {}
+      return badRequest('Invalid profile')
+    }
+
+    if (!isValidMode((body.profile as any).mode)) {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'invalid_mode', mode: String((body.profile as any).mode) })
+      } catch {}
+      return badRequest('Invalid profile.mode')
+    }
+
     if (!Array.isArray(body.profile.children)) {
-      track('ai.quick_ideas.bad_request', { reason: 'children_not_array' })
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'children_not_array' })
+      } catch {}
       return badRequest('Invalid profile.children')
     }
+
+    if (!body.context || typeof body.context !== 'object') {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'invalid_context' })
+      } catch {}
+      return badRequest('Invalid context')
+    }
+
+    if (!isValidLocation((body.context as any).location)) {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'invalid_location', location: String((body.context as any).location) })
+      } catch {}
+      return badRequest('Invalid context.location')
+    }
+
+    if (!isValidEnergy((body.context as any).energy)) {
+      try {
+        track('ai.quick_ideas.bad_request', { reason: 'invalid_energy', energy: String((body.context as any).energy) })
+      } catch {}
+      return badRequest('Invalid context.energy')
+    }
+
+    const safeTimeWindow = sanitizeTimeWindowMin((body.context as any).time_window_min)
 
     if (body.plan === 'free') {
       const res = {
@@ -62,7 +203,7 @@ export async function POST(req: Request) {
         query_echo: {
           plan: body.plan,
           location: body.context.location,
-          time_window_min: body.context.time_window_min,
+          time_window_min: safeTimeWindow,
           energy: body.context.energy,
           age_buckets: body.profile.children.map((child) => child.age_bucket),
         },
@@ -70,10 +211,9 @@ export async function POST(req: Request) {
         aggregates: { materials_consolidated: [] as string[] },
       }
 
-      track('ai.quick_ideas.denied', {
-        plan: body.plan,
-        ms: Date.now() - t0,
-      })
+      try {
+        track('ai.quick_ideas.legacy', { plan: body.plan })
+      } catch {}
 
       return NextResponse.json(res)
     }
@@ -95,18 +235,12 @@ export async function POST(req: Request) {
       id: 'cabana-lencois-10min',
       title: 'Cabana de Lençóis Aconchegante',
       summary: 'Montem uma cabaninha e contem uma história curta.',
-      time_total_min: Math.min(10, Number(body.context.time_window_min || 10)),
+      time_total_min: Math.min(10, safeTimeWindow),
       location: body.context.location,
       materials: ['lençóis', 'cadeiras', 'lanterna'],
-      steps: [
-        'Estenda os lençóis entre as cadeiras para formar a cabana.',
-        'Entrem com a lanterna e contem uma história curtinha.',
-      ],
+      steps: ['Estenda os lençóis entre as cadeiras para formar a cabana.', 'Entrem com a lanterna e contem uma história curtinha.'],
       age_adaptations: ageAdaptations,
-      safety_notes: [
-        'Supervisão constante; evite prender lençol em locais altos.',
-        'Lanterna sem peças pequenas soltas.',
-      ],
+      safety_notes: ['Supervisão constante; evite prender lençol em locais altos.', 'Lanterna sem peças pequenas soltas.'],
       badges,
       planner_payload: { type: 'idea', duration_min: 10, materials: ['lençóis', 'cadeiras', 'lanterna'] },
       rationale: 'Poucos materiais, cabe no tempo disponível e na energia atual.',
@@ -130,7 +264,7 @@ export async function POST(req: Request) {
       query_echo: {
         plan: body.plan,
         location: body.context.location,
-        time_window_min: body.context.time_window_min,
+        time_window_min: safeTimeWindow,
         energy: body.context.energy,
         age_buckets: body.profile.children.map((child) => child.age_bucket),
       },
@@ -138,16 +272,19 @@ export async function POST(req: Request) {
       aggregates: { materials_consolidated: consolidateMaterials(ideas) },
     }
 
-    track('ai.quick_ideas.response', {
-      plan: body.plan,
-      limited_to_one: body.plan === 'essencial',
-      ideas: ideas.length,
-      ms: Date.now() - t0,
-    })
+    try {
+      track('ai.quick_ideas.legacy', {
+        plan: body.plan,
+        location: body.context.location,
+        energy: body.context.energy,
+      })
+    } catch {}
 
     return NextResponse.json(response)
   } catch (err) {
-    track('ai.quick_ideas.error', { error: String(err) })
+    try {
+      track('ai.quick_ideas.error', { error: String(err) })
+    } catch {}
     return badRequest('Invalid JSON payload', String(err))
   }
 }
