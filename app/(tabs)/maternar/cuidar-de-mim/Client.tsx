@@ -8,7 +8,7 @@ import LegalFooter from '@/components/common/LegalFooter'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { track } from '@/app/lib/telemetry'
 
-import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import { addTaskToMyDay, listMyDayTasks, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { load, save } from '@/app/lib/persist'
@@ -20,13 +20,11 @@ type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 
 /**
  * Governança:
- * - Cuidar de Mim é a “casa oficial” do check-in (estado emocional).
- * - Não usamos Eu360 como storage de estado do dia (Eu360 é “espelho”).
- * - Mantemos compat com legado eu360_ritmo, mas a escrita passa a ser em persist (m360: prefix).
+ * - Cuidar de Mim é a casa oficial do check-in (estado do momento).
+ * - Mantém leitura compat do legado eu360_ritmo, mas não escreve mais lá.
  */
 const PERSIST_KEYS = {
   cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
-  myDaySavedDailyCounterPrefix: 'my_day.saved_counter.v1.', // + YYYY-MM-DD
 } as const
 
 const LEGACY_LS_KEYS = {
@@ -55,11 +53,9 @@ function inferRitmo(): Ritmo {
   if (raw === 'cansada') return 'cansada'
   if (raw === 'confusa') return 'confusa'
   if (raw === 'ok') return 'ok'
-  // compat antigo
   if (raw === 'sobrecarregada') return 'cansada'
   if (raw === 'animada') return 'ok'
 
-  // default seguro (sem culpa)
   return 'cansada'
 }
 
@@ -70,55 +66,28 @@ function setRitmoPersist(r: Ritmo) {
 }
 
 /**
- * Contagem real mínima (v1): "Salvos hoje"
- * Estratégia incremental e segura:
- * - Não tenta “adivinhar” estruturas internas do Meu Dia.
- * - Atualiza o contador quando algo é salvo a partir daqui (created=true).
- * - Mostra um número real (não “—”), cumprindo a entrega v1.
- *
- * Observação de governança:
- * - Isso é “mínimo viável” para interligação perceptível.
- * - A contagem global (incluindo saves do Meu Dia, Meu Dia Leve etc.) pode vir na v2,
- *   quando conectarmos com o storage real do core sem heurística.
+ * DaySignals (v1)
+ * - Salvos: real (core do Meu Dia) via listMyDayTasks(today)
+ * - Compromissos / Para depois: ainda não conectados (v2/v3)
  */
-function todayKey(): string {
-  // YYYY-MM-DD local
-  const d = new Date()
-  const yyyy = String(d.getFullYear())
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function dailySavedCounterKey(): string {
-  return `${PERSIST_KEYS.myDaySavedDailyCounterPrefix}${todayKey()}`
-}
-
-function readSavedTodayCounter(): number {
-  try {
-    const n = load<number>(dailySavedCounterKey())
-    return typeof n === 'number' && Number.isFinite(n) && n >= 0 ? n : 0
-  } catch {
-    return 0
-  }
-}
-
-function bumpSavedTodayCounter() {
-  try {
-    const cur = readSavedTodayCounter()
-    save(dailySavedCounterKey(), cur + 1)
-  } catch {}
-}
-
 type DaySignals = {
   savedCount: number
   commitmentsCount: number | null
   laterCount: number | null
 }
 
+function readSavedTodayFromCore(): number {
+  try {
+    const tasks = listMyDayTasks(new Date())
+    return Array.isArray(tasks) ? tasks.length : 0
+  } catch {
+    return 0
+  }
+}
+
 function readDaySignalsV1(): DaySignals {
   return {
-    savedCount: readSavedTodayCounter(),
+    savedCount: readSavedTodayFromCore(),
     commitmentsCount: null,
     laterCount: null,
   }
@@ -127,24 +96,21 @@ function readDaySignalsV1(): DaySignals {
 function pickOrientation(tone: 'gentil' | 'direto', ritmo: Ritmo, signals: DaySignals) {
   const hasSaved = (signals.savedCount ?? 0) > 0
 
-  // Direto (Eu360)
   if (tone === 'direto') {
-    if (ritmo === 'confusa') return hasSaved ? 'Escolha só um próximo passo real. O resto pode esperar.' : 'Escolha um próximo passo real. O resto pode esperar.'
+    if (ritmo === 'confusa') return 'Escolha só um próximo passo real. O resto pode esperar.'
     if (ritmo === 'cansada') return hasSaved ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
-    if (ritmo === 'leve') return hasSaved ? 'Siga leve. Só não invente complexidade.' : 'Siga leve. Sem inventar complexidade.'
+    if (ritmo === 'leve') return 'Siga leve. Só não invente complexidade.'
     return hasSaved ? 'Seu dia já está em movimento. Sem se cobrar por “fechar”.' : 'Seu dia não precisa render para valer.'
   }
 
-  // Gentil (padrão)
-  if (ritmo === 'confusa') return hasSaved ? 'Agora é um bom momento para simplificar. Um passo já ajuda.' : 'Agora é um bom momento para simplificar. Um passo já ajuda.'
-  if (ritmo === 'cansada') return hasSaved ? 'Um passo simples já é suficiente hoje.' : 'Um passo simples já é suficiente hoje.'
-  if (ritmo === 'leve') return hasSaved ? 'Vamos manter leve. Só o que fizer sentido.' : 'Vamos manter leve. Só o que fizer sentido.'
-  return hasSaved ? 'Você pode seguir sem se cobrar.' : 'Você pode seguir sem se cobrar.'
+  // gentil
+  if (ritmo === 'confusa') return 'Agora é um bom momento para simplificar. Um passo já ajuda.'
+  if (ritmo === 'cansada') return 'Um passo simples já é suficiente hoje.'
+  if (ritmo === 'leve') return 'Vamos manter leve. Só o que fizer sentido.'
+  return 'Você pode seguir sem se cobrar.'
 }
 
 function microCareSuggestion(ritmo: Ritmo, seed: number) {
-  // Micro cuidado opcional — curto, adulto, não terapêutico.
-  // seed rotaciona sem salvar automaticamente.
   const optionsByRitmo: Record<Ritmo, string[]> = {
     confusa: [
       'Se fizer sentido agora: água + 1 minuto em silêncio antes do próximo passo.',
@@ -186,12 +152,12 @@ export default function Client() {
     }
   }, [])
 
-  const daySignals = useMemo(() => {
-    try {
-      const s = readDaySignalsV1()
-      return s
-    } catch {
-      return { savedCount: 0, commitmentsCount: null, laterCount: null }
+  // v1: somente "Salvos" real
+  const daySignals = useMemo<DaySignals>(() => {
+    return {
+      savedCount: savedToday,
+      commitmentsCount: null,
+      laterCount: null,
     }
   }, [savedToday])
 
@@ -210,8 +176,7 @@ export default function Client() {
     const r = inferRitmo()
     setRitmo(r)
 
-    // v1: carregar contador real mínimo
-    const c = readSavedTodayCounter()
+    const c = readSavedTodayFromCore()
     setSavedToday(c)
 
     try {
@@ -243,17 +208,21 @@ export default function Client() {
       })
     } catch {}
 
-    // v1: contador real mínimo (somente quando criou)
-    if (res.created) {
-      bumpSavedTodayCounter()
-      const c = readSavedTodayCounter()
+    // atualiza contagem real (core)
+    // - created true: cresce
+    // - created false: não muda
+    // - limitHit: não muda
+    if (res?.ok) {
+      const c = readSavedTodayFromCore()
       setSavedToday(c)
     }
 
     try {
       track('cuidar_de_mim.save_to_my_day', {
         origin,
-        created: res.created,
+        ok: !!res.ok,
+        created: !!res.created,
+        limitHit: !!res.limitHit,
         dateKey: res.dateKey,
         source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
       })
@@ -263,26 +232,17 @@ export default function Client() {
   const stat = (n: number | null) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main
-      data-layout="page-template-v1"
-      data-tab="maternar"
-      className="relative min-h-[100dvh] pb-24 overflow-hidden"
-    >
+    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden">
       <ClientOnly>
         <div className="page-shell relative z-10">
           {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link
-              href="/maternar"
-              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
-            >
+            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
               <span className="mr-1.5 text-lg leading-none">←</span>
               Voltar para o Maternar
             </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
-              Cuidar de Mim
-            </h1>
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
 
             <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
               Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
@@ -294,6 +254,7 @@ export default function Client() {
             <div className="hub-shell-inner">
               {/* RAIL (integração visual) */}
               <div className="relative">
+                {/* linha vertical sutil */}
                 <div className="absolute left-[18px] top-[6px] bottom-[6px] w-px bg-[#f5d7e5]" />
 
                 <div className="space-y-8">
@@ -340,32 +301,20 @@ export default function Client() {
 
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                          Salvos
-                        </div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
-                          {String(savedToday)}
-                        </div>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{String(savedToday)}</div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                       </div>
 
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                          Compromissos
-                        </div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
-                          {stat(daySignals.commitmentsCount)}
-                        </div>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                       </div>
 
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                          Para depois
-                        </div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
-                          {stat(daySignals.laterCount)}
-                        </div>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Para depois</div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                       </div>
                     </div>
@@ -374,10 +323,7 @@ export default function Client() {
                       <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
                         Ir para Meu Dia
                       </Link>
-                      <Link
-                        href="/maternar/meu-filho"
-                        className="btn-secondary inline-flex items-center justify-center"
-                      >
+                      <Link href="/maternar/meu-filho" className="btn-secondary inline-flex items-center justify-center">
                         Ir para Meu Filho
                       </Link>
                     </div>
@@ -416,7 +362,6 @@ export default function Client() {
                         Salvar no Meu Dia
                       </button>
 
-                      {/* Agora é rotação silenciosa (não salva) */}
                       <button
                         type="button"
                         onClick={() => {
