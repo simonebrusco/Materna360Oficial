@@ -24,6 +24,11 @@ export const revalidate = 0
 
 type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 
+/**
+ * Governança:
+ * - Cuidar de Mim é a casa oficial do check-in.
+ * - Mantém leitura compat do legado eu360_ritmo, mas grava no persist.
+ */
 const PERSIST_KEYS = {
   cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
 } as const
@@ -45,6 +50,7 @@ type DaySignals = {
   laterCount: number
 }
 
+/** Fallback obrigatório da governança (sem IA, sem variação). */
 const GUIDANCE_FALLBACK = 'Agora é um bom momento para simplificar. Um passo já ajuda.'
 
 function safeGetLS(key: string): string | null {
@@ -57,16 +63,20 @@ function safeGetLS(key: string): string | null {
 }
 
 function inferRitmo(): Ritmo {
+  // 1) Novo padrão (persist)
   try {
     const v = load<string>(PERSIST_KEYS.cuidarDeMimRitmo)
     if (v === 'leve' || v === 'cansada' || v === 'confusa' || v === 'ok') return v
   } catch {}
 
+  // 2) Legado (compat)
   const raw = safeGetLS(LEGACY_LS_KEYS.eu360Ritmo)
   if (raw === 'leve') return 'leve'
-  if (raw === 'cansada' || raw === 'sobrecarregada') return 'cansada'
+  if (raw === 'cansada') return 'cansada'
   if (raw === 'confusa') return 'confusa'
-  if (raw === 'ok' || raw === 'animada') return 'ok'
+  if (raw === 'ok') return 'ok'
+  if (raw === 'sobrecarregada') return 'cansada'
+  if (raw === 'animada') return 'ok'
 
   return 'cansada'
 }
@@ -77,6 +87,11 @@ function setRitmoPersist(r: Ritmo) {
   } catch {}
 }
 
+/**
+ * Compromissos (real):
+ * - Fonte: planner/appointments/all
+ * - Count: appointments com dateKey === todayKey
+ */
 function readCommitmentsTodayFromPlanner(): number {
   try {
     const todayKey = getBrazilDateKey(new Date())
@@ -88,6 +103,11 @@ function readCommitmentsTodayFromPlanner(): number {
   }
 }
 
+/**
+ * BLOCO 2 — integração real mínima e segura:
+ * - Salvos e Para depois: via helper oficial readMyDayCountsToday()
+ * - Compromissos: via planner/appointments/all
+ */
 function readDaySignals(): DaySignals {
   try {
     const counts = readMyDayCountsToday()
@@ -105,11 +125,11 @@ function readDaySignals(): DaySignals {
 
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
-  const [daySignals, setDaySignals] = useState<DaySignals>({
+  const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
     savedCount: 0,
     commitmentsCount: 0,
     laterCount: 0,
-  })
+  }))
 
   const euSignal = useMemo(() => {
     try {
@@ -119,15 +139,14 @@ export default function Client() {
     }
   }, [])
 
+  /** BLOCO 3 — governança: texto vindo do helper oficial + fallback obrigatório */
   const guidance = useMemo(() => {
     try {
       const out = getCareGuidance({
         ritmo,
-        savedCount: daySignals.savedCount,
+        savedCount: daySignals.savedCount ?? 0,
       })
-
       const text = (out?.text ?? '').trim()
-
       return {
         title: (out?.title ?? 'Hoje, um norte simples').trim() || 'Hoje, um norte simples',
         text: text || GUIDANCE_FALLBACK,
@@ -170,22 +189,33 @@ export default function Client() {
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg"
+    >
       <ClientOnly>
         <div className="page-shell relative z-10">
+          {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
+            <Link
+              href="/maternar"
+              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
+            >
               <span className="mr-1.5 text-lg leading-none">←</span>
               Voltar para o Maternar
             </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+              Cuidar de Mim
+            </h1>
 
             <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
               Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
             </p>
           </header>
 
+          {/* CONTAINER EDITORIAL ÚNICO */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
               <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
@@ -201,22 +231,22 @@ export default function Client() {
                       <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
                       <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
-                      <div className="mt-5">
-                        <div className="mx-auto max-w-[880px]">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+                      {/* CENTERING RAIL (corrige o "puxado") */}
+                      <div className="mt-5 flex justify-center">
+                        <div className="w-full max-w-[840px]">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch justify-items-stretch">
+                            {/* 0A) Apoio emocional */}
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
+                            {/* 0B) Ação prática (QuickIdeaAI) */}
                             <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
                               <div className="flex items-start gap-3">
                                 <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
                                   <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
                                 </div>
 
-                                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                  <div className="mt-1">
-                                    <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
-                                  </div>
-
+                                <div className="min-w-0 flex-1">
+                                  <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
                                   <div className="mt-3 text-[12px] text-[#6a6a6a]">
                                     Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
                                   </div>
@@ -273,7 +303,7 @@ export default function Client() {
 
                 <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 2 — SEU DIA */}
+                {/* BLOCO 2 — SEU DIA (dados reais) */}
                 <section className="py-6">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
@@ -283,24 +313,38 @@ export default function Client() {
                     <div className="min-w-0 flex-1">
                       <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
                       <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
-                      <div className="hub-subtitle text-[#6a6a6a]">Uma visão consolidada, sem agenda e sem cobrança.</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">
+                        Uma visão consolidada, sem agenda e sem cobrança.
+                      </div>
 
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                            Salvos
+                          </div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                            {stat(daySignals.savedCount)}
+                          </div>
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                         </div>
 
                         <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                            Compromissos
+                          </div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                            {stat(daySignals.commitmentsCount)}
+                          </div>
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                         </div>
 
                         <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Para depois</div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                            Para depois
+                          </div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                            {stat(daySignals.laterCount)}
+                          </div>
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                         </div>
                       </div>
@@ -340,7 +384,9 @@ export default function Client() {
                     <div className="min-w-0 flex-1">
                       <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
                       <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
-                      <div className="hub-subtitle text-[#6a6a6a]">Se não couber nada agora, fechar por aqui já é cuidado.</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">
+                        Se não couber nada agora, fechar por aqui já é cuidado.
+                      </div>
 
                       <div className="mt-4 flex flex-col sm:flex-row gap-2">
                         <button
@@ -383,7 +429,9 @@ export default function Client() {
                       </div>
 
                       {euSignal?.showLessLine ? (
-                        <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
+                        <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                          Hoje pode ser menos. E ainda assim contar.
+                        </div>
                       ) : null}
                     </div>
                   </div>
