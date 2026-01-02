@@ -8,6 +8,8 @@ import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { ClientOnly } from '@/components/common/ClientOnly'
 
+import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
+
 import { track } from '@/app/lib/telemetry'
 import { load, save } from '@/app/lib/persist'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
@@ -124,7 +126,7 @@ function readDaySignals(): DaySignals {
 }
 
 /**
- * “Ideia simples para agora” (sem IA):
+ * “Micro cuidado” offline (sem IA):
  * - Linguagem adulta, não terapêutica.
  * - Curta e acionável.
  */
@@ -191,7 +193,7 @@ export default function Client() {
     }
   }, [ritmo, daySignals.savedCount])
 
-  /** “Para agora” e Micro Cuidado usam a mesma fonte (coerência + zero inventar). */
+  /** Fallback offline do hub (sem IA): usado no bloco “Micro cuidado”. */
   const micro = useMemo(() => microCareSuggestion(ritmo, microSeed), [ritmo, microSeed])
 
   useEffect(() => {
@@ -240,7 +242,6 @@ export default function Client() {
       })
     } catch {}
 
-    // atualiza BLOCO 2 real (sem toast)
     if (res?.ok) {
       setDaySignals(readDaySignals())
     }
@@ -284,7 +285,7 @@ export default function Client() {
           <section className="hub-shell">
             <div className="hub-shell-inner">
               <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-lg border border-black/5">
-                {/* BLOCO 0 — PARA AGORA (novo: traz “Um apoio para este momento” + “Me dá uma ideia”) */}
+                {/* BLOCO 0 — PARA AGORA (reuso: card do Meu Dia, adaptado ao hub via mode) */}
                 <section className="pb-6" id="para-agora">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
@@ -296,36 +297,8 @@ export default function Client() {
                       <div className="hub-title">Um apoio para este momento</div>
                       <div className="hub-subtitle">Pequeno, prático e sem cobrança.</div>
 
-                      <div className="mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3">
-                        <div className="text-[13px] md:text-[14px] text-black/75 leading-relaxed">{micro}</div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMicroSeed((s) => s + 1)
-                              try {
-                                track('cuidar_de_mim.para_agora.rotate', { ritmo })
-                              } catch {}
-                            }}
-                            className="btn-secondary"
-                          >
-                            Me dá uma ideia
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              saveToMyDay(micro)
-                              try {
-                                track('cuidar_de_mim.para_agora.save_to_my_day', { ritmo })
-                              } catch {}
-                            }}
-                            className="btn-primary"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-                        </div>
+                      <div className="mt-4">
+                        <QuickIdeaAI mode="cuidar_de_mim" />
                       </div>
                     </div>
                   </div>
@@ -443,7 +416,7 @@ export default function Client() {
 
                 <div className="border-t border-black/5" />
 
-                {/* BLOCO 4 — MICRO CUIDADO (opcional, discreto) */}
+                {/* BLOCO 4 — MICRO CUIDADO (offline, sem IA) */}
                 <section className="pt-6" id="pausas">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
