@@ -36,10 +36,6 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
-/**
- * Fallback alinhado ao Prompt Canônico — MATERNAR:
- * acolhe, nomeia, normaliza e fecha sem tarefa.
- */
 function baseFallback(): Suggestion[] {
   return [
     {
@@ -78,7 +74,6 @@ function baseFallback(): Suggestion[] {
 function normalizeFromEmocional(payload: any): Suggestion[] | null {
   if (!payload) return null
 
-  // Schema: { inspiration: { phrase, care, ritual } }
   if (payload?.inspiration) {
     const phrase = typeof payload.inspiration.phrase === 'string' ? payload.inspiration.phrase.trim() : ''
     const care = typeof payload.inspiration.care === 'string' ? payload.inspiration.care.trim() : ''
@@ -157,9 +152,7 @@ export default function ParaAgoraSupportCard({
       const nextItems = (normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19))).slice(0, 3)
 
       const sig = signature(nextItems)
-      if (sig && sig === lastSigRef.current && attempt < 1) {
-        return await fetchCards(attempt + 1)
-      }
+      if (sig && sig === lastSigRef.current && attempt < 1) return await fetchCards(attempt + 1)
 
       lastSigRef.current = sig
       setDismissed({})
@@ -168,9 +161,7 @@ export default function ParaAgoraSupportCard({
       const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
       const sig = signature(nextItems)
 
-      if (sig && sig === lastSigRef.current && attempt < 1) {
-        return await fetchCards(attempt + 1)
-      }
+      if (sig && sig === lastSigRef.current && attempt < 1) return await fetchCards(attempt + 1)
 
       lastSigRef.current = sig
       setDismissed({})
@@ -259,13 +250,11 @@ export default function ParaAgoraSupportCard({
 
   const loadingTextClass = isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'
 
+  // IMPORTANT: evita repetição no Hub (embedded)
+  const headerTitle = isEmbedded ? 'Um respiro para agora' : 'Um apoio para este momento'
+
   return (
-    <SoftCard
-      className={[
-        shellClass,
-        className ?? '',
-      ].join(' ')}
-    >
+    <SoftCard className={[shellClass, className ?? ''].join(' ')}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <div className={iconWrapClass}>
@@ -275,7 +264,7 @@ export default function ParaAgoraSupportCard({
           <div className="space-y-1">
             <span className={pillClass}>Para agora</span>
 
-            <h3 className={titleClass}>Um apoio para este momento</h3>
+            <h3 className={titleClass}>{headerTitle}</h3>
 
             <p className={subtitleClass}>Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
           </div>
