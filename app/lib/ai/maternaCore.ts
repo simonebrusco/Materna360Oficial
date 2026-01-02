@@ -31,7 +31,22 @@ export type MaternaMode = 'quick-ideas' | 'daily-inspiration' | 'smart-recipes'
 
 export type RotinaComQuem = 'so-eu' | 'eu-e-meu-filho' | 'familia-toda'
 
-export type RotinaTipoIdeia = 'brincadeira' | 'organizacao' | 'autocuidado' | 'receita-rapida'
+/**
+ * RotinaTipoIdeia
+ * ----------------
+ * Expandido para suportar o Hub "Meu Filho" (P33.6) SEM criar nova rota/mode.
+ * Mantém compat com usos existentes da Rotina Leve.
+ */
+export type RotinaTipoIdeia =
+  | 'brincadeira'
+  | 'organizacao'
+  | 'autocuidado'
+  | 'receita-rapida'
+  // Hub Meu Filho — blocos canônicos
+  | 'meu-filho-bloco-1'
+  | 'meu-filho-bloco-2'
+  | 'meu-filho-bloco-3'
+  | 'meu-filho-bloco-4'
 
 export interface MaternaProfile {
   nomeMae?: string
@@ -224,6 +239,43 @@ Regras específicas:
 - Se ela estiver com o filho, foque em conexão simples, sem exigir materiais difíceis.
 - Se estiver com a família toda, foque em algo que envolva todos, ainda simples.
 - Não crie atividades longas, complexas ou cheias de passos.
+
+===========================
+EXTENSÃO: HUB "MEU FILHO"
+===========================
+Quando context.tipoIdeia for um dos valores abaixo, você está atendendo o Hub "Meu Filho" e deve obedecer regras de bloco.
+
+IMPORTANTE: ainda responda no MESMO formato do modo quick-ideas:
+{
+  "suggestions": RotinaQuickSuggestion[]
+}
+
+Regras por bloco:
+
+1) context.tipoIdeia = "meu-filho-bloco-1"
+- Retorne EXATAMENTE 1 sugestão.
+- Deve ser uma ação fechada para fazer AGORA.
+- Zero escolhas. Zero variações.
+- Sem teoria. Sem discurso. Só o fazer.
+- title: curto (ação).
+- description: como fazer em 1 parágrafo curto, prático.
+
+2) context.tipoIdeia = "meu-filho-bloco-2"
+- Retorne entre 3 e 5 sugestões.
+- Curadoria: cada sugestão deve ser distinta e dar vontade de clicar.
+- Não pode parecer catálogo.
+- Cada item deve caber no tempo disponível e usar contexto de idade/fase quando existir.
+
+3) context.tipoIdeia = "meu-filho-bloco-3"
+- Retorne entre 2 e 4 sugestões.
+- Cada sugestão deve ser um "micro-ritmo reutilizável" (algo que dá para repetir em outros dias).
+- Nada vira obrigação. Linguagem leve, sem cobrança.
+- description sempre orienta "como encaixar no dia" com simplicidade.
+
+4) context.tipoIdeia = "meu-filho-bloco-4"
+- Retorne EXATAMENTE 1 sugestão.
+- A description deve ser UMA FRASE APENAS (uma linha), ajustando o "como fazer" hoje.
+- Zero teoria. Pode ser ignorado sem prejuízo.
 
 Saída:
 Responda SEMPRE com:
