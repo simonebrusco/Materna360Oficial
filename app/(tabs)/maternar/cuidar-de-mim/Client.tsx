@@ -173,7 +173,6 @@ export default function Client() {
     <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
       <ClientOnly>
         <div className="page-shell relative z-10">
-          {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
               <span className="mr-1.5 text-lg leading-none">←</span>
@@ -187,7 +186,6 @@ export default function Client() {
             </p>
           </header>
 
-          {/* CONTAINER EDITORIAL ÚNICO */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
               <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
@@ -206,18 +204,15 @@ export default function Client() {
                       <div className="mt-5">
                         <div className="mx-auto max-w-[880px]">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
-                            {/* Card ESQUERDO (embedded) */}
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                            {/* Card DIREITO (mesma linguagem visual, sem texto novo) */}
                             <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
                               <div className="flex items-start gap-3">
                                 <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
                                   <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
                                 </div>
 
-                                <div className="min-w-0 flex-1">
-                                  {/* Sem texto novo: apenas superfície + alinhamento tipográfico */}
+                                <div className="min-w-0 flex-1 flex flex-col justify-center">
                                   <div className="mt-1">
                                     <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
                                   </div>
