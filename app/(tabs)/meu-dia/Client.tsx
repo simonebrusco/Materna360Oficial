@@ -12,7 +12,6 @@ import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import MyDayGroups from '@/components/my-day/MyDayGroups'
-import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
@@ -78,7 +77,11 @@ function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
   if (!v || typeof v !== 'object') return false
   const o = v as any
   const okOrigin =
-    o.origin === 'today' || o.origin === 'family' || o.origin === 'selfcare' || o.origin === 'home' || o.origin === 'other'
+    o.origin === 'today' ||
+    o.origin === 'family' ||
+    o.origin === 'selfcare' ||
+    o.origin === 'home' ||
+    o.origin === 'other'
   const okTs = typeof o.ts === 'number' && Number.isFinite(o.ts)
   const okSource = typeof o.source === 'string' && !!o.source.trim()
   return okOrigin && okTs && okSource
@@ -434,8 +437,7 @@ export default function MeuDiaClient() {
 
         <MyDayGroups aiContext={aiContext} />
 
-        {/* P33.2 — IA guiada sob demanda (ação opcional) */}
-        <QuickIdeaAI />
+        {/* REMOVIDO: QuickIdeaAI (o "Para agora" agora vive no Cuidar de Mim) */}
 
         {/* BLOCO FREE / PREMIUM — inalterado */}
         {/* ... mantém exatamente como estava ... */}

@@ -3,33 +3,55 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { track } from '@/app/lib/telemetry'
-import { Reveal } from '@/components/ui/Reveal'
-import { ClientOnly } from '@/components/common/ClientOnly'
+
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
-import { SoftCard } from '@/components/ui/card'
-import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
+import { ClientOnly } from '@/components/common/ClientOnly'
+
+import { track } from '@/app/lib/telemetry'
+import { load, save } from '@/app/lib/persist'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+
+import { getEu360Signal } from '@/app/lib/eu360Signals.client'
+import { readMyDayCountsToday } from '@/app/lib/myDayCounts.client'
+import { getCareGuidance } from '@/app/lib/cuidarDeMimGuidance'
+
+import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
+import ParaAgoraSupportCard from '@/components/cuidar-de-mim/ParaAgoraSupportCard'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-type Step = 'ritmo' | 'mini-rotina' | 'pausas' | 'para-voce'
-type FocusMode = '1min' | '3min' | '5min'
-type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
+type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 
-type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
+/**
+ * Governança:
+ * - Cuidar de Mim é a casa oficial do check-in.
+ * - Mantém leitura compat do legado eu360_ritmo, mas grava no persist.
+ */
+const PERSIST_KEYS = {
+  cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
+} as const
 
-type Routine = {
+const LEGACY_LS_KEYS = {
+  eu360Ritmo: 'eu360_ritmo',
+} as const
+
+type Appointment = {
   id: string
+  dateKey: string
+  time: string
   title: string
-  subtitle: string
-  focus: FocusMode
-  steps: string[]
-  pauseDeck: { label: string; min: 1 | 2 }[]
-  close: string
-  next: string
 }
+
+type DaySignals = {
+  savedCount: number
+  commitmentsCount: number
+  laterCount: number
+}
+
+/** Fallback obrigatório da governança (sem IA, sem variação). */
+const GUIDANCE_FALLBACK = 'Agora é um bom momento para simplificar. Um passo já ajuda.'
 
 function safeGetLS(key: string): string | null {
   try {
@@ -40,395 +62,230 @@ function safeGetLS(key: string): string | null {
   }
 }
 
-function safeSetLS(key: string, value: string) {
+function inferRitmo(): Ritmo {
+  // 1) Novo padrão (persist)
   try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
+    const v = load<string>(PERSIST_KEYS.cuidarDeMimRitmo)
+    if (v === 'leve' || v === 'cansada' || v === 'confusa' || v === 'ok') return v
+  } catch {}
+
+  // 2) Legado (compat)
+  const raw = safeGetLS(LEGACY_LS_KEYS.eu360Ritmo)
+  if (raw === 'leve') return 'leve'
+  if (raw === 'cansada') return 'cansada'
+  if (raw === 'confusa') return 'confusa'
+  if (raw === 'ok') return 'ok'
+  if (raw === 'sobrecarregada') return 'cansada'
+  if (raw === 'animada') return 'ok'
+
+  return 'cansada'
+}
+
+function setRitmoPersist(r: Ritmo) {
+  try {
+    save(PERSIST_KEYS.cuidarDeMimRitmo, r)
   } catch {}
 }
 
-function stepIndex(s: Step) {
-  return s === 'ritmo' ? 1 : s === 'mini-rotina' ? 2 : s === 'pausas' ? 3 : 4
+/**
+ * Compromissos (real):
+ * - Fonte: planner/appointments/all
+ * - Count: appointments com dateKey === todayKey
+ */
+function readCommitmentsTodayFromPlanner(): number {
+  try {
+    const todayKey = getBrazilDateKey(new Date())
+    const all = load<Appointment[]>('planner/appointments/all', []) ?? []
+    if (!Array.isArray(all)) return 0
+    return all.filter((a) => a?.dateKey === todayKey).length
+  } catch {
+    return 0
+  }
 }
 
-function focusLabel(f: FocusMode) {
-  if (f === '1min') return '1 min'
-  if (f === '3min') return '3 min'
-  return '5 min'
-}
+/**
+ * BLOCO 2 — integração real mínima e segura:
+ * - Salvos e Para depois: via helper oficial readMyDayCountsToday()
+ * - Compromissos: via planner/appointments/all
+ */
+function readDaySignals(): DaySignals {
+  try {
+    const counts = readMyDayCountsToday()
+    const commitments = readCommitmentsTodayFromPlanner()
 
-function focusTitle(f: FocusMode) {
-  if (f === '1min') return 'Reset rápido'
-  if (f === '3min') return 'Recarregar'
-  return 'Cuidar com calma'
-}
-
-function focoHint(f: FocusMode) {
-  if (f === '1min') return 'Para quando você só precisa baixar o volume e seguir.'
-  if (f === '3min') return 'Para quando dá para fazer um pequeno reset e continuar.'
-  return 'Para quando você consegue se organizar por dentro com um pouco mais de calma.'
-}
-
-function ritmoTitle(r: Ritmo) {
-  if (r === 'leve') return 'Ok, vamos manter leve.'
-  if (r === 'animada') return 'Boa. Vamos estabilizar sem exagerar.'
-  if (r === 'cansada') return 'Entendido. Vamos recuperar fôlego.'
-  return 'Entendido. Vamos reduzir pressão primeiro.'
-}
-
-function ritmoHint(r: Ritmo) {
-  if (r === 'leve') return 'A meta é simples: seguir bem, sem inventar muito.'
-  if (r === 'animada') return 'A meta é manter o ritmo bom sem virar sobrecarga.'
-  if (r === 'cansada') return 'A meta é recuperar um pouco de energia com algo curto e certeiro.'
-  return 'A meta é destravar: um passo pequeno agora já muda o resto do dia.'
-}
-
-const ROUTINES: Routine[] = [
-  {
-    id: 'r1',
-    focus: '1min',
-    title: 'Reset 60s (respirar e seguir)',
-    subtitle: 'Um minuto para reduzir o ruído e voltar pro próximo passo.',
-    steps: ['Inspire 4', 'Segure 2', 'Solte 6', 'Repita 3x'],
-    pauseDeck: [
-      { label: 'Respirar 1 min', min: 1 },
-      { label: 'Água (3 goles) + pausa', min: 1 },
-      { label: 'Ombros para baixo (3x)', min: 1 },
-      { label: 'Olhar pela janela (30s)', min: 1 },
-    ],
-    close: 'Pronto. Você já fez o necessário para seguir melhor.',
-    next: 'Agora escolha a próxima coisa real do seu dia.',
-  },
-  {
-    id: 'r2',
-    focus: '3min',
-    title: 'Reset 3 min (água + pescoço + foco)',
-    subtitle: 'Três minutos para retomar o controle do próximo passo.',
-    steps: ['Água: 3–5 goles', 'Pescoço: 3 giros leves', 'Respire: 4 lentas', 'Escolha 1 próxima ação pequena'],
-    pauseDeck: [
-      { label: 'Água + pausa', min: 1 },
-      { label: 'Pescoço (30s)', min: 1 },
-      { label: 'Respirar 1 min', min: 1 },
-      { label: 'Alongar mãos (30s)', min: 1 },
-    ],
-    close: 'Feito. Você se deu um reinício sem parar o mundo.',
-    next: 'Se quiser, faça mais 1 pausa rápida — ou siga para o seu dia.',
-  },
-  {
-    id: 'r3',
-    focus: '5min',
-    title: 'Cuidar 5 min (corpo + ambiente mínimo)',
-    subtitle: 'Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.',
-    steps: ['Hidratante nas mãos (30s)', 'Braços: alongar 30s', 'Mão no peito: 4 respirações', '1 item no lugar'],
-    pauseDeck: [
-      { label: 'Hidratante (2 min)', min: 2 },
-      { label: 'Braços (30s) + ombros', min: 1 },
-      { label: 'Respirar 1 min', min: 1 },
-      { label: 'Água + pausa', min: 1 },
-    ],
-    close: 'Pronto. Isso já deixa o resto do dia mais fácil.',
-    next: 'Agora você decide: seguir, repetir, ou ir para Meu Filho.',
-  },
-]
-
-function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo } {
-  const focusRaw = safeGetLS('eu360_focus_time')
-  const ritmoRaw = safeGetLS('eu360_ritmo')
-
-  const focus: FocusMode = focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
-  const ritmo: Ritmo =
-    ritmoRaw === 'leve' || ritmoRaw === 'cansada' || ritmoRaw === 'animada' || ritmoRaw === 'sobrecarregada'
-      ? ritmoRaw
-      : 'cansada'
-
-  if (ritmo === 'sobrecarregada') return { focus: '1min', ritmo }
-  return { focus, ritmo }
-}
-
-function pickRoutine(focus: FocusMode) {
-  return ROUTINES.find((r) => r.focus === focus) ?? ROUTINES[1]
-}
-
-function originForCuidarDeMim(): TaskOrigin {
-  return 'selfcare'
+    return {
+      savedCount: typeof counts.savedToday === 'number' ? counts.savedToday : 0,
+      laterCount: typeof counts.laterToday === 'number' ? counts.laterToday : 0,
+      commitmentsCount: commitments,
+    }
+  } catch {
+    return { savedCount: 0, commitmentsCount: 0, laterCount: 0 }
+  }
 }
 
 export default function Client() {
-  const [step, setStep] = useState<Step>('mini-rotina')
-  const [focus, setFocus] = useState<FocusMode>('3min')
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
-  const [checked, setChecked] = useState<boolean[]>([false, false, false, false])
-  const [pauseIndex, setPauseIndex] = useState(0)
+  const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
+    savedCount: 0,
+    commitmentsCount: 0,
+    laterCount: 0,
+  }))
 
-  const [saveFeedback, setSaveFeedback] = useState<string>('')
-
-  useEffect(() => {
+  const euSignal = useMemo(() => {
     try {
-      track('nav.view', { page: 'cuidar-de-mim', timestamp: new Date().toISOString() })
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    const inferred = inferFromEu360()
-    setFocus(inferred.focus)
-    setRitmo(inferred.ritmo)
-    setStep('mini-rotina')
-
-    try {
-      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo })
-    } catch {}
-  }, [])
-
-  const routine = useMemo(() => pickRoutine(focus), [focus])
-
-  useEffect(() => {
-    setChecked([false, false, false, false])
-    setPauseIndex(0)
-  }, [routine.id])
-
-  const progress = useMemo(() => checked.filter(Boolean).length, [checked])
-
-  function go(next: Step) {
-    setStep(next)
-    try {
-      track('cuidar_de_mim.step', { step: next })
-    } catch {}
-  }
-
-  function onSelectFocus(next: FocusMode) {
-    setFocus(next)
-    safeSetLS('eu360_focus_time', next)
-    try {
-      track('cuidar_de_mim.focus.select', { focus: next })
-    } catch {}
-  }
-
-  function onSelectRitmo(next: Ritmo) {
-    setRitmo(next)
-    safeSetLS('eu360_ritmo', next)
-
-    if (next === 'sobrecarregada') {
-      setFocus('1min')
-      safeSetLS('eu360_focus_time', '1min')
+      return getEu360Signal()
+    } catch {
+      return { tone: 'gentil' as const, listLimit: 5, showLessLine: false }
     }
+  }, [])
 
+  /** BLOCO 3 — governança: texto vindo do helper oficial + fallback obrigatório */
+  const guidance = useMemo(() => {
     try {
-      track('cuidar_de_mim.ritmo.select', { ritmo: next })
+      const out = getCareGuidance({
+        ritmo,
+        savedCount: daySignals.savedCount ?? 0,
+      })
+      const text = (out?.text ?? '').trim()
+      return {
+        title: (out?.title ?? 'Hoje, um norte simples').trim() || 'Hoje, um norte simples',
+        text: text || GUIDANCE_FALLBACK,
+      }
+    } catch {
+      return { title: 'Hoje, um norte simples', text: GUIDANCE_FALLBACK }
+    }
+  }, [ritmo, daySignals.savedCount])
+
+  useEffect(() => {
+    try {
+      track('nav.view', { page: 'maternar.cuidar-de-mim', timestamp: new Date().toISOString() })
     } catch {}
-  }
 
-  function toggleStep(i: number) {
-    setChecked((prev) => {
-      const next = [...prev]
-      next[i] = !next[i]
-      try {
-        track('cuidar_de_mim.routine.toggle', { i, value: next[i], focus })
-      } catch {}
-      return next
-    })
-  }
+    const r = inferRitmo()
+    setRitmo(r)
 
-  function nextPause() {
-    setPauseIndex((p) => (p + 1) % routine.pauseDeck.length)
-    try {
-      track('cuidar_de_mim.pause.next', { focus })
-    } catch {}
-  }
-
-  function saveToMyDay(title: string) {
-    const origin = originForCuidarDeMim()
-    const res = addTaskToMyDay({
-      title,
-      origin,
-      source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-    })
-
-    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Essa tarefa já estava no Meu Dia.')
+    const s = readDaySignals()
+    setDaySignals(s)
 
     try {
-      track('cuidar_de_mim.save_to_my_day', {
-        origin,
-        created: res.created,
-        dateKey: res.dateKey,
-        source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+      track('cuidar_de_mim.open', {
+        ritmo: r,
+        saved: s.savedCount,
+        commitments: s.commitmentsCount,
+        later: s.laterCount,
       })
     } catch {}
+  }, [])
 
-    window.setTimeout(() => setSaveFeedback(''), 2200)
+  function onPickRitmo(next: Ritmo) {
+    setRitmo(next)
+    setRitmoPersist(next)
+
+    try {
+      track('cuidar_de_mim.checkin.select', { ritmo: next })
+    } catch {}
   }
 
-  const chips = [
-    { id: 'ritmo' as const, label: 'Ritmo' },
-    { id: 'mini-rotina' as const, label: 'Ação' },
-    { id: 'pausas' as const, label: 'Pausa' },
-    { id: 'para-voce' as const, label: 'Fechar' },
-  ]
+  const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      className="
-        min-h-[100dvh]
-        pb-32
-        bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
-      "
+      className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg"
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+        <div className="page-shell relative z-10">
+          {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
-                <span className="mr-1.5 text-lg leading-none">←</span>
-                Voltar para o Maternar
-              </Link>
+            <Link
+              href="/maternar"
+              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
+            >
+              <span className="mr-1.5 text-lg leading-none">←</span>
+              Voltar para o Maternar
+            </Link>
 
-              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                Cuidar de Mim
-              </h1>
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+              Cuidar de Mim
+            </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem clareza e sai com um reset curto e prático para seguir melhor — sem precisar pensar muito.
-              </p>
-            </div>
+            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
+              Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
+            </p>
           </header>
 
-          <div className="space-y-7 md:space-y-8 pb-10">
-            <div
-              className="
-                rounded-3xl
-                bg-white/10
-                border border-white/35
-                backdrop-blur-xl
-                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
-                p-4 md:p-6
-                space-y-6
-              "
-            >
-              <Reveal>
-                <div
-                  className="
-                    rounded-3xl
-                    bg-white/10
-                    border border-white/25
-                    shadow-[0_14px_40px_rgba(0,0,0,0.12)]
-                    p-4 md:p-5
-                  "
-                >
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
-                    <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
-                      <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
-                        <AppIcon name="heart" size={22} className="text-white" />
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="text-[12px] text-white/85">
-                          Passo {stepIndex(step)}/4 • {focusTitle(focus)} • {ritmo}
-                        </div>
-
-                        <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                          Sugestão pronta para agora: {routine.title}
-                        </div>
-
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">
-                          {routine.subtitle}
-                        </div>
-                      </div>
+          {/* CONTAINER EDITORIAL ÚNICO */}
+          <section className="hub-shell">
+            <div className="hub-shell-inner">
+              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
+                {/* BLOCO 0 — PARA AGORA */}
+                <section className="pb-6" id="para-agora">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <button
-                        onClick={() => go('ritmo')}
-                        className="
-                          rounded-full
-                          bg-white/90 hover:bg-white
-                          text-[#2f3a56]
-                          px-4 py-2
-                          text-[12px]
-                          shadow-[0_6px_18px_rgba(0,0,0,0.12)]
-                          transition
-                        "
-                      >
-                        Ajustar
-                      </button>
-                      <button
-                        onClick={() => go('mini-rotina')}
-                        className="
-                          rounded-full
-                          bg-[#fd2597]
-                          text-white
-                          px-4 py-2
-                          text-[12px]
-                          shadow-[0_10px_26px_rgba(253,37,151,0.35)]
-                          hover:opacity-95
-                          transition
-                        "
-                      >
-                        Começar
-                      </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
+                      <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
+
+                      {/* CENTERING RAIL (corrige o "puxado") */}
+                      <div className="mt-5 flex justify-center">
+                        <div className="w-full max-w-[840px]">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch justify-items-stretch">
+                            {/* 0A) Apoio emocional */}
+                            <ParaAgoraSupportCard variant="embedded" className="h-full" />
+
+                            {/* 0B) Ação prática (QuickIdeaAI) */}
+                            <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
+                              <div className="flex items-start gap-3">
+                                <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
+                                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
+                                  <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                                    Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
+                </section>
 
-                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                    {chips.map((it) => {
-                      const active = step === it.id
-                      return (
-                        <button
-                          key={it.id}
-                          onClick={() => go(it.id)}
-                          className={[
-                            'rounded-full px-3.5 py-2 text-[12px] border transition',
-                            active
-                              ? 'bg-white/95 border-white/40 text-[#2f3a56]'
-                              : 'bg-white/20 border-white/30 text-white/90 hover:bg-white/25',
-                          ].join(' ')}
-                        >
-                          {it.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </Reveal>
+                <div className="border-t border-[#f5d7e5]" />
 
-              <Reveal>
-                <SoftCard
-                  className="
-                    p-5 md:p-6 rounded-3xl
-                    bg-white/95
-                    border border-[#f5d7e5]
-                    shadow-[0_10px_28px_rgba(184,35,107,0.12)]
-                  "
-                >
-                  {saveFeedback ? (
-                    <div className="mb-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] px-4 py-3 text-[12px] text-[#2f3a56]">
-                      {saveFeedback}
+                {/* BLOCO 1 — CHECK-IN */}
+                <section className="py-6" id="ritmo">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="heart" size={16} className="text-[#fd2597]" />
                     </div>
-                  ) : null}
+                    <div className="min-w-0">
+                      <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
+                      <div className="hub-title text-[#2f3a56]">Como você está agora?</div>
 
-                  {step === 'ritmo' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">
-                        Ajuste rápido (pra eu pensar melhor por você)
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
                           const active = ritmo === r
                           return (
                             <button
                               key={r}
-                              onClick={() => onSelectRitmo(r)}
+                              type="button"
+                              onClick={() => onPickRitmo(r)}
                               className={[
-                                'rounded-full px-3.5 py-2 text-[12px] border transition text-left',
+                                'rounded-full px-4 py-2 text-[12px] border transition font-semibold',
                                 active
-                                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                  : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                  ? 'bg-[#fd2597] border-[#fd2597] text-white shadow-[0_8px_18px_rgba(253,37,151,0.18)]'
+                                  : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff3f8]',
                               ].join(' ')}
                             >
                               {r}
@@ -437,225 +294,157 @@ export default function Client() {
                         })}
                       </div>
 
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[14px] font-semibold text-[#2f3a56]">{ritmoTitle(ritmo)}</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1">{ritmoHint(ritmo)}</div>
-
-                        <div className="mt-4 text-[13px] text-[#2f3a56] font-semibold">Quanto tempo dá agora?</div>
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          {(['1min', '3min', '5min'] as FocusMode[]).map((f) => {
-                            const active = focus === f
-                            return (
-                              <button
-                                key={f}
-                                onClick={() => onSelectFocus(f)}
-                                className={[
-                                  'rounded-2xl border p-3 text-left transition',
-                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                                ].join(' ')}
-                              >
-                                <div className="text-[12px] text-[#6a6a6a]">{focusLabel(f)}</div>
-                                <div className="text-[13px] font-semibold text-[#2f3a56]">{focusTitle(f)}</div>
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        <div className="mt-3 text-[12px] text-[#6a6a6a]">{focoHint(focus)}</div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={() => go('mini-rotina')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Aplicar e começar
-                          </button>
-                          <button
-                            onClick={() => go('pausas')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Só uma pausa rápida
-                          </button>
-                        </div>
+                      <div className="mt-2 text-[12px] text-[#6a6a6a]">
+                        Só um toque para se reconhecer. Nada além disso.
                       </div>
                     </div>
-                  ) : null}
+                  </div>
+                </section>
 
-                  {step === 'mini-rotina' ? (
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                        <div>
-                          <div className="text-[14px] text-[#2f3a56] font-semibold">Faça isso agora</div>
-                          <div className="text-[12px] text-[#6a6a6a]">
-                            Progresso: <span className="font-semibold text-[#2f3a56]">{progress}</span>/4
+                <div className="border-t border-[#f5d7e5]" />
+
+                {/* BLOCO 2 — SEU DIA (dados reais) */}
+                <section className="py-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="list" size={16} className="text-[#fd2597]" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
+                      <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">
+                        Uma visão consolidada, sem agenda e sem cobrança.
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                            Salvos
                           </div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                            {stat(daySignals.savedCount)}
+                          </div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                          <button
-                            onClick={() => go('pausas')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-3.5 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Preciso pausar
-                          </button>
-                          <button
-                            onClick={() => go('para-voce')}
-                            className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Concluir
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {routine.steps.slice(0, 4).map((s, i) => (
-                          <button
-                            key={`${routine.id}-${s}`}
-                            onClick={() => toggleStep(i)}
-                            className={[
-                              'rounded-3xl border p-4 text-left transition',
-                              checked[i]
-                                ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                            ].join(' ')}
-                          >
-                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                              passo {i + 1}
-                            </div>
-                            <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-3">
-                              {checked[i] ? 'feito ✓' : 'marcar como feito'}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                          Faça só o passo 1. Isso já ajuda.
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                            Compromissos
+                          </div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                            {stat(daySignals.commitmentsCount)}
+                          </div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                         </div>
 
-                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={() => saveToMyDay(routine.title)}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('pausas')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ir para Pausas rápidas
-                          </button>
-
-                          <button
-                            onClick={() => go('para-voce')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Finalizar
-                          </button>
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                            Para depois
+                          </div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                            {stat(daySignals.laterCount)}
+                          </div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                         </div>
                       </div>
                     </div>
-                  ) : null}
+                  </div>
+                </section>
 
-                  {step === 'pausas' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Escolha uma pausa (curta)</div>
+                <div className="border-t border-[#f5d7e5]" />
 
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">agora</div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                          {routine.pauseDeck[pauseIndex]?.label}
-                        </div>
-                        <div className="text-[12px] text-[#6a6a6a] mt-2">
-                          Duração sugerida: {routine.pauseDeck[pauseIndex]?.min} min
-                        </div>
+                {/* BLOCO 3 — ORIENTAÇÃO */}
+                <section className="py-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="info" size={16} className="text-[#fd2597]" />
+                    </div>
 
-                        <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={nextPause}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition w-full sm:w-auto"
-                          >
-                            Outra pausa
-                          </button>
+                    <div className="min-w-0">
+                      <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
+                      <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                          <button
-                            onClick={() => saveToMyDay(routine.pauseDeck[pauseIndex]?.label ?? routine.title)}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('mini-rotina')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar para a ação
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="text-[12px] text-[#6a6a6a]">
-                        Regra do Materna: uma pausa já conta. Não precisa fazer tudo.
+                      <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
+                        {guidance.text}
                       </div>
                     </div>
-                  ) : null}
+                  </div>
+                </section>
 
-                  {step === 'para-voce' ? (
-                    <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Fechamento</div>
+                <div className="border-t border-[#f5d7e5]" />
 
-                      <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
-                        <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">feito</div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56] mt-2 leading-relaxed">
-                          {routine.close}
-                        </div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-3 leading-relaxed">{routine.next}</div>
-
-                        <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                          <button
-                            onClick={() => saveToMyDay(routine.title)}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('mini-rotina')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Repetir (mesma opção)
-                          </button>
-
-                          <Link
-                            href="/maternar/meu-filho"
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ir para Meu Filho
-                          </Link>
-
-                          <button
-                            onClick={() => go('ritmo')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ajustar e trocar
-                          </button>
-                        </div>
-                      </div>
+                {/* BLOCO 4 — MICRO CUIDADO */}
+                <section className="pt-6" id="pausas">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                     </div>
-                  ) : null}
-                </SoftCard>
-              </Reveal>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
+                      <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">
+                        Se não couber nada agora, fechar por aqui já é cuidado.
+                      </div>
+
+                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              track('cuidar_de_mim.micro_close', { ritmo })
+                            } catch {}
+                          }}
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-white
+                            border border-[#f5d7e5]
+                            text-[#2f3a56]
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            hover:bg-[#fff3f8]
+                            transition
+                          "
+                        >
+                          Encerrar por aqui
+                        </button>
+
+                        <Link
+                          href="/meu-dia"
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-[#fd2597] hover:opacity-95
+                            text-white
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                            transition
+                          "
+                        >
+                          Ver Meu Dia
+                        </Link>
+                      </div>
+
+                      {euSignal?.showLessLine ? (
+                        <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                          Hoje pode ser menos. E ainda assim contar.
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </section>
+              </div>
             </div>
+          </section>
 
-            <div className="mt-4">
-              <LegalFooter />
-            </div>
+          <div className="mt-6">
+            <LegalFooter />
           </div>
+
+          <div className="PageSafeBottom" />
         </div>
       </ClientOnly>
     </main>

@@ -22,31 +22,26 @@ const MOTIVATIONAL_PHRASES: Record<string, string> = {
 
 export function MotivationalFooter({ routeKey = 'meu-dia' }: MotivationalFooterProps) {
   const { name, isLoading } = useProfile()
-  
-  const phrase = MOTIVATIONAL_PHRASES[routeKey] || MOTIVATIONAL_PHRASES['meu-dia']
+
   const displayName = name && name.trim() ? name.split(' ')[0] : null
 
-  if (isLoading || !displayName || routeKey === 'meu-dia') {
-  return null
-}
+  // P33.4 — Meu Dia (contrato canônico):
+  // - sem CTA, sem progresso, sem aprofundamento, sem parentalidade
+  // Portanto, este footer nunca deve renderizar em qualquer rota do Meu Dia.
+  if (routeKey.startsWith('meu-dia')) return null
+
+  const phrase = MOTIVATIONAL_PHRASES[routeKey] || MOTIVATIONAL_PHRASES['meu-dia']
+
+  if (isLoading || !displayName) return null
+
   return (
     <div className="mt-10 text-center">
       <div className="flex items-center justify-center gap-2">
-        <AppIcon
-          name="heart"
-          size={14}
-          className="text-[#9B4D96]"
-          decorative
-        />
+        <AppIcon name="heart" size={14} className="text-[#9B4D96]" decorative />
         <p className="text-sm text-gray-500">
           <span className="font-semibold">{displayName},</span> {phrase}
         </p>
-        <AppIcon
-          name="heart"
-          size={14}
-          className="text-[#9B4D96]"
-          decorative
-        />
+        <AppIcon name="heart" size={14} className="text-[#9B4D96]" decorative />
       </div>
     </div>
   )

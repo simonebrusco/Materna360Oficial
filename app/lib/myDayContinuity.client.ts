@@ -41,6 +41,22 @@ const LEGACY_LAST_HANDLED_KEYS = [
   'm360.meu_dia_leve_last_handled_ts_v1',
 ] as const
 
+export function originLabel(origin: MeuDiaContinuityOrigin) {
+  switch (origin) {
+    case 'today':
+      return 'Hoje'
+    case 'family':
+      return 'Família'
+    case 'selfcare':
+      return 'Autocuidado'
+    case 'home':
+      return 'Casa'
+    case 'other':
+    default:
+      return 'Outros'
+  }
+}
+
 function isOrigin(v: any): v is MeuDiaContinuityOrigin {
   return v === 'today' || v === 'family' || v === 'selfcare' || v === 'home' || v === 'other'
 }

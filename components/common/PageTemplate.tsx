@@ -30,8 +30,17 @@ export function PageTemplate({
 }: PageTemplateProps) {
   const isLight = headerTone === 'light'
 
+  // Gradiente Assinatura (OFICIAL) — não alterar cores, direção ou percentuais
+  // background: linear-gradient(
+  //   to bottom,
+  //   #fd2597 0%,
+  //   #fd2597 26%,
+  //   #fdbed7 56%,
+  //   #ffe1f1 90%,
+  //   #ffffff 100%
+  // );
   const rootBg = isLight
-    ? 'bg-[#ffe1f1] bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]'
+    ? 'bg-[#ffffff] bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_26%,#fdbed7_56%,#ffe1f1_90%,#ffffff_100%)]'
     : 'bg-[#0b1220] bg-[linear-gradient(to_bottom,#121a2e_0%,#0b1220_70%,#0b1220_100%)]'
 
   const titleColor = isLight ? 'text-white' : 'text-white'

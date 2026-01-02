@@ -295,19 +295,16 @@ function readTasksByDateKey(dateKey: string): MyDayTaskItem[] {
   if (!Array.isArray(rawLegacy)) return []
 
   const nowISO = new Date().toISOString()
-  let changed = false
   const normalized: MyDayTaskItem[] = []
 
   for (const raw of rawLegacy) {
     const r = normalizeStoredTask(raw, nowISO)
     if (r.item) normalized.push(r.item)
-    if (r.changed) changed = true
   }
 
   // migração silenciosa: achou só no legado → replica no persist
   writeTasksByDateKey(dateKey, normalized)
 
-  // se normalizou, já persistiu acima
   return normalized
 }
 

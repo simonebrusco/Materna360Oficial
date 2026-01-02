@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/Button'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { TabPill } from '@/components/common/TabPill'
-import MaternarAICards from '@/components/maternar/MaternarAICards'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -108,10 +107,9 @@ export default function MaternarClient() {
           </header>
 
           <div className="space-y-7 md:space-y-8 pb-10">
-            {/* P33.3 — IA silenciosa no Maternar (conteúdo pronto, sem chat) */}
-            <Reveal>
-              <MaternarAICards />
-            </Reveal>
+            {/* REMOVIDO: P33.3 — IA silenciosa no Maternar (Para agora)
+                O "Para agora" agora vive dentro de Cuidar de Mim.
+            */}
 
             {/* PAINEL PRINCIPAL — SEÇÕES MODULARES */}
             <div
@@ -169,12 +167,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Para você
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Cuidar de Mim
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Leve · 3–5 minutos · foco em você
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Cuidar de Mim</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Leve · 3–5 minutos · foco em você</p>
                             </div>
                           </div>
 
@@ -189,9 +183,7 @@ export default function MaternarClient() {
 
                           <div className="mt-4 pt-1">
                             <Link href="/maternar/cuidar-de-mim">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Cuidar de Mim
-                              </Button>
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Cuidar de Mim</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -222,12 +214,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Para o seu filho
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Meu Filho
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Brincadeiras · conexão · desenvolvimento leve
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Meu Filho</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Brincadeiras · conexão · desenvolvimento leve</p>
                             </div>
                           </div>
 
@@ -242,9 +230,7 @@ export default function MaternarClient() {
 
                           <div className="mt-4 pt-1">
                             <Link href="/maternar/meu-filho">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Meu Filho
-                              </Button>
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Meu Filho</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -275,12 +261,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Para o seu dia
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Meu Dia Leve
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Inspirações · ideias rápidas · leveza
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Meu Dia Leve</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Inspirações · ideias rápidas · leveza</p>
                             </div>
                           </div>
 
@@ -295,9 +277,7 @@ export default function MaternarClient() {
 
                           <div className="mt-4 pt-1">
                             <Link href="/maternar/meu-dia-leve">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Meu Dia Leve
-                              </Button>
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Meu Dia Leve</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -328,12 +308,8 @@ export default function MaternarClient() {
                               <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                                 Sua caminhada
                               </span>
-                              <h2 className="text-lg font-semibold text-[#2f3a56]">
-                                Minha Jornada
-                              </h2>
-                              <p className="text-[13px] text-[#6a6a6a]">
-                                Conquistas · símbolos · progresso gentil
-                              </p>
+                              <h2 className="text-lg font-semibold text-[#2f3a56]">Minha Jornada</h2>
+                              <p className="text-[13px] text-[#6a6a6a]">Conquistas · símbolos · progresso gentil</p>
                             </div>
                           </div>
 
@@ -348,9 +324,7 @@ export default function MaternarClient() {
 
                           <div className="mt-4 pt-1">
                             <Link href="/maternar/minha-jornada">
-                              <Button className="w-full md:w-auto px-6">
-                                Ver tudo de Minha Jornada
-                              </Button>
+                              <Button className="w-full md:w-auto px-6">Ver tudo de Minha Jornada</Button>
                             </Link>
                           </div>
                         </SoftCard>
@@ -380,9 +354,7 @@ export default function MaternarClient() {
                     <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                       Mais ferramentas
                     </span>
-                    <h2 className="text-lg font-semibold text-[#2f3a56]">
-                      Outros espaços do Maternar
-                    </h2>
+                    <h2 className="text-lg font-semibold text-[#2f3a56]">Outros espaços do Maternar</h2>
                     <p className="text-[15px] text-[#545454] leading-relaxed">
                       Acesse quando fizer sentido, sem pesar seu começo do dia.
                     </p>
@@ -409,9 +381,7 @@ export default function MaternarClient() {
                   </Link>
 
                   <Link href="/maternar/materna-plus">
-                    <Button className="w-full text-[12px] md:text-[13px]">
-                      Materna+
-                    </Button>
+                    <Button className="w-full text-[12px] md:text-[13px]">Materna+</Button>
                   </Link>
 
                   <Link href="/maternar/materna-plus/maternabox">

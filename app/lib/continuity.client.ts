@@ -105,6 +105,7 @@ function toDate(dk: string) {
 
 function phrasesByTone(tone: Tone): ContinuityPhrase[] {
   // P13 — neutras, humanas, sem avaliação, sem cobrança, sem “progresso”
+  // Ajuste P33.4 (Meu Dia): evitar suporte emocional profundo / relacional.
   if (tone === 'direto') {
     return [
       { id: 'd_01', text: 'Ontem foi diferente. Hoje pode ser mais leve.' },
@@ -119,8 +120,8 @@ function phrasesByTone(tone: Tone): ContinuityPhrase[] {
     { id: 'g_01', text: 'Você já passou por dias assim.' },
     { id: 'g_02', text: 'Nem todo dia precisa ser igual — e tudo bem.' },
     { id: 'g_03', text: 'Ontem foi diferente. Hoje pode ser mais leve.' },
-    { id: 'g_04', text: 'Se hoje for só o essencial, já está valendo.' },
-    { id: 'g_05', text: 'Um respiro por vez. Você não está sozinha.' },
+    { id: 'g_04', text: 'Se hoje for só o essencial, já faz sentido.' },
+    { id: 'g_05', text: 'Um respiro por vez. Só o possível, por agora.' },
   ]
 }
 

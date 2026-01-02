@@ -1,13 +1,16 @@
-// app/(tabs)/maternar/cuidar-de-mim/page.tsx
-import { Metadata } from 'next'
 import Client from './Client'
 
-export const metadata: Metadata = {
-  title: 'Cuidar de Mim | Materna360',
-  description:
-    'Um ajuste curto e prático para aliviar o peso do momento e seguir o dia com mais clareza — sem cobrança.',
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default function Page() {
-  return <Client />
+  return (
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="relative min-h-[100dvh] pb-24 overflow-hidden"
+    >
+      <Client />
+    </main>
+  )
 }
