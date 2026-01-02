@@ -2,48 +2,64 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import AppIcon from './AppIcon'
+import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon'
 
-const TABS = [
-  { href: '/meu-dia', label: 'Meu Dia', icon: { name: 'home' as const } },
-  { href: '/cuidar', label: 'Cuidar', icon: { name: 'care' as const } },
-  { href: '/descobrir', label: 'Descobrir', icon: { name: 'search' as const } },
-  { href: '/eu360', label: 'Eu360', icon: { name: 'star' as const } },
+type Tab = {
+  href: string
+  label: string
+  icon: KnownIconName
+}
+
+/**
+ * Fonte única de verdade (alinhado ao BottomNav).
+ * Evita divergência de tabs e sensação de "estou no lugar errado".
+ */
+const TABS: Tab[] = [
+  { href: '/meu-dia', label: 'Meu Dia', icon: 'calendar' },
+  { href: '/maternar', label: 'Maternar', icon: 'hand-heart' },
+  { href: '/eu360', label: 'Eu360', icon: 'user' },
 ]
 
 export function TabBar() {
-  const rawPathname = usePathname()
-  const pathname = typeof rawPathname === 'string' ? rawPathname : ''
+  const pathname = usePathname()
+
   const isActive = (target: string) => pathname === target || pathname.startsWith(`${target}/`)
 
   return (
-    <nav className="bottom-nav fixed bottom-4 left-1/2 z-[60] w-[calc(100%-2.5rem)] max-w-xl -translate-x-1/2">
-      <div className="glass-panel flex items-center justify-between gap-1 rounded-full px-2 py-2 shadow-soft backdrop-blur-2xl">
+    <nav className="fixed inset-x-0 bottom-4 z-50 flex justify-center md:bottom-6 pointer-events-none">
+      <div
+        className="
+          pointer-events-auto w-[92%] max-w-xl rounded-full
+          border border-white/70 
+          bg-white/85 
+          backdrop-blur-2xl 
+          shadow-[0_18px_40px_rgba(0,0,0,0.15)]
+          px-3 py-2 flex items-center justify-between
+        "
+      >
         {TABS.map((tab) => {
           const active = isActive(tab.href)
 
           return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-current={active ? 'page' : undefined}
-              className={`group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-full px-3 py-2 text-[11px] font-semibold transition-all duration-300 ease-gentle ${
-                active ? 'text-primary' : 'text-support-2/80 hover:text-support-1'
-              }`}
-            >
+            <Link key={tab.href} href={tab.href} className="flex-1 flex justify-center" aria-current={active ? 'page' : undefined}>
               <div
-                className={`transition-transform duration-500 ease-gentle ${
-                  active ? 'animate-scale-in' : 'group-hover:-translate-y-1'
-                }`}
+                className={[
+                  'flex items-center gap-1.5 rounded-full px-4 py-2',
+                  'text-xs md:text-sm font-semibold transition-all duration-200',
+                  active
+                    ? 'bg-[var(--color-brand)] text-white shadow-[0_8px_22px_rgba(255,20,117,0.45)] scale-[1.02]'
+                    : 'text-[#2F3A56] hover:bg-white/95',
+                ].join(' ')}
               >
-                <AppIcon {...tab.icon} decorative className="h-5 w-5" />
+                <AppIcon
+                  name={tab.icon}
+                  className={[
+                    'h-4 w-4 md:h-5 md:w-5',
+                    active ? 'text-white' : 'text-[var(--color-brand)]',
+                  ].join(' ')}
+                />
+                <span>{tab.label}</span>
               </div>
-              <span className="tracking-wide uppercase">{tab.label}</span>
-              <span
-                className={`absolute inset-x-3 bottom-1 h-1 rounded-full bg-gradient-to-r from-primary via-[#ff2f78] to-[#ff6b9c] opacity-0 transition-opacity duration-500 blur-md ${
-                  active ? 'opacity-80' : 'group-hover:opacity-60'
-                }`}
-              />
             </Link>
           )
         })}
