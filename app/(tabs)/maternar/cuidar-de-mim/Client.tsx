@@ -12,10 +12,7 @@ import { track } from '@/app/lib/telemetry'
 import { load, save } from '@/app/lib/persist'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
 
-import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
-import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
-
 import { readMyDayCountsToday } from '@/app/lib/myDayCounts.client'
 import { getCareGuidance } from '@/app/lib/cuidarDeMimGuidance'
 
@@ -132,7 +129,7 @@ export default function Client() {
       const text = (out?.text ?? '').trim()
 
       return {
-        title: (out?.title ?? 'Hoje, um norte simples').trim(),
+        title: (out?.title ?? 'Hoje, um norte simples').trim() || 'Hoje, um norte simples',
         text: text || GUIDANCE_FALLBACK,
       }
     } catch {
@@ -141,7 +138,9 @@ export default function Client() {
   }, [ritmo, daySignals.savedCount])
 
   useEffect(() => {
-    track('nav.view', { page: 'maternar.cuidar-de-mim' })
+    try {
+      track('nav.view', { page: 'maternar.cuidar-de-mim', timestamp: new Date().toISOString() })
+    } catch {}
 
     const r = inferRitmo()
     setRitmo(r)
@@ -149,170 +148,250 @@ export default function Client() {
     const s = readDaySignals()
     setDaySignals(s)
 
-    track('cuidar_de_mim.open', {
-      ritmo: r,
-      saved: s.savedCount,
-      commitments: s.commitmentsCount,
-      later: s.laterCount,
-    })
+    try {
+      track('cuidar_de_mim.open', {
+        ritmo: r,
+        saved: s.savedCount,
+        commitments: s.commitmentsCount,
+        later: s.laterCount,
+      })
+    } catch {}
   }, [])
 
   function onPickRitmo(next: Ritmo) {
     setRitmo(next)
     setRitmoPersist(next)
-    track('cuidar_de_mim.checkin.select', { ritmo: next })
+
+    try {
+      track('cuidar_de_mim.checkin.select', { ritmo: next })
+    } catch {}
   }
 
-  const stat = (n?: number) => (typeof n === 'number' ? String(n) : '—')
+  const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 eu360-hub-bg">
+    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
       <ClientOnly>
         <div className="page-shell relative z-10">
           {/* HEADER */}
-          <header className="pt-8 md:pt-10 mb-8">
-            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85">
-              ← Voltar para o Maternar
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
+              <span className="mr-1.5 text-lg leading-none">←</span>
+              Voltar para o Maternar
             </Link>
 
-            <h1 className="mt-3 text-[32px] font-semibold text-white">Cuidar de Mim</h1>
-            <p className="mt-1 text-white/90 max-w-2xl">
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
+
+            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
               Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
             </p>
           </header>
 
-          {/* HUB */}
+          {/* CONTAINER EDITORIAL ÚNICO */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
-              <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-[0_18px_45px_rgba(184,35,107,0.12)] border border-[#f5d7e5]/80">
-
-                {/* PARA AGORA */}
-                <section className="pb-8">
+              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
+                {/* BLOCO 0 — PARA AGORA */}
+                <section className="pb-6" id="para-agora">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center">
-                      <AppIcon name="sparkles" size={16} className="text-[#b8236b]" />
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
                       <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
-                      <div className="hub-subtitle text-[#6a6a6a]">
-                        Pequeno, prático e sem cobrança.
-                      </div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
-                      {/* GRID CENTRALIZADO */}
                       <div className="mt-5">
                         <div className="mx-auto max-w-[880px]">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+                            {/* Card ESQUERDO (embedded) */}
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                            <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 p-4 flex flex-col justify-center">
-                              <QuickIdeaAI mode="cuidar_de_mim" />
-                              <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                                Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                            {/* Card DIREITO (mesma linguagem visual, sem texto novo) */}
+                            <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
+                              <div className="flex items-start gap-3">
+                                <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
+                                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  {/* Sem texto novo: apenas superfície + alinhamento tipográfico */}
+                                  <div className="mt-1">
+                                    <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
+                                  </div>
+
+                                  <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                                    Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </section>
+
+                <div className="border-t border-[#f5d7e5]" />
+
+                {/* BLOCO 1 — CHECK-IN */}
+                <section className="py-6" id="ritmo">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="heart" size={16} className="text-[#fd2597]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
+                      <div className="hub-title text-[#2f3a56]">Como você está agora?</div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
+                          const active = ritmo === r
+                          return (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => onPickRitmo(r)}
+                              className={[
+                                'rounded-full px-4 py-2 text-[12px] border transition font-semibold',
+                                active
+                                  ? 'bg-[#fd2597] border-[#fd2597] text-white shadow-[0_8px_18px_rgba(253,37,151,0.18)]'
+                                  : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff3f8]',
+                              ].join(' ')}
+                            >
+                              {r}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      <div className="mt-2 text-[12px] text-[#6a6a6a]">
+                        Só um toque para se reconhecer. Nada além disso.
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="border-t border-[#f5d7e5]" />
+
+                {/* BLOCO 2 — SEU DIA */}
+                <section className="py-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="list" size={16} className="text-[#fd2597]" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
+                      <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Uma visão consolidada, sem agenda e sem cobrança.</div>
+
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
+                        </div>
+
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
+                        </div>
+
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Para depois</div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                <div className="border-t border-[#f5d7e5]/45" />
+                <div className="border-t border-[#f5d7e5]" />
 
-                {/* CHECK-IN */}
-                <section className="py-7">
-                  <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
-                  <div className="hub-title text-[#2f3a56]">Como você está agora?</div>
-
-                  <div className="mt-4 flex gap-2 flex-wrap">
-                    {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => onPickRitmo(r)}
-                        className={`rounded-full px-4 py-2 text-[12px] font-semibold border transition ${
-                          ritmo === r
-                            ? 'bg-[#fd2597] text-white border-[#fd2597]'
-                            : 'bg-white border-[#f5d7e5] text-[#545454]'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-2 text-[12px] text-[#6a6a6a]">
-                    Só um toque para se reconhecer. Nada além disso.
-                  </div>
-                </section>
-
-                <div className="border-t border-[#f5d7e5]/45" />
-
-                {/* SEU DIA */}
-                <section className="py-7">
-                  <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
-                  <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
-
-                  <div className="mt-4 grid sm:grid-cols-3 gap-4">
-                    <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/60 p-4">
-                      <div className="text-[11px] uppercase tracking-wide text-[#b8236b]">Salvos</div>
-                      <div className="mt-1 text-[20px] font-semibold">{stat(daySignals.savedCount)}</div>
+                {/* BLOCO 3 — ORIENTAÇÃO */}
+                <section className="py-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="info" size={16} className="text-[#fd2597]" />
                     </div>
 
-                    <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/60 p-4">
-                      <div className="text-[11px] uppercase tracking-wide text-[#b8236b]">Compromissos</div>
-                      <div className="mt-1 text-[20px] font-semibold">
-                        {stat(daySignals.commitmentsCount)}
-                      </div>
-                    </div>
+                    <div className="min-w-0">
+                      <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
+                      <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                    <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/60 p-4">
-                      <div className="text-[11px] uppercase tracking-wide text-[#b8236b]">Para depois</div>
-                      <div className="mt-1 text-[20px] font-semibold">
-                        {stat(daySignals.laterCount)}
+                      <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
+                        {guidance.text}
                       </div>
                     </div>
                   </div>
                 </section>
 
-                <div className="border-t border-[#f5d7e5]/45" />
+                <div className="border-t border-[#f5d7e5]" />
 
-                {/* ORIENTAÇÃO */}
-                <section className="py-7">
-                  <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
-                  <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
-                  <p className="mt-2 text-[#545454] max-w-2xl">{guidance.text}</p>
-                </section>
-
-                <div className="border-t border-[#f5d7e5]/45" />
-
-                {/* MICRO CUIDADO */}
-                <section className="pt-7">
-                  <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
-                  <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
-                  <div className="hub-subtitle text-[#6a6a6a]">
-                    Se não couber nada agora, fechar por aqui já é cuidado.
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <button className="rounded-full bg-white/70 border border-[#f5d7e5]/70 px-5 py-3 text-[12px] font-semibold">
-                      Encerrar por aqui
-                    </button>
-
-                    <Link
-                      href="/meu-dia"
-                      className="rounded-full bg-[#fd2597] text-white px-5 py-3 text-[12px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.18)]"
-                    >
-                      Ver Meu Dia
-                    </Link>
-                  </div>
-
-                  {euSignal.showLessLine && (
-                    <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                      Hoje pode ser menos. E ainda assim contar.
+                {/* BLOCO 4 — MICRO CUIDADO */}
+                <section className="pt-6" id="pausas">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                     </div>
-                  )}
+
+                    <div className="min-w-0 flex-1">
+                      <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
+                      <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Se não couber nada agora, fechar por aqui já é cuidado.</div>
+
+                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              track('cuidar_de_mim.micro_close', { ritmo })
+                            } catch {}
+                          }}
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-white
+                            border border-[#f5d7e5]
+                            text-[#2f3a56]
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            hover:bg-[#fff3f8]
+                            transition
+                          "
+                        >
+                          Encerrar por aqui
+                        </button>
+
+                        <Link
+                          href="/meu-dia"
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-[#fd2597] hover:opacity-95
+                            text-white
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                            transition
+                          "
+                        >
+                          Ver Meu Dia
+                        </Link>
+                      </div>
+
+                      {euSignal?.showLessLine ? (
+                        <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
+                      ) : null}
+                    </div>
+                  </div>
                 </section>
               </div>
             </div>
@@ -321,6 +400,8 @@ export default function Client() {
           <div className="mt-6">
             <LegalFooter />
           </div>
+
+          <div className="PageSafeBottom" />
         </div>
       </ClientOnly>
     </main>
