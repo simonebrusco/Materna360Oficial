@@ -123,7 +123,10 @@ function normalize(payload: any): { items: Suggestion[]; meta?: Record<string, a
         title: String(x.title),
         description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
       }))
-    return items.length ? { items, meta: payload?.meta && typeof payload.meta === 'object' ? payload.meta : undefined } : null
+
+    return items.length
+      ? { items, meta: payload?.meta && typeof payload.meta === 'object' ? payload.meta : undefined }
+      : null
   }
 
   // Formato alternativo: { title, body }
@@ -182,7 +185,10 @@ function getSavedFromLS(): Suggestion[] {
     .filter((x) => x && typeof x.title === 'string' && x.title.trim())
     .slice(0, 50)
     .map((x, idx) => ({
-      id: typeof (x as any).id === 'string' && String((x as any).id).trim() ? String((x as any).id) : `saved-${idx + 1}`,
+      id:
+        typeof (x as any).id === 'string' && String((x as any).id).trim()
+          ? String((x as any).id)
+          : `saved-${idx + 1}`,
       title: String((x as any).title),
       description:
         typeof (x as any).description === 'string' && String((x as any).description).trim()
@@ -210,8 +216,6 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
     if (state.status !== 'done') return []
     return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
-
-  const hub = mode === 'cuidar_de_mim' ? 'cuidar_de_mim' : 'my_day'
 
   const run = useCallback(
     async (attempt = 0) => {
@@ -254,6 +258,7 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
         if (postRes.ok) {
           data = await postRes.json().catch(() => null)
         } else {
+          // compat: alguns ambientes ainda podem devolver por GET
           const getRes = await fetch(`/api/ai/quick-ideas?nonce=${nonce}`, { method: 'GET', cache: 'no-store' })
           if (getRes.ok) data = await getRes.json().catch(() => null)
         }
@@ -262,10 +267,10 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
 
         const nextItems =
           normalized?.items ??
-          shuffle(baseFallback(), (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'my_day' ? 17 : 23))).slice(
-            0,
-            3
-          )
+          shuffle(
+            baseFallback(),
+            (fallbackSeedRef.current = fallbackSeedRef.current + (mode === 'my_day' ? 17 : 23))
+          ).slice(0, 3)
 
         // Meu Dia: atualiza memória recente com o primeiro item exibido
         if (mode === 'my_day' && nextItems[0]?.id) {
@@ -314,6 +319,7 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
   const saveOne = useCallback(
     (item: Suggestion) => {
       if (mode !== 'my_day') return
+
       const key = `${item.title}::${item.description ?? ''}`.trim()
       const exists = saved.some((s) => `${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) return
@@ -387,7 +393,9 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
         ) : null}
 
         {state.status === 'loading' ? (
-          <p className="text-[13px] text-[#6A6A6A]">{mode === 'cuidar_de_mim' ? 'Pensando num cuidado possível…' : 'Pensando em algo leve…'}</p>
+          <p className="text-[13px] text-[#6A6A6A]">
+            {mode === 'cuidar_de_mim' ? 'Pensando num cuidado possível…' : 'Pensando em algo leve…'}
+          </p>
         ) : null}
 
         {state.status === 'done' ? (
@@ -491,7 +499,9 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
             ) : (
               <div className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3">
                 <p className="text-[13px] text-[#6A6A6A]">
-                  {mode === 'cuidar_de_mim' ? 'Tudo bem. Você pode fechar por aqui.' : 'Sem pressão. Se quiser, peça outra ideia.'}
+                  {mode === 'cuidar_de_mim'
+                    ? 'Tudo bem. Você pode fechar por aqui.'
+                    : 'Sem pressão. Se quiser, peça outra ideia.'}
                 </p>
               </div>
             )}
@@ -533,15 +543,15 @@ export default function QuickIdeaAI({ mode = 'my_day', className }: Props) {
                 </div>
 
                 {saved.length > 3 ? (
-                  <p className="mt-2 text-[12px] text-[#6A6A6A]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A]">
+                    Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
+                  </p>
                 ) : null}
               </div>
             ) : null}
 
             {mode === 'cuidar_de_mim' ? (
-              <p className="pt-1 text-[12px] text-[#6A6A6A]">
-                Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
-              </p>
+              <p className="pt-1 text-[12px] text-[#6A6A6A]">Se não servir, pode trocar ou fechar por aqui. Sem obrigação.</p>
             ) : null}
           </div>
         ) : null}

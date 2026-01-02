@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
+import { MY_DAY_SOURCES, addTaskToMyDayAndTrack } from '@/app/lib/myDayTasks.client'
+import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
 type Suggestion = {
   id: string
@@ -60,7 +62,7 @@ function brazilDateKey(d: Date) {
 }
 
 function signature(items: Suggestion[]) {
-  return items.map(i => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
+  return items.map((i) => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
 }
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -159,7 +161,7 @@ function getSavedFromLS(): Suggestion[] {
   const parsed = safeParse<unknown>(raw)
   if (!Array.isArray(parsed)) return []
   const items = (parsed as any[])
-    .filter(x => x && typeof x.title === 'string' && x.title.trim())
+    .filter((x) => x && typeof x.title === 'string' && x.title.trim())
     .slice(0, 50)
     .map((x, idx) => ({
       id: typeof x.id === 'string' && x.id.trim() ? x.id : `saved-${idx + 1}`,
@@ -196,7 +198,7 @@ export default function MaternarAICards() {
 
   const visibleItems = useMemo(() => {
     if (state.status !== 'done') return []
-    return state.items.filter(i => !dismissed[i.id])
+    return state.items.filter((i) => !dismissed[i.id])
   }, [state, dismissed])
 
   const persistDismiss = useCallback(
@@ -209,7 +211,7 @@ export default function MaternarAICards() {
 
   const dismissOne = useCallback(
     (id: string) => {
-      // FIX TS: garantir Record<string, true>
+      // FIX TS: preservar Record<string, true>
       const next: Record<string, true> = { ...dismissed, [id]: true as true }
       persistDismiss(next)
     },
@@ -219,15 +221,38 @@ export default function MaternarAICards() {
   const saveOne = useCallback(
     (item: Suggestion) => {
       const key = `${item.tag ?? ''}::${item.title}::${item.description ?? ''}`.trim()
-      const exists = saved.some(s => `${s.tag ?? ''}::${s.title}::${s.description ?? ''}`.trim() === key)
+      const exists = saved.some((s) => `${s.tag ?? ''}::${s.title}::${s.description ?? ''}`.trim() === key)
       if (exists) {
         dismissOne(item.id)
         return
       }
 
+      // 1) mantém comportamento atual do Maternar (guardadas)
       const next = [{ ...item, id: `saved-${Date.now()}` }, ...saved].slice(0, 50)
       setSaved(next)
       setSavedToLS(next)
+
+      // 2) P33.5a — conexão indireta e opcional com Meu Dia (silenciosa)
+      try {
+        const title = (item.title ?? '').trim()
+        if (title) {
+          addTaskToMyDayAndTrack({
+            title,
+            origin: 'selfcare',
+            source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+          })
+
+          // marca continuidade para o Meu Dia abrir no grupo certo (sem CTA / sem navegação)
+          markRecentMyDaySave({
+            origin: 'selfcare',
+            source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
+          })
+        }
+      } catch {
+        // nunca quebrar fluxo do Maternar
+      }
+
+      // 3) fecha o item da leva atual (permite “não agora” implícito)
       dismissOne(item.id)
     },
     [saved, dismissOne]
@@ -235,61 +260,56 @@ export default function MaternarAICards() {
 
   const removeSaved = useCallback(
     (id: string) => {
-      const next = saved.filter(s => s.id !== id)
+      const next = saved.filter((s) => s.id !== id)
       setSaved(next)
       setSavedToLS(next)
     },
     [saved]
   )
 
-  const fetchCards = useCallback(
-    async (attempt = 0) => {
-      setState({ status: 'loading' })
+  const fetchCards = useCallback(async (attempt = 0) => {
+    setState({ status: 'loading' })
 
-      const nonce = Date.now()
+    const nonce = Date.now()
 
-      try {
-        const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
-          method: 'POST',
-          cache: 'no-store',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            feature: 'daily_inspiration',
-            origin: 'maternar-hub',
-            context: {},
-          }),
-        })
+    try {
+      const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'daily_inspiration',
+          origin: 'maternar-hub',
+          context: {},
+        }),
+      })
 
-        let data: any = null
-        if (res.ok) data = await res.json().catch(() => null)
+      let data: any = null
+      if (res.ok) data = await res.json().catch(() => null)
 
-        const normalized = normalizeFromEmocional(data)
-        const nextItems =
-          normalized ??
-          shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
+      const normalized = normalizeFromEmocional(data)
+      const nextItems = normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
 
-        const sig = signature(nextItems)
+      const sig = signature(nextItems)
 
-        if (sig && sig === lastSigRef.current && attempt < 1) {
-          return await fetchCards(attempt + 1)
-        }
-
-        lastSigRef.current = sig
-        setState({ status: 'done', items: nextItems })
-      } catch {
-        const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
-        const sig = signature(nextItems)
-
-        if (sig && sig === lastSigRef.current && attempt < 1) {
-          return await fetchCards(attempt + 1)
-        }
-
-        lastSigRef.current = sig
-        setState({ status: 'done', items: nextItems })
+      if (sig && sig === lastSigRef.current && attempt < 1) {
+        return await fetchCards(attempt + 1)
       }
-    },
-    []
-  )
+
+      lastSigRef.current = sig
+      setState({ status: 'done', items: nextItems })
+    } catch {
+      const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
+      const sig = signature(nextItems)
+
+      if (sig && sig === lastSigRef.current && attempt < 1) {
+        return await fetchCards(attempt + 1)
+      }
+
+      lastSigRef.current = sig
+      setState({ status: 'done', items: nextItems })
+    }
+  }, [])
 
   return (
     <div className="space-y-4">
@@ -342,11 +362,8 @@ export default function MaternarAICards() {
         {state.status === 'done' ? (
           <div className="mt-4 space-y-3">
             {visibleItems.length ? (
-              visibleItems.map(item => (
-                <div
-                  key={item.id}
-                  className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3"
-                >
+              visibleItems.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       {item.tag ? (
@@ -405,9 +422,7 @@ export default function MaternarAICards() {
               ))
             ) : (
               <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-3">
-                <p className="text-[13px] text-[#6a6a6a]">
-                  Sem pressão. Se quiser, peça outra leva.
-                </p>
+                <p className="text-[13px] text-[#6a6a6a]">Sem pressão. Se quiser, peça outra leva.</p>
               </div>
             )}
           </div>
@@ -439,7 +454,7 @@ export default function MaternarAICards() {
           </div>
 
           <div className="mt-4 space-y-2">
-            {saved.slice(0, 3).map(item => (
+            {saved.slice(0, 3).map((item) => (
               <div
                 key={item.id}
                 className="
@@ -471,9 +486,7 @@ export default function MaternarAICards() {
           </div>
 
           {saved.length > 3 ? (
-            <p className="mt-3 text-[12px] text-[#6a6a6a]">
-              Você tem mais ideias guardadas — quando quiser, elas ficam aqui.
-            </p>
+            <p className="mt-3 text-[12px] text-[#6a6a6a]">Você tem mais ideias guardadas — quando quiser, elas ficam aqui.</p>
           ) : null}
 
           <div className="mt-3">

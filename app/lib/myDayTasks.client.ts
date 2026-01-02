@@ -39,6 +39,7 @@ export type TaskOrigin =
   | 'agenda'
   | 'family'
   | 'selfcare'
+  | 'checkin'
   | 'home'
   | 'other'
   | 'custom'

@@ -34,27 +34,17 @@ type QuickIdeasRequestLegacy = {
 
 /**
  * Memória contextual suave (modo leve):
- * - apenas para reduzir repetição e “tendenciar” de leve a escolha
- * - opcional e compatível com clientes que não enviam nada
+ * - apenas para reduzir repetição
+ * - aplicar tendência leve por sinal emocional
  */
 type QuickIdeasLightMemory = {
-  /**
-   * IDs mostrados recentemente (ex.: últimos 3–10).
-   * O endpoint tenta não repetir.
-   */
   recent_suggestion_ids?: string[]
-
-  /**
-   * Sinal leve do estado atual (se o app tiver essa info).
-   * Ex.: vindo do Meu Dia / emocional, etc.
-   * Opcional; se não vier, não interfere.
-   */
   last_signal?: 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
 }
 
 /**
- * Payload leve para Meu Dia (P33.4):
- * 1 foco, sem parentalidade, sem plano, sem lista.
+ * Payload leve — Meu Dia / Cuidar de Mim (P33.4)
+ * 1 sugestão, sem parentalidade, sem plano.
  */
 type QuickIdeasRequestLight = {
   intent: 'quick_idea'
@@ -63,7 +53,11 @@ type QuickIdeasRequestLight = {
   memory?: QuickIdeasLightMemory
 }
 
-type Suggestion = { id: string; title: string; description?: string }
+type Suggestion = {
+  id: string
+  title: string
+  description?: string
+}
 
 function badRequest(message: string, details?: unknown) {
   return NextResponse.json({ error: message, details }, { status: 400 })
@@ -108,7 +102,7 @@ function sanitizeTimeWindowMin(v: any): QuickIdeasTimeWindow {
   return 20
 }
 
-/** ---------- modo leve (Meu Dia) ---------- */
+/** ---------- modo leve (Meu Dia / Cuidar de Mim) ---------- */
 
 function myDaySuggestions(): Suggestion[] {
   return [
@@ -128,10 +122,7 @@ function chooseOne(seed: number, items: Suggestion[]) {
 
 function sanitizeRecentIds(v: any): string[] {
   if (!Array.isArray(v)) return []
-  return v
-    .filter((x) => typeof x === 'string' && x.trim())
-    .map((x) => x.trim())
-    .slice(0, 10)
+  return v.filter((x) => typeof x === 'string' && x.trim()).slice(0, 10)
 }
 
 function isValidSignal(v: any): v is NonNullable<QuickIdeasLightMemory['last_signal']> {
@@ -140,48 +131,36 @@ function isValidSignal(v: any): v is NonNullable<QuickIdeasLightMemory['last_sig
 
 type LightSignalWithNone = NonNullable<QuickIdeasLightMemory['last_signal']> | 'none'
 
-/**
- * Memória contextual suave:
- * 1) remove itens vistos recentemente (recent_suggestion_ids)
- * 2) aplica uma “tendência” leve por sinal (se existir)
- * 3) se tudo for excluído, volta ao catálogo completo
- */
 function chooseWithSoftMemory(opts: {
   seed: number
   suggestions: Suggestion[]
   memory?: QuickIdeasLightMemory
 }): { one: Suggestion; excludedCount: number; memoryUsed: boolean; signal: LightSignalWithNone } {
   const recent = sanitizeRecentIds(opts.memory?.recent_suggestion_ids)
-
   const rawSignal = opts.memory?.last_signal
   const signal: LightSignalWithNone = isValidSignal(rawSignal) ? rawSignal : 'none'
 
   const hasMemory = recent.length > 0 || signal !== 'none'
   const excludedSet = new Set(recent)
 
-  // Filtra repetição recente
   let pool = opts.suggestions.filter((s) => !excludedSet.has(s.id))
   const excludedCount = opts.suggestions.length - pool.length
 
-  // Se excluiu tudo, volta ao catálogo completo (sem bloqueio)
   if (!pool.length) pool = opts.suggestions
 
-  // Tendência bem suave por sinal (se existir)
   if (signal !== 'none') {
     const preferredIds =
       signal === 'heavy'
         ? new Set(['md-5', 'md-2'])
         : signal === 'tired'
-          ? new Set(['md-1', 'md-4'])
-          : signal === 'overwhelmed'
-            ? new Set(['md-2', 'md-3'])
-            : new Set<string>()
+        ? new Set(['md-1', 'md-4'])
+        : signal === 'overwhelmed'
+        ? new Set(['md-2', 'md-3'])
+        : new Set<string>()
 
     if (preferredIds.size) {
       const preferred = pool.filter((s) => preferredIds.has(s.id))
       const others = pool.filter((s) => !preferredIds.has(s.id))
-
-      // “peso” leve duplicando o pool preferido (mantém determinismo pelo seed)
       if (preferred.length) pool = [...preferred, ...preferred, ...others]
     }
   }
@@ -195,9 +174,9 @@ export async function POST(req: Request) {
     const body = (await req.json()) as QuickIdeasRequestLegacy | QuickIdeasRequestLight | null
 
     /**
-     * MODO LEVE (Meu Dia)
-     * Retorna no formato esperado pelo QuickIdeaAI: { suggestions: [...] }
-     * Apenas 1 sugestão.
+     * =========================
+     * MODO LEVE — Meu Dia / Cuidar de Mim
+     * =========================
      */
     if (isLightRequest(body)) {
       const seed = typeof body.nonce === 'number' ? body.nonce : Date.now()
@@ -226,69 +205,23 @@ export async function POST(req: Request) {
     }
 
     /**
-     * MODO LEGADO (Catálogo completo)
-     * Mantido, mas com validação forte para evitar payload inválido.
+     * =========================
+     * MODO LEGADO — CATÁLOGO
+     * =========================
      */
     if (!isLegacyRequest(body)) {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'missing_fields' })
-      } catch {}
       return badRequest('Missing required fields: plan, profile, context')
     }
 
-    if (!isValidPlan(body.plan)) {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'invalid_plan', plan: String(body.plan) })
-      } catch {}
-      return badRequest('Invalid plan')
-    }
+    if (!isValidPlan(body.plan)) return badRequest('Invalid plan')
+    if (!isValidMode(body.profile.mode)) return badRequest('Invalid profile.mode')
+    if (!isValidLocation(body.context.location)) return badRequest('Invalid context.location')
+    if (!isValidEnergy(body.context.energy)) return badRequest('Invalid context.energy')
 
-    if (!body.profile || typeof body.profile !== 'object') {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'invalid_profile' })
-      } catch {}
-      return badRequest('Invalid profile')
-    }
-
-    if (!isValidMode((body.profile as any).mode)) {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'invalid_mode', mode: String((body.profile as any).mode) })
-      } catch {}
-      return badRequest('Invalid profile.mode')
-    }
-
-    if (!Array.isArray(body.profile.children)) {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'children_not_array' })
-      } catch {}
-      return badRequest('Invalid profile.children')
-    }
-
-    if (!body.context || typeof body.context !== 'object') {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'invalid_context' })
-      } catch {}
-      return badRequest('Invalid context')
-    }
-
-    if (!isValidLocation((body.context as any).location)) {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'invalid_location', location: String((body.context as any).location) })
-      } catch {}
-      return badRequest('Invalid context.location')
-    }
-
-    if (!isValidEnergy((body.context as any).energy)) {
-      try {
-        track('ai.quick_ideas.bad_request', { reason: 'invalid_energy', energy: String((body.context as any).energy) })
-      } catch {}
-      return badRequest('Invalid context.energy')
-    }
-
-    const safeTimeWindow = sanitizeTimeWindowMin((body.context as any).time_window_min)
+    const safeTimeWindow = sanitizeTimeWindowMin(body.context.time_window_min)
 
     if (body.plan === 'free') {
-      const res = {
+      return NextResponse.json({
         access: {
           denied: true,
           limited_to_one: false,
@@ -299,31 +232,21 @@ export async function POST(req: Request) {
           location: body.context.location,
           time_window_min: safeTimeWindow,
           energy: body.context.energy,
-          age_buckets: body.profile.children.map((child) => child.age_bucket),
+          age_buckets: body.profile.children.map((c) => c.age_bucket),
         },
-        ideas: [] as unknown[],
-        aggregates: { materials_consolidated: [] as string[] },
-      }
-
-      try {
-        track('ai.quick_ideas.legacy', { plan: body.plan })
-      } catch {}
-
-      return NextResponse.json(res)
+        ideas: [],
+        aggregates: { materials_consolidated: [] },
+      })
     }
 
-    const resolvedBucket: QuickIdeasAgeBucket | undefined =
+    const resolvedBucket =
       body.profile.mode === 'all'
         ? youngestBucket(body.profile.children)
-        : body.profile.children.find((child) => child.id === body.profile.active_child_id)?.age_bucket ??
+        : body.profile.children.find((c) => c.id === body.profile.active_child_id)?.age_bucket ??
           body.profile.children[0]?.age_bucket
 
     const bucket: QuickIdeasAgeBucket = resolvedBucket ?? '2-3'
-
     const badges: QuickIdeasBadge[] = ['curta', 'linguagem']
-    const ageAdaptations: Partial<Record<QuickIdeasAgeBucket, string>> = {
-      [bucket]: 'Adapte o tempo e as falas à idade.',
-    }
 
     const baseIdea: QuickIdea = {
       id: 'cabana-lencois-10min',
@@ -336,14 +259,14 @@ export async function POST(req: Request) {
         'Estenda os lençóis entre as cadeiras para formar a cabana.',
         'Entrem com a lanterna e contem uma história curtinha.',
       ],
-      age_adaptations: ageAdaptations,
-      safety_notes: ['Supervisão constante; evite prender lençol em locais altos.', 'Lanterna sem peças pequenas soltas.'],
+      age_adaptations: { [bucket]: 'Adapte o tempo e as falas à idade.' },
+      safety_notes: ['Supervisão constante.', 'Lanterna sem peças pequenas.'],
       badges,
       planner_payload: { type: 'idea', duration_min: 10, materials: ['lençóis', 'cadeiras', 'lanterna'] },
       rationale: 'Poucos materiais, cabe no tempo disponível e na energia atual.',
     }
 
-    const ideas: QuickIdea[] =
+    const ideas =
       body.plan === 'essencial'
         ? [baseIdea]
         : [
@@ -352,7 +275,7 @@ export async function POST(req: Request) {
             { ...baseIdea, id: 'caixa-tesouros', title: 'Caixa de Tesouros Sensorial' },
           ]
 
-    const response = {
+    return NextResponse.json({
       access: {
         denied: false,
         limited_to_one: body.plan === 'essencial',
@@ -363,25 +286,12 @@ export async function POST(req: Request) {
         location: body.context.location,
         time_window_min: safeTimeWindow,
         energy: body.context.energy,
-        age_buckets: body.profile.children.map((child) => child.age_bucket),
+        age_buckets: body.profile.children.map((c) => c.age_bucket),
       },
       ideas,
       aggregates: { materials_consolidated: consolidateMaterials(ideas) },
-    }
-
-    try {
-      track('ai.quick_ideas.legacy', {
-        plan: body.plan,
-        location: body.context.location,
-        energy: body.context.energy,
-      })
-    } catch {}
-
-    return NextResponse.json(response)
+    })
   } catch (err) {
-    try {
-      track('ai.quick_ideas.error', { error: String(err) })
-    } catch {}
     return badRequest('Invalid JSON payload', String(err))
   }
 }
