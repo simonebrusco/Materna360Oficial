@@ -225,7 +225,11 @@ export default function Client() {
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg"
+    >
       <ClientOnly>
         <div className="page-shell relative z-10">
           {/* HEADER */}
@@ -248,12 +252,12 @@ export default function Client() {
           {/* CONTAINER EDITORIAL ÚNICO */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
-              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
+              <div className="bg-white rounded-3xl p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#f5d7e5]">
                 {/* BLOCO 0 — PARA AGORA (apoio + ação prática) */}
-                <section className="pb-6" id="para-agora">
+                <section className="pb-7" id="para-agora">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
+                      <AppIcon name="sparkles" size={16} className="text-[#b8236b]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -261,12 +265,14 @@ export default function Client() {
                       <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
                       <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
-                      <div className="mt-4 space-y-3">
-                        {/* 0A) Apoio emocional (extraído do Maternar) */}
-                        <ParaAgoraSupportCard />
+                      <div className="mt-4 space-y-4">
+                        {/* 0A) Acolhimento primeiro */}
+                        <div className="rounded-2xl bg-[#ffffff] border border-[#f5d7e5]/70 shadow-[0_4px_14px_rgba(0,0,0,0.04)] p-4">
+                          <ParaAgoraSupportCard />
+                        </div>
 
-                        {/* 0B) Ação prática (QuickIdeaAI do Cuidar de Mim) */}
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-4 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                        {/* 0B) Ação depois (mais discreta) */}
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
                           <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
                           <div className="mt-3 text-[12px] text-[#6a6a6a]">
                             Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
@@ -285,13 +291,13 @@ export default function Client() {
                   </div>
                 </section>
 
-                <div className="border-t border-[#f5d7e5]" />
+                <div className="border-t border-[#f5d7e5]/70" />
 
                 {/* BLOCO 1 — CHECK-IN */}
-                <section className="py-6" id="ritmo">
+                <section className="py-7" id="ritmo">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="heart" size={16} className="text-[#fd2597]" />
+                      <AppIcon name="heart" size={16} className="text-[#b8236b]" />
                     </div>
                     <div className="min-w-0">
                       <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
@@ -308,8 +314,8 @@ export default function Client() {
                               className={[
                                 'rounded-full px-4 py-2 text-[12px] border transition font-semibold',
                                 active
-                                  ? 'bg-[#fd2597] border-[#fd2597] text-white shadow-[0_8px_18px_rgba(253,37,151,0.18)]'
-                                  : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff3f8]',
+                                  ? 'bg-[#fff3f8] border-[#fd2597] text-[#b8236b]'
+                                  : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff7fb]',
                               ].join(' ')}
                             >
                               {r}
@@ -318,20 +324,18 @@ export default function Client() {
                         })}
                       </div>
 
-                      <div className="mt-2 text-[12px] text-[#6a6a6a]">
-                        Só um toque para se reconhecer. Nada além disso.
-                      </div>
+                      <div className="mt-2 text-[12px] text-[#6a6a6a]">Só um toque para se reconhecer. Nada além disso.</div>
                     </div>
                   </div>
                 </section>
 
-                <div className="border-t border-[#f5d7e5]" />
+                <div className="border-t border-[#f5d7e5]/70" />
 
                 {/* BLOCO 2 — SEU DIA, DO JEITO QUE ESTÁ (dados reais) */}
-                <section className="py-6">
+                <section className="py-8">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="list" size={16} className="text-[#fd2597]" />
+                      <AppIcon name="list" size={16} className="text-[#b8236b]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -339,8 +343,8 @@ export default function Client() {
                       <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
                       <div className="hub-subtitle text-[#6a6a6a]">Uma visão consolidada, sem agenda e sem cobrança.</div>
 
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                      <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
                           <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                             Salvos
                           </div>
@@ -348,7 +352,7 @@ export default function Client() {
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                         </div>
 
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
                           <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                             Compromissos
                           </div>
@@ -358,7 +362,7 @@ export default function Client() {
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                         </div>
 
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
                           <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                             Para depois
                           </div>
@@ -367,17 +371,18 @@ export default function Client() {
                         </div>
                       </div>
 
-                      <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                      <div className="mt-6 flex flex-col sm:flex-row gap-2">
                         <Link
                           href="/meu-dia"
                           className="
                             inline-flex items-center justify-center
                             rounded-full
-                            bg-[#fd2597] hover:opacity-95
-                            text-white
+                            bg-white
+                            border border-[#fd2597]
+                            text-[#b8236b]
                             px-5 py-3
                             text-[12px] font-semibold
-                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                            hover:bg-[#fff3f8]
                             transition
                           "
                         >
@@ -394,7 +399,7 @@ export default function Client() {
                             text-[#2f3a56]
                             px-5 py-3
                             text-[12px] font-semibold
-                            hover:bg-[#fff3f8]
+                            hover:bg-[#fff7fb]
                             transition
                           "
                         >
@@ -405,33 +410,33 @@ export default function Client() {
                   </div>
                 </section>
 
-                <div className="border-t border-[#f5d7e5]" />
+                <div className="border-t border-[#f5d7e5]/70" />
 
                 {/* BLOCO 3 — ORIENTAÇÃO (apenas linguagem; fallback obrigatório) */}
-                <section className="py-6">
+                <section className="py-8">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="info" size={16} className="text-[#fd2597]" />
+                      <AppIcon name="info" size={16} className="text-[#b8236b]" />
                     </div>
 
                     <div className="min-w-0">
                       <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
                       <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                      <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
+                      <div className="mt-3 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
                         {guidance.text}
                       </div>
                     </div>
                   </div>
                 </section>
 
-                <div className="border-t border-[#f5d7e5]" />
+                <div className="border-t border-[#f5d7e5]/70" />
 
                 {/* BLOCO 4 — MICRO CUIDADO (fechamento simples) */}
-                <section className="pt-6" id="pausas">
+                <section className="pt-8" id="pausas">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
+                      <AppIcon name="sparkles" size={16} className="text-[#b8236b]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -455,7 +460,7 @@ export default function Client() {
                             text-[#2f3a56]
                             px-5 py-3
                             text-[12px] font-semibold
-                            hover:bg-[#fff3f8]
+                            hover:bg-[#fff7fb]
                             transition
                           "
                         >
@@ -467,11 +472,12 @@ export default function Client() {
                           className="
                             inline-flex items-center justify-center
                             rounded-full
-                            bg-[#fd2597] hover:opacity-95
-                            text-white
+                            bg-white
+                            border border-[#fd2597]
+                            text-[#b8236b]
                             px-5 py-3
                             text-[12px] font-semibold
-                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                            hover:bg-[#fff3f8]
                             transition
                           "
                         >
