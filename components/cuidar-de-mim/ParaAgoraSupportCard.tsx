@@ -36,6 +36,10 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
+/**
+ * Fallback alinhado ao Prompt Canônico — MATERNAR:
+ * acolhe, nomeia, normaliza e fecha sem tarefa.
+ */
 function baseFallback(): Suggestion[] {
   return [
     {
@@ -55,6 +59,18 @@ function baseFallback(): Suggestion[] {
       tag: 'ritual',
       title: 'Às vezes, o que falta não é força.',
       description: 'É só um pouco de respiro, do jeito que der.',
+    },
+    {
+      id: 'fb-4',
+      tag: 'limites',
+      title: 'Limites também podem ser amor.',
+      description: 'Dizer “não” pode ser um jeito de proteger o que importa — sem culpa.',
+    },
+    {
+      id: 'fb-5',
+      tag: 'cansaço',
+      title: 'Quando tudo parece demais, é comum se sentir assim.',
+      description: 'Nem sempre cabe tudo — e isso não é falha.',
     },
   ]
 }
@@ -173,13 +189,17 @@ export default function ParaAgoraSupportCard({
       className={[
         `
           rounded-2xl
-          ${isEmbedded ? 'p-4 md:p-5' : 'p-5 md:p-6'}
-          ${isEmbedded ? 'bg-white/70 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_6px_18px_rgba(0,0,0,0.04)]' : 'bg-white border border-black/5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]'}
+          ${isEmbedded ? 'h-full flex flex-col p-4 md:p-5' : 'p-5 md:p-6'}
+          ${
+            isEmbedded
+              ? 'bg-white/70 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_6px_18px_rgba(0,0,0,0.04)]'
+              : 'bg-white border border-black/5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]'
+          }
         `,
         className ?? '',
       ].join(' ')}
     >
-      {/* CABEÇALHO — SOMENTE NO STANDALONE (para não duplicar no hub) */}
+      {/* CABEÇALHO — SOMENTE NO STANDALONE */}
       {!isEmbedded ? (
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -191,8 +211,12 @@ export default function ParaAgoraSupportCard({
               <span className="inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-black/70">
                 Para agora
               </span>
-              <h3 className="text-[16px] md:text-[17px] font-semibold text-black/85">Um apoio para este momento</h3>
-              <p className="text-[13px] text-black/60 leading-relaxed">Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
+              <h3 className="text-[16px] md:text-[17px] font-semibold text-black/85">
+                Um apoio para este momento
+              </h3>
+              <p className="text-[13px] text-black/60 leading-relaxed">
+                Se fizer sentido, fica. Se não fizer, tudo bem também.
+              </p>
             </div>
           </div>
 
@@ -210,15 +234,17 @@ export default function ParaAgoraSupportCard({
         </div>
       ) : null}
 
-      {/* EMBEDDED — CTA quieto, full-width, altura padrão (alinha com o QuickIdeaAI) */}
+      {/* EMBEDDED — IDLE centralizado (para não “tortar” no grid) */}
       {isEmbedded && state.status === 'idle' ? (
-        <Button
-          variant="secondary"
-          className="w-full h-11 rounded-full justify-center border border-[#f5d7e5] bg-white/70 hover:bg-white/80"
-          onClick={() => void fetchCards()}
-        >
-          Ver um apoio possível agora
-        </Button>
+        <div className="flex-1 flex items-center justify-center">
+          <Button
+            variant="secondary"
+            className="w-full h-11 rounded-full justify-center border border-[#f5d7e5] bg-white/70 hover:bg-white/80"
+            onClick={() => void fetchCards()}
+          >
+            Ver um apoio possível agora
+          </Button>
+        </div>
       ) : null}
 
       {state.status === 'loading' ? (
@@ -243,7 +269,9 @@ export default function ParaAgoraSupportCard({
                     <p className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
 
                     {item.description ? (
-                      <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">{item.description}</p>
+                      <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">
+                        {item.description}
+                      </p>
                     ) : null}
                   </div>
 
