@@ -225,7 +225,7 @@ export default function Client() {
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden">
+    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
       <ClientOnly>
         <div className="page-shell relative z-10">
           {/* HEADER */}
@@ -248,27 +248,27 @@ export default function Client() {
           {/* CONTAINER EDITORIAL ÚNICO */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
-              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-lg border border-black/5">
+              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
                 {/* BLOCO 0 — PARA AGORA (apoio + ação prática) */}
                 <section className="pb-6" id="para-agora">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="sparkles" size={16} className="text-black/70" />
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow">PARA AGORA</div>
-                      <div className="hub-title">Um apoio para este momento</div>
-                      <div className="hub-subtitle">Pequeno, prático e sem cobrança.</div>
+                      <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
+                      <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
                       <div className="mt-4 space-y-3">
                         {/* 0A) Apoio emocional (extraído do Maternar) */}
                         <ParaAgoraSupportCard />
 
                         {/* 0B) Ação prática (QuickIdeaAI do Cuidar de Mim) */}
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-4">
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-4 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
                           <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
-                          <div className="mt-3 text-[12px] text-black/55">
+                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
                             Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
                           </div>
                         </div>
@@ -285,17 +285,17 @@ export default function Client() {
                   </div>
                 </section>
 
-                <div className="border-t border-black/5" />
+                <div className="border-t border-[#f5d7e5]" />
 
                 {/* BLOCO 1 — CHECK-IN */}
                 <section className="py-6" id="ritmo">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="heart" size={16} className="text-black/70" />
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="heart" size={16} className="text-[#fd2597]" />
                     </div>
                     <div className="min-w-0">
-                      <div className="hub-eyebrow">CHECK-IN</div>
-                      <div className="hub-title">Como você está agora?</div>
+                      <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
+                      <div className="hub-title text-[#2f3a56]">Como você está agora?</div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
@@ -306,10 +306,10 @@ export default function Client() {
                               type="button"
                               onClick={() => onPickRitmo(r)}
                               className={[
-                                'rounded-full px-4 py-2 text-[12px] border transition',
+                                'rounded-full px-4 py-2 text-[12px] border transition font-semibold',
                                 active
-                                  ? 'bg-black/10 border-black/10 text-black'
-                                  : 'bg-white border-black/10 text-black/70 hover:bg-black/5',
+                                  ? 'bg-[#fd2597] border-[#fd2597] text-white shadow-[0_8px_18px_rgba(253,37,151,0.18)]'
+                                  : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff3f8]',
                               ].join(' ')}
                             >
                               {r}
@@ -318,60 +318,86 @@ export default function Client() {
                         })}
                       </div>
 
-                      <div className="mt-2 text-[12px] text-black/55">
+                      <div className="mt-2 text-[12px] text-[#6a6a6a]">
                         Só um toque para se reconhecer. Nada além disso.
                       </div>
                     </div>
                   </div>
                 </section>
 
-                <div className="border-t border-black/5" />
+                <div className="border-t border-[#f5d7e5]" />
 
                 {/* BLOCO 2 — SEU DIA, DO JEITO QUE ESTÁ (dados reais) */}
                 <section className="py-6">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="list" size={16} className="text-black/70" />
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="list" size={16} className="text-[#fd2597]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow">SEU DIA</div>
-                      <div className="hub-title">Do jeito que está</div>
-                      <div className="hub-subtitle">Uma visão consolidada, sem agenda e sem cobrança.</div>
+                      <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
+                      <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Uma visão consolidada, sem agenda e sem cobrança.</div>
 
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-black/60 font-semibold">
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                             Salvos
                           </div>
-                          <div className="mt-1 text-[20px] font-semibold text-black">{stat(daySignals.savedCount)}</div>
-                          <div className="mt-0.5 text-[12px] text-black/60">coisas registradas hoje</div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                         </div>
 
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-black/60 font-semibold">
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                             Compromissos
                           </div>
-                          <div className="mt-1 text-[20px] font-semibold text-black">
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
                             {stat(daySignals.commitmentsCount)}
                           </div>
-                          <div className="mt-0.5 text-[12px] text-black/60">no seu planner</div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                         </div>
 
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-black/60 font-semibold">
+                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                             Para depois
                           </div>
-                          <div className="mt-1 text-[20px] font-semibold text-black">{stat(daySignals.laterCount)}</div>
-                          <div className="mt-0.5 text-[12px] text-black/60">coisas que podem esperar</div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                         </div>
                       </div>
 
                       <div className="mt-5 flex flex-col sm:flex-row gap-2">
-                        <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
+                        <Link
+                          href="/meu-dia"
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-[#fd2597] hover:opacity-95
+                            text-white
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                            transition
+                          "
+                        >
                           Ir para Meu Dia
                         </Link>
-                        <Link href="/maternar/meu-filho" className="btn-secondary inline-flex items-center justify-center">
+
+                        <Link
+                          href="/maternar/meu-filho"
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-white
+                            border border-[#f5d7e5]
+                            text-[#2f3a56]
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            hover:bg-[#fff3f8]
+                            transition
+                          "
+                        >
                           Ir para Meu Filho
                         </Link>
                       </div>
@@ -379,39 +405,39 @@ export default function Client() {
                   </div>
                 </section>
 
-                <div className="border-t border-black/5" />
+                <div className="border-t border-[#f5d7e5]" />
 
                 {/* BLOCO 3 — ORIENTAÇÃO (apenas linguagem; fallback obrigatório) */}
                 <section className="py-6">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="info" size={16} className="text-black/70" />
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="info" size={16} className="text-[#fd2597]" />
                     </div>
 
                     <div className="min-w-0">
-                      <div className="hub-eyebrow">ORIENTAÇÃO</div>
-                      <div className="hub-title">{guidance.title}</div>
+                      <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
+                      <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                      <div className="mt-2 text-[13px] md:text-[14px] text-black/70 leading-relaxed max-w-2xl">
+                      <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
                         {guidance.text}
                       </div>
                     </div>
                   </div>
                 </section>
 
-                <div className="border-t border-black/5" />
+                <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 4 — MICRO CUIDADO (agora é um fechamento simples, sem duplicar o Para Agora) */}
+                {/* BLOCO 4 — MICRO CUIDADO (fechamento simples) */}
                 <section className="pt-6" id="pausas">
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="sparkles" size={16} className="text-black/70" />
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow">MICRO CUIDADO</div>
-                      <div className="hub-title">Opcional</div>
-                      <div className="hub-subtitle">Se não couber nada agora, fechar por aqui já é cuidado.</div>
+                      <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
+                      <div className="hub-title text-[#2f3a56]">Opcional</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">Se não couber nada agora, fechar por aqui já é cuidado.</div>
 
                       <div className="mt-4 flex flex-col sm:flex-row gap-2">
                         <button
@@ -421,18 +447,40 @@ export default function Client() {
                               track('cuidar_de_mim.micro_close', { ritmo })
                             } catch {}
                           }}
-                          className="btn-secondary"
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-white
+                            border border-[#f5d7e5]
+                            text-[#2f3a56]
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            hover:bg-[#fff3f8]
+                            transition
+                          "
                         >
                           Encerrar por aqui
                         </button>
 
-                        <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
+                        <Link
+                          href="/meu-dia"
+                          className="
+                            inline-flex items-center justify-center
+                            rounded-full
+                            bg-[#fd2597] hover:opacity-95
+                            text-white
+                            px-5 py-3
+                            text-[12px] font-semibold
+                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                            transition
+                          "
+                        >
                           Ver Meu Dia
                         </Link>
                       </div>
 
                       {euSignal?.showLessLine ? (
-                        <div className="mt-3 text-[12px] text-black/60">Hoje pode ser menos. E ainda assim contar.</div>
+                        <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
                       ) : null}
                     </div>
                   </div>
