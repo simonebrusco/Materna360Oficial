@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/Button'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { TabPill } from '@/components/common/TabPill'
-import MaternarAICards from '@/components/maternar/MaternarAICards'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -108,10 +107,9 @@ export default function MaternarClient() {
           </header>
 
           <div className="space-y-7 md:space-y-8 pb-10">
-            {/* P33.3 — IA silenciosa no Maternar (conteúdo pronto, sem chat) */}
-            <Reveal>
-              <MaternarAICards />
-            </Reveal>
+            {/* REMOVIDO: P33.3 — IA silenciosa no Maternar (Para agora) 
+                O "Para agora" agora vive dentro de Cuidar de Mim.
+            */}
 
             {/* PAINEL PRINCIPAL — SEÇÕES MODULARES */}
             <div
