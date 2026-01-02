@@ -163,31 +163,13 @@ export default function Client() {
     track('cuidar_de_mim.checkin.select', { ritmo: next })
   }
 
-  function saveToMyDay(title: string) {
-    const origin = 'selfcare' as const
-
-    const res = addTaskToMyDay({
-      title,
-      origin,
-      source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-    })
-
-    if (res?.ok) {
-      setDaySignals(readDaySignals())
-    }
-
-    markRecentMyDaySave({
-      origin,
-      source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
-    })
-  }
-
   const stat = (n?: number) => (typeof n === 'number' ? String(n) : '—')
 
   return (
     <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 eu360-hub-bg">
       <ClientOnly>
         <div className="page-shell relative z-10">
+          {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-8">
             <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85">
               ← Voltar para o Maternar
@@ -199,26 +181,37 @@ export default function Client() {
             </p>
           </header>
 
+          {/* HUB */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
               <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-[0_18px_45px_rgba(184,35,107,0.12)] border border-[#f5d7e5]/80">
 
                 {/* PARA AGORA */}
                 <section className="pb-8">
-                  <div className="flex gap-3">
-                    <AppIcon name="sparkles" size={16} className="text-[#b8236b]" />
-                    <div>
-                      <div className="hub-eyebrow">PARA AGORA</div>
-                      <div className="hub-title">Um apoio para este momento</div>
-                      <div className="hub-subtitle">Pequeno, prático e sem cobrança.</div>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center">
+                      <AppIcon name="sparkles" size={16} className="text-[#b8236b]" />
+                    </div>
 
-                      <div className="mt-4 grid md:grid-cols-2 gap-5">
-                        <ParaAgoraSupportCard variant="embedded" className="h-full" />
+                    <div className="flex-1 min-w-0">
+                      <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
+                      <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
+                      <div className="hub-subtitle text-[#6a6a6a]">
+                        Pequeno, prático e sem cobrança.
+                      </div>
 
-                        <div className="rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 p-4">
-                          <QuickIdeaAI mode="cuidar_de_mim" />
-                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                            Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                      {/* GRID CENTRALIZADO */}
+                      <div className="mt-5">
+                        <div className="mx-auto max-w-[880px]">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+                            <ParaAgoraSupportCard variant="embedded" className="h-full" />
+
+                            <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 p-4 flex flex-col justify-center">
+                              <QuickIdeaAI mode="cuidar_de_mim" />
+                              <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                                Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -230,18 +223,18 @@ export default function Client() {
 
                 {/* CHECK-IN */}
                 <section className="py-7">
-                  <div className="hub-eyebrow">CHECK-IN</div>
-                  <div className="hub-title">Como você está agora?</div>
+                  <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
+                  <div className="hub-title text-[#2f3a56]">Como você está agora?</div>
 
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex gap-2 flex-wrap">
                     {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => (
                       <button
                         key={r}
                         onClick={() => onPickRitmo(r)}
-                        className={`rounded-full px-4 py-2 text-[12px] font-semibold border ${
+                        className={`rounded-full px-4 py-2 text-[12px] font-semibold border transition ${
                           ritmo === r
                             ? 'bg-[#fd2597] text-white border-[#fd2597]'
-                            : 'bg-white border-[#f5d7e5]'
+                            : 'bg-white border-[#f5d7e5] text-[#545454]'
                         }`}
                       >
                         {r}
@@ -258,13 +251,28 @@ export default function Client() {
 
                 {/* SEU DIA */}
                 <section className="py-7">
-                  <div className="hub-eyebrow">SEU DIA</div>
-                  <div className="hub-title">Do jeito que está</div>
+                  <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
+                  <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
 
                   <div className="mt-4 grid sm:grid-cols-3 gap-4">
-                    <div className="soft-card">Salvos<br />{stat(daySignals.savedCount)}</div>
-                    <div className="soft-card">Compromissos<br />{stat(daySignals.commitmentsCount)}</div>
-                    <div className="soft-card">Para depois<br />{stat(daySignals.laterCount)}</div>
+                    <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/60 p-4">
+                      <div className="text-[11px] uppercase tracking-wide text-[#b8236b]">Salvos</div>
+                      <div className="mt-1 text-[20px] font-semibold">{stat(daySignals.savedCount)}</div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/60 p-4">
+                      <div className="text-[11px] uppercase tracking-wide text-[#b8236b]">Compromissos</div>
+                      <div className="mt-1 text-[20px] font-semibold">
+                        {stat(daySignals.commitmentsCount)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/60 p-4">
+                      <div className="text-[11px] uppercase tracking-wide text-[#b8236b]">Para depois</div>
+                      <div className="mt-1 text-[20px] font-semibold">
+                        {stat(daySignals.laterCount)}
+                      </div>
+                    </div>
                   </div>
                 </section>
 
@@ -272,8 +280,8 @@ export default function Client() {
 
                 {/* ORIENTAÇÃO */}
                 <section className="py-7">
-                  <div className="hub-eyebrow">ORIENTAÇÃO</div>
-                  <div className="hub-title">{guidance.title}</div>
+                  <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
+                  <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
                   <p className="mt-2 text-[#545454] max-w-2xl">{guidance.text}</p>
                 </section>
 
@@ -281,15 +289,23 @@ export default function Client() {
 
                 {/* MICRO CUIDADO */}
                 <section className="pt-7">
-                  <div className="hub-eyebrow">MICRO CUIDADO</div>
+                  <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
                   <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
-                  <div className="hub-subtitle">
+                  <div className="hub-subtitle text-[#6a6a6a]">
                     Se não couber nada agora, fechar por aqui já é cuidado.
                   </div>
 
                   <div className="mt-4 flex gap-2">
-                    <button className="secondary-btn">Encerrar por aqui</button>
-                    <Link href="/meu-dia" className="primary-btn">Ver Meu Dia</Link>
+                    <button className="rounded-full bg-white/70 border border-[#f5d7e5]/70 px-5 py-3 text-[12px] font-semibold">
+                      Encerrar por aqui
+                    </button>
+
+                    <Link
+                      href="/meu-dia"
+                      className="rounded-full bg-[#fd2597] text-white px-5 py-3 text-[12px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.18)]"
+                    >
+                      Ver Meu Dia
+                    </Link>
                   </div>
 
                   {euSignal.showLessLine && (
