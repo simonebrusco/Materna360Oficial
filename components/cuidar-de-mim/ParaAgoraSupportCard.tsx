@@ -17,6 +17,8 @@ type State =
   | { status: 'loading' }
   | { status: 'done'; items: Suggestion[] }
 
+type Variant = 'standalone' | 'embedded'
+
 function signature(items: Suggestion[]) {
   return items.map((i) => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
 }
@@ -34,10 +36,6 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
-/**
- * Fallback alinhado ao Prompt Canônico — MATERNAR:
- * acolhe, nomeia, normaliza e fecha sem tarefa.
- */
 function baseFallback(): Suggestion[] {
   return [
     {
@@ -58,59 +56,16 @@ function baseFallback(): Suggestion[] {
       title: 'Às vezes, o que falta não é força.',
       description: 'É só um pouco de respiro, do jeito que der.',
     },
-    {
-      id: 'fb-4',
-      tag: 'limites',
-      title: 'Limites também podem ser amor.',
-      description: 'Dizer “não” pode ser um jeito de proteger o que importa — sem culpa.',
-    },
-    {
-      id: 'fb-5',
-      tag: 'cansaço',
-      title: 'Quando tudo parece demais, é comum se sentir assim.',
-      description: 'Nem sempre cabe tudo — e isso não é falha.',
-    },
   ]
 }
 
-function normalizeFromEmocional(payload: any): Suggestion[] | null {
-  if (!payload) return null
-
-  // Schema: { inspiration: { phrase, care, ritual } }
-  if (payload?.inspiration) {
-    const phrase = typeof payload.inspiration.phrase === 'string' ? payload.inspiration.phrase.trim() : ''
-    const care = typeof payload.inspiration.care === 'string' ? payload.inspiration.care.trim() : ''
-    const ritual = typeof payload.inspiration.ritual === 'string' ? payload.inspiration.ritual.trim() : ''
-
-    const items: Suggestion[] = []
-
-    if (phrase) items.push({ id: 'inspo-phrase', tag: 'frase', title: phrase })
-
-    if (care) {
-      items.push({
-        id: 'inspo-care',
-        tag: 'cuidado',
-        title: 'Um cuidado que acolhe',
-        description: care,
-      })
-    }
-
-    if (ritual) {
-      items.push({
-        id: 'inspo-ritual',
-        tag: 'ritual',
-        title: 'Um gesto simples de presença',
-        description: ritual,
-      })
-    }
-
-    return items.length ? items.slice(0, 3) : null
-  }
-
-  return null
-}
-
-export default function ParaAgoraSupportCard({ className }: { className?: string }) {
+export default function ParaAgoraSupportCard({
+  variant = 'standalone',
+  className,
+}: {
+  variant?: Variant
+  className?: string
+}) {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
 
@@ -126,157 +81,121 @@ export default function ParaAgoraSupportCard({ className }: { className?: string
     setDismissed((prev) => ({ ...prev, [id]: true }))
   }, [])
 
-  const fetchCards = useCallback(
-    async (attempt = 0) => {
-      setState({ status: 'loading' })
-      const nonce = Date.now()
+  const fetchCards = useCallback(async () => {
+    setState({ status: 'loading' })
 
-      try {
-        const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
-          method: 'POST',
-          cache: 'no-store',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            feature: 'daily_inspiration',
-            origin: 'cuidar-de-mim',
-            context: {},
-          }),
-        })
+    try {
+      const res = await fetch(`/api/ai/emocional`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'daily_inspiration',
+          origin: 'cuidar-de-mim',
+          context: {},
+        }),
+      })
 
-        let data: any = null
-        if (res.ok) data = await res.json().catch(() => null)
+      let data: any = null
+      if (res.ok) data = await res.json().catch(() => null)
 
-        const normalized = normalizeFromEmocional(data)
-        const nextItems =
-          normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
+      const nextItems =
+        data?.items ??
+        shuffle(baseFallback(), (seedRef.current = seedRef.current + 17)).slice(0, 3)
 
-        const sig = signature(nextItems)
-        if (sig && sig === lastSigRef.current && attempt < 1) {
-          return await fetchCards(attempt + 1)
-        }
+      const sig = signature(nextItems)
+      if (sig === lastSigRef.current) return
 
-        lastSigRef.current = sig
-        setDismissed({})
-        setState({ status: 'done', items: nextItems })
-      } catch {
-        const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
-        const sig = signature(nextItems)
+      lastSigRef.current = sig
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
+    } catch {
+      const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 23)).slice(0, 3)
+      lastSigRef.current = signature(nextItems)
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
+    }
+  }, [])
 
-        if (sig && sig === lastSigRef.current && attempt < 1) {
-          return await fetchCards(attempt + 1)
-        }
-
-        lastSigRef.current = sig
-        setDismissed({})
-        setState({ status: 'done', items: nextItems })
-      }
-    },
-    []
-  )
+  const isEmbedded = variant === 'embedded'
 
   return (
     <SoftCard
       className={[
         `
-          p-5 md:p-6 rounded-2xl
+          rounded-2xl
           bg-white
           border border-black/5
-          shadow-[0_6px_18px_rgba(0,0,0,0.06)]
+          ${isEmbedded ? 'p-4 shadow-none' : 'p-5 md:p-6 shadow-[0_6px_18px_rgba(0,0,0,0.06)]'}
         `,
         className ?? '',
       ].join(' ')}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-full bg-black/5 flex items-center justify-center shrink-0">
-            <AppIcon name="sparkles" size={20} className="text-black/70" />
+      {/* CABEÇALHO — SOMENTE NO STANDALONE */}
+      {!isEmbedded && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-black/5 flex items-center justify-center shrink-0">
+              <AppIcon name="sparkles" size={20} className="text-black/70" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-black/70">
+                Para agora
+              </span>
+              <h3 className="text-[16px] md:text-[17px] font-semibold text-black/85">
+                Um apoio para este momento
+              </h3>
+              <p className="text-[13px] text-black/60 leading-relaxed">
+                Se fizer sentido, fica. Se não fizer, tudo bem também.
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <span className="inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-black/70">
-              Para agora
-            </span>
-            <h3 className="text-[16px] md:text-[17px] font-semibold text-black/85">
-              Um apoio para este momento
-            </h3>
-            <p className="text-[13px] text-black/60 leading-relaxed">
-              Se fizer sentido, fica. Se não fizer, tudo bem também.
-            </p>
-          </div>
-        </div>
-
-        <div className="shrink-0">
-          {state.status === 'idle' ? (
+          <div className="shrink-0">
             <Button className="px-4" onClick={() => void fetchCards()}>
               Ver sugestões
             </Button>
-          ) : (
-            <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
-              Ver outro apoio
-            </Button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {state.status === 'loading' ? (
-        <div className="mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3">
-          <p className="text-[13px] text-black/60">Carregando…</p>
-        </div>
-      ) : null}
+      {/* CTA DISCRETO — EMBUTIDO */}
+      {isEmbedded && state.status === 'idle' && (
+        <Button variant="secondary" className="mb-3 px-4" onClick={() => void fetchCards()}>
+          Ver um apoio possível agora
+        </Button>
+      )}
 
-      {state.status === 'done' ? (
-        <div className="mt-4 space-y-3">
-          {visibleItems.length ? (
-            visibleItems.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    {item.tag ? (
-                      <span className="inline-flex w-max items-center rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black/70 uppercase">
-                        {item.tag}
-                      </span>
-                    ) : null}
+      {state.status === 'loading' && (
+        <div className="mt-2 text-[13px] text-black/60">Carregando…</div>
+      )}
 
-                    <p className="mt-1 text-[14px] font-semibold text-black/80">{item.title}</p>
+      {state.status === 'done' && (
+        <div className="mt-3 space-y-3">
+          {visibleItems.map((item) => (
+            <div key={item.id} className="rounded-xl border border-black/5 bg-white px-4 py-3">
+              {item.tag && (
+                <span className="inline-flex rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black/70 uppercase">
+                  {item.tag}
+                </span>
+              )}
+              <p className="mt-1 text-[14px] font-semibold text-black/80">{item.title}</p>
+              {item.description && (
+                <p className="mt-1 text-[12px] text-black/60 leading-relaxed">{item.description}</p>
+              )}
 
-                    {item.description ? (
-                      <p className="mt-1 text-[12px] text-black/60 leading-relaxed whitespace-pre-line">
-                        {item.description}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      className="
-                        rounded-full
-                        bg-white
-                        border border-black/10
-                        text-black/70
-                        px-3 py-1.5
-                        text-[12px]
-                        transition
-                        hover:shadow-sm
-                        whitespace-nowrap
-                      "
-                      onClick={() => dismissOne(item.id)}
-                    >
-                      Não agora
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-              <p className="text-[13px] text-black/60">
-                Sem pressão. Se quiser, peça outra leva.
-              </p>
+              <button
+                type="button"
+                onClick={() => dismissOne(item.id)}
+                className="mt-2 text-[12px] text-black/60 hover:underline"
+              >
+                Não agora
+              </button>
             </div>
-          )}
+          ))}
         </div>
-      ) : null}
+      )}
     </SoftCard>
   )
 }
