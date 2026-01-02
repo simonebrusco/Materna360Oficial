@@ -8,8 +8,6 @@ import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { ClientOnly } from '@/components/common/ClientOnly'
 
-import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
-
 import { track } from '@/app/lib/telemetry'
 import { load, save } from '@/app/lib/persist'
 import { getBrazilDateKey } from '@/app/lib/dateKey'
@@ -20,6 +18,9 @@ import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 
 import { readMyDayCountsToday } from '@/app/lib/myDayCounts.client'
 import { getCareGuidance } from '@/app/lib/cuidarDeMimGuidance'
+
+import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
+import ParaAgoraSupportCard from '@/components/cuidar-de-mim/ParaAgoraSupportCard'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -125,43 +126,8 @@ function readDaySignals(): DaySignals {
   }
 }
 
-/**
- * “Micro cuidado” offline (sem IA):
- * - Linguagem adulta, não terapêutica.
- * - Curta e acionável.
- */
-function microCareSuggestion(ritmo: Ritmo, seed: number) {
-  const optionsByRitmo: Record<Ritmo, string[]> = {
-    confusa: [
-      'Se fizer sentido agora: água + 10 segundos em silêncio antes do próximo passo.',
-      'Se fizer sentido agora: uma respiração funda e escolher só uma coisa pequena.',
-      'Se fizer sentido agora: baixar os ombros e voltar para o próximo passo.',
-    ],
-    cansada: [
-      'Se fizer sentido agora: 3 goles d’água e ombros para baixo (3x).',
-      'Se fizer sentido agora: água e um alongamento curto do pescoço (1x).',
-      'Se fizer sentido agora: sentar por 20 segundos. Só isso.',
-    ],
-    leve: [
-      'Se fizer sentido agora: um gole d’água e seguir.',
-      'Se fizer sentido agora: abrir a janela por um instante e continuar.',
-      'Se fizer sentido agora: água e uma pausa curtinha.',
-    ],
-    ok: [
-      'Se fizer sentido agora: um gole d’água já ajuda.',
-      'Se fizer sentido agora: organizar só o que está na sua frente.',
-      'Se fizer sentido agora: água e seguir no seu ritmo.',
-    ],
-  }
-
-  const list = optionsByRitmo[ritmo]
-  const idx = Math.abs(seed) % list.length
-  return list[idx]
-}
-
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
-  const [microSeed, setMicroSeed] = useState<number>(0)
   const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
     savedCount: 0,
     commitmentsCount: 0,
@@ -192,9 +158,6 @@ export default function Client() {
       return { title: 'Hoje, um norte simples', text: GUIDANCE_FALLBACK }
     }
   }, [ritmo, daySignals.savedCount])
-
-  /** Fallback offline do hub (sem IA): usado no bloco “Micro cuidado”. */
-  const micro = useMemo(() => microCareSuggestion(ritmo, microSeed), [ritmo, microSeed])
 
   useEffect(() => {
     try {
@@ -242,6 +205,7 @@ export default function Client() {
       })
     } catch {}
 
+    // atualiza BLOCO 2 real (sem toast)
     if (res?.ok) {
       setDaySignals(readDaySignals())
     }
@@ -285,7 +249,7 @@ export default function Client() {
           <section className="hub-shell">
             <div className="hub-shell-inner">
               <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-lg border border-black/5">
-                {/* BLOCO 0 — PARA AGORA (reuso: card do Meu Dia, adaptado ao hub via mode) */}
+                {/* BLOCO 0 — PARA AGORA (apoio + ação prática) */}
                 <section className="pb-6" id="para-agora">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
@@ -297,8 +261,25 @@ export default function Client() {
                       <div className="hub-title">Um apoio para este momento</div>
                       <div className="hub-subtitle">Pequeno, prático e sem cobrança.</div>
 
-                      <div className="mt-4">
-                        <QuickIdeaAI mode="cuidar_de_mim" />
+                      <div className="mt-4 space-y-3">
+                        {/* 0A) Apoio emocional (extraído do Maternar) */}
+                        <ParaAgoraSupportCard />
+
+                        {/* 0B) Ação prática (QuickIdeaAI do Cuidar de Mim) */}
+                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-4">
+                          <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
+                          <div className="mt-3 text-[12px] text-black/55">
+                            Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                          </div>
+                        </div>
+
+                        {/* Botão opcional: salvar no Meu Dia (mais explícito) */}
+                        <button
+                          type="button"
+                          className="hidden"
+                          onClick={() => saveToMyDay('Um cuidado possível agora')}
+                          aria-hidden="true"
+                        />
                       </div>
                     </div>
                   </div>
@@ -335,6 +316,10 @@ export default function Client() {
                             </button>
                           )
                         })}
+                      </div>
+
+                      <div className="mt-2 text-[12px] text-black/55">
+                        Só um toque para se reconhecer. Nada além disso.
                       </div>
                     </div>
                   </div>
@@ -416,7 +401,7 @@ export default function Client() {
 
                 <div className="border-t border-black/5" />
 
-                {/* BLOCO 4 — MICRO CUIDADO (offline, sem IA) */}
+                {/* BLOCO 4 — MICRO CUIDADO (agora é um fechamento simples, sem duplicar o Para Agora) */}
                 <section className="pt-6" id="pausas">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
@@ -426,25 +411,24 @@ export default function Client() {
                     <div className="min-w-0 flex-1">
                       <div className="hub-eyebrow">MICRO CUIDADO</div>
                       <div className="hub-title">Opcional</div>
-                      <div className="hub-subtitle">{micro}</div>
+                      <div className="hub-subtitle">Se não couber nada agora, fechar por aqui já é cuidado.</div>
 
                       <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                        <button type="button" onClick={() => saveToMyDay(micro)} className="btn-primary">
-                          Salvar no Meu Dia
-                        </button>
-
                         <button
                           type="button"
                           onClick={() => {
-                            setMicroSeed((s) => s + 1)
                             try {
-                              track('cuidar_de_mim.micro.rotate', { ritmo })
+                              track('cuidar_de_mim.micro_close', { ritmo })
                             } catch {}
                           }}
                           className="btn-secondary"
                         >
-                          Me dá outra opção
+                          Encerrar por aqui
                         </button>
+
+                        <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
+                          Ver Meu Dia
+                        </Link>
                       </div>
 
                       {euSignal?.showLessLine ? (
