@@ -254,180 +254,189 @@ export default function Client() {
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden">
-      <ClientOnly>
-        <div className="page-shell relative z-10">
-          {/* HEADER */}
-          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
-              <span className="mr-1.5 text-lg leading-none">←</span>
-              Voltar para o Maternar
-            </Link>
+    <ClientOnly>
+      <div className="page-shell relative z-10">
+        {/* HEADER */}
+        <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+          <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
+            <span className="mr-1.5 text-lg leading-none">←</span>
+            Voltar para o Maternar
+          </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
+          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
 
-            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
-              Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
-            </p>
-          </header>
+          <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
+            Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
+          </p>
+        </header>
 
-          {/* CONTAINER EDITORIAL ÚNICO (premium) */}
-          <section className="hub-shell">
-            <div className="hub-shell-inner">
-              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-lg border border-black/5">
-                {/* BLOCO 1 — CHECK-IN */}
-                <section className="pb-6">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="sparkles" size={16} className="text-black/70" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="hub-eyebrow">CHECK-IN</div>
-                      <div className="hub-title">Como você está agora?</div>
+        {/* CONTAINER EDITORIAL ÚNICO (alinhado ao padrão do projeto) */}
+        <section className="hub-shell">
+          <div className="hub-shell-inner">
+            <div className="bg-white rounded-3xl p-6 md:p-7 shadow-soft border border-[#f5d7e5]">
+              {/* BLOCO 1 — CHECK-IN */}
+              <section id="ritmo" className="pb-6">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] flex items-center justify-center">
+                    <AppIcon name="sparkles" size={16} className="text-[var(--color-brand)]" />
+                  </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
-                          const active = ritmo === r
-                          return (
-                            <button
-                              key={r}
-                              type="button"
-                              onClick={() => onPickRitmo(r)}
-                              className={[
-                                'rounded-full px-4 py-2 text-[12px] border transition',
-                                active
-                                  ? 'bg-black/10 border-black/10 text-black'
-                                  : 'bg-white border-black/10 text-black/70 hover:bg-black/5',
-                              ].join(' ')}
-                            >
-                              {r}
-                            </button>
-                          )
-                        })}
-                      </div>
+                  <div className="min-w-0">
+                    <div className="hub-eyebrow">CHECK-IN</div>
+                    <div className="hub-title">Como você está agora?</div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
+                        const active = ritmo === r
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => onPickRitmo(r)}
+                            className={[
+                              'rounded-full px-4 py-2 text-[12px] border transition',
+                              active
+                                ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                            ].join(' ')}
+                          >
+                            {r}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
-                </section>
+                </div>
+              </section>
 
-                <div className="border-t border-black/5" />
+              <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 2 — SEU DIA, DO JEITO QUE ESTÁ (dados reais) */}
-                <section className="py-6">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="list" size={16} className="text-black/70" />
-                    </div>
+              {/* BLOCO 2 — SEU DIA, DO JEITO QUE ESTÁ (dados reais) */}
+              <section className="py-6">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 h-9 w-9 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center">
+                    <AppIcon name="list" size={16} className="text-[var(--color-brand)]" />
+                  </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow">SEU DIA</div>
-                      <div className="hub-title">Do jeito que está</div>
-                      <div className="hub-subtitle">Uma visão consolidada, sem agenda e sem cobrança.</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="hub-eyebrow">SEU DIA</div>
+                    <div className="hub-title">Do jeito que está</div>
+                    <div className="hub-subtitle">Uma visão consolidada, sem agenda e sem cobrança.</div>
 
-                      {/* mini-métricas (sistêmicas, não 3 cards protagonistas) */}
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-black/60 font-semibold">Salvos</div>
-                          <div className="mt-1 text-[20px] font-semibold text-black">{stat(daySignals.savedCount)}</div>
-                          <div className="mt-0.5 text-[12px] text-black/60">coisas registradas hoje</div>
+                    {/* mini-métricas (sistêmicas, não 3 cards protagonistas) */}
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-brand)] font-semibold">
+                          Salvos
                         </div>
+                        <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                        <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
+                      </div>
 
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-black/60 font-semibold">
-                            Compromissos
-                          </div>
-                          <div className="mt-1 text-[20px] font-semibold text-black">{stat(daySignals.commitmentsCount)}</div>
-                          <div className="mt-0.5 text-[12px] text-black/60">no seu planner</div>
+                      <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-brand)] font-semibold">
+                          Compromissos
                         </div>
-
-                        <div className="rounded-2xl border border-black/5 bg-white px-4 py-3">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-black/60 font-semibold">Para depois</div>
-                          <div className="mt-1 text-[20px] font-semibold text-black">{stat(daySignals.laterCount)}</div>
-                          <div className="mt-0.5 text-[12px] text-black/60">coisas que podem esperar</div>
+                        <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                          {stat(daySignals.commitmentsCount)}
                         </div>
+                        <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                       </div>
 
-                      <div className="mt-5 flex flex-col sm:flex-row gap-2">
-                        <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
-                          Ir para Meu Dia
-                        </Link>
-                        <Link href="/maternar/meu-filho" className="btn-secondary inline-flex items-center justify-center">
-                          Ir para Meu Filho
-                        </Link>
+                      <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-brand)] font-semibold">
+                          Para depois
+                        </div>
+                        <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                        <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                       </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                      <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
+                        Ir para Meu Dia
+                      </Link>
+                      <Link href="/maternar/meu-filho" className="btn-secondary inline-flex items-center justify-center">
+                        Ir para Meu Filho
+                      </Link>
                     </div>
                   </div>
-                </section>
+                </div>
+              </section>
 
-                <div className="border-t border-black/5" />
+              <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 3 — ORIENTAÇÃO (apenas linguagem; fallback obrigatório) */}
-                <section className="py-6">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="info" size={16} className="text-black/70" />
+              {/* BLOCO 3 — ORIENTAÇÃO (apenas linguagem; fallback obrigatório) */}
+              <section className="py-6">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] flex items-center justify-center">
+                    <AppIcon name="info" size={16} className="text-[var(--color-brand)]" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="hub-eyebrow">ORIENTAÇÃO</div>
+                    <div className="hub-title">{guidance.title}</div>
+
+                    <div className="mt-2 text-[13px] md:text-[14px] text-[#6a6a6a] leading-relaxed max-w-2xl">
+                      {guidance.text}
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="hub-eyebrow">ORIENTAÇÃO</div>
-                      <div className="hub-title">{guidance.title}</div>
-
-                      <div className="mt-2 text-[13px] md:text-[14px] text-black/70 leading-relaxed max-w-2xl">
-                        {guidance.text}
-                      </div>
+                    <div className="mt-2 text-[12px] md:text-[13px] text-[#6a6a6a] leading-relaxed max-w-2xl">
+                      Você não precisa organizar o dia inteiro para seguir. Só o próximo passo.
                     </div>
                   </div>
-                </section>
+                </div>
+              </section>
 
-                <div className="border-t border-black/5" />
+              <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 4 — MICRO CUIDADO (opcional, discreto) */}
-                <section className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-black/5 flex items-center justify-center">
-                      <AppIcon name="heart" size={16} className="text-black/70" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow">MICRO CUIDADO</div>
-                      <div className="hub-title">Opcional</div>
-                      <div className="hub-subtitle">{micro}</div>
-
-                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                        <button type="button" onClick={() => saveToMyDay(micro)} className="btn-primary">
-                          Salvar no Meu Dia
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMicroSeed((s) => s + 1)
-                            try {
-                              track('cuidar_de_mim.micro.rotate', { ritmo })
-                            } catch {}
-                          }}
-                          className="btn-secondary"
-                        >
-                          Me dá outra opção
-                        </button>
-                      </div>
-
-                      {euSignal?.showLessLine ? (
-                        <div className="mt-3 text-[12px] text-black/60">Hoje pode ser menos. E ainda assim contar.</div>
-                      ) : null}
-                    </div>
+              {/* BLOCO 4 — MICRO CUIDADO (opcional, discreto) */}
+              <section id="pausas" className="pt-6">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 h-9 w-9 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center">
+                    <AppIcon name="heart" size={16} className="text-[var(--color-brand)]" />
                   </div>
-                </section>
-              </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="hub-eyebrow">MICRO CUIDADO</div>
+                    <div className="hub-title">Opcional</div>
+                    <div className="hub-subtitle">{micro}</div>
+
+                    <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                      <button type="button" onClick={() => saveToMyDay(micro)} className="btn-primary">
+                        Salvar no Meu Dia
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMicroSeed((s) => s + 1)
+                          try {
+                            track('cuidar_de_mim.micro.rotate', { ritmo })
+                          } catch {}
+                        }}
+                        className="btn-secondary"
+                      >
+                        Me dá outra opção
+                      </button>
+                    </div>
+
+                    {euSignal?.showLessLine ? (
+                      <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
             </div>
-          </section>
-
-          <div className="mt-6">
-            <LegalFooter />
           </div>
+        </section>
 
-          <div className="PageSafeBottom" />
+        <div className="mt-6">
+          <LegalFooter />
         </div>
-      </ClientOnly>
-    </main>
+
+        <div className="PageSafeBottom" />
+      </div>
+    </ClientOnly>
   )
 }
