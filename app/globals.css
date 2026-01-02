@@ -25,14 +25,17 @@
   --color-border-soft: #f5d7e5;
   --color-border-muted: #eec2d6;
 
+  /* Legacy soft bg (kept) */
   --soft-page-bg: #fff7fb;
 
+  /* RGB triplets */
   --primary: 253 37 151;
   --support-1: 84 84 84;
   --support-2: 106 106 106;
   --neutral-1: 248 249 250;
   --neutral-2: 255 255 255;
 
+  /* Spacing / radius */
   --space-xs: 8px;
   --space-s: 12px;
   --space-m: 16px;
@@ -43,12 +46,16 @@
   --radius-card-lg: 24px;
   --radius-pill: 999px;
 
+  /* Shadows */
   --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.08);
   --shadow-card-hover: 0 10px 30px rgba(0, 0, 0, 0.1);
   --shadow-press: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   --glow-pink: 0 8px 24px rgba(253, 37, 151, 0.12);
 
+  /* ============================================================
+     ✅ FUNDO ÚNICO OFICIAL — Fonte da Verdade (App inteiro)
+     ============================================================ */
   --m360-app-bg: linear-gradient(
     to bottom,
     #b8236b 0%,
@@ -60,7 +67,7 @@
 }
 
 /* ============================================================
-   FUNDO GLOBAL
+   FUNDO GLOBAL (fonte única)
    ============================================================ */
 html,
 body {
@@ -72,16 +79,80 @@ body {
   min-height: 100%;
 }
 
+/* Zera wrappers que possam pintar por cima */
+body > div:first-child,
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  background: transparent !important;
+  min-height: 100%;
+}
+
+/* Pages/templates não podem competir com o fundo global */
 main[data-layout="page-template-v1"],
 main[data-layout="page-template-v2"] {
   background: transparent !important;
 }
 
+/* Se algum hub ainda aplicar classe antiga, força tudo ficar igual */
+.materna360-premium-bg,
+.maternar-hub-bg,
+.eu360-hub-bg {
+  background-color: transparent !important;
+  background-image: var(--m360-app-bg) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+}
+
 @layer base {
+  html,
+  body {
+    height: 100%;
+    color-scheme: light;
+    color: rgb(var(--support-1));
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
     @apply min-h-screen antialiased font-sans;
-    color: rgb(var(--support-1));
     font-family: 'Poppins', sans-serif;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+    color: var(--color-text-main);
+  }
+
+  p {
+    @apply text-sm leading-relaxed md:text-base;
+    color: var(--color-text-muted);
+  }
+
+  a {
+    @apply transition-colors duration-300;
+    color: var(--color-brand);
+  }
+
+  a:hover {
+    color: var(--color-brand-deep);
+  }
+
+  ::selection {
+    @apply bg-primary text-white;
   }
 }
 
@@ -90,7 +161,8 @@ main[data-layout="page-template-v2"] {
    ============================================================ */
 @layer components {
   .glass-panel {
-    @apply relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur-2xl shadow-soft;
+    @apply relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur-2xl;
+    box-shadow: var(--shadow-card);
   }
 
   .page-shell {
@@ -100,12 +172,10 @@ main[data-layout="page-template-v2"] {
   /* ============================================================
      ✅ NEW — BOTÕES UTILITÁRIOS MATERNA360
      ============================================================ */
-
   .btn-primary {
-    @apply rounded-full px-4 py-2 text-[12px] font-medium
-      text-white transition
-      shadow;
+    @apply rounded-full px-4 py-2 text-[12px] font-medium text-white transition;
     background-color: var(--color-brand);
+    box-shadow: 0 10px 26px rgba(253, 37, 151, 0.35);
   }
 
   .btn-primary:hover {
@@ -113,11 +183,11 @@ main[data-layout="page-template-v2"] {
   }
 
   .btn-secondary {
-    @apply rounded-full px-4 py-2 text-[12px] font-medium
-      transition;
+    @apply rounded-full px-4 py-2 text-[12px] font-medium transition;
     background-color: #ffffff;
     color: var(--color-text-main);
     border: 1px solid var(--color-border-soft);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   }
 
   .btn-secondary:hover {
@@ -125,14 +195,14 @@ main[data-layout="page-template-v2"] {
   }
 
   .btn-ghost {
-    @apply rounded-full px-4 py-2 text-[12px] font-medium
-      transition;
+    @apply rounded-full px-4 py-2 text-[12px] font-medium transition;
     background-color: transparent;
     color: var(--color-text-main);
+    border: 1px solid rgba(255, 255, 255, 0.28);
   }
 
   .btn-ghost:hover {
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.18);
   }
 }
 
