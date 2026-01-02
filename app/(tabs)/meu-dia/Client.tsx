@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import WeeklyPlannerShell from '@/components/planner/WeeklyPlannerShell'
 import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
@@ -11,7 +12,6 @@ import { getTimeGreeting } from '@/app/lib/greetings'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 import MyDayGroups from '@/components/my-day/MyDayGroups'
-import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
 import { buildAiContext } from '@/app/lib/ai/buildAiContext'
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 
@@ -244,14 +244,43 @@ export default function MeuDiaClient() {
           </div>
         </header>
 
+        {/* Grupos/tarefas continuam no Meu Dia */}
         <MyDayGroups aiContext={aiContext} />
 
-        {/* P33.2 — IA guiada sob demanda (ação opcional) */}
-        <QuickIdeaAI />
+        {/* NOVO: o “me dá uma ideia agora” sai do Meu Dia e vira CTA para Cuidar de Mim */}
+        <section className="mt-6 md:mt-8">
+          <div className="rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md p-5 md:p-6 shadow-[0_10px_28px_rgba(0,0,0,0.10)]">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-[12px] text-white/85 font-semibold uppercase tracking-[0.18em]">
+                  Para agora
+                </div>
+                <div className="mt-2 text-[18px] md:text-[20px] font-semibold text-white leading-snug">
+                  Quer uma ideia simples para este momento?
+                </div>
+                <p className="mt-1 text-[12px] md:text-[13px] text-white/85 leading-relaxed max-w-2xl">
+                  No Cuidar de Mim você ajusta o volume (rapidinho), puxa seus salvos e escolhe um próximo passo — sem virar agenda.
+                </p>
+              </div>
 
-        {/* BLOCO FREE / PREMIUM — inalterado */}
-        {/* ... mantém exatamente como estava ... */}
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                <Link
+                  href="/maternar/cuidar-de-mim"
+                  className="rounded-full bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-[0_6px_18px_rgba(0,0,0,0.12)] hover:bg-white/95 transition text-center"
+                  onClick={() => {
+                    try {
+                      track('meu_dia.cta.cuidar_de_mim', { dateKey: todayKey })
+                    } catch {}
+                  }}
+                >
+                  Ir para Cuidar de Mim
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
+        {/* Planner continua no Meu Dia */}
         <section
           className="
             mt-6 md:mt-8
