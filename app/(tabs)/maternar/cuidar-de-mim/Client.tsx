@@ -225,19 +225,12 @@ export default function Client() {
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main
-      data-layout="page-template-v1"
-      data-tab="maternar"
-      className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg"
-    >
+    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
       <ClientOnly>
         <div className="page-shell relative z-10">
           {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link
-              href="/maternar"
-              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
-            >
+            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
               <span className="mr-1.5 text-lg leading-none">←</span>
               Voltar para o Maternar
             </Link>
@@ -252,7 +245,7 @@ export default function Client() {
           {/* CONTAINER EDITORIAL ÚNICO */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
-              <div className="bg-white rounded-3xl p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#f5d7e5]">
+              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
                 {/* BLOCO 0 — PARA AGORA (apoio + ação prática) */}
                 <section className="pb-7" id="para-agora">
                   <div className="flex items-start gap-3">
@@ -266,26 +259,21 @@ export default function Client() {
                       <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
                       <div className="mt-4 space-y-4">
-                        {/* 0A) Acolhimento primeiro */}
-                        <div className="rounded-2xl bg-[#ffffff] border border-[#f5d7e5]/70 shadow-[0_4px_14px_rgba(0,0,0,0.04)] p-4">
+                        {/* 0A) Apoio emocional (sem duplicar título/eyebrow do card interno) */}
+                        <div className="cuidarDeMim-paraAgoraEmbed rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]">
                           <ParaAgoraSupportCard />
                         </div>
 
-                        {/* 0B) Ação depois (mais discreta) */}
-                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
+                        {/* 0B) Ação prática (mais discreta, sem competir com o acolhimento) */}
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]">
                           <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
                           <div className="mt-3 text-[12px] text-[#6a6a6a]">
                             Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
                           </div>
                         </div>
 
-                        {/* Botão opcional: salvar no Meu Dia (mais explícito) */}
-                        <button
-                          type="button"
-                          className="hidden"
-                          onClick={() => saveToMyDay('Um cuidado possível agora')}
-                          aria-hidden="true"
-                        />
+                        {/* Botão opcional: salvar no Meu Dia (mantido oculto como antes) */}
+                        <button type="button" className="hidden" onClick={() => saveToMyDay('Um cuidado possível agora')} aria-hidden="true" />
                       </div>
                     </div>
                   </div>
@@ -344,28 +332,20 @@ export default function Client() {
                       <div className="hub-subtitle text-[#6a6a6a]">Uma visão consolidada, sem agenda e sem cobrança.</div>
 
                       <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                            Salvos
-                          </div>
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
                           <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                         </div>
 
-                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                            Compromissos
-                          </div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
-                            {stat(daySignals.commitmentsCount)}
-                          </div>
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
+                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                         </div>
 
-                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.04)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                            Para depois
-                          </div>
+                        <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white px-5 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Para depois</div>
                           <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
                           <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                         </div>
@@ -378,11 +358,11 @@ export default function Client() {
                             inline-flex items-center justify-center
                             rounded-full
                             bg-white
-                            border border-[#fd2597]
-                            text-[#b8236b]
+                            border border-[#f5d7e5]
+                            text-[#2f3a56]
                             px-5 py-3
                             text-[12px] font-semibold
-                            hover:bg-[#fff3f8]
+                            hover:bg-[#fff7fb]
                             transition
                           "
                         >
@@ -423,9 +403,7 @@ export default function Client() {
                       <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
                       <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                      <div className="mt-3 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
-                        {guidance.text}
-                      </div>
+                      <div className="mt-3 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">{guidance.text}</div>
                     </div>
                   </div>
                 </section>
@@ -473,11 +451,11 @@ export default function Client() {
                             inline-flex items-center justify-center
                             rounded-full
                             bg-white
-                            border border-[#fd2597]
-                            text-[#b8236b]
+                            border border-[#f5d7e5]
+                            text-[#2f3a56]
                             px-5 py-3
                             text-[12px] font-semibold
-                            hover:bg-[#fff3f8]
+                            hover:bg-[#fff7fb]
                             transition
                           "
                         >
@@ -485,9 +463,7 @@ export default function Client() {
                         </Link>
                       </div>
 
-                      {euSignal?.showLessLine ? (
-                        <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
-                      ) : null}
+                      {euSignal?.showLessLine ? <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div> : null}
                     </div>
                   </div>
                 </section>
@@ -501,6 +477,35 @@ export default function Client() {
 
           <div className="PageSafeBottom" />
         </div>
+
+        {/* CSS escopado: remove duplicação visual DENTRO do ParaAgoraSupportCard apenas aqui */}
+        <style jsx global>{`
+          .cuidarDeMim-paraAgoraEmbed .hub-eyebrow,
+          .cuidarDeMim-paraAgoraEmbed .hub-title,
+          .cuidarDeMim-paraAgoraEmbed .hub-subtitle {
+            display: none !important;
+          }
+
+          /* Silencia o “botão rosa” do card interno (vira CTA quieto) */
+          .cuidarDeMim-paraAgoraEmbed a,
+          .cuidarDeMim-paraAgoraEmbed button {
+            background: #ffffff !important;
+            color: #2f3a56 !important;
+            border: 1px solid #f5d7e5 !important;
+            box-shadow: none !important;
+          }
+
+          .cuidarDeMim-paraAgoraEmbed a:hover,
+          .cuidarDeMim-paraAgoraEmbed button:hover {
+            background: #fff7fb !important;
+          }
+
+          /* Evita “card dentro de card”: zera sombra/borda interna se existir */
+          .cuidarDeMim-paraAgoraEmbed .shadow,
+          .cuidarDeMim-paraAgoraEmbed [class*='shadow-'] {
+            box-shadow: none !important;
+          }
+        `}</style>
       </ClientOnly>
     </main>
   )
