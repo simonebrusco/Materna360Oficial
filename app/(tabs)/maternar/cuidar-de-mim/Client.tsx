@@ -261,7 +261,8 @@ export default function Client() {
                       <div className="mt-4 space-y-4">
                         {/* 0A) Apoio emocional (sem duplicar título/eyebrow do card interno) */}
                         <div className="cuidarDeMim-paraAgoraEmbed rounded-2xl border border-[#f5d7e5]/70 bg-white px-4 py-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]">
-                          <ParaAgoraSupportCard />
+                          {/* 0A) Apoio emocional (extraído do Maternar) */}
+<ParaAgoraSupportCard variant="embedded" />
                         </div>
 
                         {/* 0B) Ação prática (mais discreta, sem competir com o acolhimento) */}
