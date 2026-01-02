@@ -3,15 +3,19 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { ClientOnly } from '@/components/common/ClientOnly'
-import { track } from '@/app/lib/telemetry'
 
+import { track } from '@/app/lib/telemetry'
+import { load, save } from '@/app/lib/persist'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+
+import type { MyDayTaskItem } from '@/app/lib/myDayTasks.client'
 import { addTaskToMyDay, listMyDayTasks, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
-import { load, save } from '@/app/lib/persist'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -20,8 +24,8 @@ type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 
 /**
  * Governança:
- * - Cuidar de Mim é a casa oficial do check-in (estado do momento).
- * - Mantém leitura compat do legado eu360_ritmo, mas não escreve mais lá.
+ * - Cuidar de Mim é a casa oficial do check-in.
+ * - Mantém leitura compat do legado eu360_ritmo, mas grava no persist.
  */
 const PERSIST_KEYS = {
   cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
@@ -30,6 +34,19 @@ const PERSIST_KEYS = {
 const LEGACY_LS_KEYS = {
   eu360Ritmo: 'eu360_ritmo',
 } as const
+
+type Appointment = {
+  id: string
+  dateKey: string
+  time: string
+  title: string
+}
+
+type DaySignals = {
+  savedCount: number
+  commitmentsCount: number
+  laterCount: number
+}
 
 function safeGetLS(key: string): string | null {
   try {
@@ -66,48 +83,79 @@ function setRitmoPersist(r: Ritmo) {
 }
 
 /**
- * DaySignals (v1)
- * - Salvos: real (core do Meu Dia) via listMyDayTasks(today)
- * - Compromissos / Para depois: ainda não conectados (v2/v3)
+ * Salvos e Para depois (real):
+ * - Fonte: listMyDayTasks(new Date()) -> lê planner/tasks/YYYY-MM-DD (persist + legado)
+ * - Para depois: status === 'snoozed' OU snoozeUntil > todayKey
  */
-type DaySignals = {
-  savedCount: number
-  commitmentsCount: number | null
-  laterCount: number | null
+function readSavedTodayFromCore(): { total: number; later: number } {
+  try {
+    const todayKey = getBrazilDateKey(new Date())
+    const tasks = listMyDayTasks(new Date())
+    if (!Array.isArray(tasks)) return { total: 0, later: 0 }
+
+    let later = 0
+    for (const t of tasks as MyDayTaskItem[]) {
+      const status = (t.status ?? (t.done ? 'done' : 'active')) as string
+      const snoozeUntil = typeof t.snoozeUntil === 'string' ? t.snoozeUntil : ''
+
+      if (status === 'snoozed' || (snoozeUntil && snoozeUntil > todayKey)) later += 1
+    }
+
+    return { total: tasks.length, later }
+  } catch {
+    return { total: 0, later: 0 }
+  }
 }
 
-function readSavedTodayFromCore(): number {
+/**
+ * Compromissos (real):
+ * - Fonte: planner/appointments/all
+ * - Count: appointments com dateKey === todayKey
+ */
+function readCommitmentsTodayFromPlanner(): number {
   try {
-    const tasks = listMyDayTasks(new Date())
-    return Array.isArray(tasks) ? tasks.length : 0
+    const todayKey = getBrazilDateKey(new Date())
+    const all = load<Appointment[]>('planner/appointments/all', []) ?? []
+    if (!Array.isArray(all)) return 0
+    return all.filter((a) => a?.dateKey === todayKey).length
   } catch {
     return 0
   }
 }
 
-function readDaySignalsV1(): DaySignals {
+function readDaySignals(): DaySignals {
+  const saved = readSavedTodayFromCore()
+  const commitments = readCommitmentsTodayFromPlanner()
+
   return {
-    savedCount: readSavedTodayFromCore(),
-    commitmentsCount: null,
-    laterCount: null,
+    savedCount: saved.total,
+    commitmentsCount: commitments,
+    laterCount: saved.later,
   }
 }
 
 function pickOrientation(tone: 'gentil' | 'direto', ritmo: Ritmo, signals: DaySignals) {
-  const hasSaved = (signals.savedCount ?? 0) > 0
+  const saved = signals.savedCount ?? 0
+  const commitments = signals.commitmentsCount ?? 0
+  const later = signals.laterCount ?? 0
+
+  // carga simples (não “score”, só leitura)
+  const loadTotal = saved + commitments + later
+  const hasLoad = loadTotal > 0
+  const heavy = loadTotal >= 6
 
   if (tone === 'direto') {
     if (ritmo === 'confusa') return 'Escolha só um próximo passo real. O resto pode esperar.'
-    if (ritmo === 'cansada') return hasSaved ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
-    if (ritmo === 'leve') return 'Siga leve. Só não invente complexidade.'
-    return hasSaved ? 'Seu dia já está em movimento. Sem se cobrar por “fechar”.' : 'Seu dia não precisa render para valer.'
+    if (ritmo === 'cansada') return heavy ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
+    if (ritmo === 'leve') return hasLoad ? 'Siga leve. Só não invente complexidade.' : 'Siga leve. Um passo por vez.'
+    return hasLoad ? 'Seu dia já está em movimento. Sem se cobrar por “fechar”.' : 'Seu dia não precisa render para valer.'
   }
 
   // gentil
   if (ritmo === 'confusa') return 'Agora é um bom momento para simplificar. Um passo já ajuda.'
-  if (ritmo === 'cansada') return 'Um passo simples já é suficiente hoje.'
-  if (ritmo === 'leve') return 'Vamos manter leve. Só o que fizer sentido.'
-  return 'Você pode seguir sem se cobrar.'
+  if (ritmo === 'cansada') return heavy ? 'Hoje, manter o básico já é suficiente.' : 'Um passo simples já é suficiente hoje.'
+  if (ritmo === 'leve') return hasLoad ? 'Vamos manter leve. Só o que fizer sentido.' : 'Vamos manter leve. Sem pressa.'
+  return hasLoad ? 'Você pode seguir sem se cobrar.' : 'Você pode seguir no seu ritmo.'
 }
 
 function microCareSuggestion(ritmo: Ritmo, seed: number) {
@@ -142,7 +190,11 @@ function microCareSuggestion(ritmo: Ritmo, seed: number) {
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [microSeed, setMicroSeed] = useState<number>(0)
-  const [savedToday, setSavedToday] = useState<number>(0)
+  const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
+    savedCount: 0,
+    commitmentsCount: 0,
+    laterCount: 0,
+  }))
 
   const euSignal = useMemo(() => {
     try {
@@ -151,15 +203,6 @@ export default function Client() {
       return { tone: 'gentil' as const, listLimit: 5, showLessLine: false }
     }
   }, [])
-
-  // v1: somente "Salvos" real
-  const daySignals = useMemo<DaySignals>(() => {
-    return {
-      savedCount: savedToday,
-      commitmentsCount: null,
-      laterCount: null,
-    }
-  }, [savedToday])
 
   const orientation = useMemo(() => {
     const tone = (euSignal?.tone ?? 'gentil') as 'gentil' | 'direto'
@@ -176,11 +219,11 @@ export default function Client() {
     const r = inferRitmo()
     setRitmo(r)
 
-    const c = readSavedTodayFromCore()
-    setSavedToday(c)
+    const s = readDaySignals()
+    setDaySignals(s)
 
     try {
-      track('cuidar_de_mim.open', { ritmo: r, savedToday: c })
+      track('cuidar_de_mim.open', { ritmo: r, saved: s.savedCount, commitments: s.commitmentsCount, later: s.laterCount })
     } catch {}
   }, [])
 
@@ -208,13 +251,9 @@ export default function Client() {
       })
     } catch {}
 
-    // atualiza contagem real (core)
-    // - created true: cresce
-    // - created false: não muda
-    // - limitHit: não muda
+    // atualiza BLOCO 2 real (sem toast)
     if (res?.ok) {
-      const c = readSavedTodayFromCore()
-      setSavedToday(c)
+      setDaySignals(readDaySignals())
     }
 
     try {
@@ -229,7 +268,7 @@ export default function Client() {
     } catch {}
   }
 
-  const stat = (n: number | null) => (typeof n === 'number' ? String(n) : '—')
+  const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
     <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden">
@@ -302,13 +341,15 @@ export default function Client() {
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{String(savedToday)}</div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                       </div>
 
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
+                          {stat(daySignals.commitmentsCount)}
+                        </div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                       </div>
 
