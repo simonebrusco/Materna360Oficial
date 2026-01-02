@@ -17,7 +17,7 @@ type State =
   | { status: 'loading' }
   | { status: 'done'; items: Suggestion[] }
 
-type Variant = 'standalone' | 'embedded'
+type Variant = 'default' | 'embedded'
 
 function signature(items: Suggestion[]) {
   return items.map((i) => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
@@ -113,11 +113,11 @@ function normalizeFromEmocional(payload: any): Suggestion[] | null {
 }
 
 export default function ParaAgoraSupportCard({
-  variant = 'standalone',
   className,
+  variant = 'default',
 }: {
-  variant?: Variant
   className?: string
+  variant?: Variant
 }) {
   const [state, setState] = useState<State>({ status: 'idle' })
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
@@ -134,170 +134,212 @@ export default function ParaAgoraSupportCard({
     setDismissed((prev) => ({ ...prev, [id]: true }))
   }, [])
 
-  const fetchCards = useCallback(
-    async (attempt = 0) => {
-      setState({ status: 'loading' })
-      const nonce = Date.now()
+  const fetchCards = useCallback(async (attempt = 0) => {
+    setState({ status: 'loading' })
+    const nonce = Date.now()
 
-      try {
-        const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
-          method: 'POST',
-          cache: 'no-store',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            feature: 'daily_inspiration',
-            origin: 'cuidar-de-mim',
-            context: {},
-          }),
-        })
+    try {
+      const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feature: 'daily_inspiration',
+          origin: 'cuidar-de-mim',
+          context: {},
+        }),
+      })
 
-        let data: any = null
-        if (res.ok) data = await res.json().catch(() => null)
+      let data: any = null
+      if (res.ok) data = await res.json().catch(() => null)
 
-        const normalized = normalizeFromEmocional(data)
-        const nextItems =
-          normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19)).slice(0, 3)
+      const normalized = normalizeFromEmocional(data)
+      const nextItems = (normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19))).slice(0, 3)
 
-        const sig = signature(nextItems)
-        if (sig && sig === lastSigRef.current && attempt < 1) {
-          return await fetchCards(attempt + 1)
-        }
-
-        lastSigRef.current = sig
-        setDismissed({})
-        setState({ status: 'done', items: nextItems })
-      } catch {
-        const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
-        const sig = signature(nextItems)
-
-        if (sig && sig === lastSigRef.current && attempt < 1) {
-          return await fetchCards(attempt + 1)
-        }
-
-        lastSigRef.current = sig
-        setDismissed({})
-        setState({ status: 'done', items: nextItems })
+      const sig = signature(nextItems)
+      if (sig && sig === lastSigRef.current && attempt < 1) {
+        return await fetchCards(attempt + 1)
       }
-    },
-    []
-  )
+
+      lastSigRef.current = sig
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
+    } catch {
+      const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
+      const sig = signature(nextItems)
+
+      if (sig && sig === lastSigRef.current && attempt < 1) {
+        return await fetchCards(attempt + 1)
+      }
+
+      lastSigRef.current = sig
+      setDismissed({})
+      setState({ status: 'done', items: nextItems })
+    }
+  }, [])
 
   const isEmbedded = variant === 'embedded'
+
+  const shellClass = isEmbedded
+    ? `
+      h-full
+      p-5 md:p-6 rounded-2xl
+      bg-white/60 backdrop-blur
+      border border-[#f5d7e5]/70
+      shadow-[0_10px_26px_rgba(184,35,107,0.08)]
+    `
+    : `
+      p-5 md:p-6 rounded-2xl
+      bg-white
+      border border-black/5
+      shadow-[0_6px_18px_rgba(0,0,0,0.06)]
+    `
+
+  const iconWrapClass = isEmbedded
+    ? 'h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0'
+    : 'h-10 w-10 rounded-full bg-black/5 flex items-center justify-center shrink-0'
+
+  const iconClass = isEmbedded ? 'text-[#b8236b]' : 'text-black/70'
+
+  const pillClass = isEmbedded
+    ? 'inline-flex items-center rounded-full bg-[#ffe1f1]/70 border border-[#f5d7e5]/70 px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]'
+    : 'inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-black/70'
+
+  const titleClass = isEmbedded
+    ? 'text-[15px] md:text-[16px] font-semibold text-[#2f3a56]'
+    : 'text-[16px] md:text-[17px] font-semibold text-black/85'
+
+  const subtitleClass = isEmbedded
+    ? 'text-[12px] text-[#6a6a6a] leading-relaxed'
+    : 'text-[13px] text-black/60 leading-relaxed'
+
+  const itemShellClass = isEmbedded
+    ? 'rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3'
+    : 'rounded-2xl border border-black/5 bg-white px-4 py-3'
+
+  const itemTagClass = isEmbedded
+    ? 'inline-flex w-max items-center rounded-full bg-[#ffe1f1]/70 border border-[#f5d7e5]/70 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase'
+    : 'inline-flex w-max items-center rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black/70 uppercase'
+
+  const itemTitleClass = isEmbedded
+    ? 'mt-1 text-[14px] font-semibold text-[#2f3a56]'
+    : 'mt-1 text-[14px] font-semibold text-black/80'
+
+  const itemDescClass = isEmbedded
+    ? 'mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line'
+    : 'mt-1 text-[12px] text-black/60 leading-relaxed whitespace-pre-line'
+
+  const dismissBtnClass = isEmbedded
+    ? `
+      rounded-full
+      bg-white/70 backdrop-blur
+      border border-[#f5d7e5]/70
+      text-[#545454]
+      px-3 py-1.5
+      text-[12px]
+      transition
+      hover:bg-white/80
+      whitespace-nowrap
+    `
+    : `
+      rounded-full
+      bg-white
+      border border-black/10
+      text-black/70
+      px-3 py-1.5
+      text-[12px]
+      transition
+      hover:shadow-sm
+      whitespace-nowrap
+    `
+
+  const loadingShellClass = isEmbedded
+    ? 'mt-4 rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3'
+    : 'mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3'
+
+  const loadingTextClass = isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'
 
   return (
     <SoftCard
       className={[
-        `
-          rounded-2xl
-          ${isEmbedded ? 'h-full flex flex-col p-4 md:p-5' : 'p-5 md:p-6'}
-          ${
-            isEmbedded
-              ? 'bg-white/70 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_6px_18px_rgba(0,0,0,0.04)]'
-              : 'bg-white border border-black/5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]'
-          }
-        `,
+        shellClass,
         className ?? '',
       ].join(' ')}
     >
-      {/* CABEÇALHO — SOMENTE NO STANDALONE */}
-      {!isEmbedded ? (
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-full bg-black/5 flex items-center justify-center shrink-0">
-              <AppIcon name="sparkles" size={20} className="text-black/70" />
-            </div>
-
-            <div className="space-y-1">
-              <span className="inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-black/70">
-                Para agora
-              </span>
-              <h3 className="text-[16px] md:text-[17px] font-semibold text-black/85">
-                Um apoio para este momento
-              </h3>
-              <p className="text-[13px] text-black/60 leading-relaxed">
-                Se fizer sentido, fica. Se não fizer, tudo bem também.
-              </p>
-            </div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className={iconWrapClass}>
+            <AppIcon name="sparkles" size={20} className={iconClass} />
           </div>
 
-          <div className="shrink-0">
-            {state.status === 'idle' ? (
-              <Button className="px-4" onClick={() => void fetchCards()}>
-                Ver sugestões
-              </Button>
-            ) : (
-              <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
-                Ver outro apoio
-              </Button>
-            )}
+          <div className="space-y-1">
+            <span className={pillClass}>Para agora</span>
+
+            <h3 className={titleClass}>Um apoio para este momento</h3>
+
+            <p className={subtitleClass}>Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
           </div>
         </div>
-      ) : null}
 
-      {/* EMBEDDED — IDLE centralizado (para não “tortar” no grid) */}
-      {isEmbedded && state.status === 'idle' ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Button
-            variant="secondary"
-            className="w-full h-11 rounded-full justify-center border border-[#f5d7e5] bg-white/70 hover:bg-white/80"
-            onClick={() => void fetchCards()}
-          >
-            Ver um apoio possível agora
-          </Button>
+        <div className="shrink-0">
+          {state.status === 'idle' ? (
+            <Button
+              className={[
+                'px-4 h-9 text-[12px]',
+                isEmbedded ? 'shadow-[0_10px_26px_rgba(184,35,107,0.10)]' : '',
+              ].join(' ')}
+              onClick={() => void fetchCards()}
+            >
+              Ver sugestões
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              className={[
+                'px-4 h-9 text-[12px]',
+                isEmbedded ? 'bg-white/70 backdrop-blur border border-[#f5d7e5]/70 text-[#2f3a56]' : '',
+              ].join(' ')}
+              onClick={() => void fetchCards()}
+            >
+              Ver outro apoio
+            </Button>
+          )}
         </div>
-      ) : null}
+      </div>
 
       {state.status === 'loading' ? (
-        <div className="mt-3 rounded-2xl border border-[#f5d7e5]/70 bg-white/70 px-4 py-3">
-          <p className="text-[13px] text-[#6a6a6a]">Carregando…</p>
+        <div className={loadingShellClass}>
+          <p className={loadingTextClass}>Carregando…</p>
         </div>
       ) : null}
 
       {state.status === 'done' ? (
-        <div className="mt-3 space-y-3">
+        <div className="mt-4 space-y-3">
           {visibleItems.length ? (
             visibleItems.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-[#f5d7e5]/70 bg-white/70 px-4 py-3">
+              <div key={item.id} className={itemShellClass}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    {item.tag ? (
-                      <span className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        {item.tag}
-                      </span>
-                    ) : null}
+                    {item.tag ? <span className={itemTagClass}>{item.tag}</span> : null}
 
-                    <p className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{item.title}</p>
+                    <p className={itemTitleClass}>{item.title}</p>
 
-                    {item.description ? (
-                      <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line">
-                        {item.description}
-                      </p>
-                    ) : null}
+                    {item.description ? <p className={itemDescClass}>{item.description}</p> : null}
                   </div>
 
-                  <button
-                    type="button"
-                    className="
-                      rounded-full
-                      bg-white/80
-                      border border-[#f5d7e5]
-                      text-[#545454]
-                      px-3 py-1.5
-                      text-[12px]
-                      transition
-                      hover:bg-white
-                      whitespace-nowrap
-                    "
-                    onClick={() => dismissOne(item.id)}
-                  >
-                    Não agora
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button type="button" className={dismissBtnClass} onClick={() => dismissOne(item.id)}>
+                      Não agora
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="rounded-2xl border border-[#f5d7e5]/70 bg-white/70 px-4 py-3">
-              <p className="text-[13px] text-[#6a6a6a]">Sem pressão. Se quiser, peça outra leva.</p>
+            <div className={itemShellClass}>
+              <p className={isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'}>
+                Sem pressão. Se quiser, peça outra leva.
+              </p>
             </div>
           )}
         </div>
