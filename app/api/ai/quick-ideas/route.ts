@@ -50,26 +50,16 @@ type QuickIdeasLightMemory = {
    * Opcional; se não vier, não interfere.
    */
   last_signal?: 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
-
-  /**
-   * Contexto leve vindo do Eu360 (opcional)
-   * Não é usado como perfil; apenas como tendência suave.
-   */
-  eu360_persona_id?: 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
-  eu360_q1?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
-  eu360_q3?: 'tempo' | 'emocional' | 'organizacao' | 'conexao' | 'tudo'
 }
 
 /**
- * Payload leve (P33.4):
- * - Meu Dia: 1 sugestão curta
- * - Cuidar de Mim: 2 opções + livre arbítrio
+ * Payload leve para Meu Dia (P33.4):
+ * 1 foco, sem parentalidade, sem plano, sem lista.
  */
 type QuickIdeasRequestLight = {
   intent: 'quick_idea'
   nonce?: number
   locale?: 'pt-BR'
-  hub?: 'my_day' | 'cuidar_de_mim'
   memory?: QuickIdeasLightMemory
 }
 
@@ -118,17 +108,22 @@ function sanitizeTimeWindowMin(v: any): QuickIdeasTimeWindow {
   return 20
 }
 
-/** ---------- helpers (modo leve) ---------- */
+/** ---------- modo leve (Meu Dia) ---------- */
+
+function myDaySuggestions(): Suggestion[] {
+  return [
+    { id: 'md-1', title: 'Respire por 1 minuto', description: 'Só para o corpo entender que você chegou.' },
+    { id: 'md-2', title: 'Escolha só uma coisa para agora', description: 'O resto pode esperar um pouco.' },
+    { id: 'md-3', title: 'Faça um passo pequeno', description: 'Algo simples já organiza por dentro.' },
+    { id: 'md-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
+    { id: 'md-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
+  ]
+}
 
 function chooseOne(seed: number, items: Suggestion[]) {
   const safeSeed = Number.isFinite(seed) ? seed : Date.now()
   const idx = Math.abs(safeSeed) % items.length
   return items[idx]!
-}
-
-function rotateIndex(seed: number, mod: number) {
-  const s = Number.isFinite(seed) ? seed : Date.now()
-  return Math.abs(s) % Math.max(1, mod)
 }
 
 function sanitizeRecentIds(v: any): string[] {
@@ -139,34 +134,40 @@ function sanitizeRecentIds(v: any): string[] {
     .slice(0, 10)
 }
 
-function isValidSignal(v: any): v is QuickIdeasLightMemory['last_signal'] {
+function isValidSignal(v: any): v is NonNullable<QuickIdeasLightMemory['last_signal']> {
   return v === 'heavy' || v === 'tired' || v === 'overwhelmed' || v === 'neutral'
 }
 
-function sanitizePersonaId(v: any): QuickIdeasLightMemory['eu360_persona_id'] | undefined {
-  if (v === 'sobrevivencia' || v === 'organizacao' || v === 'conexao' || v === 'equilibrio' || v === 'expansao') return v
-  return undefined
-}
+type LightSignalWithNone = NonNullable<QuickIdeasLightMemory['last_signal']> | 'none'
 
+/**
+ * Memória contextual suave:
+ * 1) remove itens vistos recentemente (recent_suggestion_ids)
+ * 2) aplica uma “tendência” leve por sinal (se existir)
+ * 3) se tudo for excluído, volta ao catálogo completo
+ */
 function chooseWithSoftMemory(opts: {
   seed: number
   suggestions: Suggestion[]
   memory?: QuickIdeasLightMemory
-}): { one: Suggestion; excludedCount: number; memoryUsed: boolean; signal?: QuickIdeasLightMemory['last_signal'] } {
+}): { one: Suggestion; excludedCount: number; memoryUsed: boolean; signal: LightSignalWithNone } {
   const recent = sanitizeRecentIds(opts.memory?.recent_suggestion_ids)
-  const signal = isValidSignal(opts.memory?.last_signal) ? opts.memory?.last_signal : undefined
 
-  const hasMemory = recent.length > 0 || !!signal
+  const rawSignal = opts.memory?.last_signal
+  const signal: LightSignalWithNone = isValidSignal(rawSignal) ? rawSignal : 'none'
+
+  const hasMemory = recent.length > 0 || signal !== 'none'
   const excludedSet = new Set(recent)
 
   // Filtra repetição recente
   let pool = opts.suggestions.filter((s) => !excludedSet.has(s.id))
   const excludedCount = opts.suggestions.length - pool.length
 
+  // Se excluiu tudo, volta ao catálogo completo (sem bloqueio)
   if (!pool.length) pool = opts.suggestions
 
-  // Tendência suave por sinal (se existir)
-  if (signal) {
+  // Tendência bem suave por sinal (se existir)
+  if (signal !== 'none') {
     const preferredIds =
       signal === 'heavy'
         ? new Set(['md-5', 'md-2'])
@@ -179,6 +180,8 @@ function chooseWithSoftMemory(opts: {
     if (preferredIds.size) {
       const preferred = pool.filter((s) => preferredIds.has(s.id))
       const others = pool.filter((s) => !preferredIds.has(s.id))
+
+      // “peso” leve duplicando o pool preferido (mantém determinismo pelo seed)
       if (preferred.length) pool = [...preferred, ...preferred, ...others]
     }
   }
@@ -187,191 +190,38 @@ function chooseWithSoftMemory(opts: {
   return { one, excludedCount, memoryUsed: hasMemory, signal }
 }
 
-/** ---------- catálogos (modo leve) ---------- */
-
-function myDaySuggestions(): Suggestion[] {
-  return [
-    { id: 'md-1', title: 'Respire por 1 minuto', description: 'Só para o corpo entender que você chegou.' },
-    { id: 'md-2', title: 'Escolha só uma coisa para agora', description: 'O resto pode esperar um pouco.' },
-    { id: 'md-3', title: 'Faça um passo pequeno', description: 'Algo simples já organiza por dentro.' },
-    { id: 'md-4', title: 'Beba um copo de água', description: 'Uma âncora rápida no presente.' },
-    { id: 'md-5', title: 'Escreva uma frase do que está pesado', description: 'Só para tirar da cabeça e pôr no chão.' },
-  ]
-}
-
-type CareTheme = 'aterrissar' | 'baixar-volume' | 'clarear' | 'autocompaixao' | 'apoio-leve'
-
-function careThemes(): Array<{ id: CareTheme; label: string }> {
-  return [
-    { id: 'aterrissar', label: 'Aterrissar' },
-    { id: 'baixar-volume', label: 'Baixar o volume' },
-    { id: 'clarear', label: 'Clarear o próximo passo' },
-    { id: 'autocompaixao', label: 'Autocompaixão prática' },
-    { id: 'apoio-leve', label: 'Apoio leve' },
-  ]
-}
-
-// Sugestões sempre curtas, sem “melhorar a mãe”, sem terapia, sem meta.
-// Cada tema retorna um conjunto; o endpoint escolhe 2 opções.
-function careSuggestionsByTheme(theme: CareTheme): Suggestion[] {
-  switch (theme) {
-    case 'aterrissar':
-      return [
-        { id: 'cdm-a-1', title: 'Mão no peito + 4 respirações', description: 'Só para o corpo voltar para o agora.' },
-        { id: 'cdm-a-2', title: 'Olhar 10 segundos para um ponto fixo', description: 'Uma âncora simples, sem esforço.' },
-        { id: 'cdm-a-3', title: 'Soltar os ombros 3 vezes', description: 'Pequeno ajuste que muda o “volume” do corpo.' },
-        { id: 'cdm-a-4', title: 'Beber água em 3 goles', description: 'Uma pausa concreta, sem pensar.' },
-      ]
-    case 'baixar-volume':
-      return [
-        { id: 'cdm-b-1', title: 'Diminuir 1 expectativa do dia', description: 'Hoje, “bom o bastante” conta.' },
-        { id: 'cdm-b-2', title: 'Trocar pressa por “só o próximo passo”', description: 'Uma coisa por vez, sem lista.' },
-        { id: 'cdm-b-3', title: 'Pausar 60s sem “resolver” nada', description: 'Só pausa. Sem conclusão.' },
-        { id: 'cdm-b-4', title: 'Fazer 1 coisa mais simples', description: 'Simplificar também é cuidado.' },
-      ]
-    case 'clarear':
-      return [
-        { id: 'cdm-c-1', title: 'Escolher 1 próxima ação pequena', description: 'Uma só. O resto pode ficar em espera.' },
-        { id: 'cdm-c-2', title: 'Escrever 1 frase: “agora eu só…”', description: 'Um recorte para diminuir ruído.' },
-        { id: 'cdm-c-3', title: 'Separar “urgente” de “importante” em 10s', description: 'Só na cabeça, sem planilha.' },
-        { id: 'cdm-c-4', title: 'Arrumar 1 item (apenas um)', description: 'Micro-ordem para o cérebro respirar.' },
-      ]
-    case 'autocompaixao':
-      return [
-        { id: 'cdm-d-1', title: 'Falar consigo como falaria com uma amiga', description: 'Uma frase gentil já muda o tom.' },
-        { id: 'cdm-d-2', title: 'Permitir 70% hoje', description: 'Seu dia não precisa ser perfeito para valer.' },
-        { id: 'cdm-d-3', title: 'Trocar “eu devia” por “se der”', description: 'Só ajustar a linguagem interna.' },
-        { id: 'cdm-d-4', title: 'Reconhecer 1 coisa que você já fez', description: 'Sem lista, só um fato.' },
-      ]
-    case 'apoio-leve':
-      return [
-        { id: 'cdm-e-1', title: 'Pedir ajuda com 1 frase curta', description: '“Você segura 10 min?” já resolve muito.' },
-        { id: 'cdm-e-2', title: 'Delegar 1 parte do que pesa', description: 'Uma parte, não o mundo.' },
-        { id: 'cdm-e-3', title: 'Avisar seu limite sem justificar', description: '“Hoje eu não consigo isso.” pronto.' },
-        { id: 'cdm-e-4', title: 'Escolher silêncio por 60s', description: 'Sem conversa, sem áudio, só respiro.' },
-      ]
-  }
-}
-
-function deriveThemeFromMemory(seed: number, memory?: QuickIdeasLightMemory): CareTheme {
-  const persona = sanitizePersonaId(memory?.eu360_persona_id)
-  const q1 = memory?.eu360_q1
-  const q3 = memory?.eu360_q3
-  const signal = isValidSignal(memory?.last_signal) ? memory?.last_signal : 'neutral'
-
-  // Tendências leves (não determinísticas)
-  if (signal === 'overwhelmed' || q3 === 'tudo') return 'baixar-volume'
-  if (signal === 'tired' || q1 === 'exausta' || q1 === 'cansada') return 'aterrissar'
-  if (signal === 'heavy' || persona === 'sobrevivencia') return 'autocompaixao'
-  if (q3 === 'organizacao') return 'clarear'
-  if (q3 === 'emocional') return 'autocompaixao'
-
-  // Rotação por dia/seed (jornada)
-  const themes = careThemes()
-  return themes[rotateIndex(seed, themes.length)]!.id
-}
-
-function chooseTwoWithFreeWill(opts: {
-  seed: number
-  memory?: QuickIdeasLightMemory
-}): { theme: CareTheme; items: Suggestion[]; excludedCount: number; memoryUsed: boolean; signal: string } {
-  const theme = deriveThemeFromMemory(opts.seed, opts.memory)
-  const base = careSuggestionsByTheme(theme)
-
-  const recent = sanitizeRecentIds(opts.memory?.recent_suggestion_ids)
-  const excludedSet = new Set(recent)
-
-  let pool = base.filter((s) => !excludedSet.has(s.id))
-  const excludedCount = base.length - pool.length
-  if (pool.length < 2) pool = base // nunca bloqueia a experiência
-
-  // Uma segunda tendência leve: se a mãe prefere “diretas”, aumentamos chance de opções mais concretas
-  // (Aqui mantemos simples e determinístico)
-  const items = [
-    pool[rotateIndex(opts.seed + 7, pool.length)]!,
-    pool[rotateIndex(opts.seed + 29, pool.length)]!,
-  ].filter(Boolean)
-
-  // Dedup caso coincidam
-  const unique: Suggestion[] = []
-  for (const it of items) {
-    if (!unique.some((u) => u.id === it.id)) unique.push(it)
-  }
-  while (unique.length < 2 && pool.length) {
-    const cand = pool[rotateIndex(opts.seed + 97 + unique.length * 11, pool.length)]!
-    if (!unique.some((u) => u.id === cand.id)) unique.push(cand)
-    else break
-  }
-
-  const memoryUsed =
-    (sanitizeRecentIds(opts.memory?.recent_suggestion_ids).length > 0) ||
-    Boolean(opts.memory?.last_signal) ||
-    Boolean(opts.memory?.eu360_persona_id) ||
-    Boolean(opts.memory?.eu360_q1) ||
-    Boolean(opts.memory?.eu360_q3)
-
-  const signal = isValidSignal(opts.memory?.last_signal) ? opts.memory?.last_signal : 'none'
-  return { theme, items: unique.slice(0, 2), excludedCount, memoryUsed, signal }
-}
-
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as QuickIdeasRequestLegacy | QuickIdeasRequestLight | null
 
     /**
-     * MODO LEVE (Meu Dia / Cuidar de Mim)
+     * MODO LEVE (Meu Dia)
+     * Retorna no formato esperado pelo QuickIdeaAI: { suggestions: [...] }
+     * Apenas 1 sugestão.
      */
     if (isLightRequest(body)) {
       const seed = typeof body.nonce === 'number' ? body.nonce : Date.now()
-      const hub = body.hub ?? 'my_day'
 
-      // Meu Dia (compat total com QuickIdeaAI atual)
-      if (hub === 'my_day') {
-        const base = myDaySuggestions()
-        const { one, excludedCount, memoryUsed, signal } = chooseWithSoftMemory({
-          seed,
-          suggestions: base,
-          memory: body.memory,
-        })
-
-        try {
-          track('ai.quick_ideas.light', {
-            hub,
-            intent: body.intent,
-            locale: body.locale ?? 'pt-BR',
-            memory_used: memoryUsed,
-            excluded_count: excludedCount,
-            signal: signal ?? 'none',
-          })
-        } catch {}
-
-        return NextResponse.json({
-          suggestions: [one],
-          meta: { mode: 'my_day_light' as const },
-        })
-      }
-
-      // Cuidar de Mim (2 opções + livre arbítrio)
-      const { theme, items, excludedCount, memoryUsed, signal } = chooseTwoWithFreeWill({
+      const base = myDaySuggestions()
+      const { one, excludedCount, memoryUsed, signal } = chooseWithSoftMemory({
         seed,
+        suggestions: base,
         memory: body.memory,
       })
 
       try {
         track('ai.quick_ideas.light', {
-          hub,
           intent: body.intent,
           locale: body.locale ?? 'pt-BR',
           memory_used: memoryUsed,
           excluded_count: excludedCount,
           signal,
-          theme,
         })
       } catch {}
 
       return NextResponse.json({
-        suggestions: items,
-        meta: { mode: 'cuidar_de_mim_light' as const, theme },
+        suggestions: [one],
+        meta: { mode: 'my_day_light' as const },
       })
     }
 
