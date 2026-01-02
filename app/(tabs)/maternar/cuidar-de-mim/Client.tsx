@@ -17,6 +17,7 @@ export const revalidate = 0
 type Step = 'ritmo' | 'mini-rotina' | 'pausas' | 'para-voce'
 type FocusMode = '1min' | '3min' | '5min'
 type Ritmo = 'leve' | 'cansada' | 'animada' | 'sobrecarregada'
+
 type TaskOrigin = 'today' | 'family' | 'selfcare' | 'home' | 'other'
 
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
@@ -41,21 +42,17 @@ type Routine = {
   title: string
   subtitle: string
   focus: FocusMode
+  theme: 'regular' | 'descomprimir' | 'clarear' | 'corpo' | 'ambiente'
   steps: string[]
   pauseDeck: { label: string; min: 1 | 2 }[]
   close: string
   next: string
 }
 
-type Suggestion = { id: string; title: string; description?: string }
-
 const LS_KEYS = {
+  eu360FocusTime: 'eu360_focus_time',
+  eu360Ritmo: 'eu360_ritmo',
   eu360Persona: 'eu360_persona_v1',
-  euFocusTime: 'eu360_focus_time',
-  euRitmo: 'eu360_ritmo',
-
-  // Memória leve do Cuidar de Mim (separada do Meu Dia)
-  cdmRecent: 'm360.ai.cuidar_de_mim.recent.v1',
 }
 
 function safeGetLS(key: string): string | null {
@@ -83,13 +80,6 @@ function safeParseJSON<T>(raw: string | null): T | null {
   }
 }
 
-function safeDateKey(d = new Date()) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
 function stepIndex(s: Step) {
   return s === 'ritmo' ? 1 : s === 'mini-rotina' ? 2 : s === 'pausas' ? 3 : 4
 }
@@ -113,23 +103,31 @@ function focoHint(f: FocusMode) {
 }
 
 function ritmoTitle(r: Ritmo) {
-  if (r === 'leve') return 'Ok. Vamos manter leve.'
+  if (r === 'leve') return 'Ok, vamos manter leve.'
   if (r === 'animada') return 'Boa. Vamos estabilizar sem exagerar.'
   if (r === 'cansada') return 'Entendido. Vamos recuperar fôlego.'
   return 'Entendido. Vamos reduzir pressão primeiro.'
 }
 
 function ritmoHint(r: Ritmo) {
-  if (r === 'leve') return 'A ideia é simples: seguir bem, sem inventar muito.'
-  if (r === 'animada') return 'A ideia é manter o ritmo bom sem virar sobrecarga.'
-  if (r === 'cansada') return 'A ideia é recuperar um pouco de energia com algo curto e certeiro.'
-  return 'A ideia é destravar: um passo pequeno agora já muda o resto do dia.'
+  if (r === 'leve') return 'A meta é simples: seguir bem, sem inventar muito.'
+  if (r === 'animada') return 'A meta é manter o ritmo bom sem virar sobrecarga.'
+  if (r === 'cansada') return 'A meta é recuperar um pouco de energia com algo curto e certeiro.'
+  return 'A meta é destravar: um passo pequeno agora já muda o resto do dia.'
 }
 
+/**
+ * Conteúdo vivo:
+ * - múltiplas rotinas por focus
+ * - tema (descomprimir/clarear/corpo/ambiente)
+ * - o app escolhe 1 principal + 1 alternativa (livre-arbítrio real)
+ */
 const ROUTINES: Routine[] = [
+  // 1 MIN — DESCOMPRIMIR
   {
-    id: 'r1',
+    id: 'r1-1',
     focus: '1min',
+    theme: 'descomprimir',
     title: 'Reset 60s (respirar e seguir)',
     subtitle: 'Um minuto para reduzir o ruído e voltar pro próximo passo.',
     steps: ['Inspire 4', 'Segure 2', 'Solte 6', 'Repita 3x'],
@@ -143,8 +141,27 @@ const ROUTINES: Routine[] = [
     next: 'Se quiser, escolha só a próxima coisa real do seu dia.',
   },
   {
-    id: 'r2',
+    id: 'r1-2',
+    focus: '1min',
+    theme: 'clarear',
+    title: 'Clareza 60s (uma frase no papel)',
+    subtitle: 'Um minuto para tirar da cabeça e deixar o resto mais simples.',
+    steps: ['Escreva 1 frase do que está pesado', 'Escreva 1 frase do próximo passo', 'Dobre e guarde', 'Siga'],
+    pauseDeck: [
+      { label: 'Escrever 1 frase', min: 1 },
+      { label: 'Água (3 goles) + pausa', min: 1 },
+      { label: 'Soltar mandíbula (3x)', min: 1 },
+      { label: 'Respirar 1 min', min: 1 },
+    ],
+    close: 'Ok. Agora está fora da sua cabeça por um instante.',
+    next: 'Se não quiser fazer mais nada, tudo bem. Isso já conta.',
+  },
+
+  // 3 MIN — CORPO / CLAREAR
+  {
+    id: 'r3-1',
     focus: '3min',
+    theme: 'corpo',
     title: 'Reset 3 min (água + pescoço + foco)',
     subtitle: 'Três minutos para retomar o controle do próximo passo.',
     steps: ['Água: 3–5 goles', 'Pescoço: 3 giros leves', 'Respire: 4 lentas', 'Escolha 1 próxima ação pequena'],
@@ -155,11 +172,30 @@ const ROUTINES: Routine[] = [
       { label: 'Alongar mãos (30s)', min: 1 },
     ],
     close: 'Feito. Você se deu um reinício sem parar o mundo.',
-    next: 'Se quiser, faça mais 1 pausa rápida — ou siga.',
+    next: 'Se fizer sentido, siga com só um próximo passo.',
   },
   {
-    id: 'r3',
+    id: 'r3-2',
+    focus: '3min',
+    theme: 'clarear',
+    title: 'Organizar por dentro (3 min)',
+    subtitle: 'Três minutos para reduzir a sensação de “tudo ao mesmo tempo”.',
+    steps: ['Liste 3 coisas (sem resolver)', 'Circule 1 (a mais urgente)', 'Transforme em 1 passo pequeno', 'Pare'],
+    pauseDeck: [
+      { label: 'Escrever 3 coisas', min: 1 },
+      { label: 'Respirar 1 min', min: 1 },
+      { label: 'Olhar longe (30s)', min: 1 },
+      { label: 'Água + pausa', min: 1 },
+    ],
+    close: 'Pronto. Você não resolveu tudo — só reduziu o ruído.',
+    next: 'Se quiser, agora escolha só o passo pequeno.',
+  },
+
+  // 5 MIN — AMBIENTE / CORPO
+  {
+    id: 'r5-1',
     focus: '5min',
+    theme: 'ambiente',
     title: 'Cuidar 5 min (corpo + ambiente mínimo)',
     subtitle: 'Cinco minutos para reduzir ruído e deixar o resto do dia mais fácil.',
     steps: ['Hidratante nas mãos (30s)', 'Braços: alongar 30s', 'Mão no peito: 4 respirações', '1 item no lugar'],
@@ -170,22 +206,49 @@ const ROUTINES: Routine[] = [
       { label: 'Água + pausa', min: 1 },
     ],
     close: 'Pronto. Isso já deixa o resto do dia mais fácil.',
-    next: 'Agora você decide: seguir, repetir, ou ir para Meu Filho.',
+    next: 'Se não quiser continuar, tudo bem. Você já cuidou de você.',
+  },
+  {
+    id: 'r5-2',
+    focus: '5min',
+    theme: 'corpo',
+    title: 'Abaixar tensão (5 min)',
+    subtitle: 'Cinco minutos para o corpo parar de “segurar tudo”.',
+    steps: ['Ombros: sobe e desce 5x', 'Solte a mandíbula 5x', 'Respire 4 lentas', 'Alongue mãos 30s'],
+    pauseDeck: [
+      { label: 'Ombros (30s) + pescoço', min: 1 },
+      { label: 'Respirar 1 min', min: 1 },
+      { label: 'Água + pausa', min: 1 },
+      { label: 'Olhar pela janela (30s)', min: 1 },
+    ],
+    close: 'Ok. Seu corpo recebeu um sinal de “menos pressão”.',
+    next: 'Se quiser, volte para o seu dia com um passo menor.',
   },
 ]
 
-function pickRoutine(focus: FocusMode) {
-  return ROUTINES.find((r) => r.focus === focus) ?? ROUTINES[1]
+function readPersonaFromLS(): PersonaResult | undefined {
+  const raw = safeGetLS(LS_KEYS.eu360Persona)
+  const parsed = safeParseJSON<PersonaResult>(raw)
+  return parsed ?? undefined
 }
 
-function originForCuidarDeMim(): TaskOrigin {
-  return 'selfcare'
+function daySeed() {
+  const d = new Date()
+  // seed diária simples: YYYYMMDD
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return Number(`${y}${m}${day}`)
+}
+
+function chooseOne<T>(seed: number, items: T[]) {
+  const idx = Math.abs(seed) % items.length
+  return items[idx]!
 }
 
 function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo; persona?: PersonaResult } {
-  const focusRaw = safeGetLS(LS_KEYS.euFocusTime)
-  const ritmoRaw = safeGetLS(LS_KEYS.euRitmo)
-  const persona = safeParseJSON<PersonaResult>(safeGetLS(LS_KEYS.eu360Persona))
+  const focusRaw = safeGetLS(LS_KEYS.eu360FocusTime)
+  const ritmoRaw = safeGetLS(LS_KEYS.eu360Ritmo)
 
   const focus: FocusMode = focusRaw === '1min' || focusRaw === '3min' || focusRaw === '5min' ? focusRaw : '3min'
   const ritmo: Ritmo =
@@ -193,48 +256,59 @@ function inferFromEu360(): { focus: FocusMode; ritmo: Ritmo; persona?: PersonaRe
       ? ritmoRaw
       : 'cansada'
 
-  // Ajuste suave: se sobrecarregada, puxa para 1min automaticamente (como já existia)
-  if (ritmo === 'sobrecarregada') return { focus: '1min', ritmo, persona }
+  const persona = readPersonaFromLS()
 
+  // ajuste suave: se sobrecarregada, puxa para 1min automaticamente (como já existia)
+  if (ritmo === 'sobrecarregada') return { focus: '1min', ritmo, persona }
   return { focus, ritmo, persona }
 }
 
-function getRecentFromLS(): string[] {
-  const parsed = safeParseJSON<unknown>(safeGetLS(LS_KEYS.cdmRecent))
-  if (!Array.isArray(parsed)) return []
-  return (parsed as any[])
-    .filter((x) => typeof x === 'string' && x.trim())
-    .map((x) => String(x).trim())
-    .slice(0, 10)
+function themesForPersona(persona?: PersonaId): Array<Routine['theme']> {
+  // Só “tendência”. Nunca força.
+  if (!persona) return ['descomprimir', 'clarear', 'corpo', 'ambiente', 'regular']
+
+  if (persona === 'sobrevivencia') return ['descomprimir', 'corpo', 'clarear', 'regular', 'ambiente']
+  if (persona === 'organizacao') return ['clarear', 'ambiente', 'corpo', 'regular', 'descomprimir']
+  if (persona === 'conexao') return ['descomprimir', 'corpo', 'regular', 'clarear', 'ambiente']
+  if (persona === 'equilibrio') return ['regular', 'corpo', 'clarear', 'ambiente', 'descomprimir']
+  return ['clarear', 'regular', 'ambiente', 'corpo', 'descomprimir']
 }
 
-function setRecentToLS(ids: string[]) {
-  safeSetLS(LS_KEYS.cdmRecent, JSON.stringify(ids.slice(0, 10)))
+function routinesByFocus(focus: FocusMode) {
+  return ROUTINES.filter((r) => r.focus === focus)
 }
 
-function pushRecentId(id: string) {
-  const current = getRecentFromLS()
-  const next = [id, ...current.filter((x) => x !== id)].slice(0, 10)
-  setRecentToLS(next)
-  return next
+function pickTwoRoutines(input: { focus: FocusMode; ritmo: Ritmo; persona?: PersonaResult; altIndex: number }) {
+  const seedBase = daySeed() + input.altIndex * 31
+
+  const pool = routinesByFocus(input.focus)
+  if (!pool.length) return { primary: ROUTINES[0], secondary: ROUTINES[1] ?? ROUTINES[0] }
+
+  const themeOrder = themesForPersona(input.persona?.persona)
+
+  // “puxa” por ritmo (bem leve): sobrecarregada/cansada preferem descomprimir/corpo
+  const boostedThemes =
+    input.ritmo === 'sobrecarregada' || input.ritmo === 'cansada'
+      ? ['descomprimir', 'corpo', ...themeOrder]
+      : input.ritmo === 'animada'
+        ? ['clarear', 'ambiente', ...themeOrder]
+        : themeOrder
+
+  const primaryTheme = chooseOne(seedBase, boostedThemes)
+  const primaryCandidates = pool.filter((r) => r.theme === primaryTheme)
+  const primary = chooseOne(seedBase + 7, primaryCandidates.length ? primaryCandidates : pool)
+
+  // secundária: pega outro tema (ou outro id) para dar livre-arbítrio real
+  const secondaryPool = pool.filter((r) => r.id !== primary.id)
+  const secondaryTheme = chooseOne(seedBase + 13, boostedThemes)
+  const secondaryCandidates = secondaryPool.filter((r) => r.theme === secondaryTheme)
+  const secondary = chooseOne(seedBase + 19, secondaryCandidates.length ? secondaryCandidates : secondaryPool.length ? secondaryPool : pool)
+
+  return { primary, secondary }
 }
 
-/**
- * Sinal suave derivado do Eu360: apenas tendência.
- * Não salva “histórico”, não cria acompanhamento.
- */
-function deriveSoftSignalFromEu360(persona?: PersonaResult, ritmo?: Ritmo): 'heavy' | 'tired' | 'overwhelmed' | 'neutral' {
-  const q1 = persona?.answers?.q1
-  const q3 = persona?.answers?.q3
-  const p = persona?.persona
-
-  if (ritmo === 'sobrecarregada') return 'overwhelmed'
-  if (q3 === 'tudo') return 'overwhelmed'
-  if (q3 === 'emocional') return 'heavy'
-  if (p === 'sobrevivencia') return 'heavy'
-  if (q1 === 'exausta') return 'tired'
-  if (q1 === 'cansada') return 'tired'
-  return 'neutral'
+function originForCuidarDeMim(): TaskOrigin {
+  return 'selfcare'
 }
 
 export default function Client() {
@@ -243,17 +317,13 @@ export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [checked, setChecked] = useState<boolean[]>([false, false, false, false])
   const [pauseIndex, setPauseIndex] = useState(0)
+
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
-  // Sugestão “inteligente”
-  const [aiState, setAiState] = useState<
-    | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'done'; items: Suggestion[]; theme?: string }
-  >({ status: 'idle' })
-  const [aiDismissed, setAiDismissed] = useState(false)
+  // alternância “Outra opção” (sem parecer tarefa)
+  const [altIndex, setAltIndex] = useState(0)
 
-  const dateKey = useMemo(() => safeDateKey(new Date()), [])
+  const [persona, setPersona] = useState<PersonaResult | undefined>(undefined)
 
   useEffect(() => {
     try {
@@ -265,14 +335,21 @@ export default function Client() {
     const inferred = inferFromEu360()
     setFocus(inferred.focus)
     setRitmo(inferred.ritmo)
+    setPersona(inferred.persona)
     setStep('mini-rotina')
 
     try {
-      track('cuidar_de_mim.open', { focus: inferred.focus, ritmo: inferred.ritmo, hasPersona: Boolean(inferred.persona) })
+      track('cuidar_de_mim.open', {
+        focus: inferred.focus,
+        ritmo: inferred.ritmo,
+        persona: inferred.persona?.persona ?? 'none',
+      })
     } catch {}
   }, [])
 
-  const routine = useMemo(() => pickRoutine(focus), [focus])
+  const picked = useMemo(() => pickTwoRoutines({ focus, ritmo, persona, altIndex }), [focus, ritmo, persona, altIndex])
+  const routine = picked.primary
+  const altRoutine = picked.secondary
 
   useEffect(() => {
     setChecked([false, false, false, false])
@@ -290,7 +367,7 @@ export default function Client() {
 
   function onSelectFocus(next: FocusMode) {
     setFocus(next)
-    safeSetLS(LS_KEYS.euFocusTime, next)
+    safeSetLS(LS_KEYS.eu360FocusTime, next)
     try {
       track('cuidar_de_mim.focus.select', { focus: next })
     } catch {}
@@ -298,11 +375,11 @@ export default function Client() {
 
   function onSelectRitmo(next: Ritmo) {
     setRitmo(next)
-    safeSetLS(LS_KEYS.euRitmo, next)
+    safeSetLS(LS_KEYS.eu360Ritmo, next)
 
     if (next === 'sobrecarregada') {
       setFocus('1min')
-      safeSetLS(LS_KEYS.euFocusTime, '1min')
+      safeSetLS(LS_KEYS.eu360FocusTime, '1min')
     }
 
     try {
@@ -315,7 +392,7 @@ export default function Client() {
       const next = [...prev]
       next[i] = !next[i]
       try {
-        track('cuidar_de_mim.routine.toggle', { i, value: next[i], focus })
+        track('cuidar_de_mim.routine.toggle', { i, value: next[i], focus, routineId: routine.id })
       } catch {}
       return next
     })
@@ -324,7 +401,14 @@ export default function Client() {
   function nextPause() {
     setPauseIndex((p) => (p + 1) % routine.pauseDeck.length)
     try {
-      track('cuidar_de_mim.pause.next', { focus })
+      track('cuidar_de_mim.pause.next', { focus, routineId: routine.id })
+    } catch {}
+  }
+
+  function swapSuggestion() {
+    setAltIndex((i) => i + 1)
+    try {
+      track('cuidar_de_mim.suggestion.swap', { focus, ritmo, persona: persona?.persona ?? 'none' })
     } catch {}
   }
 
@@ -349,82 +433,6 @@ export default function Client() {
     } catch {}
 
     window.setTimeout(() => setSaveFeedback(''), 2200)
-  }
-
-  async function runCareSuggestion() {
-    setAiDismissed(false)
-    setAiState({ status: 'loading' })
-
-    const inferred = inferFromEu360()
-    const persona = inferred.persona
-    const signal = deriveSoftSignalFromEu360(persona, ritmo)
-    const recentIds = getRecentFromLS()
-
-    const payload = {
-      intent: 'quick_idea' as const,
-      hub: 'cuidar_de_mim' as const,
-      nonce: Date.now(),
-      locale: 'pt-BR' as const,
-      memory: {
-        recent_suggestion_ids: recentIds,
-        last_signal: signal,
-        eu360_persona_id: persona?.persona,
-        eu360_q1: persona?.answers?.q1,
-        eu360_q3: persona?.answers?.q3,
-      },
-    }
-
-    try {
-      const res = await fetch('/api/ai/quick-ideas', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-        cache: 'no-store',
-      })
-
-      const data = res.ok ? await res.json().catch(() => null) : null
-      const items = Array.isArray(data?.suggestions) ? (data.suggestions as Suggestion[]) : []
-
-      const cleaned = items
-        .filter((x) => x && typeof x.title === 'string' && x.title.trim())
-        .slice(0, 2)
-        .map((x, idx) => ({
-          id: typeof x.id === 'string' && x.id.trim() ? x.id : `cdm-${idx + 1}`,
-          title: String(x.title),
-          description: typeof x.description === 'string' && x.description.trim() ? String(x.description) : undefined,
-        }))
-
-      if (cleaned[0]?.id) pushRecentId(cleaned[0].id)
-      if (cleaned[1]?.id) pushRecentId(cleaned[1].id)
-
-      try {
-        track('cuidar_de_mim.ai.suggest', {
-          dateKey,
-          signal,
-          persona: persona?.persona ?? 'none',
-          q1: persona?.answers?.q1 ?? 'none',
-          q3: persona?.answers?.q3 ?? 'none',
-          ok: cleaned.length > 0,
-          mode: data?.meta?.mode ?? 'unknown',
-          theme: data?.meta?.theme ?? 'none',
-        })
-      } catch {}
-
-      if (!cleaned.length) {
-        setAiState({ status: 'done', items: [{ id: 'fallback-1', title: 'Hoje você pode só respirar 1 minuto', description: 'Se fizer sentido. Se não, tudo bem.' }] })
-        return
-      }
-
-      setAiState({ status: 'done', items: cleaned, theme: String(data?.meta?.theme ?? '') })
-    } catch {
-      setAiState({
-        status: 'done',
-        items: [
-          { id: 'fallback-1', title: 'Respire por 1 minuto', description: 'Só para o corpo voltar para o presente.' },
-          { id: 'fallback-2', title: 'Escolha uma coisa pequena', description: 'Uma só. O resto pode esperar.' },
-        ],
-      })
-    }
   }
 
   const chips = [
@@ -462,7 +470,7 @@ export default function Client() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um espaço para você baixar o volume e escolher um próximo passo possível — sem virar obrigação.
+                Um respiro curto, com escolhas. Se não servir, você troca — sem culpa.
               </p>
             </div>
           </header>
@@ -498,15 +506,14 @@ export default function Client() {
                       <div className="space-y-1">
                         <div className="text-[12px] text-white/85">
                           Passo {stepIndex(step)}/4 • {focusTitle(focus)} • {ritmo}
+                          {persona?.label ? <span> • {persona.label}</span> : null}
                         </div>
 
                         <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                           Sugestão pronta para agora: {routine.title}
                         </div>
 
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">
-                          {routine.subtitle}
-                        </div>
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">{routine.subtitle}</div>
                       </div>
                     </div>
 
@@ -525,6 +532,23 @@ export default function Client() {
                       >
                         Ajustar
                       </button>
+
+                      <button
+                        onClick={swapSuggestion}
+                        className="
+                          rounded-full
+                          bg-white/20
+                          border border-white/30
+                          text-white
+                          px-4 py-2
+                          text-[12px]
+                          hover:bg-white/25
+                          transition
+                        "
+                      >
+                        Outra opção
+                      </button>
+
                       <button
                         onClick={() => go('mini-rotina')}
                         className="
@@ -562,6 +586,44 @@ export default function Client() {
                       )
                     })}
                   </div>
+
+                  {/* Alternativa sempre visível (livre-arbítrio real) */}
+                  <div className="mt-4 rounded-3xl bg-white/10 border border-white/25 p-4">
+                    <div className="text-[11px] text-white/80 font-semibold uppercase tracking-[0.18em]">
+                      Se não for isso
+                    </div>
+                    <div className="mt-2 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[14px] font-semibold text-white leading-snug">{altRoutine.title}</div>
+                        <div className="mt-1 text-[12px] text-white/85 leading-relaxed">{altRoutine.subtitle}</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // “troca” a principal pela alternativa aumentando altIndex
+                          swapSuggestion()
+                          try {
+                            track('cuidar_de_mim.alt.offer.used', { focus, ritmo, altRoutineId: altRoutine.id })
+                          } catch {}
+                        }}
+                        className="
+                          rounded-full
+                          bg-white/90 hover:bg-white
+                          text-[#2f3a56]
+                          px-3.5 py-2
+                          text-[12px]
+                          shadow-[0_6px_18px_rgba(0,0,0,0.12)]
+                          transition
+                          whitespace-nowrap
+                        "
+                      >
+                        Trocar por essa
+                      </button>
+                    </div>
+                    <div className="mt-3 text-[12px] text-white/80">
+                      Você não precisa acertar. Só escolher o que cabe.
+                    </div>
+                  </div>
                 </div>
               </Reveal>
 
@@ -580,113 +642,9 @@ export default function Client() {
                     </div>
                   ) : null}
 
-                  {/* SUGESTÃO INTELIGENTE (EU360 → tendência suave) */}
-                  {!aiDismissed ? (
-                    <div className="mb-5 rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-4 md:p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a6a6a]">
-                            Sugestão inteligente para agora
-                          </p>
-                          <p className="mt-1 text-[13px] text-[#2f3a56] leading-relaxed">
-                            Duas opções curtas. Se nenhuma servir, tudo bem — você pode só seguir.
-                          </p>
-                        </div>
-
-                        <div className="shrink-0">
-                          <button
-                            type="button"
-                            className="rounded-2xl bg-white border border-[#F5D7E5]/70 px-3 py-2 text-[12px] font-semibold text-[#fd2597] hover:opacity-90 transition"
-                            onClick={() => void runCareSuggestion()}
-                          >
-                            {aiState.status === 'idle' ? 'Gerar' : 'Outra'}
-                          </button>
-                        </div>
-                      </div>
-
-                      {aiState.status === 'loading' ? (
-                        <p className="mt-3 text-[12px] text-[#6a6a6a]">Pensando em algo leve…</p>
-                      ) : null}
-
-                      {aiState.status === 'done' ? (
-                        <div className="mt-3 space-y-2">
-                          {aiState.items.slice(0, 2).map((item) => (
-                            <div
-                              key={item.id}
-                              className="rounded-2xl border border-[#F5D7E5]/70 bg-white px-4 py-3"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <p className="text-[13px] font-semibold text-[#2f3a56]">{item.title}</p>
-                                  {item.description ? (
-                                    <p className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                      {item.description}
-                                    </p>
-                                  ) : null}
-                                </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <button
-                                    type="button"
-                                    className="rounded-full bg-white border border-[#F5D7E5]/70 text-[#545454] px-3 py-1.5 text-[12px] transition hover:shadow-sm whitespace-nowrap"
-                                    onClick={() => saveToMyDay(item.title)}
-                                  >
-                                    Guardar no Meu Dia
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-
-                          <div className="mt-2 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAiDismissed(true)
-                                try {
-                                  track('cuidar_de_mim.ai.dismiss', { dateKey })
-                                } catch {}
-                              }}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Hoje não
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => void runCareSuggestion()}
-                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                            >
-                              Outra combinação
-                            </button>
-                          </div>
-
-                          <p className="mt-2 text-[11px] text-[#6a6a6a] leading-relaxed">
-                            Isso é só um convite. Você pode escolher uma, adaptar, ou não fazer nada agora.
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="mb-5 rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-4 md:p-5">
-                      <p className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                        Tudo bem não pegar sugestão agora. Se mais tarde fizer sentido, ela continua aqui.
-                      </p>
-                      <button
-                        type="button"
-                        className="mt-3 rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        onClick={() => setAiDismissed(false)}
-                      >
-                        Mostrar sugestões novamente
-                      </button>
-                    </div>
-                  )}
-
                   {step === 'ritmo' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">
-                        Ajuste rápido (pra eu pensar melhor por você)
-                      </div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido (pra eu pensar melhor por você)</div>
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {(['leve', 'cansada', 'animada', 'sobrecarregada'] as Ritmo[]).map((r) => {
@@ -742,6 +700,12 @@ export default function Client() {
                             Aplicar e começar
                           </button>
                           <button
+                            onClick={swapSuggestion}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ver outra opção
+                          </button>
+                          <button
                             onClick={() => go('pausas')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
@@ -790,22 +754,16 @@ export default function Client() {
                                 : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                             ].join(' ')}
                           >
-                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                              passo {i + 1}
-                            </div>
+                            <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">passo {i + 1}</div>
                             <div className="text-[13px] text-[#2f3a56] mt-1 leading-relaxed">{s}</div>
-                            <div className="text-[12px] text-[#6a6a6a] mt-3">
-                              {checked[i] ? 'feito ✓' : 'marcar como feito'}
-                            </div>
+                            <div className="text-[12px] text-[#6a6a6a] mt-3">{checked[i] ? 'feito ✓' : 'marcar como feito'}</div>
                           </button>
                         ))}
                       </div>
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[13px] text-[#2f3a56] font-semibold">Se estiver corrido:</div>
-                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">
-                          Faça só o passo 1. Isso já ajuda.
-                        </div>
+                        <div className="text-[13px] text-[#6a6a6a] mt-1 leading-relaxed">Faça só o passo 1. Isso já ajuda.</div>
 
                         <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
                           <button
@@ -813,6 +771,13 @@ export default function Client() {
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
                             Salvar no Meu Dia
+                          </button>
+
+                          <button
+                            onClick={swapSuggestion}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Trocar sugestão
                           </button>
 
                           <button
@@ -870,9 +835,7 @@ export default function Client() {
                         </div>
                       </div>
 
-                      <div className="text-[12px] text-[#6a6a6a]">
-                        Regra do Materna: uma pausa já conta. Não precisa fazer tudo.
-                      </div>
+                      <div className="text-[12px] text-[#6a6a6a]">Regra do Materna: uma pausa já conta. Não precisa fazer tudo.</div>
                     </div>
                   ) : null}
 
@@ -900,6 +863,13 @@ export default function Client() {
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
                             Repetir (mesma opção)
+                          </button>
+
+                          <button
+                            onClick={swapSuggestion}
+                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          >
+                            Ver outra sugestão
                           </button>
 
                           <Link
