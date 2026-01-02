@@ -1,3 +1,4 @@
+// app/(tabs)/maternar/cuidar-de-mim/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -49,24 +50,23 @@ type DaySignals = {
 }
 
 /**
- * P33.4 — ÚNICO PONTO DE IA (planejamento, não execução)
- * - IA só pode atuar no texto do Bloco 3 (Orientação)
- * - Se falhar, fallback fixo obrigatório
- * - Output: texto único, máx 2 frases, máx 220 chars, sem listas, sem emojis
+ * P33.4 — ÚNICO PONTO DE IA (ORIENTAÇÃO)
+ * - IA pode ser ligada/desligada por flag
+ * - Fallback humano fixo obrigatório (hub funciona 100% sem IA)
+ *
+ * Observação:
+ * - Mesmo com IA desligada, mantemos orientação humana determinística (segura),
+ *   mas o fallback fixo é sempre o guardrail final para falha/timeout/invalid.
  */
-type CareGuidanceInput = {
+const CARE_GUIDANCE_FALLBACK = 'Agora é um bom momento para simplificar. Um passo já ajuda.'
+
+type CareGuidanceInputs = {
   checkin: Ritmo
   salvosCount: number
   compromissosCount: number
   paraDepoisCount: number
   day: 'hoje'
 }
-
-type CareGuidance = {
-  text: string
-}
-
-const CARE_GUIDANCE_FALLBACK = 'Agora é um bom momento para simplificar. Um passo já ajuda.'
 
 function safeGetLS(key: string): string | null {
   try {
@@ -75,6 +75,13 @@ function safeGetLS(key: string): string | null {
   } catch {
     return null
   }
+}
+
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
 }
 
 function inferRitmo(): Ritmo {
@@ -97,9 +104,13 @@ function inferRitmo(): Ritmo {
 }
 
 function setRitmoPersist(r: Ritmo) {
+  // Fonte oficial
   try {
     save(PERSIST_KEYS.cuidarDeMimRitmo, r)
   } catch {}
+
+  // Compat: espelha no legado enquanto outras telas consumirem isso
+  safeSetLS(LEGACY_LS_KEYS.eu360Ritmo, r)
 }
 
 /**
@@ -107,9 +118,8 @@ function setRitmoPersist(r: Ritmo) {
  * - Fonte: listMyDayTasks(new Date()) -> lê planner/tasks/YYYY-MM-DD (persist + legado)
  * - Para depois: status === 'snoozed' OU snoozeUntil > todayKey
  */
-function readSavedTodayFromCore(): { total: number; later: number } {
+function readSavedTodayFromCore(todayKey: string): { total: number; later: number } {
   try {
-    const todayKey = getBrazilDateKey(new Date())
     const tasks = listMyDayTasks(new Date())
     if (!Array.isArray(tasks)) return { total: 0, later: 0 }
 
@@ -117,6 +127,7 @@ function readSavedTodayFromCore(): { total: number; later: number } {
     for (const t of tasks as MyDayTaskItem[]) {
       const status = (t.status ?? (t.done ? 'done' : 'active')) as string
       const snoozeUntil = typeof t.snoozeUntil === 'string' ? t.snoozeUntil : ''
+
       if (status === 'snoozed' || (snoozeUntil && snoozeUntil > todayKey)) later += 1
     }
 
@@ -131,9 +142,8 @@ function readSavedTodayFromCore(): { total: number; later: number } {
  * - Fonte: planner/appointments/all
  * - Count: appointments com dateKey === todayKey
  */
-function readCommitmentsTodayFromPlanner(): number {
+function readCommitmentsTodayFromPlanner(todayKey: string): number {
   try {
-    const todayKey = getBrazilDateKey(new Date())
     const all = load<Appointment[]>('planner/appointments/all', []) ?? []
     if (!Array.isArray(all)) return 0
     return all.filter((a) => a?.dateKey === todayKey).length
@@ -142,9 +152,9 @@ function readCommitmentsTodayFromPlanner(): number {
   }
 }
 
-function readDaySignals(): DaySignals {
-  const saved = readSavedTodayFromCore()
-  const commitments = readCommitmentsTodayFromPlanner()
+function readDaySignals(todayKey: string): DaySignals {
+  const saved = readSavedTodayFromCore(todayKey)
+  const commitments = readCommitmentsTodayFromPlanner(todayKey)
 
   return {
     savedCount: saved.total,
@@ -153,66 +163,42 @@ function readDaySignals(): DaySignals {
   }
 }
 
-function clampGuidanceText(raw: string): string {
-  const s = (raw ?? '').trim().replace(/\s+/g, ' ')
-  if (!s) return CARE_GUIDANCE_FALLBACK
+/**
+ * Orientação HUMANA (fallback seguro) — declarativa, sem CTA, sem plano, sem múltiplas opções.
+ * Pode ser usada como baseline quando IA está desligada.
+ */
+function pickOrientationHuman(tone: 'gentil' | 'direto', ritmo: Ritmo, signals: DaySignals): string {
+  const saved = signals.savedCount ?? 0
+  const commitments = signals.commitmentsCount ?? 0
+  const later = signals.laterCount ?? 0
 
-  // máx 2 frases (split simples por pontuação comum)
-  const parts = s
-    .split(/(?<=[.!?])\s+/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .slice(0, 2)
+  // Leitura leve (não “score”, só sinal)
+  const loadTotal = saved + commitments + later
+  const hasLoad = loadTotal > 0
+  const heavy = loadTotal >= 6
 
-  let out = parts.join(' ')
-  if (!out) out = CARE_GUIDANCE_FALLBACK
+  if (tone === 'direto') {
+    if (ritmo === 'confusa') return 'Escolha só um próximo passo real. O resto pode esperar.'
+    if (ritmo === 'cansada') return heavy ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
+    if (ritmo === 'leve') return hasLoad ? 'Siga leve. Só não invente complexidade.' : 'Siga leve. Um passo por vez.'
+    return hasLoad ? 'Seu dia já está em movimento. Sem se cobrar por “fechar”.' : 'Seu dia não precisa render para valer.'
+  }
 
-  // máx 220 chars
-  if (out.length > 220) out = out.slice(0, 220).trim()
-
-  return out
+  // gentil
+  if (ritmo === 'confusa') return CARE_GUIDANCE_FALLBACK
+  if (ritmo === 'cansada') return heavy ? 'Hoje, manter o básico já é suficiente.' : 'Um passo simples já é suficiente hoje.'
+  if (ritmo === 'leve') return hasLoad ? 'Vamos manter leve. Só o que fizer sentido.' : 'Vamos manter leve. Sem pressa.'
+  return hasLoad ? 'Você pode seguir sem se cobrar.' : 'Você pode seguir no seu ritmo.'
 }
 
 /**
- * Implementação atual (sem IA): lógica determinística, mas já “plugável”.
- * Quando a IA for ligada, este ponto vira o call (mantendo o mesmo contrato e fallback).
+ * Micro cuidado (opcional, nunca protagonista) — não terapêutico, não “exercício”, não lista.
  */
-function getCareGuidance(input: CareGuidanceInput, tone: 'gentil' | 'direto'): CareGuidance {
-  try {
-    const saved = input.salvosCount ?? 0
-    const commitments = input.compromissosCount ?? 0
-    const later = input.paraDepoisCount ?? 0
-
-    const loadTotal = saved + commitments + later
-    const hasLoad = loadTotal > 0
-    const heavy = loadTotal >= 6
-
-    let text = CARE_GUIDANCE_FALLBACK
-
-    if (tone === 'direto') {
-      if (input.checkin === 'confusa') text = 'Escolha só um próximo passo real. O resto pode esperar.'
-      else if (input.checkin === 'cansada')
-        text = heavy ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
-      else if (input.checkin === 'leve') text = hasLoad ? 'Siga leve. Só não invente complexidade.' : 'Siga leve. Um passo por vez.'
-      else text = hasLoad ? 'Seu dia já está em movimento. Sem se cobrar por “fechar”.' : 'Seu dia não precisa render para valer.'
-    } else {
-      if (input.checkin === 'confusa') text = 'Agora é um bom momento para simplificar. Um passo já ajuda.'
-      else if (input.checkin === 'cansada') text = heavy ? 'Hoje, manter o básico já é suficiente.' : 'Um passo simples já é suficiente hoje.'
-      else if (input.checkin === 'leve') text = hasLoad ? 'Vamos manter leve. Só o que fizer sentido.' : 'Vamos manter leve. Sem pressa.'
-      else text = hasLoad ? 'Você pode seguir sem se cobrar.' : 'Você pode seguir no seu ritmo.'
-    }
-
-    return { text: clampGuidanceText(text) }
-  } catch {
-    return { text: CARE_GUIDANCE_FALLBACK }
-  }
-}
-
 function microCareSuggestion(ritmo: Ritmo, seed: number) {
   const optionsByRitmo: Record<Ritmo, string[]> = {
     confusa: [
       'Se fizer sentido agora: água + 1 minuto em silêncio antes do próximo passo.',
-      'Se fizer sentido agora: respira uma vez fundo e escolhe só uma coisa pequena.',
+      'Se fizer sentido agora: respira uma vez fundo e segue.',
       'Se fizer sentido agora: fecha os olhos por 10 segundos e reabre no próximo passo.',
     ],
     cansada: [
@@ -237,14 +223,108 @@ function microCareSuggestion(ritmo: Ritmo, seed: number) {
   return list[idx]
 }
 
+function clampText(s: string, maxLen: number) {
+  const t = (s ?? '').trim().replace(/\s+/g, ' ')
+  if (!t) return ''
+  if (t.length <= maxLen) return t
+  return t.slice(0, maxLen).trim()
+}
+
+function countSentences(s: string) {
+  // Heurística simples: divide por ., !, ? (mantém governança “até 2 frases”)
+  const parts = (s ?? '')
+    .split(/[.!?]+/g)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  return parts.length
+}
+
+function containsListyPatterns(s: string) {
+  const t = s ?? ''
+  if (t.includes('\n-') || t.includes('\n•')) return true
+  if (/\b(1\)|2\)|3\))/.test(t)) return true
+  return false
+}
+
+function looksLikeCtaOrPlan(s: string) {
+  const t = (s ?? '').toLowerCase()
+  // guardrail: bloqueia verbos típicos de instrução/ação direta
+  const blocked = [
+    'faça',
+    'tente',
+    'você precisa',
+    'você deve',
+    'agora faça',
+    'comece',
+    'liste',
+    'planeje',
+    'organize',
+    'crie',
+    'adicione',
+    'salve',
+    'vá para',
+    'clique',
+    'toque',
+  ]
+  return blocked.some((k) => t.includes(k))
+}
+
+/**
+ * IA (somente ORIENTAÇÃO):
+ * - Inputs permitidos: checkin + contagens + day:'hoje'
+ * - Output: texto único, até 2 frases, até 220 caracteres, sem listas, sem emojis
+ *
+ * Nota: endpoint pode não existir ainda — falha -> fallback fixo.
+ */
+async function fetchCareGuidanceAI(inputs: CareGuidanceInputs, signal?: AbortSignal): Promise<string | null> {
+  const AI_ENABLED = process.env.NEXT_PUBLIC_P33_CARE_GUIDANCE_AI === '1'
+  if (!AI_ENABLED) return null
+
+  try {
+    const res = await fetch('/api/ai/cuidar-de-mim/orientacao', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(inputs),
+      signal,
+    })
+
+    if (!res.ok) return null
+    const data = (await res.json()) as { text?: unknown } | null
+    const raw = typeof data?.text === 'string' ? data.text : ''
+    const cleaned = clampText(raw, 220)
+
+    // validações de governança
+    if (!cleaned) return null
+    if (countSentences(cleaned) > 2) return null
+    if (containsListyPatterns(cleaned)) return null
+    if (cleaned.includes('😀') || cleaned.includes('😂') || cleaned.includes('❤️')) return null // guardrail básico
+    if (/[^\x00-\x7F]/.test('') && false) {
+      // noop (mantém TS feliz sem “unused” se você quiser estender depois)
+    }
+    if (looksLikeCtaOrPlan(cleaned)) return null
+
+    return cleaned
+  } catch {
+    return null
+  }
+}
+
 export default function Client() {
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [microSeed, setMicroSeed] = useState<number>(0)
+
+  // 🔒 Bloco 2 (real)
   const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
     savedCount: 0,
     commitmentsCount: 0,
     laterCount: 0,
   }))
+
+  // 🔒 Bloco 3 (orientação) — pode vir de IA (somente aqui)
+  const [guidanceText, setGuidanceText] = useState<string>(CARE_GUIDANCE_FALLBACK)
+  const aiAbortRef = useRef<AbortController | null>(null)
 
   const euSignal = useMemo(() => {
     try {
@@ -254,37 +334,71 @@ export default function Client() {
     }
   }, [])
 
-  const tone = useMemo(() => (euSignal?.tone ?? 'gentil') as 'gentil' | 'direto', [euSignal?.tone])
-
-  const guidance = useMemo(() => {
-    const input: CareGuidanceInput = {
-      checkin: ritmo,
-      salvosCount: daySignals.savedCount,
-      compromissosCount: daySignals.commitmentsCount,
-      paraDepoisCount: daySignals.laterCount,
-      day: 'hoje',
-    }
-    return getCareGuidance(input, tone)
-  }, [ritmo, daySignals, tone])
+  const tone = useMemo(() => {
+    return (euSignal?.tone ?? 'gentil') as 'gentil' | 'direto'
+  }, [euSignal?.tone])
 
   const micro = useMemo(() => microCareSuggestion(ritmo, microSeed), [ritmo, microSeed])
 
-  // ====== Integração real do Bloco 2 (sempre “ao vivo”, sem esforço da usuária) ======
-  const lastSignalsRef = useRef<string>('')
+  function refreshSignals(source: string) {
+    const next = readDaySignals(todayKey)
+    setDaySignals(next)
 
-  const refreshSignals = React.useCallback((reason: string) => {
     try {
-      const s = readDaySignals()
-      const sig = `${s.savedCount}|${s.commitmentsCount}|${s.laterCount}`
-      if (sig === lastSignalsRef.current) return
-      lastSignalsRef.current = sig
-      setDaySignals(s)
-
-      try {
-        track('cuidar_de_mim.signals.refresh', { reason, saved: s.savedCount, commitments: s.commitmentsCount, later: s.laterCount })
-      } catch {}
+      track('cuidar_de_mim.signals.refresh', {
+        source,
+        saved: next.savedCount,
+        commitments: next.commitmentsCount,
+        later: next.laterCount,
+        todayKey,
+      })
     } catch {}
-  }, [])
+  }
+
+  async function refreshGuidance(reason: string, r: Ritmo, signals: DaySignals) {
+    // Sempre temos baseline humano seguro
+    const human = pickOrientationHuman(tone, r, signals)
+
+    // Cancela IA anterior
+    try {
+      aiAbortRef.current?.abort()
+    } catch {}
+    aiAbortRef.current = new AbortController()
+
+    const inputs: CareGuidanceInputs = {
+      checkin: r,
+      salvosCount: signals.savedCount ?? 0,
+      compromissosCount: signals.commitmentsCount ?? 0,
+      paraDepoisCount: signals.laterCount ?? 0,
+      day: 'hoje',
+    }
+
+    // IA (se ligada) — se falhar: fallback fixo; se desligada: human
+    const ai = await fetchCareGuidanceAI(inputs, aiAbortRef.current.signal)
+
+    const next =
+      typeof ai === 'string' && ai
+        ? ai
+        : typeof human === 'string' && human
+          ? human
+          : CARE_GUIDANCE_FALLBACK
+
+    // Guardrail final: nunca deixa vazio; se der qualquer coisa estranha, fallback fixo
+    const safe = clampText(next, 220)
+    const finalText = safe && countSentences(safe) <= 2 && !containsListyPatterns(safe) ? safe : CARE_GUIDANCE_FALLBACK
+
+    setGuidanceText(finalText)
+
+    try {
+      track('cuidar_de_mim.guidance.refresh', {
+        reason,
+        usedAi: !!ai,
+        tone,
+        ritmo: r,
+        todayKey,
+      })
+    } catch {}
+  }
 
   useEffect(() => {
     try {
@@ -294,41 +408,99 @@ export default function Client() {
     const r = inferRitmo()
     setRitmo(r)
 
-    refreshSignals('mount')
+    const s = readDaySignals(todayKey)
+    setDaySignals(s)
+
+    // orientação inicial
+    void refreshGuidance('mount', r, s)
 
     try {
-      const s = readDaySignals()
       track('cuidar_de_mim.open', { ritmo: r, saved: s.savedCount, commitments: s.commitmentsCount, later: s.laterCount })
     } catch {}
-  }, [refreshSignals])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const onFocus = () => refreshSignals('focus')
-    const onVis = () => {
-      if (document.visibilityState === 'visible') refreshSignals('visibility')
+    // 🔒 Refresh real dos dados do Bloco 2 (e orientação) em eventos de “vida real”
+    const onFocus = () => {
+      const nextSignals = readDaySignals(todayKey)
+      setDaySignals(nextSignals)
+      void refreshGuidance('focus', r, nextSignals)
     }
-    const onStorage = () => refreshSignals('storage')
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        const nextSignals = readDaySignals(todayKey)
+        setDaySignals(nextSignals)
+        void refreshGuidance('visibility', r, nextSignals)
+      }
+    }
+
+    const onStorage = (e: StorageEvent) => {
+      const k = String(e.key ?? '')
+      // persist.ts pode prefixar com "m360:" internamente — então checamos por contains
+      const relevant =
+        k.includes('planner/appointments/all') ||
+        k.includes(`planner/tasks/${todayKey}`) ||
+        k.includes(`planner/tasks/`) ||
+        k.includes('m360:planner/appointments/all') ||
+        k.includes(`m360:planner/tasks/${todayKey}`) ||
+        k.includes('cuidar_de_mim.ritmo.v1') ||
+        k.includes('eu360_ritmo')
+
+      if (!relevant) return
+
+      const nextSignals = readDaySignals(todayKey)
+      setDaySignals(nextSignals)
+      // orientação deve reagir ao estado + volume (sem virar template fixo)
+      const nextRitmo = inferRitmo()
+      setRitmo(nextRitmo)
+      void refreshGuidance('storage', nextRitmo, nextSignals)
+    }
+
+    // Eventos custom (quando houver)
+    const onCustom = () => {
+      const nextSignals = readDaySignals(todayKey)
+      setDaySignals(nextSignals)
+      void refreshGuidance('custom', inferRitmo(), nextSignals)
+    }
 
     try {
       window.addEventListener('focus', onFocus)
-      document.addEventListener('visibilitychange', onVis)
+      document.addEventListener('visibilitychange', onVisibility)
       window.addEventListener('storage', onStorage)
+      window.addEventListener('m360:myday-updated', onCustom as EventListener)
+      window.addEventListener('m360:planner-updated', onCustom as EventListener)
     } catch {}
 
     return () => {
       try {
         window.removeEventListener('focus', onFocus)
-        document.removeEventListener('visibilitychange', onVis)
+        document.removeEventListener('visibilitychange', onVisibility)
         window.removeEventListener('storage', onStorage)
+        window.removeEventListener('m360:myday-updated', onCustom as EventListener)
+        window.removeEventListener('m360:planner-updated', onCustom as EventListener)
       } catch {}
     }
-  }, [refreshSignals])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Quando ritmo muda por toque, orientação precisa reagir (IA só aqui)
+  useEffect(() => {
+    void refreshGuidance('ritmo_changed', ritmo, daySignals)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ritmo])
+
+  // Quando contagens mudam (por refresh), orientação reage
+  useEffect(() => {
+    void refreshGuidance('signals_changed', ritmo, daySignals)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [daySignals.savedCount, daySignals.commitmentsCount, daySignals.laterCount])
 
   function onPickRitmo(next: Ritmo) {
     setRitmo(next)
     setRitmoPersist(next)
+
+    // Mantém counts reais atualizados (pode ter mudado em paralelo)
+    refreshSignals('checkin_select')
+
     try {
       track('cuidar_de_mim.checkin.select', { ritmo: next })
     } catch {}
@@ -350,7 +522,7 @@ export default function Client() {
       })
     } catch {}
 
-    // atualiza BLOCO 2 real (sem toast)
+    // Atualiza BLOCO 2 real (sem toast)
     if (res?.ok) refreshSignals('save_to_my_day')
 
     try {
@@ -367,6 +539,9 @@ export default function Client() {
 
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
+  // UI microcopy (não IA)
+  const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
+
   return (
     <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden">
       <ClientOnly>
@@ -378,34 +553,34 @@ export default function Client() {
               Voltar para o Maternar
             </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
+            <h1 className="mt-3 text-[28px] md:text-[34px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
 
-            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
+            <p className="mt-1.5 text-sm md:text-base text-white/90 max-w-2xl">
               Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
             </p>
           </header>
 
-          {/* HUB CONTAINER (premium, integrado) */}
-          <section className="relative">
-            <div className="rounded-[28px] border border-white/35 bg-white/90 shadow-[0_26px_90px_rgba(0,0,0,0.22)] backdrop-blur-[6px] overflow-hidden">
-              <div className="p-5 md:p-7">
-                {/* trilho vertical sutil (sensação de sistema, não widgets) */}
-                <div className="relative">
-                  <div className="absolute left-[18px] top-[10px] bottom-[10px] w-px bg-[var(--color-soft-strong)]" />
+          {/* CONTAINER PREMIUM (um módulo central forte) */}
+          <section className="mx-auto max-w-5xl">
+            <div className="relative overflow-hidden rounded-[36px] border border-white/35 bg-white/92 shadow-[0_30px_90px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+              {/* subtle top sheen */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#fff6fb] via-transparent to-transparent opacity-70" />
 
-                  <div className="space-y-8">
+              {/* inner padding */}
+              <div className="relative p-5 md:p-8">
+                {/* editorial rail */}
+                <div className="relative">
+                  <div className="absolute left-[18px] top-2 bottom-2 w-px bg-[#f5d7e5]" />
+
+                  <div className="space-y-10">
                     {/* BLOCO 1 — CHECK-IN */}
                     <section className="relative pl-12">
-                      <div className="absolute left-2 top-1.5 h-8 w-8 rounded-2xl bg-[var(--color-soft-bg)] border border-[var(--color-soft-strong)] flex items-center justify-center">
-                        <AppIcon name="sparkles" size={16} className="text-[var(--color-brand)]" />
+                      <div className="absolute left-2 top-1.5 h-9 w-9 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] flex items-center justify-center shadow-[0_10px_26px_rgba(253,37,151,0.14)]">
+                        <AppIcon name="sparkles" size={16} className="text-[#b8236b]" />
                       </div>
 
-                      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        Check-in
-                      </p>
-                      <h2 className="mt-1 text-[18px] md:text-[20px] font-semibold text-[var(--color-text-main)]">
-                        Como você está agora?
-                      </h2>
+                      <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">CHECK-IN</div>
+                      <div className="mt-1 text-[18px] md:text-[20px] font-semibold text-[#2f3a56]">Como você está agora?</div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
                         {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
@@ -419,9 +594,10 @@ export default function Client() {
                                 'rounded-full px-4 py-2 text-[12px] border transition',
                                 'outline-none focus:outline-none focus-visible:outline-none',
                                 active
-                                  ? 'bg-[var(--color-soft-bg)] border-[var(--color-soft-strong)] text-[var(--color-text-main)]'
-                                  : 'bg-white border-[var(--color-soft-strong)] text-[var(--color-text-muted)] hover:bg-[var(--color-soft-bg)]',
+                                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                  : 'bg-white border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
                               ].join(' ')}
+                              aria-label={`Selecionar ritmo ${r}`}
                             >
                               {r}
                             </button>
@@ -430,112 +606,136 @@ export default function Client() {
                       </div>
                     </section>
 
-                    {/* BLOCO 2 — SEU DIA, DO JEITO QUE ESTÁ (módulo central forte) */}
+                    {/* BLOCO 2 — SEU DIA, DO JEITO QUE ESTÁ (coração + premium) */}
                     <section className="relative pl-12">
-                      <div className="absolute left-2 top-1.5 h-8 w-8 rounded-2xl bg-white border border-[var(--color-soft-strong)] flex items-center justify-center">
-                        <AppIcon name="list" size={16} className="text-[var(--color-brand)]" />
+                      <div className="absolute left-2 top-1.5 h-9 w-9 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                        <AppIcon name="list" size={16} className="text-[#b8236b]" />
                       </div>
 
-                      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        Seu dia
-                      </p>
-                      <h2 className="mt-1 text-[18px] md:text-[20px] font-semibold text-[var(--color-text-main)]">
-                        Do jeito que está
-                      </h2>
-                      <p className="mt-1 text-[12px] md:text-[13px] text-[var(--color-text-muted)]">
+                      <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">SEU DIA</div>
+                      <div className="mt-1 text-[18px] md:text-[20px] font-semibold text-[#2f3a56]">Do jeito que está</div>
+                      <div className="mt-1 text-[12px] md:text-[13px] text-[#6a6a6a]">
                         Uma visão consolidada, sem agenda e sem cobrança.
-                      </p>
+                      </div>
 
-                      {/* módulo coeso (não 3 cards soltos) */}
-                      <div className="mt-4 rounded-[22px] border border-[var(--color-soft-strong)] bg-[var(--color-soft-bg)]/45 p-3 md:p-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="rounded-2xl border border-[var(--color-soft-strong)] bg-white px-4 py-3">
-                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-brand)] font-semibold">
-                              Salvos
+                      {/* módulo integrado (não “3 cards jogados”) */}
+                      <div className="mt-5 rounded-[28px] border border-[#f5d7e5] bg-gradient-to-b from-[#fff6fb] to-white shadow-[0_18px_55px_rgba(253,37,151,0.10)] overflow-hidden">
+                        <div className="p-4 md:p-5">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-[#b8236b] font-semibold">
+                                Salvos
+                              </div>
+                              <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                              <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                             </div>
-                            <div className="mt-1 text-[20px] font-semibold text-[var(--color-text-main)]">
-                              {stat(daySignals.savedCount)}
+
+                            <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-[#b8236b] font-semibold">
+                                Compromissos
+                              </div>
+                              <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                                {stat(daySignals.commitmentsCount)}
+                              </div>
+                              <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                             </div>
-                            <div className="mt-0.5 text-[12px] text-[var(--color-text-muted)]">coisas registradas hoje</div>
+
+                            <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-[#b8236b] font-semibold">
+                                Para depois
+                              </div>
+                              <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                              <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
+                            </div>
                           </div>
 
-                          <div className="rounded-2xl border border-[var(--color-soft-strong)] bg-white px-4 py-3">
-                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-brand)] font-semibold">
-                              Compromissos
-                            </div>
-                            <div className="mt-1 text-[20px] font-semibold text-[var(--color-text-main)]">
-                              {stat(daySignals.commitmentsCount)}
-                            </div>
-                            <div className="mt-0.5 text-[12px] text-[var(--color-text-muted)]">no seu planner</div>
+                          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                            <Link
+                              href="/meu-dia"
+                              className={[
+                                'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold',
+                                'bg-[#ff005e] text-white',
+                                'shadow-[0_12px_30px_rgba(253,37,151,0.28)] hover:bg-[#e00070] transition',
+                              ].join(' ')}
+                            >
+                              Ir para Meu Dia
+                            </Link>
+
+                            <Link
+                              href="/maternar/meu-filho"
+                              className={[
+                                'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold',
+                                'border border-[#f5d7e5] bg-white text-[#2f3a56]',
+                                'hover:bg-[#fff0f7] transition',
+                              ].join(' ')}
+                            >
+                              Ir para Meu Filho
+                            </Link>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                refreshSignals('manual_refresh_button')
+                                void refreshGuidance('manual_refresh_button', ritmo, readDaySignals(todayKey))
+                              }}
+                              className={[
+                                'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold',
+                                'border border-[#f5d7e5] bg-white text-[#6a6a6a]',
+                                'hover:bg-[#fff0f7] transition',
+                              ].join(' ')}
+                              aria-label="Atualizar contagens do dia"
+                              title="Atualizar"
+                            >
+                              Atualizar
+                            </button>
                           </div>
 
-                          <div className="rounded-2xl border border-[var(--color-soft-strong)] bg-white px-4 py-3">
-                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-brand)] font-semibold">
-                              Para depois
-                            </div>
-                            <div className="mt-1 text-[20px] font-semibold text-[var(--color-text-main)]">
-                              {stat(daySignals.laterCount)}
-                            </div>
-                            <div className="mt-0.5 text-[12px] text-[var(--color-text-muted)]">coisas que podem esperar</div>
+                          <div className="mt-3 text-[11px] text-[#6a6a6a]">
+                            Esses números são um retrato do que já existe no sistema — sem te pedir mais nada.
                           </div>
-                        </div>
-
-                        <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                          <Link
-                            href="/meu-dia"
-                            className="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95 transition"
-                          >
-                            Ir para Meu Dia
-                          </Link>
-
-                          <Link
-                            href="/maternar/meu-filho"
-                            className="inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] bg-white hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)] transition"
-                          >
-                            Ir para Meu Filho
-                          </Link>
                         </div>
                       </div>
                     </section>
 
-                    {/* BLOCO 3 — ORIENTAÇÃO DO DIA (núcleo, pronto para IA futura) */}
+                    {/* BLOCO 3 — ORIENTAÇÃO DO DIA (núcleo; IA só aqui) */}
                     <section className="relative pl-12">
-                      <div className="absolute left-2 top-1.5 h-8 w-8 rounded-2xl bg-[var(--color-soft-bg)] border border-[var(--color-soft-strong)] flex items-center justify-center">
-                        <AppIcon name="info" size={16} className="text-[var(--color-brand)]" />
+                      <div className="absolute left-2 top-1.5 h-9 w-9 rounded-2xl bg-[#ffd8e6] border border-[#f5d7e5] flex items-center justify-center shadow-[0_10px_26px_rgba(253,37,151,0.14)]">
+                        <AppIcon name="info" size={16} className="text-[#b8236b]" />
                       </div>
 
-                      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        Orientação
-                      </p>
-                      <h2 className="mt-1 text-[18px] md:text-[20px] font-semibold text-[var(--color-text-main)]">
-                        Hoje, um norte simples
-                      </h2>
+                      <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">ORIENTAÇÃO</div>
+                      <div className="mt-1 text-[18px] md:text-[20px] font-semibold text-[#2f3a56]">Hoje, um norte simples</div>
 
-                      <p className="mt-2 text-[12px] md:text-[13px] text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
-                        {guidance?.text ? clampGuidanceText(guidance.text) : CARE_GUIDANCE_FALLBACK}
-                      </p>
+                      <div className="mt-2 text-[13px] md:text-[14px] text-[#6a6a6a] leading-relaxed max-w-2xl">
+                        {guidanceText}
+                      </div>
+
+                      {/* linha humana fixa de apoio (não IA) */}
+                      <div className="mt-2 text-[13px] md:text-[14px] text-[#6a6a6a] leading-relaxed max-w-2xl">
+                        Você não precisa organizar o dia inteiro para seguir. Só o próximo passo.
+                      </div>
                     </section>
 
                     {/* BLOCO 4 — MICRO CUIDADO (opcional e discreto) */}
                     <section className="relative pl-12">
-                      <div className="absolute left-2 top-1.5 h-8 w-8 rounded-2xl bg-white border border-[var(--color-soft-strong)] flex items-center justify-center">
-                        <AppIcon name="heart" size={16} className="text-[var(--color-brand)]" />
+                      <div className="absolute left-2 top-1.5 h-9 w-9 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
+                        <AppIcon name="heart" size={16} className="text-[#b8236b]" />
                       </div>
 
-                      <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[var(--color-brand)]">
-                        Micro cuidado
-                      </p>
-                      <h2 className="mt-1 text-[18px] md:text-[20px] font-semibold text-[var(--color-text-main)]">Opcional</h2>
+                      <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-[#b8236b]">MICRO CUIDADO</div>
+                      <div className="mt-1 text-[18px] md:text-[20px] font-semibold text-[#2f3a56]">Opcional</div>
 
-                      <p className="mt-1 text-[12px] md:text-[13px] text-[var(--color-text-muted)] leading-relaxed max-w-2xl">
-                        {micro}
-                      </p>
+                      <div className="mt-1 text-[12px] md:text-[13px] text-[#6a6a6a]">{micro}</div>
 
                       <div className="mt-4 flex flex-col sm:flex-row gap-2">
                         <button
                           type="button"
                           onClick={() => saveToMyDay(micro)}
-                          className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-brand)] text-white shadow-[0_10px_26px_rgba(253,37,151,0.30)] hover:opacity-95 transition"
+                          className={[
+                            'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold',
+                            'bg-[#ff005e] text-white',
+                            'shadow-[0_12px_30px_rgba(253,37,151,0.28)] hover:bg-[#e00070] transition',
+                          ].join(' ')}
                         >
                           Salvar no Meu Dia
                         </button>
@@ -548,16 +748,18 @@ export default function Client() {
                               track('cuidar_de_mim.micro.rotate', { ritmo })
                             } catch {}
                           }}
-                          className="rounded-full px-4 py-2 text-xs font-semibold border border-[var(--color-soft-strong)] bg-white hover:bg-[var(--color-soft-bg)] text-[var(--color-text-main)] transition"
+                          className={[
+                            'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold',
+                            'border border-[#f5d7e5] bg-white text-[#2f3a56]',
+                            'hover:bg-[#fff0f7] transition',
+                          ].join(' ')}
                         >
                           Me dá outra opção
                         </button>
                       </div>
 
                       {euSignal?.showLessLine ? (
-                        <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
-                          Hoje pode ser menos — e ainda assim conta.
-                        </p>
+                        <div className="mt-3 text-[12px] text-[#6a6a6a]">{lessLine}</div>
                       ) : null}
                     </section>
                   </div>
@@ -566,7 +768,7 @@ export default function Client() {
             </div>
           </section>
 
-          <div className="mt-6">
+          <div className="mt-8">
             <LegalFooter />
           </div>
 
