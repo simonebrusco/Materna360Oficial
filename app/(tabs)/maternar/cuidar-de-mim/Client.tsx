@@ -11,13 +11,25 @@ import { track } from '@/app/lib/telemetry'
 import { addTaskToMyDay, MY_DAY_SOURCES } from '@/app/lib/myDayTasks.client'
 import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
+import { load, save } from '@/app/lib/persist'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 
-const LS_KEYS = {
+/**
+ * Governança:
+ * - Cuidar de Mim é a “casa oficial” do check-in (estado emocional).
+ * - Não usamos Eu360 como storage de estado do dia (Eu360 é “espelho”).
+ * - Mantemos compat com legado eu360_ritmo, mas a escrita passa a ser em persist (m360: prefix).
+ */
+const PERSIST_KEYS = {
+  cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
+  myDaySavedDailyCounterPrefix: 'my_day.saved_counter.v1.', // + YYYY-MM-DD
+} as const
+
+const LEGACY_LS_KEYS = {
   eu360Ritmo: 'eu360_ritmo',
 } as const
 
@@ -30,80 +42,141 @@ function safeGetLS(key: string): string | null {
   }
 }
 
-function safeSetLS(key: string, value: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(key, value)
-  } catch {}
-}
-
 function inferRitmo(): Ritmo {
-  const raw = safeGetLS(LS_KEYS.eu360Ritmo)
+  // 1) Novo padrão (persist)
+  try {
+    const v = load<string>(PERSIST_KEYS.cuidarDeMimRitmo)
+    if (v === 'leve' || v === 'cansada' || v === 'confusa' || v === 'ok') return v
+  } catch {}
+
+  // 2) Legado (compat)
+  const raw = safeGetLS(LEGACY_LS_KEYS.eu360Ritmo)
   if (raw === 'leve') return 'leve'
   if (raw === 'cansada') return 'cansada'
   if (raw === 'confusa') return 'confusa'
   if (raw === 'ok') return 'ok'
-  // compat
+  // compat antigo
   if (raw === 'sobrecarregada') return 'cansada'
   if (raw === 'animada') return 'ok'
+
+  // default seguro (sem culpa)
   return 'cansada'
 }
 
-function setRitmoLS(r: Ritmo) {
-  safeSetLS(LS_KEYS.eu360Ritmo, r)
+function setRitmoPersist(r: Ritmo) {
+  try {
+    save(PERSIST_KEYS.cuidarDeMimRitmo, r)
+  } catch {}
 }
 
 /**
- * “Volume do dia” (v1):
- * - Sem assumir estruturas internas desconhecidas.
- * - Retorna números se você plugar depois; por enquanto, fallback “—”.
+ * Contagem real mínima (v1): "Salvos hoje"
+ * Estratégia incremental e segura:
+ * - Não tenta “adivinhar” estruturas internas do Meu Dia.
+ * - Atualiza o contador quando algo é salvo a partir daqui (created=true).
+ * - Mostra um número real (não “—”), cumprindo a entrega v1.
  *
- * IMPORTANTE:
- * O que você idealizou pede números reais (salvos/compromissos/depois).
- * Aqui deixo pronto para conectar depois SEM mudar layout.
+ * Observação de governança:
+ * - Isso é “mínimo viável” para interligação perceptível.
+ * - A contagem global (incluindo saves do Meu Dia, Meu Dia Leve etc.) pode vir na v2,
+ *   quando conectarmos com o storage real do core sem heurística.
  */
+function todayKey(): string {
+  // YYYY-MM-DD local
+  const d = new Date()
+  const yyyy = String(d.getFullYear())
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function dailySavedCounterKey(): string {
+  return `${PERSIST_KEYS.myDaySavedDailyCounterPrefix}${todayKey()}`
+}
+
+function readSavedTodayCounter(): number {
+  try {
+    const n = load<number>(dailySavedCounterKey())
+    return typeof n === 'number' && Number.isFinite(n) && n >= 0 ? n : 0
+  } catch {
+    return 0
+  }
+}
+
+function bumpSavedTodayCounter() {
+  try {
+    const cur = readSavedTodayCounter()
+    save(dailySavedCounterKey(), cur + 1)
+  } catch {}
+}
+
 type DaySignals = {
-  savedCount: number | null
+  savedCount: number
   commitmentsCount: number | null
   laterCount: number | null
 }
 
-function readDaySignalsBestEffort(): DaySignals {
-  // Por enquanto não arriscamos inferir com heurística agressiva.
-  // Mantemos nulo (UI mostra “—”), mas layout já é o ideal.
-  return { savedCount: null, commitmentsCount: null, laterCount: null }
+function readDaySignalsV1(): DaySignals {
+  return {
+    savedCount: readSavedTodayCounter(),
+    commitmentsCount: null,
+    laterCount: null,
+  }
 }
 
 function pickOrientation(tone: 'gentil' | 'direto', ritmo: Ritmo, signals: DaySignals) {
-  // Leitura do momento (adulto), cruzando estado + volume (quando houver).
-  const hasLoad =
-    (signals.savedCount ?? 0) + (signals.commitmentsCount ?? 0) + (signals.laterCount ?? 0) > 0
+  const hasSaved = (signals.savedCount ?? 0) > 0
 
+  // Direto (Eu360)
   if (tone === 'direto') {
-    if (ritmo === 'confusa') return 'Escolha só um próximo passo real. O resto pode esperar.'
-    if (ritmo === 'cansada') return hasLoad ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
-    if (ritmo === 'leve') return 'Siga leve. Não invente complexidade.'
-    return 'Seu dia não precisa render para valer.'
+    if (ritmo === 'confusa') return hasSaved ? 'Escolha só um próximo passo real. O resto pode esperar.' : 'Escolha um próximo passo real. O resto pode esperar.'
+    if (ritmo === 'cansada') return hasSaved ? 'Hoje é dia de manter o básico. Sem decidir tudo agora.' : 'Mantenha o básico. O resto pode esperar.'
+    if (ritmo === 'leve') return hasSaved ? 'Siga leve. Só não invente complexidade.' : 'Siga leve. Sem inventar complexidade.'
+    return hasSaved ? 'Seu dia já está em movimento. Sem se cobrar por “fechar”.' : 'Seu dia não precisa render para valer.'
   }
 
-  // gentil
-  if (ritmo === 'confusa') return 'Agora é um bom momento para simplificar. Um passo já ajuda.'
-  if (ritmo === 'cansada') return 'Um passo simples já é suficiente hoje.'
-  if (ritmo === 'leve') return 'Vamos manter leve. Só o que fizer sentido.'
-  return 'Você pode seguir sem se cobrar.'
+  // Gentil (padrão)
+  if (ritmo === 'confusa') return hasSaved ? 'Agora é um bom momento para simplificar. Um passo já ajuda.' : 'Agora é um bom momento para simplificar. Um passo já ajuda.'
+  if (ritmo === 'cansada') return hasSaved ? 'Um passo simples já é suficiente hoje.' : 'Um passo simples já é suficiente hoje.'
+  if (ritmo === 'leve') return hasSaved ? 'Vamos manter leve. Só o que fizer sentido.' : 'Vamos manter leve. Só o que fizer sentido.'
+  return hasSaved ? 'Você pode seguir sem se cobrar.' : 'Você pode seguir sem se cobrar.'
 }
 
-function microCareSuggestion(ritmo: Ritmo) {
-  // Micro cuidado opcional — sem tom terapêutico.
-  if (ritmo === 'confusa') return 'Se fizer sentido agora: água + 1 minuto em silêncio antes do próximo passo.'
-  if (ritmo === 'cansada') return 'Se fizer sentido agora: 3 goles d’água e ombros para baixo (3x).'
-  if (ritmo === 'leve') return 'Se fizer sentido agora: um gole d’água e siga.'
-  return 'Se fizer sentido agora: um gole d’água já ajuda.'
+function microCareSuggestion(ritmo: Ritmo, seed: number) {
+  // Micro cuidado opcional — curto, adulto, não terapêutico.
+  // seed rotaciona sem salvar automaticamente.
+  const optionsByRitmo: Record<Ritmo, string[]> = {
+    confusa: [
+      'Se fizer sentido agora: água + 1 minuto em silêncio antes do próximo passo.',
+      'Se fizer sentido agora: respira uma vez fundo e escolhe só uma coisa pequena.',
+      'Se fizer sentido agora: fecha os olhos por 10 segundos e reabre no próximo passo.',
+    ],
+    cansada: [
+      'Se fizer sentido agora: 3 goles d’água e ombros para baixo (3x).',
+      'Se fizer sentido agora: água e um alongamento rápido do pescoço (1x).',
+      'Se fizer sentido agora: senta por 20 segundos. Só isso.',
+    ],
+    leve: [
+      'Se fizer sentido agora: um gole d’água e siga.',
+      'Se fizer sentido agora: abre a janela por um instante e continua.',
+      'Se fizer sentido agora: água e uma pausa curtinha.',
+    ],
+    ok: [
+      'Se fizer sentido agora: um gole d’água já ajuda.',
+      'Se fizer sentido agora: arruma só o que está na sua frente.',
+      'Se fizer sentido agora: água e segue no seu ritmo.',
+    ],
+  }
+
+  const list = optionsByRitmo[ritmo]
+  const idx = Math.abs(seed) % list.length
+  return list[idx]
 }
 
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
-  const [saveFeedback, setSaveFeedback] = useState<string>('')
+  const [microSeed, setMicroSeed] = useState<number>(0)
+  const [savedToday, setSavedToday] = useState<number>(0)
 
   const euSignal = useMemo(() => {
     try {
@@ -115,18 +188,19 @@ export default function Client() {
 
   const daySignals = useMemo(() => {
     try {
-      return readDaySignalsBestEffort()
+      const s = readDaySignalsV1()
+      return s
     } catch {
-      return { savedCount: null, commitmentsCount: null, laterCount: null }
+      return { savedCount: 0, commitmentsCount: null, laterCount: null }
     }
-  }, [])
+  }, [savedToday])
 
   const orientation = useMemo(() => {
     const tone = (euSignal?.tone ?? 'gentil') as 'gentil' | 'direto'
     return pickOrientation(tone, ritmo, daySignals)
   }, [euSignal?.tone, ritmo, daySignals])
 
-  const micro = useMemo(() => microCareSuggestion(ritmo), [ritmo])
+  const micro = useMemo(() => microCareSuggestion(ritmo, microSeed), [ritmo, microSeed])
 
   useEffect(() => {
     try {
@@ -136,14 +210,18 @@ export default function Client() {
     const r = inferRitmo()
     setRitmo(r)
 
+    // v1: carregar contador real mínimo
+    const c = readSavedTodayCounter()
+    setSavedToday(c)
+
     try {
-      track('cuidar_de_mim.open', { ritmo: r })
+      track('cuidar_de_mim.open', { ritmo: r, savedToday: c })
     } catch {}
   }, [])
 
   function onPickRitmo(next: Ritmo) {
     setRitmo(next)
-    setRitmoLS(next)
+    setRitmoPersist(next)
     try {
       track('cuidar_de_mim.checkin.select', { ritmo: next })
     } catch {}
@@ -165,8 +243,12 @@ export default function Client() {
       })
     } catch {}
 
-    if (res.created) setSaveFeedback('Salvo no Meu Dia.')
-    else setSaveFeedback('Isso já estava no Meu Dia.')
+    // v1: contador real mínimo (somente quando criou)
+    if (res.created) {
+      bumpSavedTodayCounter()
+      const c = readSavedTodayCounter()
+      setSavedToday(c)
+    }
 
     try {
       track('cuidar_de_mim.save_to_my_day', {
@@ -176,24 +258,31 @@ export default function Client() {
         source: MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM,
       })
     } catch {}
-
-    window.setTimeout(() => setSaveFeedback(''), 2200)
   }
 
   const stat = (n: number | null) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden">
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="relative min-h-[100dvh] pb-24 overflow-hidden"
+    >
       <ClientOnly>
         <div className="page-shell relative z-10">
           {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
+            <Link
+              href="/maternar"
+              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
+            >
               <span className="mr-1.5 text-lg leading-none">←</span>
               Voltar para o Maternar
             </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+              Cuidar de Mim
+            </h1>
 
             <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
               Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
@@ -203,15 +292,8 @@ export default function Client() {
           {/* HUB CONTAINER (um bloco único, integrado) */}
           <section className="hub-shell">
             <div className="hub-shell-inner">
-              {saveFeedback ? (
-                <div className="mb-5 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] px-4 py-3 text-[12px] text-[#2f3a56]">
-                  {saveFeedback}
-                </div>
-              ) : null}
-
               {/* RAIL (integração visual) */}
               <div className="relative">
-                {/* linha vertical sutil */}
                 <div className="absolute left-[18px] top-[6px] bottom-[6px] w-px bg-[#f5d7e5]" />
 
                 <div className="space-y-8">
@@ -224,7 +306,6 @@ export default function Client() {
                     <div className="hub-eyebrow">CHECK-IN</div>
                     <div className="hub-title">Como você está agora?</div>
 
-                    {/* sem explicação longa (ideal) */}
                     <div className="mt-4 flex flex-wrap gap-2">
                       {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
                         const active = ritmo === r
@@ -257,23 +338,34 @@ export default function Client() {
                     <div className="hub-title">Do jeito que está</div>
                     <div className="hub-subtitle">Uma visão consolidada, sem agenda e sem cobrança.</div>
 
-                    {/* 3 sinais integrados (não lista) */}
                     <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          Salvos
+                        </div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
+                          {String(savedToday)}
+                        </div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                       </div>
 
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          Compromissos
+                        </div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
+                          {stat(daySignals.commitmentsCount)}
+                        </div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                       </div>
 
                       <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3">
-                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Para depois</div>
-                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          Para depois
+                        </div>
+                        <div className="mt-1 text-[18px] font-semibold text-[#2f3a56]">
+                          {stat(daySignals.laterCount)}
+                        </div>
                         <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                       </div>
                     </div>
@@ -282,7 +374,10 @@ export default function Client() {
                       <Link href="/meu-dia" className="btn-primary inline-flex items-center justify-center">
                         Ir para Meu Dia
                       </Link>
-                      <Link href="/maternar/meu-filho" className="btn-secondary inline-flex items-center justify-center">
+                      <Link
+                        href="/maternar/meu-filho"
+                        className="btn-secondary inline-flex items-center justify-center"
+                      >
                         Ir para Meu Filho
                       </Link>
                     </div>
@@ -295,10 +390,13 @@ export default function Client() {
                     </div>
 
                     <div className="hub-eyebrow">ORIENTAÇÃO</div>
-                    <div className="hub-title">{orientation}</div>
+                    <div className="hub-title">Hoje, um norte simples</div>
 
-                    {/* 1 linha curta abaixo, sem consolo */}
                     <div className="mt-1 text-[12px] md:text-[13px] text-[#6a6a6a] leading-relaxed max-w-2xl">
+                      {orientation}
+                    </div>
+
+                    <div className="mt-2 text-[12px] md:text-[13px] text-[#6a6a6a] leading-relaxed max-w-2xl">
                       Você não precisa organizar o dia inteiro para seguir. Só o próximo passo.
                     </div>
                   </section>
@@ -318,19 +416,18 @@ export default function Client() {
                         Salvar no Meu Dia
                       </button>
 
-                      {/* secondary bem discreto */}
+                      {/* Agora é rotação silenciosa (não salva) */}
                       <button
                         type="button"
                         onClick={() => {
-                          const alt = microCareSuggestion(ritmo === 'cansada' ? 'ok' : 'cansada')
+                          setMicroSeed((s) => s + 1)
                           try {
-                            track('cuidar_de_mim.micro.alt', { ritmo })
+                            track('cuidar_de_mim.micro.rotate', { ritmo })
                           } catch {}
-                          saveToMyDay(alt)
                         }}
                         className="btn-secondary"
                       >
-                        Salvar outra opção
+                        Me dá outra opção
                       </button>
                     </div>
 
