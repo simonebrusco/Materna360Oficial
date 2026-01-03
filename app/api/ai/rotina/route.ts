@@ -13,11 +13,12 @@ import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
 
 import { sanitizeMeuFilhoBloco2Suggestions } from '@/app/lib/ai/validators/bloco2'
+import { safeMeuFilhoBloco4Text } from '@/app/lib/ai/validators/bloco4'
 
 export const runtime = 'nodejs'
 
 type RotinaRequestBody = {
-  feature?: 'recipes' | 'quick-ideas'
+  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase-contexto'
   origin?: string
 
   // Campos pensados para Receitas Inteligentes
@@ -25,10 +26,20 @@ type RotinaRequestBody = {
   tipoRefeicao?: string | null
   tempoPreparoMinutos?: number | null
 
-  // Campos pensados para Ideias Rápidas
+  // Campos pensados para Ideias Rápidas (Blocos 1/2)
   tempoDisponivel?: number | null
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
+
+  // Campos Bloco 3 (micro-ritmos)
+  idade?: number | string | null
+  faixa_etaria?: string | null
+  momento_do_dia?: 'manhã' | 'tarde' | 'noite' | 'transição' | string | null
+  tipo_experiencia?: 'rotina' | 'conexao' | string | null
+  contexto?: string | null
+
+  // Campos Bloco 4 (fase/contexto)
+  momento_desenvolvimento?: 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia' | string | null
 }
 
 // Headers padrão para não cachear respostas de IA
@@ -70,7 +81,9 @@ function sanitizeMeuFilhoBloco1(
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
       ? Math.max(1, Math.round(tempoDisponivel))
-      : first.estimatedMinutes
+      : typeof first.estimatedMinutes === 'number'
+        ? first.estimatedMinutes
+        : 1
 
   const sanitized: RotinaQuickSuggestion = {
     ...first,
@@ -78,6 +91,41 @@ function sanitizeMeuFilhoBloco1(
     description,
     withChild: true,
     estimatedMinutes,
+  }
+
+  return [sanitized]
+}
+
+/**
+ * Bloco 4 (Meu Filho) — Validação canônica no servidor
+ * Regras:
+ * - Exatamente 1 frase
+ * - <= 140 caracteres
+ * - Tom observacional, sem normatividade / sem teoria
+ * - se falhar: retorna [] (fallback silencioso no client)
+ *
+ * Observação: Bloco 4 é “lente”, não lidera decisão.
+ * Aqui só garantimos contrato mínimo e seguro.
+ */
+function sanitizeMeuFilhoBloco4(
+  raw: RotinaQuickSuggestion[] | null | undefined,
+): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  if (!first) return []
+
+  const candidate = String(first.description ?? '').trim()
+  const cleaned = safeMeuFilhoBloco4Text(candidate)
+  if (!cleaned) return []
+
+  const sanitized: RotinaQuickSuggestion = {
+    ...first,
+    title: '',
+    description: cleaned,
+    withChild: true,
+    estimatedMinutes:
+      typeof first.estimatedMinutes === 'number' && Number.isFinite(first.estimatedMinutes)
+        ? first.estimatedMinutes
+        : 1,
   }
 
   return [sanitized]
@@ -100,32 +148,53 @@ export async function POST(req: Request) {
     }
 
     // -----------------------------------------
-    // 1) IDEIAS RÁPIDAS (modo quick-ideas)
+    // 1) IA “texto curto” (quick-ideas / micro-ritmos / fase-contexto)
     // -----------------------------------------
-    if (body.feature === 'quick-ideas') {
+    if (
+      body.feature === 'quick-ideas' ||
+      body.feature === 'micro-ritmos' ||
+      body.feature === 'fase-contexto'
+    ) {
+      // IMPORTANTÍSSIMO:
+      // - callMaternaAI só tem modes: 'quick-ideas' | 'smart-recipes'
+      // - micro-ritmos e fase-contexto também rodam como quick-ideas
+      // - passamos o payload do body como contexto (sem cache)
       const result = await callMaternaAI({
         mode: 'quick-ideas',
         profile,
         child,
         context: {
+          // legado / base
           tempoDisponivel: body.tempoDisponivel ?? null,
           comQuem: body.comQuem ?? null,
           tipoIdeia: body.tipoIdeia ?? null,
+
+          // bloco 3
+          idade: body.idade ?? null,
+          faixa_etaria: body.faixa_etaria ?? null,
+          momento_do_dia: body.momento_do_dia ?? null,
+          tipo_experiencia: body.tipo_experiencia ?? null,
+          contexto: body.contexto ?? null,
+
+          // bloco 4
+          momento_desenvolvimento: body.momento_desenvolvimento ?? null,
+
+          // rastreio/depuração (não obrigatório)
+          origin: body.origin ?? null,
+          feature: body.feature ?? null,
         },
       })
 
       // ✅ Guardrail canônico: Meu Filho — Bloco 1
       if (body.tipoIdeia === 'meu-filho-bloco-1') {
-        const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
+        const sanitized = sanitizeMeuFilhoBloco1(
+          result.suggestions,
+          body.tempoDisponivel ?? null,
+        )
 
         return NextResponse.json(
-          {
-            suggestions: sanitized, // pode ser [] para cair no fallback silencioso do client
-          },
-          {
-            status: 200,
-            headers: NO_STORE_HEADERS,
-          },
+          { suggestions: sanitized }, // pode ser [] para cair no fallback silencioso do client
+          { status: 200, headers: NO_STORE_HEADERS },
         )
       }
 
@@ -137,25 +206,25 @@ export async function POST(req: Request) {
         )
 
         return NextResponse.json(
-          {
-            suggestions: sanitized, // pode ser [] para fallback silencioso do client
-          },
-          {
-            status: 200,
-            headers: NO_STORE_HEADERS,
-          },
+          { suggestions: sanitized }, // pode ser [] para fallback silencioso do client
+          { status: 200, headers: NO_STORE_HEADERS },
         )
       }
 
-      // default: contrato original
+      // ✅ Guardrail canônico: Meu Filho — Bloco 4 (Fases / Contexto)
+      if (body.tipoIdeia === 'meu-filho-bloco-4') {
+        const sanitized = sanitizeMeuFilhoBloco4(result.suggestions)
+
+        return NextResponse.json(
+          { suggestions: sanitized }, // pode ser [] para fallback silencioso do client
+          { status: 200, headers: NO_STORE_HEADERS },
+        )
+      }
+
+      // default: contrato original (mantém compat)
       return NextResponse.json(
-        {
-          suggestions: result.suggestions ?? [],
-        },
-        {
-          status: 200,
-          headers: NO_STORE_HEADERS,
-        },
+        { suggestions: result.suggestions ?? [] },
+        { status: 200, headers: NO_STORE_HEADERS },
       )
     }
 
@@ -170,17 +239,14 @@ export async function POST(req: Request) {
         ingredientePrincipal: body.ingredientePrincipal ?? null,
         tipoRefeicao: body.tipoRefeicao ?? null,
         tempoPreparo: body.tempoPreparoMinutos ?? null,
+        origin: body.origin ?? null,
+        feature: body.feature ?? null,
       },
     })
 
     return NextResponse.json(
-      {
-        recipes: result.recipes ?? [],
-      },
-      {
-        status: 200,
-        headers: NO_STORE_HEADERS,
-      },
+      { recipes: result.recipes ?? [] },
+      { status: 200, headers: NO_STORE_HEADERS },
     )
   } catch (error) {
     if (error instanceof RateLimitError) {
