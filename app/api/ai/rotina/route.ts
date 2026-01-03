@@ -103,9 +103,6 @@ function sanitizeMeuFilhoBloco1(
  * - <= 140 caracteres
  * - Tom observacional, sem normatividade / sem teoria
  * - se falhar: retorna [] (fallback silencioso no client)
- *
- * Observação: Bloco 4 é “lente”, não lidera decisão.
- * Aqui só garantimos contrato mínimo e seguro.
  */
 function sanitizeMeuFilhoBloco4(
   raw: RotinaQuickSuggestion[] | null | undefined,
@@ -148,49 +145,54 @@ export async function POST(req: Request) {
     }
 
     // -----------------------------------------
-    // 1) IA “texto curto” (quick-ideas / micro-ritmos / fase-contexto)
+    // 1) IDEIAS RÁPIDAS / MICRO-RITMOS / FASE-CONTEXTO
     // -----------------------------------------
     if (
       body.feature === 'quick-ideas' ||
       body.feature === 'micro-ritmos' ||
       body.feature === 'fase-contexto'
     ) {
-      // IMPORTANTÍSSIMO:
-      // - callMaternaAI só tem modes: 'quick-ideas' | 'smart-recipes'
-      // - micro-ritmos e fase-contexto também rodam como quick-ideas
-      // - passamos o payload do body como contexto (sem cache)
+      /**
+       * IMPORTANTE:
+       * callMaternaAI tipa context como RotinaQuickIdeasContext.
+       * Bloco 3 e 4 precisam enviar chaves extras (idade/faixa_etaria/etc).
+       * Para não mexer no maternaCore agora, usamos "any" aqui.
+       */
+      const context: any = {
+        tempoDisponivel: body.tempoDisponivel ?? null,
+        comQuem: body.comQuem ?? null,
+        tipoIdeia: body.tipoIdeia ?? null,
+        origin: body.origin ?? null,
+        feature: body.feature ?? null,
+      }
+
+      // Bloco 3 — micro-ritmos (continuidade)
+      if (body.feature === 'micro-ritmos' || body.tipoIdeia === 'meu-filho-bloco-3') {
+        context.idade = body.idade ?? null
+        context.faixa_etaria = body.faixa_etaria ?? null
+        context.momento_do_dia = body.momento_do_dia ?? null
+        context.tipo_experiencia = body.tipo_experiencia ?? null
+        context.contexto = body.contexto ?? null
+      }
+
+      // Bloco 4 — fase/contexto (lente prática)
+      if (body.feature === 'fase-contexto' || body.tipoIdeia === 'meu-filho-bloco-4') {
+        context.idade = body.idade ?? null
+        context.faixa_etaria = body.faixa_etaria ?? null
+        context.momento_desenvolvimento = body.momento_desenvolvimento ?? null
+        context.contexto = body.contexto ?? 'fase'
+      }
+
       const result = await callMaternaAI({
         mode: 'quick-ideas',
         profile,
         child,
-        context: {
-          // legado / base
-          tempoDisponivel: body.tempoDisponivel ?? null,
-          comQuem: body.comQuem ?? null,
-          tipoIdeia: body.tipoIdeia ?? null,
-
-          // bloco 3
-          idade: body.idade ?? null,
-          faixa_etaria: body.faixa_etaria ?? null,
-          momento_do_dia: body.momento_do_dia ?? null,
-          tipo_experiencia: body.tipo_experiencia ?? null,
-          contexto: body.contexto ?? null,
-
-          // bloco 4
-          momento_desenvolvimento: body.momento_desenvolvimento ?? null,
-
-          // rastreio/depuração (não obrigatório)
-          origin: body.origin ?? null,
-          feature: body.feature ?? null,
-        },
-      })
+        context, // <- any
+      } as any)
 
       // ✅ Guardrail canônico: Meu Filho — Bloco 1
       if (body.tipoIdeia === 'meu-filho-bloco-1') {
-        const sanitized = sanitizeMeuFilhoBloco1(
-          result.suggestions,
-          body.tempoDisponivel ?? null,
-        )
+        const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
 
         return NextResponse.json(
           { suggestions: sanitized }, // pode ser [] para cair no fallback silencioso do client
@@ -221,7 +223,7 @@ export async function POST(req: Request) {
         )
       }
 
-      // default: contrato original (mantém compat)
+      // default: contrato original
       return NextResponse.json(
         { suggestions: result.suggestions ?? [] },
         { status: 200, headers: NO_STORE_HEADERS },
@@ -241,7 +243,7 @@ export async function POST(req: Request) {
         tempoPreparo: body.tempoPreparoMinutos ?? null,
         origin: body.origin ?? null,
         feature: body.feature ?? null,
-      },
+      } as any,
     })
 
     return NextResponse.json(
