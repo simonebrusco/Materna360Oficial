@@ -42,6 +42,7 @@ export type RotinaTipoIdeia =
   | 'organizacao'
   | 'autocuidado'
   | 'receita-rapida'
+  | 'meu-filho-bloco-1'
   // Hub Meu Filho — blocos canônicos
   | 'meu-filho-bloco-1'
   | 'meu-filho-bloco-2'
