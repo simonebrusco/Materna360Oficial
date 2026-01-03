@@ -49,22 +49,6 @@ type Kit = {
   connection: { label: string; note: string }
 }
 
-type RotinaQuickSuggestion = {
-  id: string
-  category: 'ideia-rapida'
-  title: string
-  description: string
-  estimatedMinutes?: number
-  withChild: boolean
-  moodImpact?: 'acalma' | 'energia' | 'organiza' | 'aproxima'
-}
-
-type AIState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'done'; item: { text: string } }
-  | { status: 'error'; message: string }
-
 const LS_PREFIX = 'm360:'
 
 function safeGetLS(key: string): string | null {
@@ -203,85 +187,88 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 }
 
 /* =========================
-   AI — Bloco 1 (Canônico)
+   BLOCO 1 — CANÔNICO (fallback silencioso)
 ========================= */
 
-function clampText(raw: string, max = 280) {
-  const s = String(raw ?? '').replace(/\s+/g, ' ').trim()
-  if (s.length <= max) return s
-  return s.slice(0, max).trim()
+const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
+  '0-2': {
+    '5': 'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
+    '10': 'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
+    '15': 'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
+  },
+  '3-4': {
+    '5': 'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
+    '10': 'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
+    '15': 'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
+  },
+  '5-6': {
+    '5': 'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
+    '10': 'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
+    '15': 'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
+  },
+  '6+': {
+    '5': 'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
+    '10': 'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
+    '15': 'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
+  },
 }
 
-function countSentences(s: string) {
-  const t = String(s ?? '').trim()
-  if (!t) return 0
-  const matches = t.match(/[.!?]+/g)
-  return matches ? matches.length : 1
+function clampBloquinhoText(raw: string): string {
+  const s = String(raw ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/\u2028|\u2029/g, ' ')
+    .trim()
+
+  if (!s) return s
+
+  // limita a 3 “frases” por pontuação final comum
+  const parts = s.split(/(?<=[.!?])\s+/).filter(Boolean)
+  const first3 = parts.slice(0, 3).join(' ').trim()
+
+  // limita a 280 chars
+  if (first3.length <= 280) return first3
+  return first3.slice(0, 279).trimEnd()
 }
 
-function looksLikeList(s: string) {
-  const t = String(s ?? '')
-  if (t.includes('\n')) return true
-  if (/\s[-•]\s/.test(t)) return true
-  if (/(^|\s)\d+\)\s/.test(t)) return true
-  if (/(^|\s)\d+\.\s/.test(t)) return true
-  return false
-}
+type Bloco1State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; text: string; source: 'ai' | 'fallback' }
 
-function isCanonicalBloco1Text(s: string) {
-  const t = clampText(s, 280)
-  if (!t) return false
-  if (t.length > 280) return false
-  if (countSentences(t) > 3) return false
-  if (looksLikeList(t)) return false
+async function fetchBloco1Plan(args: {
+  tempoDisponivel: number
+}): Promise<string | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        feature: 'quick-ideas',
+        origin: 'maternar/meu-filho',
+        tempoDisponivel: args.tempoDisponivel,
+        comQuem: 'eu-e-meu-filho',
+        tipoIdeia: 'meu-filho-bloco-1',
+      }),
+    })
 
-  // bloqueia linguagem condicional óbvia (best-effort)
-  const lowered = t.toLowerCase()
-  const banned = ['você pode', 'que tal', 'uma ideia', 'talvez', 'se quiser', 'se você quiser']
-  if (banned.some((b) => lowered.includes(b))) return false
+    if (!res.ok) return null
 
-  return true
-}
+    const data = (await res.json().catch(() => null)) as
+      | { suggestions?: { description?: string }[] }
+      | null
 
-async function fetchMeuFilhoBloco1(args: { minutes: number; tipoExperiencia: 'brincar' | 'rotina' | 'conexao' }) {
-  const res = await fetch('/api/ai/rotina', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    cache: 'no-store',
-    body: JSON.stringify({
-      feature: 'quick-ideas',
-      origin: 'maternar/meu-filho',
-      tempoDisponivel: args.minutes,
-      comQuem: 'eu-e-meu-filho',
-      tipoIdeia: 'meu-filho-bloco-1',
-      // não quebra o endpoint; serve como pista para evolução futura (se o backend passar adiante)
-      tipoExperiencia: args.tipoExperiencia,
-      momento: 'agora',
-    }),
-  })
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => null)
-    const msg = data?.error ? String(data.error) : 'Falha ao gerar sugestão agora.'
-    throw new Error(msg)
+    const desc = data?.suggestions?.[0]?.description
+    const cleaned = clampBloquinhoText(desc ?? '')
+    if (!cleaned) return null
+    return cleaned
+  } catch {
+    return null
   }
-
-  const data = (await res.json()) as { suggestions?: RotinaQuickSuggestion[] }
-  const first = data?.suggestions?.[0]
-  if (!first?.description) {
-    throw new Error('Não consegui gerar uma sugestão agora.')
-  }
-
-  const text = clampText(first.description, 280)
-  if (!isCanonicalBloco1Text(text)) {
-    throw new Error('Sugestão fora do formato. Tente novamente.')
-  }
-
-  return { text }
 }
 
 /* =========================
-   KITS (fallback / baseline)
+   KITS (catálogo local / fallback geral)
 ========================= */
 
 const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
@@ -356,7 +343,7 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       },
       development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um mini ritual pré-janta (2 min) organiza o resto do período.' },
-      connection: { label: 'Toque de conexão', note: 'Toque no ombro + olhar nos olhos por 5 segundos.' },
+      connection: { label: 'Gesto de conexão', note: 'Toque no ombro + olhar nos olhos por 5 segundos.' },
     },
     '15': {
       id: 'k-3-4-15',
@@ -472,9 +459,9 @@ export default function MeuFilhoClient() {
   const [childLabel, setChildLabel] = useState<string | undefined>(undefined)
   const [profileSource, setProfileSource] = useState<ProfileSource>('none')
 
-  const [aiB1, setAiB1] = useState<AIState>({ status: 'idle' })
-  const aiAbortRef = useRef<AbortController | null>(null)
-  const aiReqIdRef = useRef(0)
+  // Bloco 1 (canônico)
+  const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
+  const bloco1ReqSeq = useRef(0)
 
   useEffect(() => {
     try {
@@ -504,6 +491,41 @@ export default function MeuFilhoClient() {
 
   const kit = useMemo(() => KITS[age][time], [age, time])
   const selected = useMemo(() => kit.plan[chosen], [kit, chosen])
+
+  // Sempre que time/age mudar, (re)gera Bloco 1 automaticamente (sem botão de “trocar”).
+  useEffect(() => {
+    let alive = true
+    const seq = ++bloco1ReqSeq.current
+
+    async function run() {
+      setBloco1({ status: 'loading' })
+
+      const tempoDisponivel = Number(time)
+      const ai = await fetchBloco1Plan({ tempoDisponivel })
+
+      // evita corrida
+      if (!alive || seq !== bloco1ReqSeq.current) return
+
+      if (ai) {
+        setBloco1({ status: 'done', text: ai, source: 'ai' })
+        try {
+          track('meu_filho.bloco1.done', { source: 'ai', time, age })
+        } catch {}
+        return
+      }
+
+      const fb = clampBloquinhoText(BLOCO1_FALLBACK[age][time])
+      setBloco1({ status: 'done', text: fb, source: 'fallback' })
+      try {
+        track('meu_filho.bloco1.done', { source: 'fallback', time, age })
+      } catch {}
+    }
+
+    run()
+    return () => {
+      alive = false
+    }
+  }, [time, age])
 
   function go(next: Step) {
     setStep(next)
@@ -545,7 +567,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  function saveSelectedToMyDay() {
+  function saveSelectedToMyDay(title: string) {
     const ORIGIN = 'family' as const
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
 
@@ -560,46 +582,8 @@ export default function MeuFilhoClient() {
       return
     }
 
-    // Se Bloco 1 AI estiver ativo, salva o texto canônico (sem título)
-    if (aiB1.status === 'done') {
-      const res = addTaskToMyDay({
-        title: aiB1.item.text,
-        origin: ORIGIN,
-        source: SOURCE,
-      })
-
-      if (res.limitHit) {
-        toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
-        try {
-          track('my_day.task.add.blocked', {
-            source: SOURCE,
-            origin: ORIGIN,
-            reason: 'open_tasks_limit_hit',
-            dateKey: res.dateKey,
-          })
-        } catch {}
-        return
-      }
-
-      if (res.created) toast.success('Salvo no Meu Dia')
-      else toast.info('Já estava no Meu Dia')
-
-      try {
-        track('my_day.task.add', {
-          ok: !!res.ok,
-          created: !!res.created,
-          origin: ORIGIN,
-          source: SOURCE,
-          dateKey: res.dateKey,
-          payload: 'ai_bloco_1',
-        })
-      } catch {}
-      return
-    }
-
-    // Fallback: salva o título do card selecionado (baseline atual)
     const res = addTaskToMyDay({
-      title: selected.title,
+      title,
       origin: ORIGIN,
       source: SOURCE,
     })
@@ -628,7 +612,6 @@ export default function MeuFilhoClient() {
         origin: ORIGIN,
         source: SOURCE,
         dateKey: res.dateKey,
-        payload: 'kit_fallback',
       })
     } catch {}
   }
@@ -638,51 +621,7 @@ export default function MeuFilhoClient() {
     toast.success('Registrado na sua Jornada')
   }
 
-  const tipoExperiencia = useMemo(() => {
-    // Bloco 1 canônico usa o "momento agora"; mapeamos pelo step como pista interna.
-    if (step === 'rotina') return 'rotina' as const
-    if (step === 'conexao') return 'conexao' as const
-    return 'brincar' as const
-  }, [step])
-
-  const minutes = useMemo(() => (time === '5' ? 5 : time === '10' ? 10 : 15), [time])
-
-  async function regenerateBloco1() {
-    const currentReqId = ++aiReqIdRef.current
-
-    // abort request anterior
-    try {
-      aiAbortRef.current?.abort()
-    } catch {}
-    const controller = new AbortController()
-    aiAbortRef.current = controller
-
-    setAiB1({ status: 'loading' })
-    try {
-      const res = await fetchMeuFilhoBloco1({ minutes, tipoExperiencia })
-      // evita race conditions
-      if (aiReqIdRef.current !== currentReqId) return
-      setAiB1({ status: 'done', item: res })
-      try {
-        track('meu_filho.ai.bloco1.done', { minutes, tipoExperiencia })
-      } catch {}
-    } catch (e) {
-      if (aiReqIdRef.current !== currentReqId) return
-      const msg = e instanceof Error ? e.message : 'Não consegui gerar agora.'
-      setAiB1({ status: 'error', message: msg })
-      try {
-        track('meu_filho.ai.bloco1.error', { minutes, tipoExperiencia, msg })
-      } catch {}
-    }
-  }
-
-  // Gera automaticamente quando entrar no hub / mudar tempo/faixa (sem exigir ação)
-  useEffect(() => {
-    // Bloco 1 é o “agora”; só faz sentido no passo Brincadeiras.
-    if (step !== 'brincadeiras') return
-    regenerateBloco1()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, minutes, age])
+  const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
 
   return (
     <main
@@ -715,11 +654,10 @@ export default function MeuFilhoClient() {
                 Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
               </p>
 
-              {/* micro-sinal de personalização (sem chamar atenção) */}
               {childLabel ? (
                 <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
                   Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
-                  {/* Debug only (P26: não mostrar em produção) */}
+                  {/* Debug only */}
                   {/* {process.env.NODE_ENV !== 'production' ? <span className="opacity-70"> • fonte: {profileSource}</span> : null} */}
                 </div>
               ) : null}
@@ -859,125 +797,143 @@ export default function MeuFilhoClient() {
                         shadow-[0_6px_18px_rgba(184,35,107,0.09)]
                       "
                     >
+                      {/* =========================
+                          BLOCO 1 — CANÔNICO
+                          1 texto, 0 opções, plano fechado
+                      ========================= */}
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                          <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
                         </div>
                         <div className="space-y-1">
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Brincadeiras do dia
+                            Plano pronto para agora
                           </span>
-
-                          {/* Mantém “moldura” do kit para não mexer no layout */}
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
-
-                          {/* Aqui entra o texto canônico do Bloco 1 (sem título) */}
                           <p className="text-[13px] text-[#6a6a6a]">
-                            {aiB1.status === 'loading'
-                              ? 'Gerando um plano pronto para agora…'
-                              : aiB1.status === 'done'
-                                ? aiB1.item.text
-                                : kit.subtitle}
+                            Você só executa. Sem decidir nada.
                           </p>
-
-                          {aiB1.status === 'error' ? (
-                            <div className="mt-2 text-[12px] text-[#6a6a6a]">
-                              Não consegui gerar agora. Você ainda pode usar o plano abaixo.
-                            </div>
-                          ) : null}
                         </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {(['a', 'b', 'c'] as const).map((k) => {
-                          const it = kit.plan[k]
-                          const active = chosen === k
-                          return (
-                            <button
-                              key={k}
-                              onClick={() => onChoose(k)}
-                              className={[
-                                'rounded-2xl border p-4 text-left transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                {it.tag} • {timeLabel(it.time)}
-                              </div>
-                              <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
-                              <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{it.how}</div>
-                            </button>
-                          )
-                        })}
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                              faça agora
-                            </div>
-
-                            {/* Bloco 1 canônico: sem título; mostramos só o texto. */}
-                            {aiB1.status === 'done' ? (
-                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{aiB1.item.text}</div>
-                            ) : (
-                              <>
-                                <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
-                              </>
-                            )}
+                        {bloco1.status === 'loading' ? (
+                          <div className="text-[13px] text-[#6a6a6a]">
+                            Gerando um plano pronto para agora…
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={regenerateBloco1}
-                            className="
-                              shrink-0
-                              rounded-full
-                              bg-white
-                              border border-[#f5d7e5]
-                              text-[#2f3a56]
-                              px-3 py-2 text-[12px]
-                              hover:bg-[#ffe1f1]
-                              transition
-                            "
-                            title="Gerar outra sugestão pronta para agora"
-                          >
-                            Trocar
-                          </button>
-                        </div>
+                        ) : (
+                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">
+                            {bloco1Text}
+                          </div>
+                        )}
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Fechar com conexão
-                          </button>
-
-                          <button
                             type="button"
-                            onClick={saveSelectedToMyDay}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            title="Salvar esta sugestão no Meu Dia"
+                            disabled={bloco1.status !== 'done'}
+                            onClick={() => {
+                              if (!bloco1Text) return
+                              saveSelectedToMyDay(bloco1Text)
+                              try {
+                                track('meu_filho.bloco1.save', { time, age, source: bloco1.status === 'done' ? bloco1.source : 'unknown' })
+                              } catch {}
+                            }}
+                            className={[
+                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+                              bloco1.status === 'done'
+                                ? 'bg-[#fd2597] text-white hover:opacity-95'
+                                : 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed',
+                            ].join(' ')}
+                            title="Salvar este plano no Meu Dia"
                           >
                             Salvar no Meu Dia
                           </button>
 
                           <button
-                            onClick={() => go('rotina')}
+                            onClick={() => go('conexao')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Ajuste de rotina
+                            Fechar com conexão
                           </button>
+                        </div>
+                      </div>
 
-                          <button
-                            onClick={() => go('desenvolvimento')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Entender a fase
-                          </button>
+                      {/* =========================
+                          BLOCO 2 (TEMPORÁRIO / CATÁLOGO LOCAL)
+                          Mantido para não remover funcionalidades existentes.
+                      ========================= */}
+                      <div className="mt-6 border-t border-[#f5d7e5] pt-5">
+                        <div className="flex items-start gap-3">
+                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                            <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                              Brincadeiras do dia
+                            </span>
+                            <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
+                            <p className="text-[13px] text-[#6a6a6a]">{kit.subtitle}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {(['a', 'b', 'c'] as const).map((k) => {
+                            const it = kit.plan[k]
+                            const active = chosen === k
+                            return (
+                              <button
+                                key={k}
+                                onClick={() => onChoose(k)}
+                                className={[
+                                  'rounded-2xl border p-4 text-left transition',
+                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                ].join(' ')}
+                              >
+                                <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                                  {it.tag} • {timeLabel(it.time)}
+                                </div>
+                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
+                                <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{it.how}</div>
+                              </button>
+                            )
+                          })}
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">opção selecionada</div>
+                          <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => go('conexao')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Fechar com conexão
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => saveSelectedToMyDay(selected.title)}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                              title="Salvar esta sugestão no Meu Dia"
+                            >
+                              Salvar no Meu Dia
+                            </button>
+
+                            <button
+                              onClick={() => go('rotina')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ajuste de rotina
+                            </button>
+
+                            <button
+                              onClick={() => go('desenvolvimento')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Entender a fase
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </SoftCard>
