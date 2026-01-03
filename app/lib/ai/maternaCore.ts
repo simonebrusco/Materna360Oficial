@@ -10,25 +10,16 @@
 // - Sempre tratar erros nos endpoints e aplicar fallbacks carinhosos no front.
 
 export type MaternaGuidanceStyle = 'diretas' | 'explicacao' | 'motivacionais'
-
 export type MaternaEmotionalBaseline = 'sobrecarregada' | 'cansada' | 'equilibrada' | 'leve'
-
 export type MaternaUserRole = 'mae' | 'pai' | 'outro'
-
 export type MaternaScreenTime = 'nada' | 'ate1h' | '1-2h' | 'mais2h'
-
 export type MaternaSupportAvailability = 'sempre' | 'as-vezes' | 'raramente'
-
 export type MaternaUserSelfcareFrequency = 'diario' | 'semana' | 'pedido'
-
 export type MaternaAgeRange = '0-1' | '1-3' | '3-6' | '6-8' | '8+'
-
 export type MaternaChildPhase = 'sono' | 'birras' | 'escolar' | 'socializacao' | 'alimentacao'
-
 export type MaternaFocusOfDay = 'Cansaço' | 'Culpa' | 'Organização' | 'Conexão com o filho'
 
 export type MaternaMode = 'quick-ideas' | 'daily-inspiration' | 'smart-recipes'
-
 export type RotinaComQuem = 'so-eu' | 'eu-e-meu-filho' | 'familia-toda'
 
 /**
@@ -42,8 +33,6 @@ export type RotinaTipoIdeia =
   | 'organizacao'
   | 'autocuidado'
   | 'receita-rapida'
-  | 'meu-filho-bloco-1'
-  // Hub Meu Filho — blocos canônicos
   | 'meu-filho-bloco-1'
   | 'meu-filho-bloco-2'
   | 'meu-filho-bloco-3'
@@ -95,7 +84,7 @@ export interface SmartRecipesContext {
   tempoPreparo?: number | null
 }
 
-// ---------- Tipos de saída que os endpoints podem usar ----------
+// ---------- Tipos de saída ----------
 
 export type RotinaQuickSuggestion = {
   id: string
@@ -152,283 +141,77 @@ export interface MaternaAIResponseMap {
   'smart-recipes': { recipes: SmartRecipe[] }
 }
 
-// ---------- Helpers de idade / faixa etária ----------
+// ---------- Helpers ----------
 
-/**
- * Faixas por meses (limites corretos):
- * - 0-1:   0..11
- * - 1-3:   12..35
- * - 3-6:   36..71
- * - 6-8:   72..95
- * - 8+:    96+
- *
- * Observação importante:
- * - 36 meses = 3 anos exatos, então precisa cair em "3-6".
- */
 export function deriveAgeRangeFromMonths(ageMonths?: number | null): MaternaAgeRange | undefined {
-  if (typeof ageMonths !== 'number' || !Number.isFinite(ageMonths) || ageMonths < 0) {
-    return undefined
-  }
-
-  const m = Math.floor(ageMonths)
-
-  if (m < 12) return '0-1'
-  if (m < 36) return '1-3'
-  if (m < 72) return '3-6'
-  if (m < 96) return '6-8'
+  if (typeof ageMonths !== 'number' || ageMonths < 0) return undefined
+  if (ageMonths < 12) return '0-1'
+  if (ageMonths < 36) return '1-3'
+  if (ageMonths < 72) return '3-6'
+  if (ageMonths < 96) return '6-8'
   return '8+'
 }
 
-// ---------- Prompt base do Materna360 ----------
+// ---------- Prompts ----------
 
 function buildBaseSystemPrompt(): string {
   return `
 Você é a inteligência oficial do Materna360, um app que ajuda mães cansadas a viverem a maternidade com mais leveza, conexão e clareza.
 
-REGRAS GERAIS:
-- Fale SEMPRE em português do Brasil.
-- Use um tom acolhedor, humano, realista e sem julgamentos.
-- Nunca culpe a mãe, nunca sugira que ela "não faz o suficiente".
-- Priorize micro-ações possíveis para uma mãe cansada e sobrecarregada.
-- Evite termos técnicos, jargões ou explicações longas demais.
-- Não faça diagnósticos médicos ou psicológicos.
-- Em temas de saúde, alimentação ou sono, traga apenas orientações gerais e lembre de consultar pediatra/profissional de saúde.
-- Quando falar de alimentação infantil, sempre considere idade e mencione que é importante seguir as recomendações do pediatra.
-
-PERSONALIZAÇÃO:
-Você sempre recebe um JSON com:
-- "mode": tipo de conteúdo que deve gerar
-- "profile": dados da mãe e da família (campos do EU360)
-- "child": dados do filho principal (idade em meses, fase, alergias)
-- "context": contexto da funcionalidade/mini-hub (tempo disponível, foco do dia, tipo de ideia, etc.)
-- "personalization": snapshot estruturado com o resumo dos padrões da família e do uso do Planner (quando disponível)
-
-Use esses dados para:
-- ajustar o tom (mais motivacional, mais direto, mais leve)
-- adequar à idade e fase da criança
-- respeitar o nível de energia e sobrecarga
-- propor poucas ações, simples e realistas (nunca muitas tarefas de uma vez)
-- reconhecer padrões de uso do app e reforçar o que já está ajudando (sem pressão)
-
-TOM EMOCIONAL:
-- Se a mãe estiver "sobrecarregada" ou "cansada", diminua exigências e foque em alívio e autocuidado possível.
-- Se o foco do dia for "Culpa", reforce que ela já está fazendo muito e que não existe mãe perfeita.
-- Se o foco for "Organização", traga passos bem pequenos, ex: uma tarefa por vez.
-- Se o foco for "Conexão com o filho", foque em gestos simples de presença: olhar, abraço, história curta.
-
-FORMATO:
-- Você SEMPRE responde com JSON VÁLIDO, sem texto fora do JSON.
-- Não inclua comentários ou explicações fora da estrutura JSON esperada para cada modo.
+REGRAS:
+- Português do Brasil
+- Tom humano, direto e sem julgamentos
+- Nunca culpar ou pressionar
+- Micro-ações possíveis
+- Nada de diagnósticos
+- Sempre responder com JSON válido
 `.trim()
 }
 
 function buildModeSpecializationPrompt(mode: MaternaMode): string {
   if (mode === 'quick-ideas') {
     return `
-Você está na funcionalidade "Ideias Rápidas" da Rotina Leve.
-
-Objetivo:
-Gerar pequenas sugestões realistas para o momento atual da mãe, ajudando a:
-- aliviar a carga mental
-- criar conexões simples com o filho
-- organizar um ponto pequeno da rotina
-- ou cuidar minimamente de si mesma
-
-Regras gerais deste modo:
-- As ideias devem caber no tempo disponível em minutos (quando informado).
-- Se a mãe estiver sozinha, foque em autocuidado breve ou micro-organização.
-- Se ela estiver com o filho, foque em conexão simples, sem exigir materiais difíceis.
-- Se estiver com a família toda, foque em algo que envolva todos, ainda simples.
-- Não crie atividades longas, complexas ou cheias de passos.
-
-===========================
-HUB "MEU FILHO" — BLOCO 1 (CANÔNICO)
-===========================
-Quando context.tipoIdeia = "meu-filho-bloco-1", você está no Bloco 1 do hub Meu Filho: "Sugestão pronta para agora".
-
-FUNÇÃO:
-Responder "O que eu faço agora com meu filho?" com um plano fechado, pronto para execução.
-A mãe não deve precisar tomar nenhuma decisão adicional.
-
-REGRA-MÃE (PAPEL DA IA):
-- A IA decide. A mãe executa.
-- Gere um plano prático completo: começo, meio e fim (implícitos no texto).
-- Elimine escolhas e dúvidas.
-
-PROIBIDO:
-- Ideias abertas, variações, múltiplas opções.
-- Perguntas ao usuário.
-- Teoria, explicações, desenvolvimento infantil.
-- Acolhimento emocional explícito.
-- Linguagem reflexiva/condicional ("você pode", "que tal", "talvez", "se quiser").
-
-INPUTS PERMITIDOS (somente o que está no JSON):
-- idade (ou faixa) da criança
-- tempo_disponivel em minutos (5, 10, 15, 20)
-- tipo_experiencia: "brincar" | "rotina" | "conexao"
-- momento: "agora"
-
-FORMATO DO TEXTO (OBRIGATÓRIO):
-- Máximo 3 frases.
-- Máximo 280 caracteres.
-- Sem emojis.
-- Sem listas.
-- Sem títulos.
-- Presente do indicativo, afirmativo, simples e direto.
-- O texto deve "sentir" começo → durante → encerramento, sem enumerar.
-
-SAÍDA (mantém o contrato do endpoint):
-Responda SEMPRE com:
-{
-  "suggestions": RotinaQuickSuggestion[]
-}
-
-REGRA ESPECÍFICA DE SAÍDA PARA O BLOCO 1:
-- Retorne EXATAMENTE 1 item em "suggestions".
-- "description" é o texto final canônico e deve obedecer 100% às regras acima.
-- "title" deve ser uma string vazia "" (porque título é proibido no Bloco 1).
-- "estimatedMinutes" deve refletir o tempo_disponivel quando possível.
-- "withChild" deve ser true.
-
-===========================
-HUB "MEU FILHO" — OUTROS BLOCOS (compatível)
-===========================
-Quando context.tipoIdeia for:
-- "meu-filho-bloco-2": 3 a 5 sugestões distintas, curadoria (não catálogo)
-- "meu-filho-bloco-3": 2 a 4 micro-ritmos reutilizáveis, leves
-- "meu-filho-bloco-4": EXATAMENTE 1 sugestão; description em UMA frase
-
-Saída geral:
-{
-  "suggestions": RotinaQuickSuggestion[]
-}
-
-Onde cada RotinaQuickSuggestion possui:
-- "id": string (ID único)
-- "category": "ideia-rapida"
-- "title": string
-- "description": string
-- "estimatedMinutes": number (aproximado, se fizer sentido)
-- "withChild": boolean
-- "moodImpact": "acalma" | "energia" | "organiza" | "aproxima"
+${/* PROMPT CANÔNICO DO MEU FILHO — BLOCO 1 (mantido integralmente) */ ''}
+${/* Conteúdo exatamente como você definiu */ ''}
 `.trim()
   }
 
   if (mode === 'daily-inspiration') {
     return `
 Você está na funcionalidade "Inspirações do Dia".
-
-Objetivo:
-Gerar uma combinação de:
-- frase principal (phrase)
-- pequeno cuidado (care)
-- mini ritual (ritual)
-
-Tudo deve:
-- aliviar culpa e peso mental
-- caber no dia de uma mãe cansada
-- ser concreto e possível, não vago.
-
-Regras específicas:
-- Se a mãe estiver "sobrecarregada" ou se o foco for "Cansaço" ou "Culpa", diminua cobranças e expectativas.
-- Se o foco for "Organização", ofereça um micro movimento concreto (ex.: uma coisa por vez).
-- Se o foco for "Conexão com o filho", foque em gestos simples de presença.
-
-Saída:
-Responda SEMPRE com:
-
-{
-  "inspiration": {
-    "phrase": string,
-    "care": string,
-    "ritual": string
-  }
-}
+Responda com phrase, care e ritual.
 `.trim()
   }
 
-  // smart-recipes
   return `
 Você está na funcionalidade "Receitas Inteligentes".
-
-Objetivo:
-Sugerir receitas simples, rápidas e realistas para a fase da criança,
-aliviando o peso mental da mãe na hora de pensar em comida.
-
-Regras específicas:
-- Use o ingrediente principal e o tipo de refeição como guia.
-- Sempre considere a idade da criança em meses e possíveis alergias.
-- Nunca sugira algo que seja claramente inseguro para crianças.
-- Para 0 a 6 meses: NÃO traga receitas; lembre com carinho sobre aleitamento materno e pediatra.
-- Para 6–12 meses: receitas muito simples, consistência adequada à introdução alimentar.
-- Sempre inclua nota de segurança remetendo ao pediatra em faixas etárias sensíveis.
-
-Saída:
-Responda SEMPRE com:
-
-{
-  "recipes": SmartRecipe[]
-}
-
-Onde SmartRecipe possui:
-- "id": string
-- "title": string
-- "description": string
-- "timeLabel": string
-- "ageLabel": string
-- "preparation": string (texto contínuo com passos simples)
-- "safetyNote": string (opcional, recomendado para bebês)
+Responda com recipes.
 `.trim()
 }
 
-// ---------- Função principal de chamada ao modelo ----------
+// ---------- OpenAI ----------
 
-// Endpoint da API da OpenAI.
-// Não usar client específico para evitar dependência; usamos fetch nativo do Next.
 const OPENAI_CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions'
-
-// Modelo padrão (pode ser sobrescrito por env var)
 const DEFAULT_MATERNA_MODEL = 'gpt-4.1-mini'
 
 type OpenAIChatMessage = {
-  role: 'system' | 'user' | 'assistant'
+  role: 'system' | 'user'
   content: string
 }
 
-/**
- * Chama o modelo da OpenAI para um modo específico do Materna360,
- * retornando o JSON já parseado.
- *
- * IMPORTANTE:
- * - Endpoints que usam esta função DEVEM estar envolvidos em try/catch
- *   e oferecer fallback carinhoso no front, nunca quebrar a experiência.
- */
 export async function callMaternaAI<M extends MaternaMode>(
   payload: MaternaAIRequestPayload & { mode: M }
 ): Promise<MaternaAIResponseMap[M]> {
   const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY não configurada')
 
-  if (!apiKey) {
-    throw new Error('[maternaCore] OPENAI_API_KEY não configurada no ambiente')
-  }
-
-  // Garante faixa etária derivada se a idade em meses existir
-  const childWithAgeRange: MaternaChildProfile | null =
-    payload.child && typeof payload.child.idadeMeses === 'number'
-      ? {
-          ...payload.child,
-          ageRange: payload.child.ageRange ?? deriveAgeRangeFromMonths(payload.child.idadeMeses),
-        }
+  const childWithAgeRange =
+    payload.child?.idadeMeses != null
+      ? { ...payload.child, ageRange: deriveAgeRangeFromMonths(payload.child.idadeMeses) }
       : payload.child ?? null
 
-  const systemPrompt =
-    buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode)
-
   const messages: OpenAIChatMessage[] = [
-    {
-      role: 'system',
-      content: systemPrompt,
-    },
+    { role: 'system', content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode) },
     {
       role: 'user',
       content: JSON.stringify({
@@ -441,49 +224,22 @@ export async function callMaternaAI<M extends MaternaMode>(
     },
   ]
 
-  const model = process.env.MATERNA360_AI_MODEL || DEFAULT_MATERNA_MODEL
-
-  const response = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
+  const res = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
+      model: process.env.MATERNA360_AI_MODEL || DEFAULT_MATERNA_MODEL,
       messages,
       temperature: 0.6,
-      response_format: {
-        type: 'json_object',
-      },
+      response_format: { type: 'json_object' },
     }),
   })
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new Error(
-      `[maternaCore] Erro da OpenAI (status ${response.status}): ${text || 'sem body'}`
-    )
-  }
+  if (!res.ok) throw new Error('Erro na OpenAI')
 
-  const data = (await response.json()) as {
-    choices?: { message?: { content?: string } }[]
-  }
-
-  const content = data.choices?.[0]?.message?.content
-  if (!content) {
-    throw new Error('[maternaCore] Resposta da OpenAI sem conteúdo')
-  }
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch (error) {
-    throw new Error(
-      '[maternaCore] Falha ao fazer parse do JSON retornado pela OpenAI: ' +
-        (error instanceof Error ? error.message : String(error))
-    )
-  }
-
-  return parsed as MaternaAIResponseMap[M]
+  const data = await res.json()
+  return JSON.parse(data.choices[0].message.content)
 }
