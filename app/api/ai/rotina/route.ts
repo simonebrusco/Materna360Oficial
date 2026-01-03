@@ -11,7 +11,8 @@ import {
 } from '@/app/lib/ai/maternaCore'
 import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
-import { safeMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
+
+import { sanitizeMeuFilhoBloco2Suggestions } from '@/app/lib/ai/validators/bloco2'
 
 export const runtime = 'nodejs'
 
@@ -36,11 +37,11 @@ const NO_STORE_HEADERS = {
 }
 
 /**
- * Bloco 1 (Meu Filho) — Sanitização canônica (hard gate)
+ * Bloco 1 (Meu Filho) — Validação canônica no servidor
  * Regras:
  * - Exatamente 1 suggestion
  * - title = ""
- * - description validada pelo validator canônico
+ * - description: 1..280 chars, até 3 frases, sem linguagem proibida
  * - se falhar: retorna [] para fallback do client
  */
 function sanitizeMeuFilhoBloco1(
@@ -50,8 +51,21 @@ function sanitizeMeuFilhoBloco1(
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const cleaned = safeMeuFilhoBloco1Text(first.description)
-  if (!cleaned) return []
+  const description = String(first.description ?? '').trim()
+
+  // 1..280 chars
+  if (description.length < 1 || description.length > 280) return []
+
+  // até 3 frases (best-effort)
+  const sentenceParts = description
+    .split(/[.!?]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (sentenceParts.length < 1 || sentenceParts.length > 3) return []
+
+  // bloqueio de linguagem proibida (case-insensitive)
+  const forbidden = /\b(você pode|voce pode|que tal|talvez|se quiser|uma ideia)\b/i
+  if (forbidden.test(description)) return []
 
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
@@ -60,8 +74,8 @@ function sanitizeMeuFilhoBloco1(
 
   const sanitized: RotinaQuickSuggestion = {
     ...first,
-    title: '', // título é proibido no Bloco 1
-    description: cleaned,
+    title: '',
+    description,
     withChild: true,
     estimatedMinutes,
   }
@@ -107,6 +121,24 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             suggestions: sanitized, // pode ser [] para cair no fallback silencioso do client
+          },
+          {
+            status: 200,
+            headers: NO_STORE_HEADERS,
+          },
+        )
+      }
+
+      // ✅ Guardrail canônico: Meu Filho — Bloco 2 (Cards de atividades)
+      if (body.tipoIdeia === 'meu-filho-bloco-2') {
+        const sanitized = sanitizeMeuFilhoBloco2Suggestions(
+          result.suggestions ?? [],
+          body.tempoDisponivel ?? null,
+        )
+
+        return NextResponse.json(
+          {
+            suggestions: sanitized, // pode ser [] para fallback silencioso do client
           },
           {
             status: 200,
