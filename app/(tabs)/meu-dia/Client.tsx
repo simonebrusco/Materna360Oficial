@@ -1,3 +1,4 @@
+// app/(tabs)/meu-dia/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -20,20 +21,19 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
+// P26 — continuidade Meu Dia Leve -> Meu Dia (fonte única de leitura do payload)
+import { readRecentMyDaySave, type MeuDiaContinuityPayload } from '@/app/lib/myDayContinuity.client'
+
 //  P23 — camada de experiência (nunca chamar isPremium diretamente em componente)
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
 // P22 — fricção zero (primeiro uso, retorno, dia 7/30)
 import { getAndUpdateUsageMilestones, ackUsageMilestone } from '@/app/lib/usageMilestones.client'
 
-// P26 — continuidade Meu Dia Leve -> Meu Dia (fonte única, via persist)
-import { consumeRecentMyDaySave, type MeuDiaContinuityPayload } from '@/app/lib/myDayContinuity.client'
-
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 type ContinuityLine = { text: string; phraseId: string }
-type GroupId = 'para-hoje' | 'familia' | 'autocuidado' | 'rotina-casa' | 'outros'
 
 const LS_ACK_PREFIX = 'm360.meu_dia_leve_ack.' // + dateKey
 
@@ -75,14 +75,6 @@ function originLabel(origin: MeuDiaContinuityPayload['origin']) {
   return 'Outros'
 }
 
-function originToGroupId(origin: MeuDiaContinuityPayload['origin']): GroupId {
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  if (origin === 'today') return 'para-hoje'
-  return 'outros'
-}
-
 export default function MeuDiaClient() {
   const { name } = useProfile()
   const firstName = useMemo(() => getFirstName(name), [name])
@@ -96,11 +88,8 @@ export default function MeuDiaClient() {
   // P13 — micro-frase de continuidade (no máximo 1 por dia)
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
 
-  // P26 — prompt discreto (1x/dia) quando houve save recente
+  // P26 — CTA discreto: “voltar ao Meu Dia Leve” (1x por dia, só quando houve save recente)
   const [meuDiaLevePrompt, setMeuDiaLevePrompt] = useState<MeuDiaContinuityPayload | null>(null)
-
-  // P33.7 (Camada 3) — foco inicial de grupo quando veio de um hub
-  const [initialGroupId, setInitialGroupId] = useState<GroupId | null>(null)
 
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
@@ -126,7 +115,10 @@ export default function MeuDiaClient() {
 
   /* tracking */
   useEffect(() => {
-    track('nav.click', { tab: 'meu-dia', timestamp: new Date().toISOString() })
+    track('nav.click', {
+      tab: 'meu-dia',
+      timestamp: new Date().toISOString(),
+    })
   }, [])
 
   /* saudação (com nome quando houver) */
@@ -165,7 +157,11 @@ export default function MeuDiaClient() {
       const signal = getEu360Signal()
       const tone = (signal?.tone ?? 'gentil') as 'gentil' | 'direto'
 
-      const line = getMyDayContinuityLine({ dateKey: todayKey, tone })
+      const line = getMyDayContinuityLine({
+        dateKey: todayKey,
+        tone,
+      })
+
       setContinuityLine(line ? { text: line.text, phraseId: line.phraseId } : null)
     } catch {
       setContinuityLine(null)
@@ -177,6 +173,7 @@ export default function MeuDiaClient() {
       const tier = getExperienceTier()
       const next = tier === 'premium'
 
+      // Telemetria interna, sem qualquer efeito visual.
       if (next) {
         const key = `m360.premium_seen.${todayKey}`
         const already = safeGetLS(key)
@@ -184,38 +181,30 @@ export default function MeuDiaClient() {
         if (!already) {
           safeSetLS(key, '1')
           try {
-            track('premium_state_visible', { tab: 'meu-dia', dateKey: todayKey, timestamp: new Date().toISOString() })
+            track('premium_state_visible', {
+              tab: 'meu-dia',
+              dateKey: todayKey,
+              timestamp: new Date().toISOString(),
+            })
           } catch {}
         }
       }
     } catch {
-      // silêncio total
+      // silêncio total: fallback implícito para free
     }
   }, [todayKey])
 
   /**
-   * P33.7 / Camada 3 — continuidade real:
-   * - consome o save recente via persist (dedupe por ts)
-   * - aplica foco inicial de grupo (sem UI extra)
-   * - opcionalmente mostra o CTA discreto 1x/dia (ack)
+   * P26 — UI do CTA (somente UI):
+   * - lê o payload via myDayContinuity.client (fonte única)
+   * - não consome nem dá dedupe (isso é responsabilidade do MyDayGroups via consumeRecentMyDaySave)
+   * - respeita ack 1x/dia
+   * - janela de recência: 30 minutos (evita “grudar” visualmente)
    */
   const refreshMeuDiaLeveContinuity = useCallback(() => {
     try {
       if (typeof window === 'undefined') return
 
-      // 1) Consumo dedupado (persist)
-      const payload = consumeRecentMyDaySave({ windowMs: 30 * 60 * 1000 })
-      if (!payload) {
-        setMeuDiaLevePrompt(null)
-        setInitialGroupId(null)
-        return
-      }
-
-      // 2) Foco inicial de grupo (principal)
-      const targetGroup = originToGroupId(payload.origin)
-      setInitialGroupId(targetGroup)
-
-      // 3) CTA discreto 1x/dia (secundário)
       const ackKey = `${LS_ACK_PREFIX}${todayKey}`
       const ack = safeGetLS(ackKey)
       if (ack === '1') {
@@ -223,19 +212,31 @@ export default function MeuDiaClient() {
         return
       }
 
+      const payload = readRecentMyDaySave()
+      if (!payload) {
+        setMeuDiaLevePrompt(null)
+        return
+      }
+
+      const ageMs = Date.now() - payload.ts
+      const RECENT_WINDOW_MS = 30 * 60 * 1000
+      if (ageMs < 0 || ageMs > RECENT_WINDOW_MS) {
+        setMeuDiaLevePrompt(null)
+        return
+      }
+
       setMeuDiaLevePrompt(payload)
 
       try {
-        track('meu_dia_leve.continuity_applied', {
+        track('meu_dia_leve.continuity_prompt.view', {
           dateKey: todayKey,
+          ageMs,
           origin: payload.origin,
           source: payload.source,
-          groupId: targetGroup,
         })
       } catch {}
     } catch {
       setMeuDiaLevePrompt(null)
-      setInitialGroupId(null)
     }
   }, [todayKey])
 
@@ -268,7 +269,13 @@ export default function MeuDiaClient() {
     <main
       data-layout="page-template-v1"
       data-tab="meu-dia"
-      className="eu360-hub-bg relative min-h-[100dvh] pb-24 flex flex-col overflow-hidden"
+      className="
+        eu360-hub-bg
+        relative min-h-[100dvh]
+        pb-24
+        flex flex-col
+        overflow-hidden
+      "
     >
       <div className="page-shell relative z-10 flex-1 w-full">
         {/* HERO */}
@@ -277,7 +284,9 @@ export default function MeuDiaClient() {
             MEU DIA
           </span>
 
-          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Seu dia, do seu jeito</h1>
+          <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+            Seu dia, do seu jeito
+          </h1>
 
           <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl lg:max-w-3xl">
             Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
@@ -299,17 +308,20 @@ export default function MeuDiaClient() {
                 {continuityLine.text}
               </p>
             ) : null}
-
-            {/* opcional: se quiser, pode manter invisível; não é necessário */}
-            {initialGroupId ? (
-              <span className="sr-only">{`Continuity group: ${initialGroupId}`}</span>
-            ) : null}
           </div>
 
-          {/* P26 — card discreto (secundário) */}
+          {/* P26 — continuidade discreta (aparece só quando houve save recente no Meu Dia Leve) */}
           {meuDiaLevePrompt ? (
             <div className="mt-5">
-              <div className="bg-white rounded-3xl p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)] border border-[#F5D7E5]">
+              <div
+                className="
+                  bg-white
+                  rounded-3xl
+                  p-6
+                  shadow-[0_2px_14px_rgba(0,0,0,0.05)]
+                  border border-[#F5D7E5]
+                "
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
@@ -329,7 +341,16 @@ export default function MeuDiaClient() {
                   <div className="flex items-center gap-2 shrink-0">
                     <a
                       href="/maternar/meu-dia-leve"
-                      className="rounded-full bg-[#fd2597] hover:opacity-95 text-white px-4 py-2 text-[12px] font-semibold shadow-lg transition whitespace-nowrap"
+                      className="
+                        rounded-full
+                        bg-[#fd2597] hover:opacity-95
+                        text-white
+                        px-4 py-2
+                        text-[12px]
+                        font-semibold
+                        shadow-lg transition
+                        whitespace-nowrap
+                      "
                       onClick={() => {
                         try {
                           track('meu_dia_leve.continuity_prompt.click', {
@@ -339,8 +360,8 @@ export default function MeuDiaClient() {
                           })
                         } catch {}
 
+                        // ack 1x/dia (não remove payload aqui; consumo/dedupe é no MyDayGroups)
                         safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        setMeuDiaLevePrompt(null)
                       }}
                     >
                       Voltar ao Meu Dia Leve
@@ -348,7 +369,17 @@ export default function MeuDiaClient() {
 
                     <button
                       type="button"
-                      className="rounded-full bg-white border border-[#F5D7E5]/70 text-[#545454] px-4 py-2 text-[12px] transition hover:shadow-sm whitespace-nowrap"
+                      className="
+                        rounded-full
+                        bg-white
+                        border border-[#F5D7E5]/70
+                        text-[#545454]
+                        px-4 py-2
+                        text-[12px]
+                        transition
+                        hover:shadow-sm
+                        whitespace-nowrap
+                      "
                       onClick={() => {
                         safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
                         setMeuDiaLevePrompt(null)
@@ -366,10 +397,23 @@ export default function MeuDiaClient() {
           ) : null}
         </header>
 
-        {/* Aqui entra a continuidade real: foco inicial no grupo */}
-        <MyDayGroups aiContext={aiContext} initialGroupId={initialGroupId ?? undefined} />
+        <MyDayGroups aiContext={aiContext} />
 
-        <section className="mt-6 md:mt-8 bg-white rounded-3xl p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+        {/* REMOVIDO: QuickIdeaAI (o "Para agora" agora vive no Cuidar de Mim) */}
+
+        {/* BLOCO FREE / PREMIUM — inalterado */}
+        {/* ... mantém exatamente como estava ... */}
+
+        <section
+          className="
+            mt-6 md:mt-8
+            bg-white
+            rounded-3xl
+            p-6
+            shadow-[0_6px_22px_rgba(0,0,0,0.06)]
+            border border-[#F5D7E5]
+          "
+        >
           <WeeklyPlannerShell />
         </section>
 
