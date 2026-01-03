@@ -4,29 +4,43 @@
 import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { track } from '@/app/lib/telemetry'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
-import AppIcon from '@/components/ui/AppIcon'
+
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { load, save } from '@/app/lib/persist'
+
+import {
+  resolveMinhaJornadaState,
+  type MinhaJornadaRecord,
+  type MinhaJornadaState,
+} from './state'
+
+import ContextBlock from '@/components/minha-jornada/ContextBlock'
+import RecordsBlock from '@/components/minha-jornada/RecordsBlock'
+import ReflectiveReading from '@/components/minha-jornada/ReflectiveReading'
+import PresenceMark from '@/components/minha-jornada/PresenceMark'
+import ClosingBlock from '@/components/minha-jornada/ClosingBlock'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 /**
- * P26 — PRINCÍPIO DA JORNADA (ANTI-CULPA)
- *
- * A Jornada é acompanhamento silencioso, não produtividade.
- * Regras inegociáveis:
- * - A Jornada registra apenas o que ACONTECEU (conclusões/salvamentos/ações).
- * - Ausência não é registrada como “falha”.
- * - Não existe “dias perdidos”, “streak quebrado” ou qualquer penalidade.
- * - Repetição conta como continuidade (não como insistência / cobrança).
- *
- * Se uma mudança futura introduzir sensação de cobrança,
- * ela viola diretamente a P26 e deve ser revertida.
+ * P33.8 — Minha Jornada (Camada 3)
+ * - Leitura do vivido, sem ação
+ * - Sem comparação, sem métrica, sem “progresso”
+ * - IA apenas como espelho descritivo
+ * - Usa apenas dados existentes (se houver), sem criar novos fluxos
  */
+
+const LS_CONQUESTS = 'minha-jornada:conquests:v1'
+const LS_MEMORIES = 'minha-jornada:memories:v1'
+const PERSIST_TIMELINE = 'minha-jornada:timeline'
+
+// controle interno (não UI)
+const PERSIST_LAST_VISIT = 'm360.minha_jornada.last_visit_datekey.v1'
 
 function safeGetLS(key: string): string | null {
   try {
@@ -37,153 +51,114 @@ function safeGetLS(key: string): string | null {
   }
 }
 
-function safeParseInt(v: string | null, fallback = 0) {
-  const n = Number.parseInt(String(v ?? ''), 10)
-  return Number.isFinite(n) ? n : fallback
+function safeParseJSON<T>(raw: string | null): T | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n))
-}
+function normalizeRecordsFromExistingSources(): MinhaJornadaRecord[] {
+  const out: MinhaJornadaRecord[] = []
 
-function todayKey() {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
+  // 1) Timeline (persist) — formato legado: Record<string, { humor?; energia?; nota? }>
+  try {
+    const rawTimeline = load<unknown>(PERSIST_TIMELINE, null)
+    if (rawTimeline && typeof rawTimeline === 'object') {
+      const obj = rawTimeline as Record<string, any>
+      for (const [dayKey, v] of Object.entries(obj)) {
+        const note = typeof v?.nota === 'string' ? v.nota.trim() : ''
+        if (!note) continue
 
-function addDaysKey(date: Date, delta: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + delta)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
+        // timestamp neutro: dia em horário local 00:00
+        const ts = `${dayKey}T00:00:00.000Z`
+        out.push({
+          id: `timeline:${dayKey}`,
+          kind: 'note',
+          text: note,
+          timestamp: ts,
+        })
+      }
+    }
+  } catch {}
 
-function getRangeKeys(daysBack: number, anchor = new Date()) {
-  const keys: string[] = []
-  for (let i = -Math.max(0, daysBack - 1); i <= 0; i++) keys.push(addDaysKey(anchor, i))
-  return keys
-}
+  // 2) Conquests (localStorage) — legado: [{ id, description, timestamp, icon }]
+  try {
+    const raw = safeGetLS(LS_CONQUESTS)
+    const parsed = safeParseJSON<any[]>(raw) ?? []
+    for (const it of parsed) {
+      const desc = typeof it?.description === 'string' ? it.description.trim() : ''
+      const ts = typeof it?.timestamp === 'string' ? it.timestamp : ''
+      const id = typeof it?.id === 'string' ? it.id : ''
+      if (!desc || !ts) continue
 
-/**
- * Chaves atuais usadas no Maternar (sem backend).
- * Mantemos compatível com o que já existe no app.
- */
-const LS = {
-  pointsTotal: 'mj_points_total',
-  dayPrefix: 'mj_day_',
-  // OBS: mesmo que exista 'mj_streak' no storage/histórico,
-  // a Jornada P26 NÃO deve depender disso como métrica central.
-  streak: 'mj_streak',
-}
+      out.push({
+        id: `conquest:${id || ts}`,
+        kind: 'memory',
+        text: desc,
+        timestamp: ts,
+      })
+    }
+  } catch {}
 
-function readDayPoints(key: string) {
-  return safeParseInt(safeGetLS(LS.dayPrefix + key), 0)
-}
+  // 3) Memories (localStorage) — legado: [{ id, description, timestamp, day? }]
+  try {
+    const raw = safeGetLS(LS_MEMORIES)
+    const parsed = safeParseJSON<any[]>(raw) ?? []
+    for (const it of parsed) {
+      const desc = typeof it?.description === 'string' ? it.description.trim() : ''
+      const ts = typeof it?.timestamp === 'string' ? it.timestamp : ''
+      const id = typeof it?.id === 'string' ? it.id : ''
+      if (!desc || !ts) continue
 
-function readTotalPoints() {
-  return safeParseInt(safeGetLS(LS.pointsTotal), 0)
-}
+      out.push({
+        id: `mem:${id || ts}`,
+        kind: 'memory',
+        text: desc,
+        timestamp: ts,
+      })
+    }
+  } catch {}
 
-function ProgressBar({ value, max }: { value: number; max: number }) {
-  const pct = clamp(Math.round((value / Math.max(1, max)) * 100), 0, 100)
-  return (
-    <div className="w-full">
-      <div className="h-2.5 rounded-full bg-[#ffe1f1] overflow-hidden border border-[#f5d7e5]">
-        <div className="h-full bg-[#ff005e] rounded-full" style={{ width: `${pct}%` }} />
-      </div>
-      <div className="mt-2 flex items-center justify-between text-[11px] text-[#6a6a6a]">
-        <span>{pct}%</span>
-        <span>
-          {value}/{max}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-type View = 'hoje' | 'resumo'
-
-function ViewPill({
-  active,
-  onClick,
-  label,
-}: {
-  active?: boolean
-  onClick?: () => void
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active
-          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-          : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
-      ].join(' ')}
-    >
-      {label}
-    </button>
-  )
+  // ordem temporal simples (quando aconteceu) — mais recente primeiro
+  return out
+    .filter(r => !!r.text?.trim() && !!r.timestamp)
+    .sort((a, b) => {
+      const ta = Date.parse(a.timestamp)
+      const tb = Date.parse(b.timestamp)
+      const na = Number.isFinite(ta) ? ta : 0
+      const nb = Number.isFinite(tb) ? tb : 0
+      return nb - na
+    })
 }
 
 export default function MinhaJornadaClient() {
-  const [view, setView] = useState<View>('hoje')
-
-  const [today, setToday] = useState<string>(todayKey())
-  const [totalPoints, setTotalPoints] = useState<number>(0)
-  const [todayPoints, setTodayPoints] = useState<number>(0)
+  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+  const [records, setRecords] = useState<MinhaJornadaRecord[]>([])
+  const [state, setState] = useState<MinhaJornadaState>('first_access')
 
   useEffect(() => {
     try {
-      track('nav.view', {
-        tab: 'maternar',
-        page: 'minha-jornada',
-        timestamp: new Date().toISOString(),
+      const existing = normalizeRecordsFromExistingSources()
+      setRecords(existing)
+
+      const last = load<string | null>(PERSIST_LAST_VISIT, null)
+      const resolved = resolveMinhaJornadaState({
+        todayKey,
+        records: existing,
+        lastVisitKey: typeof last === 'string' ? last : null,
       })
-    } catch {}
-  }, [])
+      setState(resolved)
 
-  useEffect(() => {
-    const t = todayKey()
-    setToday(t)
-
-    const total = readTotalPoints()
-    const tPoints = readDayPoints(t)
-
-    setTotalPoints(total)
-    setTodayPoints(tPoints)
-
-    try {
-      track('minha_jornada.open', { today: t, totalPoints: total, todayPoints: tPoints })
-    } catch {}
-  }, [])
-
-  const weekKeys = useMemo(() => getRangeKeys(7, new Date()), [])
-  const monthKeys = useMemo(() => getRangeKeys(28, new Date()), [])
-
-  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
-  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
-
-  const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
-  const monthlyTotal = useMemo(() => monthKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [monthKeys])
-
-  // metas “internas” (não viram cobrança; só referência visual)
-  const todaySoftMax = 26
-  const weekSoftMax = 120
-
-  const presenceLabel =
-    daysActive28 === 0
-      ? 'Você pode voltar quando fizer sentido.'
-      : daysActive28 === 1
-        ? 'Você esteve aqui 1 dia nas últimas 4 semanas.'
-        : `Você esteve aqui ${daysActive28} dias nas últimas 4 semanas.`
+      // marca visita (sem UI, sem efeito comportamental)
+      save(PERSIST_LAST_VISIT, todayKey)
+    } catch {
+      setRecords([])
+      setState('first_access')
+    }
+  }, [todayKey])
 
   return (
     <main
@@ -198,7 +173,7 @@ export default function MinhaJornadaClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          {/* HERO */}
+          {/* HERO (sem “como usar”, sem CTA) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -214,7 +189,7 @@ export default function MinhaJornadaClient() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um registro silencioso do que aconteceu — sem cobrança, sem “tudo ou nada”.
+                Um espaço de leitura do vivido.
               </p>
             </div>
           </header>
@@ -230,232 +205,26 @@ export default function MinhaJornadaClient() {
                 overflow-hidden
               "
             >
-              {/* Top bar */}
-              <div className="p-4 md:p-6 border-b border-white/25">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
-                      <AppIcon name="sparkles" size={20} className="text-[#ff005e]" />
-                    </div>
+              <div className="p-4 md:p-6 space-y-4 md:space-y-5">
+                <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <ContextBlock state={state} />
+                </SoftCard>
 
-                    <div>
-                      <div className="text-[12px] text-white/85">
-                        hoje: {todayPoints} pts • total: {totalPoints} pts • {presenceLabel}
-                      </div>
-                      <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
-                        O que coube hoje já conta
-                      </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece.
-                      </div>
-                    </div>
-                  </div>
+                <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <RecordsBlock state={state} records={records} />
+                </SoftCard>
 
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Link
-                      href="/maternar/minhas-conquistas"
-                      className="
-                        rounded-full
-                        bg-white/90 hover:bg-white
-                        text-[#2f3a56]
-                        px-4 py-2 text-[12px]
-                        shadow-lg transition
-                        text-center
-                      "
-                    >
-                      Conquistas & Selos
-                    </Link>
+                <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <ReflectiveReading state={state} records={records} />
+                </SoftCard>
 
-                    <Link
-                      href="/meu-dia"
-                      className="
-                        rounded-full
-                        bg-white/15 hover:bg-white/25
-                        text-white
-                        px-4 py-2 text-[12px]
-                        border border-white/35
-                        transition
-                        text-center
-                      "
-                    >
-                      Meu Dia
-                    </Link>
-                  </div>
-                </div>
+                <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <PresenceMark todayKey={todayKey} state={state} records={records} />
+                </SoftCard>
 
-                {/* Mini menu */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <ViewPill active={view === 'hoje'} onClick={() => setView('hoje')} label="Hoje" />
-                  <ViewPill active={view === 'resumo'} onClick={() => setView('resumo')} label="Resumo" />
-                </div>
-              </div>
-
-              {/* CONTENT */}
-              <div className="p-4 md:p-6 space-y-4">
-                {/* HOJE */}
-                {view === 'hoje' ? (
-                  <SoftCard
-                    className="
-                      p-5 md:p-6 rounded-2xl
-                      bg-white/95
-                      border border-[#f5d7e5]
-                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    "
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="heart" size={22} className="text-[#ff005e]" />
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                          Hoje
-                        </span>
-
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">Registro do dia</h2>
-
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          feito hoje
-                        </div>
-                        <div className="mt-2 text-[26px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
-
-                        <div className="mt-4">
-                          <ProgressBar value={todayPoints} max={todaySoftMax} />
-                        </div>
-
-                        <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
-                          Referência visual gentil — não é meta. Se não coube, não vira dívida.
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          presença recente
-                        </div>
-
-                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">Últimos 7 dias</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com registro: {daysActive7}/7</div>
-
-                        <div className="mt-4">
-                          <div className="text-[11px] text-[#6a6a6a]">pontos na semana</div>
-                          <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
-                          <div className="mt-3">
-                            <ProgressBar value={weeklyTotal} max={weekSoftMax} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                        fechamento leve
-                      </div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo.
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Link
-                          href="/maternar"
-                          className="rounded-full bg-[#ff005e] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Voltar para o Maternar
-                        </Link>
-                        <Link
-                          href="/meu-dia"
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ir para Meu Dia
-                        </Link>
-                      </div>
-                    </div>
-                  </SoftCard>
-                ) : null}
-
-                {/* RESUMO */}
-                {view === 'resumo' ? (
-                  <SoftCard
-                    className="
-                      p-5 md:p-6 rounded-2xl
-                      bg-white/95
-                      border border-[#f5d7e5]
-                      shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                    "
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="star" size={22} className="text-[#ff005e]" />
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                          Resumo
-                        </span>
-
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">Leitura de continuidade</h2>
-
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">total</div>
-                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{totalPoints} pts</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">somatório do que foi registrado</div>
-                      </div>
-
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          últimos 7 dias
-                        </div>
-                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">dias com registro: {daysActive7}/7</div>
-                      </div>
-
-                      <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">28 dias</div>
-                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{daysActive28} dias</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">pontos no período: {monthlyTotal} pts</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança. A Jornada
-                        respeita silêncio e pausa. Voltar já é suficiente.
-                      </div>
-
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setView('hoje')}
-                          className="rounded-full bg-[#ff005e] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                        >
-                          Ver hoje
-                        </button>
-
-                        <Link
-                          href="/maternar/minhas-conquistas"
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                        >
-                          Ir para Conquistas & Selos
-                        </Link>
-                      </div>
-                    </div>
-                  </SoftCard>
-                ) : null}
+                <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <ClosingBlock />
+                </SoftCard>
               </div>
             </section>
           </Reveal>
