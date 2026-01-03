@@ -13,48 +13,74 @@ import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
 
 import { sanitizeMeuFilhoBloco2Suggestions } from '@/app/lib/ai/validators/bloco2'
-import { safeMeuFilhoBloco4Text } from '@/app/lib/ai/validators/bloco4'
 
 export const runtime = 'nodejs'
 
+type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
+type Bloco3Tipo = 'rotina' | 'conexao'
+type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
+
 type RotinaRequestBody = {
-  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase-contexto'
+  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase'
   origin?: string
 
-  // Campos pensados para Receitas Inteligentes
+  // Receitas
   ingredientePrincipal?: string | null
   tipoRefeicao?: string | null
   tempoPreparoMinutos?: number | null
 
-  // Campos pensados para Ideias Rápidas (Blocos 1/2)
+  // Quick ideas (geral)
   tempoDisponivel?: number | null
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
 
-  // Campos Bloco 3 (micro-ritmos)
-  idade?: number | string | null
-  faixa_etaria?: string | null
-  momento_do_dia?: 'manhã' | 'tarde' | 'noite' | 'transição' | string | null
-  tipo_experiencia?: 'rotina' | 'conexao' | string | null
+  // Campos extras (Meu Filho Blocos 2–4)
+  ageBand?: string | null
   contexto?: string | null
 
-  // Campos Bloco 4 (fase/contexto)
-  momento_desenvolvimento?: 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia' | string | null
+  // Bloco 3 (Rotinas / Conexão)
+  idade?: number | string | null
+  faixa_etaria?: string | null
+  momento_do_dia?: MomentoDoDia | null
+  tipo_experiencia?: Bloco3Tipo | null
+
+  // Bloco 4 (Fases / Contexto)
+  momento_desenvolvimento?: MomentoDesenvolvimento | null
 }
 
-// Headers padrão para não cachear respostas de IA
-const NO_STORE_HEADERS = {
-  'Cache-Control': 'no-store',
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
+
+/* =========================
+   Helpers de texto
+========================= */
+
+function stripEmojiAndBullets(s: string) {
+  const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
+  return noBullets
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
-/**
- * Bloco 1 (Meu Filho) — Validação canônica no servidor
- * Regras:
- * - Exatamente 1 suggestion
- * - title = ""
- * - description: 1..280 chars, até 3 frases, sem linguagem proibida
- * - se falhar: retorna [] para fallback do client
- */
+function clampText(raw: unknown, max: number) {
+  const t = stripEmojiAndBullets(String(raw ?? '').trim())
+  if (!t) return ''
+  if (t.length <= max) return t
+  return t.slice(0, max - 1).trimEnd() + '…'
+}
+
+function countSentences(t: string) {
+  const parts = t
+    .split(/[.!?]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return parts.length
+}
+
+/* =========================
+   Bloco 1 — Guardrail servidor
+========================= */
+
 function sanitizeMeuFilhoBloco1(
   raw: RotinaQuickSuggestion[] | null | undefined,
   tempoDisponivel: number | null | undefined,
@@ -67,23 +93,18 @@ function sanitizeMeuFilhoBloco1(
   // 1..280 chars
   if (description.length < 1 || description.length > 280) return []
 
-  // até 3 frases (best-effort)
-  const sentenceParts = description
-    .split(/[.!?]+/g)
-    .map((s) => s.trim())
-    .filter(Boolean)
-  if (sentenceParts.length < 1 || sentenceParts.length > 3) return []
+  // até 3 frases
+  const n = countSentences(description)
+  if (n < 1 || n > 3) return []
 
-  // bloqueio de linguagem proibida (case-insensitive)
+  // linguagem proibida (bem conservador)
   const forbidden = /\b(você pode|voce pode|que tal|talvez|se quiser|uma ideia)\b/i
   if (forbidden.test(description)) return []
 
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
       ? Math.max(1, Math.round(tempoDisponivel))
-      : typeof first.estimatedMinutes === 'number'
-        ? first.estimatedMinutes
-        : 1
+      : first.estimatedMinutes
 
   const sanitized: RotinaQuickSuggestion = {
     ...first,
@@ -96,33 +117,104 @@ function sanitizeMeuFilhoBloco1(
   return [sanitized]
 }
 
-/**
- * Bloco 4 (Meu Filho) — Validação canônica no servidor
- * Regras:
- * - Exatamente 1 frase
- * - <= 140 caracteres
- * - Tom observacional, sem normatividade / sem teoria
- * - se falhar: retorna [] (fallback silencioso no client)
- */
-function sanitizeMeuFilhoBloco4(
-  raw: RotinaQuickSuggestion[] | null | undefined,
-): RotinaQuickSuggestion[] {
+/* =========================
+   Bloco 3 — Rotinas / Conexão
+   - até 3 frases
+   - até 240 chars
+   - sem lista / sem cobrança / sem frequência
+========================= */
+
+function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const candidate = String(first.description ?? '').trim()
-  const cleaned = safeMeuFilhoBloco4Text(candidate)
-  if (!cleaned) return []
+  const candidate = first.description ?? first.text ?? first.output ?? ''
+  const text = clampText(candidate, 240)
+  if (!text) return []
+
+  const low = text.toLowerCase()
+
+  const banned = [
+    'todo dia',
+    'todos os dias',
+    'sempre',
+    'nunca',
+    'crie o hábito',
+    'hábito',
+    'habito',
+    'disciplina',
+    'rotina ideal',
+    'o mais importante é',
+  ]
+  if (banned.some((b) => low.includes(b))) return []
+
+  // sem lista
+  if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
+
+  // até 3 frases
+  if (countSentences(text) > 3) return []
 
   const sanitized: RotinaQuickSuggestion = {
     ...first,
     title: '',
-    description: cleaned,
+    description: text,
     withChild: true,
-    estimatedMinutes:
-      typeof first.estimatedMinutes === 'number' && Number.isFinite(first.estimatedMinutes)
-        ? first.estimatedMinutes
-        : 1,
+    estimatedMinutes: 0,
+  }
+
+  return [sanitized]
+}
+
+/* =========================
+   Bloco 4 — Fases / Contexto
+   - 1 frase
+   - até 140 chars
+   - neutro / observacional / sem norma
+========================= */
+
+function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  if (!first) return []
+
+  const candidate = first.description ?? first.text ?? first.output ?? ''
+  const text = clampText(candidate, 140)
+  if (!text) return []
+
+  const low = text.toLowerCase()
+
+  // 1 frase (bem conservador)
+  if (countSentences(text) !== 1) return []
+
+  // sem lista/quebra
+  if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
+
+  // frases proibidas (normativas / comparativas / ansiosas)
+  const bannedPhrases = [
+    'é esperado que',
+    'esperado que',
+    'normalmente já deveria',
+    'já deveria',
+    'o ideal é',
+    'crianças dessa idade precisam',
+    'precisam de',
+    'deve',
+    'deveria',
+    'atraso',
+    'adiantado',
+    'comparado',
+    'comparar',
+    'diagnóstico',
+    'tdah',
+    'autismo',
+  ]
+  if (bannedPhrases.some((b) => low.includes(b))) return []
+
+  const sanitized: RotinaQuickSuggestion = {
+    ...first,
+    title: '',
+    description: text,
+    withChild: true,
+    estimatedMinutes: 0,
   }
 
   return [sanitized]
@@ -130,97 +222,77 @@ function sanitizeMeuFilhoBloco4(
 
 export async function POST(req: Request) {
   try {
-    // Proteção de uso da IA — limite por cliente / janela
     assertRateLimit(req, 'ai-rotina', {
       limit: 20,
-      windowMs: 5 * 60_000, // 20 chamadas a cada 5 minutos
+      windowMs: 5 * 60_000,
     })
 
     const body = (await req.json()) as RotinaRequestBody
 
-    // Personalização Eu360 (fallback seguro)
     const { profile, child } = (await loadMaternaContextFromRequest(req)) as {
       profile: MaternaProfile | null
       child: MaternaChildProfile | null
     }
 
-    // -----------------------------------------
-    // 1) IDEIAS RÁPIDAS / MICRO-RITMOS / FASE-CONTEXTO
-    // -----------------------------------------
-    if (
-      body.feature === 'quick-ideas' ||
-      body.feature === 'micro-ritmos' ||
-      body.feature === 'fase-contexto'
-    ) {
-      /**
-       * IMPORTANTE:
-       * callMaternaAI tipa context como RotinaQuickIdeasContext.
-       * Bloco 3 e 4 precisam enviar chaves extras (idade/faixa_etaria/etc).
-       * Para não mexer no maternaCore agora, usamos "any" aqui.
-       */
-      const context: any = {
+    // Tratamos micro-ritmos e fase como variações de quick-ideas (sem estourar tipos do core)
+    const isQuick =
+      body.feature === 'quick-ideas' || body.feature === 'micro-ritmos' || body.feature === 'fase'
+
+    if (isQuick) {
+      // IMPORTANTÍSSIMO:
+      // RotinaQuickIdeasContext (do core) não conhece campos como "idade".
+      // Então montamos como "any" aqui para não quebrar o build, mantendo o contrato do core intacto.
+      const ctx: any = {
         tempoDisponivel: body.tempoDisponivel ?? null,
         comQuem: body.comQuem ?? null,
         tipoIdeia: body.tipoIdeia ?? null,
-        origin: body.origin ?? null,
-        feature: body.feature ?? null,
-      }
 
-      // Bloco 3 — micro-ritmos (continuidade)
-      if (body.feature === 'micro-ritmos' || body.tipoIdeia === 'meu-filho-bloco-3') {
-        context.idade = body.idade ?? null
-        context.faixa_etaria = body.faixa_etaria ?? null
-        context.momento_do_dia = body.momento_do_dia ?? null
-        context.tipo_experiencia = body.tipo_experiencia ?? null
-        context.contexto = body.contexto ?? null
-      }
+        // extras (podem ser usados pelo prompt do core, sem tipagem rígida aqui)
+        ageBand: body.ageBand ?? null,
+        contexto: body.contexto ?? null,
 
-      // Bloco 4 — fase/contexto (lente prática)
-      if (body.feature === 'fase-contexto' || body.tipoIdeia === 'meu-filho-bloco-4') {
-        context.idade = body.idade ?? null
-        context.faixa_etaria = body.faixa_etaria ?? null
-        context.momento_desenvolvimento = body.momento_desenvolvimento ?? null
-        context.contexto = body.contexto ?? 'fase'
+        // bloco 3
+        idade: body.idade ?? null,
+        faixa_etaria: body.faixa_etaria ?? null,
+        momento_do_dia: body.momento_do_dia ?? null,
+        tipo_experiencia: body.tipo_experiencia ?? null,
+
+        // bloco 4
+        momento_desenvolvimento: body.momento_desenvolvimento ?? null,
       }
 
       const result = await callMaternaAI({
         mode: 'quick-ideas',
         profile,
         child,
-        context, // <- any
-      } as any)
+        context: ctx,
+      })
 
-      // ✅ Guardrail canônico: Meu Filho — Bloco 1
+      // ✅ Meu Filho — Bloco 1
       if (body.tipoIdeia === 'meu-filho-bloco-1') {
         const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
-
-        return NextResponse.json(
-          { suggestions: sanitized }, // pode ser [] para cair no fallback silencioso do client
-          { status: 200, headers: NO_STORE_HEADERS },
-        )
+        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
-      // ✅ Guardrail canônico: Meu Filho — Bloco 2 (Cards de atividades)
+      // ✅ Meu Filho — Bloco 2
       if (body.tipoIdeia === 'meu-filho-bloco-2') {
         const sanitized = sanitizeMeuFilhoBloco2Suggestions(
           result.suggestions ?? [],
           body.tempoDisponivel ?? null,
         )
-
-        return NextResponse.json(
-          { suggestions: sanitized }, // pode ser [] para fallback silencioso do client
-          { status: 200, headers: NO_STORE_HEADERS },
-        )
+        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
-      // ✅ Guardrail canônico: Meu Filho — Bloco 4 (Fases / Contexto)
-      if (body.tipoIdeia === 'meu-filho-bloco-4') {
-        const sanitized = sanitizeMeuFilhoBloco4(result.suggestions)
+      // ✅ Meu Filho — Bloco 3 (Rotinas / Conexão)
+      if (body.tipoIdeia === 'meu-filho-bloco-3') {
+        const sanitized = sanitizeMeuFilhoBloco3(result.suggestions ?? [])
+        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+      }
 
-        return NextResponse.json(
-          { suggestions: sanitized }, // pode ser [] para fallback silencioso do client
-          { status: 200, headers: NO_STORE_HEADERS },
-        )
+      // ✅ Meu Filho — Bloco 4 (Fases / Contexto)
+      if (body.tipoIdeia === 'meu-filho-bloco-4') {
+        const sanitized = sanitizeMeuFilhoBloco4(result.suggestions ?? [])
+        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
       // default: contrato original
@@ -230,9 +302,7 @@ export async function POST(req: Request) {
       )
     }
 
-    // -----------------------------------------
-    // 2) RECEITAS INTELIGENTES (modo smart-recipes)
-    // -----------------------------------------
+    // Receitas
     const result = await callMaternaAI({
       mode: 'smart-recipes',
       profile,
@@ -241,15 +311,10 @@ export async function POST(req: Request) {
         ingredientePrincipal: body.ingredientePrincipal ?? null,
         tipoRefeicao: body.tipoRefeicao ?? null,
         tempoPreparo: body.tempoPreparoMinutos ?? null,
-        origin: body.origin ?? null,
-        feature: body.feature ?? null,
-      } as any,
+      },
     })
 
-    return NextResponse.json(
-      { recipes: result.recipes ?? [] },
-      { status: 200, headers: NO_STORE_HEADERS },
-    )
+    return NextResponse.json({ recipes: result.recipes ?? [] }, { status: 200, headers: NO_STORE_HEADERS })
   } catch (error) {
     if (error instanceof RateLimitError) {
       console.warn('[API /api/ai/rotina] Rate limit atingido:', error.message)
