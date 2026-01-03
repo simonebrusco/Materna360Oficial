@@ -16,7 +16,11 @@ import {
 } from '@/app/lib/myDayTasks.client'
 
 import { markJourneyFamilyDone } from '@/app/lib/journey.client'
-import { getActiveChildOrNull, getProfileSnapshot, type ProfileSource } from '@/app/lib/profile.client'
+import {
+  getActiveChildOrNull,
+  getProfileSnapshot,
+  type ProfileSource,
+} from '@/app/lib/profile.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -230,14 +234,42 @@ function clampBloquinhoText(raw: string): string {
   return first3.slice(0, 279).trimEnd()
 }
 
+function countSentencesSimple(text: string) {
+  return text
+    .split(/[.!?]+/g)
+    .map((x) => x.trim())
+    .filter(Boolean).length
+}
+
+function containsForbiddenPhrases(text: string) {
+  // regra canônica: rejeitar linguagem reflexiva/condicional típica de “ideias”
+  // (case-insensitive, best-effort)
+  const s = text.toLowerCase()
+  const forbidden = ['você pode', 'voce pode', 'que tal', 'talvez', 'se quiser', 'uma ideia']
+  return forbidden.some((p) => s.includes(p))
+}
+
+/**
+ * Validador final do Bloco 1:
+ * - 1..280 chars
+ * - no máximo 3 frases (split simples)
+ * - rejeita frases proibidas
+ */
+function validateBloco1Text(raw: string): string | null {
+  const cleaned = clampBloquinhoText(raw)
+  if (!cleaned) return null
+  if (cleaned.length < 1 || cleaned.length > 280) return null
+  if (countSentencesSimple(cleaned) > 3) return null
+  if (containsForbiddenPhrases(cleaned)) return null
+  return cleaned
+}
+
 type Bloco1State =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'done'; text: string; source: 'ai' | 'fallback' }
 
-async function fetchBloco1Plan(args: {
-  tempoDisponivel: number
-}): Promise<string | null> {
+async function fetchBloco1Plan(args: { tempoDisponivel: number }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -258,10 +290,9 @@ async function fetchBloco1Plan(args: {
       | { suggestions?: { description?: string }[] }
       | null
 
-    const desc = data?.suggestions?.[0]?.description
-    const cleaned = clampBloquinhoText(desc ?? '')
-    if (!cleaned) return null
-    return cleaned
+    const desc = data?.suggestions?.[0]?.description ?? ''
+    // ✅ Bloco 1 só entra se passar validação; senão cai no fallback silencioso.
+    return validateBloco1Text(desc)
   } catch {
     return null
   }
@@ -279,12 +310,30 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
-        b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
-        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
+        a: {
+          tag: 'rápido',
+          time: '5',
+          title: 'Cópia de gestos',
+          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
+        },
+        b: {
+          tag: 'calmo',
+          time: '5',
+          title: 'Música + colo',
+          how: 'Uma música curta. Balance devagar e respire junto.',
+        },
+        c: {
+          tag: 'sensório',
+          time: '5',
+          title: 'Texturas da casa',
+          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
+      routine: {
+        label: 'Ajuste que ajuda hoje',
+        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
+      },
       connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
@@ -293,9 +342,19 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincadeira curta + conexão no final.',
       time: '10',
       plan: {
-        a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
+        a: {
+          tag: 'movimento',
+          time: '10',
+          title: 'Caminho de almofadas',
+          how: 'Monte um caminho no chão e atravessem juntos 3 vezes.',
+        },
         b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
-        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
+        c: {
+          tag: 'calmo',
+          time: '10',
+          title: 'Livro rápido',
+          how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
@@ -307,9 +366,24 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
-        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
-        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
+        a: {
+          tag: 'rotina',
+          time: '15',
+          title: 'Mini ritual pré-janta',
+          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
+        },
+        b: {
+          tag: 'sensório',
+          time: '15',
+          title: 'Caixa de “coisas seguras”',
+          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
+        },
+        c: {
+          tag: 'calmo',
+          time: '15',
+          title: 'Banho de brinquedos',
+          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
@@ -323,8 +397,18 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Uma brincadeira que cabe antes da janta.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
-        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
+        a: {
+          tag: 'rápido',
+          time: '5',
+          title: 'História de 5 frases',
+          how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.',
+        },
+        b: {
+          tag: 'conexão',
+          time: '5',
+          title: 'Desenho espelhado',
+          how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.',
+        },
         c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
@@ -426,8 +510,18 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       time: '10',
       plan: {
         a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
-        b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
-        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
+        b: {
+          tag: 'jogo',
+          time: '10',
+          title: 'Mini competição',
+          how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).',
+        },
+        c: {
+          tag: 'casa',
+          time: '10',
+          title: 'Função + elogio',
+          how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
@@ -440,7 +534,12 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       time: '15',
       plan: {
         a: { tag: 'equilíbrio', time: '15', title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.' },
-        b: { tag: 'casa', time: '15', title: 'Arrumar junto', how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.' },
+        b: {
+          tag: 'casa',
+          time: '15',
+          title: 'Arrumar junto',
+          how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.',
+        },
         c: { tag: 'fala', time: '15', title: 'Plano para depois', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
@@ -514,7 +613,8 @@ export default function MeuFilhoClient() {
         return
       }
 
-      const fb = clampBloquinhoText(BLOCO1_FALLBACK[age][time])
+      // ✅ fallback local sempre válido; ainda assim, passa pelo validador final.
+      const fb = validateBloco1Text(BLOCO1_FALLBACK[age][time]) ?? clampBloquinhoText(BLOCO1_FALLBACK[age][time])
       setBloco1({ status: 'done', text: fb, source: 'fallback' })
       try {
         track('meu_filho.bloco1.done', { source: 'fallback', time, age })
@@ -809,21 +909,15 @@ export default function MeuFilhoClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Plano pronto para agora
                           </span>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Você só executa. Sem decidir nada.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">
-                            Gerando um plano pronto para agora…
-                          </div>
+                          <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
                         ) : (
-                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">
-                            {bloco1Text}
-                          </div>
+                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">{bloco1Text}</div>
                         )}
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -834,7 +928,11 @@ export default function MeuFilhoClient() {
                               if (!bloco1Text) return
                               saveSelectedToMyDay(bloco1Text)
                               try {
-                                track('meu_filho.bloco1.save', { time, age, source: bloco1.status === 'done' ? bloco1.source : 'unknown' })
+                                track('meu_filho.bloco1.save', {
+                                  time,
+                                  age,
+                                  source: bloco1.status === 'done' ? bloco1.source : 'unknown',
+                                })
                               } catch {}
                             }}
                             className={[
@@ -1007,9 +1105,7 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
                         </div>
                       </div>
 
@@ -1055,9 +1151,7 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
                         </div>
                       </div>
 
