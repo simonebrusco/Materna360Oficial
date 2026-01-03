@@ -4,6 +4,7 @@
 import * as React from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { sanitizeBloco1Text } from '@/app/lib/ai/validators/bloco1'
 
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -256,7 +257,7 @@ function containsForbiddenPhrases(text: string) {
  * - rejeita frases proibidas
  */
 function validateBloco1Text(raw: string): string | null {
-  const cleaned = clampBloquinhoText(raw)
+  const cleaned = sanitizeBloco1Text(desc)
   if (!cleaned) return null
   if (cleaned.length < 1 || cleaned.length > 280) return null
   if (countSentencesSimple(cleaned) > 3) return null
