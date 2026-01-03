@@ -359,6 +359,115 @@ async function fetchBloco2Cards(args: {
 }
 
 /* =========================
+   BLOCO 3 — ROTINAS / CONEXÃO (continuidade sem cobrança)
+   - 1 texto curto por contexto
+   - até 3 frases
+   - até 240 caracteres
+========================= */
+
+type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
+type Bloco3Type = 'rotina' | 'conexao'
+
+type Bloco3State =
+  | { status: 'idle' }
+  | { status: 'loading'; kind: Bloco3Type }
+  | { status: 'done'; kind: Bloco3Type; text: string; source: 'ai' | 'fallback'; momento: MomentoDoDia }
+
+function momentForStep(step: Step): MomentoDoDia {
+  if (step === 'rotina') return 'transição'
+  if (step === 'conexao') return 'noite'
+  // não usado pelo Bloco 3 (por regra), mas mantém tipo seguro
+  return 'tarde'
+}
+
+function clampBloco3Text(raw: unknown): string | null {
+  const t = clampText(String(raw ?? ''), 240)
+  if (!t) return null
+  const low = t.toLowerCase()
+
+  // hard rules: sem cobrança / sem frequência / sem “método”
+  const banned = [
+    'todo dia',
+    'todos os dias',
+    'sempre',
+    'nunca',
+    'crie o hábito',
+    'hábito',
+    'disciplina',
+    'rotina ideal',
+    'o mais importante é',
+  ]
+  if (banned.some((b) => low.includes(b))) return null
+
+  // evitar formato de lista
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+
+  // limitar frases (best effort): até 3
+  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  if (sentences.length > 3) return null
+
+  return t
+}
+
+const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
+  rotina: {
+    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga “agora vamos guardar” e faça junto por 30 segundos. Isso já reduz a resistência.',
+    '3-4': 'Antes de mudar de atividade, faça um “sinal de troca” sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
+    '5-6': 'Escolha um encerramento simples para a brincadeira: guardar 1 item juntos e pronto. Isso evita esticar e ajuda a passar para a próxima parte do dia.',
+    '6+': 'Feche a atividade com um combinado objetivo: “agora é X, depois Y”. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
+  },
+  conexao: {
+    '0-2': 'No final, faça 10 segundos de olho no olho e um abraço curto. Sem conversa. Só presença antes de seguir.',
+    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e “valeu por brincar”. Não precisa durar. Só marca o fim com carinho.',
+    '5-6': 'Use uma frase curta e específica no final: “eu gostei de brincar com você”. Depois siga para o próximo passo do dia. Presença curta já conta.',
+    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com “valeu por fazer junto”. Conexão curta, sem estender.',
+  },
+}
+
+async function fetchBloco3Suggestion(args: {
+  faixa_etaria: AgeBand
+  momento_do_dia: MomentoDoDia
+  tipo_experiencia: Bloco3Type
+  contexto: 'continuidade'
+}): Promise<string | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        feature: 'micro-ritmos',
+        origin: 'maternar/meu-filho',
+        tipoIdeia: 'meu-filho-bloco-3',
+        idade: args.faixa_etaria, // conforme regra: idade OU faixa_etaria
+        faixa_etaria: args.faixa_etaria,
+        momento_do_dia: args.momento_do_dia,
+        tipo_experiencia: args.tipo_experiencia,
+        contexto: args.contexto,
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = (await res.json().catch(() => null)) as any
+
+    // aceitamos alguns formatos, mas sempre normalizamos por clamp
+    const candidate =
+      data?.suggestion ??
+      data?.text ??
+      data?.output ??
+      data?.suggestions?.[0]?.description ??
+      data?.suggestions?.[0]?.text ??
+      null
+
+    const cleaned = clampBloco3Text(candidate)
+    if (!cleaned) return null
+    return cleaned
+  } catch {
+    return null
+  }
+}
+
+/* =========================
    KITS (catálogo local / fallback geral)
 ========================= */
 
@@ -558,6 +667,10 @@ export default function MeuFilhoClient() {
   const [bloco2, setBloco2] = useState<Bloco2State>({ status: 'idle' })
   const bloco2ReqSeq = useRef(0)
 
+  // Bloco 3 (Rotina/Conexão — continuidade)
+  const [bloco3, setBloco3] = useState<Bloco3State>({ status: 'idle' })
+  const bloco3ReqSeq = useRef(0)
+
   useEffect(() => {
     try {
       track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
@@ -605,7 +718,6 @@ export default function MeuFilhoClient() {
       const tempoDisponivel = Number(time)
       const ai = await fetchBloco1Plan({ tempoDisponivel })
 
-      // evita corrida
       if (!alive || seq !== bloco1ReqSeq.current) return
 
       if (ai) {
@@ -616,7 +728,6 @@ export default function MeuFilhoClient() {
         return
       }
 
-      // fallback local — ainda assim passamos por clamp para evitar regressões acidentais
       const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
       setBloco1({ status: 'done', text: fb, source: 'fallback' })
       try {
@@ -641,7 +752,6 @@ export default function MeuFilhoClient() {
       const tempoDisponivel = Number(time)
       const ai = await fetchBloco2Cards({ tempoDisponivel, age })
 
-      // evita corrida
       if (!alive || seq !== bloco2ReqSeq.current) return
 
       if (ai) {
@@ -652,8 +762,7 @@ export default function MeuFilhoClient() {
         return
       }
 
-      // fallback: KITS local
-      setBloco2({ status: 'done', items: KITS[age][time].plan, source: 'fallback' })
+      setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
       try {
         track('meu_filho.bloco2.done', { source: 'fallback', time, age })
       } catch {}
@@ -663,7 +772,50 @@ export default function MeuFilhoClient() {
     return () => {
       alive = false
     }
-  }, [time, age])
+  }, [time, age, kit.plan])
+
+  // Bloco 3 só roda dentro de Rotina/Conexão (opção 1).
+  useEffect(() => {
+    if (step !== 'rotina' && step !== 'conexao') return
+
+    let alive = true
+    const seq = ++bloco3ReqSeq.current
+
+    async function run() {
+      const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
+      const momento = momentForStep(step)
+
+      setBloco3({ status: 'loading', kind })
+
+      const ai = await fetchBloco3Suggestion({
+        faixa_etaria: age,
+        momento_do_dia: momento,
+        tipo_experiencia: kind,
+        contexto: 'continuidade',
+      })
+
+      if (!alive || seq !== bloco3ReqSeq.current) return
+
+      if (ai) {
+        setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
+        try {
+          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento })
+        } catch {}
+        return
+      }
+
+      const fb = BLOCO3_FALLBACK[kind][age]
+      setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+      try {
+        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento })
+      } catch {}
+    }
+
+    run()
+    return () => {
+      alive = false
+    }
+  }, [step, age])
 
   function go(next: Step) {
     setStep(next)
@@ -676,7 +828,6 @@ export default function MeuFilhoClient() {
     setTime(next)
     setChosen('a')
 
-    // Persistência silenciosa: prefer do hub + compat legado
     safeSetLS(HUB_PREF.time, next)
     safeSetLS('eu360_time_with_child', next)
 
@@ -689,7 +840,6 @@ export default function MeuFilhoClient() {
     setAge(next)
     setChosen('a')
 
-    // Persistência silenciosa: override do hub + compat legado
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
 
@@ -714,7 +864,6 @@ export default function MeuFilhoClient() {
     const ORIGIN = 'family' as const
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
 
-    // Guardrail P26: no máximo 3 tarefas ativas do Meu Filho no dia
     const today = listMyDayTasks()
     const activeCount = countActiveFamilyFromMeuFilhoToday(today)
     if (activeCount >= 3) {
@@ -731,7 +880,6 @@ export default function MeuFilhoClient() {
       source: SOURCE,
     })
 
-    // guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
@@ -765,6 +913,20 @@ export default function MeuFilhoClient() {
   }
 
   const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
+
+  const bloco3Text =
+    bloco3.status === 'done'
+      ? bloco3.text
+      : null
+
+  const bloco3Label =
+    bloco3.status === 'loading'
+      ? 'Ajustando para o seu dia…'
+      : bloco3.status === 'done'
+        ? bloco3.source === 'ai'
+          ? 'Para encaixar no dia'
+          : 'Para encaixar no dia'
+        : 'Para encaixar no dia'
 
   return (
     <main
@@ -1042,9 +1204,7 @@ export default function MeuFilhoClient() {
                                 onClick={() => onChoose(k)}
                                 className={[
                                   'rounded-2xl border p-4 text-left transition',
-                                  active
-                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                                 disabled={bloco2.status === 'loading'}
                                 aria-disabled={bloco2.status === 'loading'}
@@ -1184,6 +1344,23 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
+                        {/* BLOCO 3 — ANCORAGEM (ROTINA) */}
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            {bloco3Label}
+                          </div>
+
+                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Ajustando para o seu dia…
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {bloco3Text}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             onClick={() => go('brincadeiras')}
@@ -1231,6 +1408,23 @@ export default function MeuFilhoClient() {
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
+
+                        {/* BLOCO 3 — ANCORAGEM (CONEXÃO) */}
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            Para encaixar no dia
+                          </div>
+
+                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Ajustando para o seu dia…
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {bloco3Text}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
