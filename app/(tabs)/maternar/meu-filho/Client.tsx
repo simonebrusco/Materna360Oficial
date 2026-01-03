@@ -268,12 +268,11 @@ type Bloco2State =
   | { status: 'done'; items: Bloco2Items; source: 'ai' | 'fallback' }
 
 function stripEmojiAndBullets(s: string) {
-  // Remove bullets comuns e emojis por faixa unicode (best effort; evita “lista” e “carinha”)
   const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
-  return noBullets.replace(
-    /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,
-    '',
-  ).replace(/\s+/g, ' ').trim()
+  return noBullets
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function clampText(s: string, max: number) {
@@ -285,7 +284,6 @@ function clampText(s: string, max: number) {
 function safeBloco2Title(raw: unknown): string | null {
   const t = clampText(String(raw ?? ''), 52)
   if (!t) return null
-  // evita títulos genéricos demais
   if (t.toLowerCase() === 'brincadeira' || t.toLowerCase() === 'atividade') return null
   return t
 }
@@ -293,7 +291,6 @@ function safeBloco2Title(raw: unknown): string | null {
 function safeBloco2How(raw: unknown): string | null {
   const t = clampText(String(raw ?? ''), 120)
   if (!t) return null
-  // regra: sem “que tal…”, sem didatismo
   const low = t.toLowerCase()
   if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
   return t
@@ -328,7 +325,6 @@ async function fetchBloco2Cards(args: {
         tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-2',
-        // não dependemos disso no backend, mas ajuda a curadoria se suportado:
         ageBand: args.age,
         contexto: 'exploracao',
       }),
@@ -657,7 +653,7 @@ export default function MeuFilhoClient() {
       }
 
       // fallback: KITS local
-      setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
+      setBloco2({ status: 'done', items: KITS[age][time].plan, source: 'fallback' })
       try {
         track('meu_filho.bloco2.done', { source: 'fallback', time, age })
       } catch {}
@@ -667,8 +663,7 @@ export default function MeuFilhoClient() {
     return () => {
       alive = false
     }
-    // kit.plan muda junto com age/time
-  }, [time, age, kit.plan])
+  }, [time, age])
 
   function go(next: Step) {
     setStep(next)
@@ -1047,7 +1042,9 @@ export default function MeuFilhoClient() {
                                 onClick={() => onChoose(k)}
                                 className={[
                                   'rounded-2xl border p-4 text-left transition',
-                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  active
+                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                                 disabled={bloco2.status === 'loading'}
                                 aria-disabled={bloco2.status === 'loading'}
