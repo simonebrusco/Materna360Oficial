@@ -250,6 +250,19 @@ function originFromFocus(f: Focus): TaskOrigin {
   return 'other'
 }
 
+/**
+ * Inspiração: título "de tarefa" (curto, específico, sem cara de UI)
+ * (evita salvar coisas como “Escolha o próximo passo.” no Meu Dia)
+ */
+function toMyDayTitleFromInspiration(input: { mood: Mood; slot: Slot; focus: Focus }): string {
+  const { slot, focus } = input
+
+  if (focus === 'filho') return slot === '3' ? 'Conexão rápida (3 min)' : 'Conexão com o filho (5 min)'
+  if (focus === 'voce') return slot === '3' ? 'Pausa curta (3 min)' : slot === '5' ? 'Respiro rápido (5 min)' : '10 min só meus'
+  if (focus === 'casa') return slot === '3' ? 'Destravar 1 ponto da casa' : 'Organizar 1 ponto só'
+  return 'Simplificar a refeição'
+}
+
 type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
 
 async function requestAIRecipe(input: {
@@ -273,12 +286,11 @@ async function requestAIRecipe(input: {
     }),
   })
 
-  // Camada 3: fallback silencioso (sem “erro exposto”)
   if (!res.ok) {
     return {
       ok: false,
       error: `http_${res.status}`,
-      hint: 'Use uma opção pronta abaixo.',
+      hint: 'Não deu certo agora. Se quiser, você pode usar uma opção pronta abaixo.',
     }
   }
 
@@ -333,7 +345,7 @@ export default function MeuDiaLeveClient() {
   const [pickedRecipe, setPickedRecipe] = useState<number>(0)
   const [pickedPasso, setPickedPasso] = useState<number>(0)
 
-  // Camada 3: sem toast. feedback mínimo e silencioso.
+  // feedback silencioso (sem toast)
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
   const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
@@ -406,6 +418,11 @@ export default function MeuDiaLeveClient() {
     return (strict.length ? strict : PASSO_LEVE).slice(0, 3)
   }, [focus])
 
+  function flash(msg: string, ms = 2200) {
+    setSaveFeedback(msg)
+    window.setTimeout(() => setSaveFeedback(''), ms)
+  }
+
   function go(next: Step) {
     setStep(next)
     if (next === 'receitas') {
@@ -472,9 +489,8 @@ export default function MeuDiaLeveClient() {
 
     const today = listMyDayTasks()
     const activeCount = countActiveFromMeuDiaLeveToday(today)
-
-    // Camada 3: sem toast; bloqueio silencioso (sem “erro exposto”)
     if (activeCount >= 3) {
+      flash('Você já salvou 3 ações do Meu Dia Leve hoje. Conclua uma ou escolha só 1 para agora.', 3200)
       try {
         track('my_day.task.add.blocked', {
           source: SOURCE,
@@ -488,8 +504,8 @@ export default function MeuDiaLeveClient() {
 
     const res = addTaskToMyDay({ title, origin: ORIGIN, source: SOURCE })
 
-    // Camada 3: sem toast; bloqueio silencioso
     if (res.limitHit) {
+      flash('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.', 3200)
       try {
         track('my_day.task.add.blocked', {
           source: SOURCE,
@@ -504,11 +520,10 @@ export default function MeuDiaLeveClient() {
     // Continuidade (P26): sinaliza para o Meu Dia focar o grupo correto
     markRecentMyDaySave({ origin: ORIGIN, source: SOURCE })
 
-    // Camada 3: feedback mínimo (sem toast)
     if (res.created) {
-      setSaveFeedback('Salvo no Meu Dia.')
+      flash('Salvo no Meu Dia.')
     } else {
-      setSaveFeedback('Já estava no Meu Dia.')
+      flash('Essa tarefa já estava no Meu Dia.')
     }
 
     try {
@@ -526,8 +541,6 @@ export default function MeuDiaLeveClient() {
         source: SOURCE,
       })
     } catch {}
-
-    window.setTimeout(() => setSaveFeedback(''), 1800)
   }
 
   const activeChild = useMemo(() => {
@@ -605,7 +618,6 @@ export default function MeuDiaLeveClient() {
   }, [children.length, activeChild, activeMonths])
 
   async function onGenerateAIRecipe() {
-    // reset silencioso
     setAiRecipeError('')
     setAiRecipeText('')
     setAiRecipeHint('')
@@ -614,12 +626,13 @@ export default function MeuDiaLeveClient() {
       try {
         track('meu_dia_leve.recipe.blocked', { reason: gate.reason, activeMonths })
       } catch {}
+      setAiRecipeHint(gate.message || 'Complete a idade no Eu360 para liberar.')
       return
     }
 
     const trimmed = pantry.trim()
     if (!trimmed) {
-      // sem toast; apenas não avança
+      setAiRecipeHint('Escreva curto o que você tem em casa.')
       return
     }
 
@@ -636,7 +649,7 @@ export default function MeuDiaLeveClient() {
 
       if (!data?.ok || !data.text) {
         setAiRecipeError(data?.error || 'erro_receita')
-        setAiRecipeHint(data?.hint || 'Use uma opção pronta abaixo.')
+        setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item — ou use uma opção pronta abaixo.')
         return
       }
 
@@ -644,7 +657,7 @@ export default function MeuDiaLeveClient() {
       setAiRecipeHint('')
     } catch {
       setAiRecipeError('erro_rede')
-      setAiRecipeHint('Use uma opção pronta abaixo.')
+      setAiRecipeHint('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
     } finally {
       setAiRecipeLoading(false)
     }
@@ -806,7 +819,7 @@ export default function MeuDiaLeveClient() {
                 <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name={step === 'receitas' ? 'heart' : step === 'passo' ? 'sparkles' : 'sparkles'} size={22} className="text-[#fd2597]" />
+                      <AppIcon name={step === 'receitas' ? 'heart' : 'sparkles'} size={22} className="text-[#fd2597]" />
                     </div>
                     <div className="space-y-1">
                       <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
@@ -835,7 +848,7 @@ export default function MeuDiaLeveClient() {
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => saveCurrentToMyDay(inspiration.action)}
+                          onClick={() => saveCurrentToMyDay(toMyDayTitleFromInspiration({ mood, slot, focus }))}
                           className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                         >
                           Salvar no Meu Dia
@@ -966,7 +979,10 @@ export default function MeuDiaLeveClient() {
 
                         <textarea
                           value={pantry}
-                          onChange={(e) => setPantry(e.target.value)}
+                          onChange={(e) => {
+                            setPantry(e.target.value)
+                            if (aiRecipeHint) setAiRecipeHint('')
+                          }}
                           rows={3}
                           placeholder="o que tenho em casa…"
                           disabled={gate.blocked}
@@ -981,19 +997,15 @@ export default function MeuDiaLeveClient() {
                             type="button"
                             onClick={onGenerateAIRecipe}
                             disabled={aiRecipeLoading || gate.blocked}
-                            aria-label="Gerar receita"
                             className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2',
+                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
                               aiRecipeLoading || gate.blocked ? 'bg-[#fd2597]/50 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
                             ].join(' ')}
                           >
-                            {aiRecipeLoading ? <AppIcon name="loader" size={16} className="text-white" /> : null}
-                            Gerar receita
+                            {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                           </button>
 
-                          {aiRecipeError ? (
-                            <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint || 'Use uma opção pronta abaixo.'}</span>
-                          ) : null}
+                          {aiRecipeHint ? <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint}</span> : null}
                         </div>
 
                         {aiRecipeText ? (
@@ -1039,6 +1051,24 @@ export default function MeuDiaLeveClient() {
                             </button>
                           )
                         })}
+                      </div>
+
+                      <div className="pt-2 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => saveCurrentToMyDay(selectedRecipe?.title || 'Receita rápida')}
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                        >
+                          Salvar no Meu Dia
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => go('passo')}
+                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                        >
+                          Ir para Passo leve
+                        </button>
+                        {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                       </div>
                     </div>
                   ) : null}
