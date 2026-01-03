@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { safeMeuFilhoBloco1Text, clampMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
+import { safeMeuFilhoBloco3Text, clampMeuFilhoBloco3Text } from '@/app/lib/ai/validators/bloco3'
 
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -380,47 +381,19 @@ function momentForStep(step: Step): MomentoDoDia {
   return 'tarde'
 }
 
-function clampBloco3Text(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 240)
-  if (!t) return null
-  const low = t.toLowerCase()
-
-  // hard rules: sem cobrança / sem frequência / sem “método”
-  const banned = [
-    'todo dia',
-    'todos os dias',
-    'sempre',
-    'nunca',
-    'crie o hábito',
-    'hábito',
-    'disciplina',
-    'rotina ideal',
-    'o mais importante é',
-  ]
-  if (banned.some((b) => low.includes(b))) return null
-
-  // evitar formato de lista
-  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
-
-  // limitar frases (best effort): até 3
-  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
-  if (sentences.length > 3) return null
-
-  return t
-}
-
+// Fallback do Bloco 3 (SEM “sempre”, SEM frequência, SEM cobrança)
 const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
   rotina: {
-    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga “agora vamos guardar” e faça junto por 30 segundos. Isso já reduz a resistência.',
-    '3-4': 'Antes de mudar de atividade, faça um “sinal de troca” sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
-    '5-6': 'Escolha um encerramento simples para a brincadeira: guardar 1 item juntos e pronto. Isso evita esticar e ajuda a passar para a próxima parte do dia.',
-    '6+': 'Feche a atividade com um combinado objetivo: “agora é X, depois Y”. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
+    '0-2': 'Antes de trocar, avise com uma frase curta e mostre com a mão. Faça a primeira ação junto por 20 segundos. A transição fica mais leve.',
+    '3-4': 'Antes de mudar de atividade, use um “sinal de troca”: timer curto ou frase fixa. Dê duas opções simples do próximo passo. A transição tende a fluir sem discussão.',
+    '5-6': 'Quando for encerrar, avise “faltam 2 minutos” e combine o próximo passo. Peça para guardar 1 item junto e finalize. Isso reduz briga na troca.',
+    '6+': 'Feche com um combinado curto: “agora é X, depois Y”. Ofereça duas opções do próximo passo. Menos explicação, mais fluidez na transição.',
   },
   conexao: {
-    '0-2': 'No final, faça 10 segundos de olho no olho e um abraço curto. Sem conversa. Só presença antes de seguir.',
-    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e “valeu por brincar”. Não precisa durar. Só marca o fim com carinho.',
-    '5-6': 'Use uma frase curta e específica no final: “eu gostei de brincar com você”. Depois siga para o próximo passo do dia. Presença curta já conta.',
-    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com “valeu por fazer junto”. Conexão curta, sem estender.',
+    '0-2': 'Abaixe na altura dele e encoste a testa por 2 segundos. Um abraço curto e um sorriso. Isso fecha com segurança.',
+    '3-4': 'Feche com um gesto curto: toque no ombro, abraço rápido e “valeu por brincar”. Sem estender. Só marca o fim com carinho.',
+    '5-6': 'Diga uma frase específica do que você viu (“eu vi você tentando”) e abrace rápido. Depois siga para o próximo passo. Presença curta já conta.',
+    '6+': 'Olho no olho por 2 segundos e uma frase direta (“obrigada por fazer junto”). Um toque rápido no ombro e pronto. Conexão sem estender.',
   },
 }
 
@@ -436,10 +409,9 @@ async function fetchBloco3Suggestion(args: {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
       body: JSON.stringify({
-        feature: 'micro-ritmos',
-        origin: 'maternar/meu-filho',
+        // inputs permitidos do Bloco 3 (sem memória longa, sem emocional)
+        origem: 'maternar/meu-filho',
         tipoIdeia: 'meu-filho-bloco-3',
-        idade: args.faixa_etaria, // conforme regra: idade OU faixa_etaria
         faixa_etaria: args.faixa_etaria,
         momento_do_dia: args.momento_do_dia,
         tipo_experiencia: args.tipo_experiencia,
@@ -450,7 +422,7 @@ async function fetchBloco3Suggestion(args: {
     if (!res.ok) return null
     const data = (await res.json().catch(() => null)) as any
 
-    // aceitamos alguns formatos, mas sempre normalizamos por clamp
+    // tolera formatos diferentes, mas sempre valida pelo validator do Bloco 3
     const candidate =
       data?.suggestion ??
       data?.text ??
@@ -459,8 +431,9 @@ async function fetchBloco3Suggestion(args: {
       data?.suggestions?.[0]?.text ??
       null
 
-    const cleaned = clampBloco3Text(candidate)
+    const cleaned = safeMeuFilhoBloco3Text(candidate)
     if (!cleaned) return null
+
     return cleaned
   } catch {
     return null
@@ -804,7 +777,7 @@ export default function MeuFilhoClient() {
         return
       }
 
-      const fb = BLOCO3_FALLBACK[kind][age]
+      const fb = clampMeuFilhoBloco3Text(BLOCO3_FALLBACK[kind][age])
       setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
       try {
         track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento })
@@ -913,20 +886,7 @@ export default function MeuFilhoClient() {
   }
 
   const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
-
-  const bloco3Text =
-    bloco3.status === 'done'
-      ? bloco3.text
-      : null
-
-  const bloco3Label =
-    bloco3.status === 'loading'
-      ? 'Ajustando para o seu dia…'
-      : bloco3.status === 'done'
-        ? bloco3.source === 'ai'
-          ? 'Para encaixar no dia'
-          : 'Para encaixar no dia'
-        : 'Para encaixar no dia'
+  const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
 
   return (
     <main
@@ -962,8 +922,6 @@ export default function MeuFilhoClient() {
               {childLabel ? (
                 <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
                   Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
-                  {/* Debug only */}
-                  {/* {process.env.NODE_ENV !== 'production' ? <span className="opacity-70"> • fonte: {profileSource}</span> : null} */}
                 </div>
               ) : null}
             </div>
@@ -1104,7 +1062,6 @@ export default function MeuFilhoClient() {
                     >
                       {/* =========================
                           BLOCO 1 — CANÔNICO
-                          1 texto, 0 opções, plano fechado
                       ========================= */}
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
@@ -1114,17 +1071,13 @@ export default function MeuFilhoClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Plano pronto para agora
                           </span>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Você só executa. Sem decidir nada.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">
-                            Gerando um plano pronto para agora…
-                          </div>
+                          <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
                         ) : (
                           <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">
                             {bloco1Text}
@@ -1168,7 +1121,6 @@ export default function MeuFilhoClient() {
 
                       {/* =========================
                           BLOCO 2 — IA + FALLBACK
-                          Curadoria (3 opções). Se IA falhar: KITS.
                       ========================= */}
                       <div className="mt-6 border-t border-[#f5d7e5] pt-5">
                         <div className="flex items-start gap-3">
@@ -1347,12 +1299,12 @@ export default function MeuFilhoClient() {
                         {/* BLOCO 3 — ANCORAGEM (ROTINA) */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            {bloco3Label}
+                            Para encaixar no dia
                           </div>
 
                           {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Ajustando para o seu dia…
+                              Ajustando um encaixe simples…
                             </div>
                           ) : (
                             <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
@@ -1417,7 +1369,7 @@ export default function MeuFilhoClient() {
 
                           {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Ajustando para o seu dia…
+                              Ajustando um encaixe simples…
                             </div>
                           ) : (
                             <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
