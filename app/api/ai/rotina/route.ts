@@ -11,7 +11,7 @@ import {
 } from '@/app/lib/ai/maternaCore'
 import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
-import { validateMeuFilhoBloco1Description } from '@/app/lib/ai/validators/bloco1'
+import { safeMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
 
 export const runtime = 'nodejs'
 
@@ -36,11 +36,12 @@ const NO_STORE_HEADERS = {
 }
 
 /**
- * Bloco 1 (Meu Filho) — Hard gate canônico no servidor
+ * Bloco 1 (Meu Filho) — Sanitização canônica (hard gate)
+ * Regras:
  * - Exatamente 1 suggestion
  * - title = ""
- * - description passa em validateMeuFilhoBloco1Description
- * - se falhar: retorna [] para fallback silencioso do client
+ * - description validada pelo validator canônico
+ * - se falhar: retorna [] para fallback do client
  */
 function sanitizeMeuFilhoBloco1(
   raw: RotinaQuickSuggestion[] | null | undefined,
@@ -49,8 +50,8 @@ function sanitizeMeuFilhoBloco1(
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const v = validateMeuFilhoBloco1Description(first.description)
-  if (!v.ok) return []
+  const cleaned = safeMeuFilhoBloco1Text(first.description)
+  if (!cleaned) return []
 
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
@@ -60,7 +61,7 @@ function sanitizeMeuFilhoBloco1(
   const sanitized: RotinaQuickSuggestion = {
     ...first,
     title: '', // título é proibido no Bloco 1
-    description: v.text,
+    description: cleaned,
     withChild: true,
     estimatedMinutes,
   }
@@ -101,10 +102,7 @@ export async function POST(req: Request) {
 
       // ✅ Guardrail canônico: Meu Filho — Bloco 1
       if (body.tipoIdeia === 'meu-filho-bloco-1') {
-        const sanitized = sanitizeMeuFilhoBloco1(
-          result.suggestions,
-          body.tempoDisponivel ?? null,
-        )
+        const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
 
         return NextResponse.json(
           {
