@@ -5,7 +5,6 @@ import * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { track } from '@/app/lib/telemetry'
-import { toast } from '@/app/lib/toast'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
@@ -273,13 +272,16 @@ async function requestAIRecipe(input: {
       childAgeLabel: input.childAgeLabel,
     }),
   })
- if (!res.ok) {
-  return {
-    ok: false,
-    error: `http_${res.status}`,
-    hint: 'Não deu certo agora. Se quiser, você pode usar uma opção pronta abaixo.',
+
+  // Camada 3: fallback silencioso (sem “erro exposto”)
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: `http_${res.status}`,
+      hint: 'Use uma opção pronta abaixo.',
+    }
   }
-}
+
   return (await res.json()) as AIRecipeResponse
 }
 
@@ -331,6 +333,7 @@ export default function MeuDiaLeveClient() {
   const [pickedRecipe, setPickedRecipe] = useState<number>(0)
   const [pickedPasso, setPickedPasso] = useState<number>(0)
 
+  // Camada 3: sem toast. feedback mínimo e silencioso.
   const [saveFeedback, setSaveFeedback] = useState<string>('')
 
   const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
@@ -469,8 +472,9 @@ export default function MeuDiaLeveClient() {
 
     const today = listMyDayTasks()
     const activeCount = countActiveFromMeuDiaLeveToday(today)
+
+    // Camada 3: sem toast; bloqueio silencioso (sem “erro exposto”)
     if (activeCount >= 3) {
-      toast.info('Você já salvou 3 ações do Meu Dia Leve hoje. Conclua uma ou escolha só 1 para agora.')
       try {
         track('my_day.task.add.blocked', {
           source: SOURCE,
@@ -484,8 +488,8 @@ export default function MeuDiaLeveClient() {
 
     const res = addTaskToMyDay({ title, origin: ORIGIN, source: SOURCE })
 
+    // Camada 3: sem toast; bloqueio silencioso
     if (res.limitHit) {
-      toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
         track('my_day.task.add.blocked', {
           source: SOURCE,
@@ -500,12 +504,11 @@ export default function MeuDiaLeveClient() {
     // Continuidade (P26): sinaliza para o Meu Dia focar o grupo correto
     markRecentMyDaySave({ origin: ORIGIN, source: SOURCE })
 
+    // Camada 3: feedback mínimo (sem toast)
     if (res.created) {
-      toast.success('Salvo no Meu Dia')
       setSaveFeedback('Salvo no Meu Dia.')
     } else {
-      toast.info('Já estava no Meu Dia')
-      setSaveFeedback('Essa tarefa já estava no Meu Dia.')
+      setSaveFeedback('Já estava no Meu Dia.')
     }
 
     try {
@@ -524,7 +527,7 @@ export default function MeuDiaLeveClient() {
       })
     } catch {}
 
-    window.setTimeout(() => setSaveFeedback(''), 2200)
+    window.setTimeout(() => setSaveFeedback(''), 1800)
   }
 
   const activeChild = useMemo(() => {
@@ -602,6 +605,7 @@ export default function MeuDiaLeveClient() {
   }, [children.length, activeChild, activeMonths])
 
   async function onGenerateAIRecipe() {
+    // reset silencioso
     setAiRecipeError('')
     setAiRecipeText('')
     setAiRecipeHint('')
@@ -610,13 +614,12 @@ export default function MeuDiaLeveClient() {
       try {
         track('meu_dia_leve.recipe.blocked', { reason: gate.reason, activeMonths })
       } catch {}
-      toast.info(gate.message || 'Complete a idade no Eu360 para liberar.')
       return
     }
 
     const trimmed = pantry.trim()
     if (!trimmed) {
-      toast.info('Escreva curto o que você tem em casa.')
+      // sem toast; apenas não avança
       return
     }
 
@@ -633,8 +636,7 @@ export default function MeuDiaLeveClient() {
 
       if (!data?.ok || !data.text) {
         setAiRecipeError(data?.error || 'erro_receita')
-        setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item — ou use uma opção pronta abaixo.')
-        toast.info(data?.hint || 'Se quiser, a gente ajuda com mais um item — ou você usa uma opção pronta abaixo.')
+        setAiRecipeHint(data?.hint || 'Use uma opção pronta abaixo.')
         return
       }
 
@@ -642,8 +644,7 @@ export default function MeuDiaLeveClient() {
       setAiRecipeHint('')
     } catch {
       setAiRecipeError('erro_rede')
-      setAiRecipeHint('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
-      toast.info('Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.')
+      setAiRecipeHint('Use uma opção pronta abaixo.')
     } finally {
       setAiRecipeLoading(false)
     }
@@ -909,7 +910,6 @@ export default function MeuDiaLeveClient() {
                                 type="button"
                                 onClick={() => {
                                   setActiveChildId(c.id)
-
                                   safeSetLS(HUB_PREF.preferredChildId, c.id)
 
                                   setAiRecipeText('')
@@ -981,16 +981,18 @@ export default function MeuDiaLeveClient() {
                             type="button"
                             onClick={onGenerateAIRecipe}
                             disabled={aiRecipeLoading || gate.blocked}
+                            aria-label="Gerar receita"
                             className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2',
                               aiRecipeLoading || gate.blocked ? 'bg-[#fd2597]/50 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
                             ].join(' ')}
                           >
-                            {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
+                            {aiRecipeLoading ? <AppIcon name="loader" size={16} className="text-white" /> : null}
+                            Gerar receita
                           </button>
 
                           {aiRecipeError ? (
-                            <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint || 'Se quiser, use uma opção pronta abaixo.'}</span>
+                            <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint || 'Use uma opção pronta abaixo.'}</span>
                           ) : null}
                         </div>
 
@@ -1045,9 +1047,7 @@ export default function MeuDiaLeveClient() {
                   {step === 'passo' ? (
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">escolha 1 passo</div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Um passo único que fecha o agora. O resto pode esperar.
-                      </div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Um passo único que fecha o agora. O resto pode esperar.</div>
 
                       <div className="mt-4 space-y-2">
                         {passosForNow.map((p, idx) => (
