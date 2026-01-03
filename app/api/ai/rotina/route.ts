@@ -49,31 +49,47 @@ export async function POST(req: Request) {
       req,
     )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
 
-    // -----------------------------------------
-    // 1) IDEIAS RÁPIDAS (modo quick-ideas)
-    // -----------------------------------------
-    if (body.feature === 'quick-ideas') {
-      const result = await callMaternaAI({
-        mode: 'quick-ideas',
-        profile,
-        child,
-        context: {
-          tempoDisponivel: body.tempoDisponivel ?? null,
-          comQuem: body.comQuem ?? null,
-          tipoIdeia: body.tipoIdeia ?? null,
-        },
-      })
+  // -----------------------------------------
+// 1) IDEIAS RÁPIDAS (modo quick-ideas)
+// -----------------------------------------
+if (body.feature === 'quick-ideas') {
+  const tipoIdeia = body.tipoIdeia ?? null
+  const tempoDisponivel = body.tempoDisponivel ?? null
+  const comQuem = body.comQuem ?? null
 
-      return NextResponse.json(
-        {
-          suggestions: result.suggestions ?? [],
-        },
-        {
-          status: 200,
-          headers: NO_STORE_HEADERS,
-        },
-      )
-    }
+  // Bloco 1 do Meu Filho: input mínimo (não usa Eu360 completo)
+  const isMeuFilhoBloco1 = tipoIdeia === 'meu-filho-bloco-1'
+
+  const safeProfile: MaternaProfile | null = isMeuFilhoBloco1 ? null : profile
+
+  const safeChild: MaternaChildProfile | null = isMeuFilhoBloco1
+    ? child && typeof child.idadeMeses === 'number'
+      ? { idadeMeses: child.idadeMeses }
+      : null
+    : child
+
+  const result = await callMaternaAI({
+    mode: 'quick-ideas',
+    profile: safeProfile,
+    child: safeChild,
+    context: {
+      tempoDisponivel,
+      comQuem,
+      tipoIdeia,
+    },
+  })
+
+  return NextResponse.json(
+    {
+      suggestions: result.suggestions ?? [],
+    },
+    {
+      status: 200,
+      headers: NO_STORE_HEADERS,
+    },
+  )
+}
+
 
     // -----------------------------------------
     // 2) RECEITAS INTELIGENTES (modo smart-recipes)
