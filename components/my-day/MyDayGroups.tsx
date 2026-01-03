@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   groupTasks,
@@ -17,7 +17,6 @@ import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
-import { consumeRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
@@ -51,7 +50,7 @@ function formatSnoozeUntil(raw: unknown): string | null {
     const y = Number(m[1])
     const mo = Number(m[2])
     const d = Number(m[3])
-    const dt = new Date(y, mo - 1, d) // local time (seguro p/ BR)
+    const dt = new Date(y, mo - 1, d)
     return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   }
 
@@ -91,7 +90,6 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?
   }
 
   return [...items].sort((a, b) => {
-    // Premium invisível: organiza por recência para sobrevivência/organização
     if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
       const sa = timeOf(a)
       const sb = timeOf(b)
@@ -107,27 +105,17 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?
 }
 
 /* =========================
-   Continuidade
-========================= */
-
-function groupIdFromOrigin(origin: string): GroupId {
-  if (origin === 'today') return 'para-hoje'
-  if (origin === 'family') return 'familia'
-  if (origin === 'selfcare') return 'autocuidado'
-  if (origin === 'home') return 'rotina-casa'
-  return 'outros'
-}
-
-/* =========================
    COMPONENTE
 ========================= */
 
 export default function MyDayGroups({
   aiContext,
   initialDate,
+  initialGroupId,
 }: {
   aiContext?: AiLightContext
   initialDate?: Date
+  initialGroupId?: GroupId
 }) {
   const [tasks, setTasks] = useState<MyDayTaskItem[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
@@ -188,30 +176,26 @@ export default function MyDayGroups({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* ---------- continuidade silenciosa ---------- */
+  /* ---------- continuidade (vinda do pai) ---------- */
+
+  const didApplyInitialFocusRef = useRef(false)
 
   useEffect(() => {
+    if (didApplyInitialFocusRef.current) return
+    if (!initialGroupId) return
+
+    didApplyInitialFocusRef.current = true
+
+    // abre o grupo, sem forçar scroll
+    setExpanded((prev) => ({ ...prev, [initialGroupId]: true }))
+    setHighlightGroup(initialGroupId)
+
+    window.setTimeout(() => setHighlightGroup(null), 4500)
+
     try {
-      const payload = consumeRecentMyDaySave()
-      if (!payload) return
-
-      const gid = groupIdFromOrigin(payload.origin)
-      setExpanded((prev) => ({ ...prev, [gid]: true }))
-      setHighlightGroup(gid)
-
-      window.setTimeout(() => {
-        try {
-          document.getElementById(`myday-group-${gid}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        } catch {}
-      }, 60)
-
-      window.setTimeout(() => setHighlightGroup(null), 6500)
-
-      try {
-        track('my_day.continuity.applied', { origin: payload.origin, source: payload.source })
-      } catch {}
+      track('my_day.continuity.focus_applied', { groupId: initialGroupId })
     } catch {}
-  }, [])
+  }, [initialGroupId])
 
   /* ---------- ações ---------- */
 
@@ -238,16 +222,12 @@ export default function MyDayGroups({
   /* ---------- render ---------- */
 
   return (
-   <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
+    <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
       {!hasAny ? (
         <div className="bg-white rounded-3xl p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)] border border-[var(--color-border-soft)]">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">
-            Seu dia pode começar simples.
-          </h4>
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Seu dia pode começar simples.</h4>
 
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">
-            Você não precisa organizar tudo agora.
-          </p>
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">Você não precisa organizar tudo agora.</p>
 
           <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
             Quando quiser, registre uma coisa pequena — ou apenas volte depois. O Materna360 continua aqui.
@@ -299,10 +279,7 @@ export default function MyDayGroups({
                     const snoozeLabel = formatSnoozeUntil((t as any).snoozeUntil)
 
                     return (
-                      <div
-                        key={t.id}
-                        className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]"
-                      >
+                      <div key={t.id} className="rounded-2xl border px-4 py-3 border-[var(--color-border-soft)]">
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-3 items-stretch sm:items-center">
                           <div className="min-w-0">
                             <p className="text-[14px] text-[var(--color-text-main)]">{t.title}</p>

@@ -1,3 +1,4 @@
+// app/(tabs)/meu-dia/Client.tsx
 'use client'
 
 import * as React from 'react'
@@ -20,6 +21,9 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { getMyDayContinuityLine } from '@/app/lib/continuity.client'
 
+// P26 — continuidade Meu Dia Leve -> Meu Dia (fonte única de leitura do payload)
+import { readRecentMyDaySave, type MeuDiaContinuityPayload } from '@/app/lib/myDayContinuity.client'
+
 //  P23 — camada de experiência (nunca chamar isPremium diretamente em componente)
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 
@@ -31,24 +35,7 @@ export const revalidate = 0
 
 type ContinuityLine = { text: string; phraseId: string }
 
-// P26 — continuidade Meu Dia Leve -> Meu Dia (sem conteúdo sensível)
-type MeuDiaLeveRecentSave = {
-  ts: number
-  origin: 'today' | 'family' | 'selfcare' | 'home' | 'other'
-  source: string
-}
-
-const LS_RECENT_SAVE = 'my_day_recent_save_v1'
 const LS_ACK_PREFIX = 'm360.meu_dia_leve_ack.' // + dateKey
-
-function safeParseJSON<T>(raw: string | null): T | null {
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
-}
 
 function safeGetLS(key: string): string | null {
   try {
@@ -66,27 +53,6 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
-function safeRemoveLS(key: string) {
-  try {
-    if (typeof window === 'undefined') return
-    window.localStorage.removeItem(key)
-  } catch {}
-}
-
-function isRecentSavePayload(v: unknown): v is MeuDiaLeveRecentSave {
-  if (!v || typeof v !== 'object') return false
-  const o = v as any
-  const okOrigin =
-    o.origin === 'today' ||
-    o.origin === 'family' ||
-    o.origin === 'selfcare' ||
-    o.origin === 'home' ||
-    o.origin === 'other'
-  const okTs = typeof o.ts === 'number' && Number.isFinite(o.ts)
-  const okSource = typeof o.source === 'string' && !!o.source.trim()
-  return okOrigin && okTs && okSource
-}
-
 function getFirstName(fullName: string | null | undefined) {
   const n = (fullName ?? '').trim()
   if (!n) return ''
@@ -101,7 +67,7 @@ function withName(baseGreeting: string, firstName: string) {
   return g ? `${g}, ${f}` : `Bom dia, ${f}`
 }
 
-function originLabel(origin: MeuDiaLeveRecentSave['origin']) {
+function originLabel(origin: MeuDiaContinuityPayload['origin']) {
   if (origin === 'family') return 'Família'
   if (origin === 'selfcare') return 'Autocuidado'
   if (origin === 'home') return 'Casa'
@@ -123,7 +89,7 @@ export default function MeuDiaClient() {
   const [continuityLine, setContinuityLine] = useState<ContinuityLine | null>(null)
 
   // P26 — CTA discreto: “voltar ao Meu Dia Leve” (1x por dia, só quando houve save recente)
-  const [meuDiaLevePrompt, setMeuDiaLevePrompt] = useState<MeuDiaLeveRecentSave | null>(null)
+  const [meuDiaLevePrompt, setMeuDiaLevePrompt] = useState<MeuDiaContinuityPayload | null>(null)
 
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
@@ -229,10 +195,11 @@ export default function MeuDiaClient() {
   }, [todayKey])
 
   /**
-   * P26 — Se o usuário salvou algo no Meu Dia Leve:
-   * - mostrar um CTA discreto no Meu Dia
-   * - não repetir mais de 1x por dia (ack)
-   * - sem expor conteúdo (apenas origem e “salvo”)
+   * P26 — UI do CTA (somente UI):
+   * - lê o payload via myDayContinuity.client (fonte única)
+   * - não consome nem dá dedupe (isso é responsabilidade do MyDayGroups via consumeRecentMyDaySave)
+   * - respeita ack 1x/dia
+   * - janela de recência: 30 minutos (evita “grudar” visualmente)
    */
   const refreshMeuDiaLeveContinuity = useCallback(() => {
     try {
@@ -245,30 +212,27 @@ export default function MeuDiaClient() {
         return
       }
 
-      const raw = safeGetLS(LS_RECENT_SAVE)
-      const parsed = safeParseJSON<unknown>(raw)
-      if (!isRecentSavePayload(parsed)) {
+      const payload = readRecentMyDaySave()
+      if (!payload) {
         setMeuDiaLevePrompt(null)
         return
       }
 
-      // janela de recência: 30 minutos (discreto, mas ainda faz sentido)
-      const ageMs = Date.now() - parsed.ts
+      const ageMs = Date.now() - payload.ts
       const RECENT_WINDOW_MS = 30 * 60 * 1000
-
       if (ageMs < 0 || ageMs > RECENT_WINDOW_MS) {
         setMeuDiaLevePrompt(null)
         return
       }
 
-      setMeuDiaLevePrompt(parsed)
+      setMeuDiaLevePrompt(payload)
 
       try {
         track('meu_dia_leve.continuity_prompt.view', {
           dateKey: todayKey,
           ageMs,
-          origin: parsed.origin,
-          source: parsed.source,
+          origin: payload.origin,
+          source: payload.source,
         })
       } catch {}
     } catch {
@@ -346,7 +310,7 @@ export default function MeuDiaClient() {
             ) : null}
           </div>
 
-          {/* P26 — continuidade discreta (aparece só quando veio do Meu Dia Leve) */}
+          {/* P26 — continuidade discreta (aparece só quando houve save recente no Meu Dia Leve) */}
           {meuDiaLevePrompt ? (
             <div className="mt-5">
               <div
@@ -396,9 +360,8 @@ export default function MeuDiaClient() {
                           })
                         } catch {}
 
-                        // ack 1x/dia + limpar payload para não “grudar”
+                        // ack 1x/dia (não remove payload aqui; consumo/dedupe é no MyDayGroups)
                         safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        safeRemoveLS(LS_RECENT_SAVE)
                       }}
                     >
                       Voltar ao Meu Dia Leve
@@ -419,7 +382,6 @@ export default function MeuDiaClient() {
                       "
                       onClick={() => {
                         safeSetLS(`${LS_ACK_PREFIX}${todayKey}`, '1')
-                        safeRemoveLS(LS_RECENT_SAVE)
                         setMeuDiaLevePrompt(null)
                         try {
                           track('meu_dia_leve.continuity_prompt.dismiss', { dateKey: todayKey })
