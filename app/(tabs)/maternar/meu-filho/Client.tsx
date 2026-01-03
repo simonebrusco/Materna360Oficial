@@ -2,8 +2,10 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+
+import { safeMeuFilhoBloco1Text, clampMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
 
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -16,7 +18,11 @@ import {
 } from '@/app/lib/myDayTasks.client'
 
 import { markJourneyFamilyDone } from '@/app/lib/journey.client'
-import { getActiveChildOrNull, getProfileSnapshot, type ProfileSource } from '@/app/lib/profile.client'
+import {
+  getActiveChildOrNull,
+  getProfileSnapshot,
+  type ProfileSource,
+} from '@/app/lib/profile.client'
 
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
@@ -187,7 +193,383 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 }
 
 /* =========================
-   KITS
+   BLOCO 1 — CANÔNICO (fallback silencioso)
+========================= */
+
+const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
+  '0-2': {
+    '5': 'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
+    '10': 'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
+    '15': 'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
+  },
+  '3-4': {
+    '5': 'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
+    '10': 'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
+    '15': 'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
+  },
+  '5-6': {
+    '5': 'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
+    '10': 'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
+    '15': 'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
+  },
+  '6+': {
+    '5': 'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
+    '10': 'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
+    '15': 'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
+  },
+}
+
+type Bloco1State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; text: string; source: 'ai' | 'fallback' }
+
+async function fetchBloco1Plan(args: { tempoDisponivel: number }): Promise<string | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        feature: 'quick-ideas',
+        origin: 'maternar/meu-filho',
+        tempoDisponivel: args.tempoDisponivel,
+        comQuem: 'eu-e-meu-filho',
+        tipoIdeia: 'meu-filho-bloco-1',
+      }),
+    })
+
+    if (!res.ok) return null
+
+    const data = (await res.json().catch(() => null)) as
+      | { suggestions?: { description?: string }[] }
+      | null
+
+    const desc = data?.suggestions?.[0]?.description
+    const cleaned = safeMeuFilhoBloco1Text(desc)
+    if (!cleaned) return null
+
+    return cleaned
+  } catch {
+    return null
+  }
+}
+
+/* =========================
+   BLOCO 2 — IA + FALLBACK (Exploração Guiada)
+========================= */
+
+type Bloco2Items = { a: PlanItem; b: PlanItem; c: PlanItem }
+
+type Bloco2State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; items: Bloco2Items; source: 'ai' | 'fallback' }
+
+function stripEmojiAndBullets(s: string) {
+  const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
+  return noBullets
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function clampText(s: string, max: number) {
+  const t = stripEmojiAndBullets(String(s ?? '').trim())
+  if (t.length <= max) return t
+  return t.slice(0, max - 1).trimEnd() + '…'
+}
+
+function safeBloco2Title(raw: unknown): string | null {
+  const t = clampText(String(raw ?? ''), 52)
+  if (!t) return null
+  if (t.toLowerCase() === 'brincadeira' || t.toLowerCase() === 'atividade') return null
+  return t
+}
+
+function safeBloco2How(raw: unknown): string | null {
+  const t = clampText(String(raw ?? ''), 120)
+  if (!t) return null
+  const low = t.toLowerCase()
+  if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
+  return t
+}
+
+function pick3Suggestions(data: any): { title: string; description: string }[] | null {
+  const arr = Array.isArray(data?.suggestions) ? data.suggestions : null
+  if (!arr || arr.length < 3) return null
+  const s0 = arr[0]
+  const s1 = arr[1]
+  const s2 = arr[2]
+  const pack = [s0, s1, s2].map((s) => ({
+    title: String(s?.title ?? '').trim(),
+    description: String(s?.description ?? '').trim(),
+  }))
+  if (pack.some((p) => !p.title || !p.description)) return null
+  return pack
+}
+
+async function fetchBloco2Cards(args: {
+  tempoDisponivel: number
+  age: AgeBand
+}): Promise<Bloco2Items | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        feature: 'quick-ideas',
+        origin: 'maternar/meu-filho',
+        tempoDisponivel: args.tempoDisponivel,
+        comQuem: 'eu-e-meu-filho',
+        tipoIdeia: 'meu-filho-bloco-2',
+        ageBand: args.age,
+        contexto: 'exploracao',
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null)
+    const picked = pick3Suggestions(data)
+    if (!picked) return null
+
+    const mk = (i: { title: string; description: string }): PlanItem | null => {
+      const title = safeBloco2Title(i.title)
+      const how = safeBloco2How(i.description)
+      if (!title || !how) return null
+      return {
+        title,
+        how,
+        time: String(args.tempoDisponivel) as TimeMode,
+        tag: 'curado',
+      }
+    }
+
+    const a = mk(picked[0])
+    const b = mk(picked[1])
+    const c = mk(picked[2])
+    if (!a || !b || !c) return null
+
+    return { a, b, c }
+  } catch {
+    return null
+  }
+}
+
+/* =========================
+   BLOCO 3 — ROTINAS / CONEXÃO (continuidade sem cobrança)
+========================= */
+
+type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
+type Bloco3Type = 'rotina' | 'conexao'
+
+type Bloco3State =
+  | { status: 'idle' }
+  | { status: 'loading'; kind: Bloco3Type }
+  | { status: 'done'; kind: Bloco3Type; text: string; source: 'ai' | 'fallback'; momento: MomentoDoDia }
+
+function momentForStep(step: Step): MomentoDoDia {
+  if (step === 'rotina') return 'transição'
+  if (step === 'conexao') return 'noite'
+  return 'tarde'
+}
+
+function clampBloco3Text(raw: unknown): string | null {
+  const t = clampText(String(raw ?? ''), 240)
+  if (!t) return null
+  const low = t.toLowerCase()
+
+  // hard rules: sem cobrança / sem frequência / sem “método”
+  const banned = [
+    'todo dia',
+    'todos os dias',
+    'sempre',
+    'nunca',
+    'crie o hábito',
+    'hábito',
+    'disciplina',
+    'rotina ideal',
+    'o mais importante é',
+  ]
+  if (banned.some((b) => low.includes(b))) return null
+
+  // evitar formato de lista
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+
+  // limitar frases (best effort): até 3
+  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  if (sentences.length > 3) return null
+
+  return t
+}
+
+const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
+  rotina: {
+    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga “agora vamos guardar” e faça junto por 30 segundos. Isso já reduz a resistência.',
+    '3-4': 'Antes de mudar de atividade, faça um “sinal de troca” sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
+    '5-6': 'Escolha um encerramento simples para a brincadeira: guardar 1 item juntos e pronto. Isso evita esticar e ajuda a passar para a próxima parte do dia.',
+    '6+': 'Feche a atividade com um combinado objetivo: “agora é X, depois Y”. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
+  },
+  conexao: {
+    '0-2': 'No final, faça 10 segundos de olho no olho e um abraço curto. Sem conversa. Só presença antes de seguir.',
+    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e “valeu por brincar”. Não precisa durar. Só marca o fim com carinho.',
+    '5-6': 'Use uma frase curta e específica no final: “eu gostei de brincar com você”. Depois siga para o próximo passo do dia. Presença curta já conta.',
+    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com “valeu por fazer junto”. Conexão curta, sem estender.',
+  },
+}
+
+async function fetchBloco3Suggestion(args: {
+  faixa_etaria: AgeBand
+  momento_do_dia: MomentoDoDia
+  tipo_experiencia: Bloco3Type
+  contexto: 'continuidade'
+}): Promise<string | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        feature: 'micro-ritmos',
+        origin: 'maternar/meu-filho',
+        tipoIdeia: 'meu-filho-bloco-3',
+        idade: args.faixa_etaria,
+        faixa_etaria: args.faixa_etaria,
+        momento_do_dia: args.momento_do_dia,
+        tipo_experiencia: args.tipo_experiencia,
+        contexto: args.contexto,
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = (await res.json().catch(() => null)) as any
+
+    // aceitamos alguns formatos, mas sempre normalizamos por clamp
+    const candidate =
+      data?.suggestion ??
+      data?.text ??
+      data?.output ??
+      data?.suggestions?.[0]?.description ??
+      data?.suggestions?.[0]?.text ??
+      null
+
+    const cleaned = clampBloco3Text(candidate)
+    if (!cleaned) return null
+    return cleaned
+  } catch {
+    return null
+  }
+}
+
+/* =========================
+   BLOCO 4 — “FASES / CONTEXTO” (Tradução Prática)
+   - 1 frase
+   - máx 140 caracteres
+   - sem tom normativo/diagnóstico
+========================= */
+
+type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
+
+type Bloco4State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; text: string; source: 'ai' | 'fallback'; momento?: MomentoDesenvolvimento }
+
+function inferMomentoDesenvolvimento(ageBand: AgeBand): MomentoDesenvolvimento | undefined {
+  // Best-effort interno: não aparece na UI e não vira “fase clínica”.
+  if (ageBand === '0-2') return 'exploracao'
+  if (ageBand === '3-4') return 'imitacao'
+  if (ageBand === '5-6') return 'afirmacao'
+  if (ageBand === '6+') return 'autonomia'
+  return undefined
+}
+
+function clampBloco4Text(raw: unknown): string | null {
+  const t = clampText(String(raw ?? ''), 140)
+  if (!t) return null
+  const low = t.toLowerCase()
+
+  // banir linguagem normativa / ansiosa / diagnóstica
+  const banned = [
+    'é esperado',
+    'já deveria',
+    'o ideal',
+    'normalmente já',
+    'crianças dessa idade',
+    'precisa',
+    'precisam',
+    'deve',
+    'deveria',
+    'tem que',
+    'têm que',
+    'diagnóstico',
+    'atraso',
+    'anormal',
+    'normal',
+  ]
+  if (banned.some((b) => low.includes(b))) return null
+
+  // sem lista / quebra / bullets
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+
+  // exatamente 1 frase (best effort)
+  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  if (sentences.length !== 1) return null
+
+  return t
+}
+
+const BLOCO4_FALLBACK: Record<AgeBand, string> = {
+  '0-2': 'Nesta fase, repetir gestos simples e curtos costuma manter o interesse sem esticar demais.',
+  '3-4': 'Nesta fase, faz de conta curto com começo e fim claro costuma reduzir atrito e prender a atenção.',
+  '5-6': 'Nesta fase, dar escolha entre duas opções simples costuma ajudar a colaborar sem disputa.',
+  '6+': 'Nesta fase, combinados curtos e respeito à autonomia costumam diminuir resistência nas transições.',
+}
+
+async function fetchBloco4Suggestion(args: {
+  faixa_etaria: AgeBand
+  momento_desenvolvimento?: MomentoDesenvolvimento
+  contexto: 'fase'
+}): Promise<string | null> {
+  try {
+    const res = await fetch('/api/ai/rotina', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({
+        feature: 'fase-contexto',
+        origin: 'maternar/meu-filho',
+        tipoIdeia: 'meu-filho-bloco-4',
+        idade: args.faixa_etaria,
+        faixa_etaria: args.faixa_etaria,
+        momento_desenvolvimento: args.momento_desenvolvimento,
+        contexto: args.contexto,
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = (await res.json().catch(() => null)) as any
+
+    const candidate =
+      data?.text ??
+      data?.suggestion ??
+      data?.output ??
+      data?.phrase ??
+      data?.suggestions?.[0]?.text ??
+      data?.suggestions?.[0]?.description ??
+      null
+
+    const cleaned = clampBloco4Text(candidate)
+    if (!cleaned) return null
+    return cleaned
+  } catch {
+    return null
+  }
+}
+
+/* =========================
+   KITS (catálogo local / fallback geral)
 ========================= */
 
 const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
@@ -378,6 +760,22 @@ export default function MeuFilhoClient() {
   const [childLabel, setChildLabel] = useState<string | undefined>(undefined)
   const [profileSource, setProfileSource] = useState<ProfileSource>('none')
 
+  // Bloco 1 (canônico)
+  const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
+  const bloco1ReqSeq = useRef(0)
+
+  // Bloco 2 (IA + fallback)
+  const [bloco2, setBloco2] = useState<Bloco2State>({ status: 'idle' })
+  const bloco2ReqSeq = useRef(0)
+
+  // Bloco 3 (Rotina/Conexão — continuidade)
+  const [bloco3, setBloco3] = useState<Bloco3State>({ status: 'idle' })
+  const bloco3ReqSeq = useRef(0)
+
+  // Bloco 4 (Fase/Contexto — 1 frase)
+  const [bloco4, setBloco4] = useState<Bloco4State>({ status: 'idle' })
+  const bloco4ReqSeq = useRef(0)
+
   useEffect(() => {
     try {
       track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
@@ -405,7 +803,164 @@ export default function MeuFilhoClient() {
   }, [])
 
   const kit = useMemo(() => KITS[age][time], [age, time])
-  const selected = useMemo(() => kit.plan[chosen], [kit, chosen])
+
+  // plano efetivo do Bloco 2 (IA -> fallback local)
+  const effectivePlan: Bloco2Items = useMemo(() => {
+    if (bloco2.status === 'done') return bloco2.items
+    return kit.plan
+  }, [bloco2, kit.plan])
+
+  const selected = useMemo(() => effectivePlan[chosen], [effectivePlan, chosen])
+
+  // Sempre que time/age mudar, (re)gera Bloco 1 automaticamente (sem botão de “trocar”).
+  useEffect(() => {
+    let alive = true
+    const seq = ++bloco1ReqSeq.current
+
+    async function run() {
+      setBloco1({ status: 'loading' })
+
+      const tempoDisponivel = Number(time)
+      const ai = await fetchBloco1Plan({ tempoDisponivel })
+
+      if (!alive || seq !== bloco1ReqSeq.current) return
+
+      if (ai) {
+        setBloco1({ status: 'done', text: ai, source: 'ai' })
+        try {
+          track('meu_filho.bloco1.done', { source: 'ai', time, age })
+        } catch {}
+        return
+      }
+
+      const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
+      setBloco1({ status: 'done', text: fb, source: 'fallback' })
+      try {
+        track('meu_filho.bloco1.done', { source: 'fallback', time, age })
+      } catch {}
+    }
+
+    run()
+    return () => {
+      alive = false
+    }
+  }, [time, age])
+
+  // Sempre que time/age mudar, (re)gera Bloco 2 automaticamente (IA -> fallback).
+  useEffect(() => {
+    let alive = true
+    const seq = ++bloco2ReqSeq.current
+
+    async function run() {
+      setBloco2({ status: 'loading' })
+
+      const tempoDisponivel = Number(time)
+      const ai = await fetchBloco2Cards({ tempoDisponivel, age })
+
+      if (!alive || seq !== bloco2ReqSeq.current) return
+
+      if (ai) {
+        setBloco2({ status: 'done', items: ai, source: 'ai' })
+        try {
+          track('meu_filho.bloco2.done', { source: 'ai', time, age })
+        } catch {}
+        return
+      }
+
+      setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
+      try {
+        track('meu_filho.bloco2.done', { source: 'fallback', time, age })
+      } catch {}
+    }
+
+    run()
+    return () => {
+      alive = false
+    }
+  }, [time, age, kit.plan])
+
+  // Bloco 3 só roda dentro de Rotina/Conexão.
+  useEffect(() => {
+    if (step !== 'rotina' && step !== 'conexao') return
+
+    let alive = true
+    const seq = ++bloco3ReqSeq.current
+
+    async function run() {
+      const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
+      const momento = momentForStep(step)
+
+      setBloco3({ status: 'loading', kind })
+
+      const ai = await fetchBloco3Suggestion({
+        faixa_etaria: age,
+        momento_do_dia: momento,
+        tipo_experiencia: kind,
+        contexto: 'continuidade',
+      })
+
+      if (!alive || seq !== bloco3ReqSeq.current) return
+
+      if (ai) {
+        setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
+        try {
+          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento })
+        } catch {}
+        return
+      }
+
+      const fb = BLOCO3_FALLBACK[kind][age]
+      setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+      try {
+        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento })
+      } catch {}
+    }
+
+    run()
+    return () => {
+      alive = false
+    }
+  }, [step, age])
+
+  // Bloco 4 roda apenas no step Desenvolvimento (Fase/Contexto).
+  useEffect(() => {
+    if (step !== 'desenvolvimento') return
+
+    let alive = true
+    const seq = ++bloco4ReqSeq.current
+
+    async function run() {
+      setBloco4({ status: 'loading' })
+
+      const momento = inferMomentoDesenvolvimento(age)
+      const ai = await fetchBloco4Suggestion({
+        faixa_etaria: age,
+        momento_desenvolvimento: momento,
+        contexto: 'fase',
+      })
+
+      if (!alive || seq !== bloco4ReqSeq.current) return
+
+      if (ai) {
+        setBloco4({ status: 'done', text: ai, source: 'ai', momento })
+        try {
+          track('meu_filho.bloco4.done', { source: 'ai', age, momento })
+        } catch {}
+        return
+      }
+
+      const fb = BLOCO4_FALLBACK[age]
+      setBloco4({ status: 'done', text: fb, source: 'fallback', momento })
+      try {
+        track('meu_filho.bloco4.done', { source: 'fallback', age, momento })
+      } catch {}
+    }
+
+    run()
+    return () => {
+      alive = false
+    }
+  }, [step, age])
 
   function go(next: Step) {
     setStep(next)
@@ -418,7 +973,6 @@ export default function MeuFilhoClient() {
     setTime(next)
     setChosen('a')
 
-    // Persistência silenciosa: prefer do hub + compat legado
     safeSetLS(HUB_PREF.time, next)
     safeSetLS('eu360_time_with_child', next)
 
@@ -431,7 +985,6 @@ export default function MeuFilhoClient() {
     setAge(next)
     setChosen('a')
 
-    // Persistência silenciosa: override do hub + compat legado
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
 
@@ -443,15 +996,19 @@ export default function MeuFilhoClient() {
   function onChoose(k: 'a' | 'b' | 'c') {
     setChosen(k)
     try {
-      track('meu_filho.plan.choose', { which: k, time, age })
+      track('meu_filho.plan.choose', {
+        which: k,
+        time,
+        age,
+        source: bloco2.status === 'done' ? bloco2.source : 'unknown',
+      })
     } catch {}
   }
 
-  function saveSelectedToMyDay() {
+  function saveSelectedToMyDay(title: string) {
     const ORIGIN = 'family' as const
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
 
-    // Guardrail P26: no máximo 3 tarefas ativas do Meu Filho no dia
     const today = listMyDayTasks()
     const activeCount = countActiveFamilyFromMeuFilhoToday(today)
     if (activeCount >= 3) {
@@ -463,12 +1020,11 @@ export default function MeuFilhoClient() {
     }
 
     const res = addTaskToMyDay({
-      title: selected.title,
+      title,
       origin: ORIGIN,
       source: SOURCE,
     })
 
-    //  guardrail global do core (anti “bola de neve”)
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
       try {
@@ -501,6 +1057,19 @@ export default function MeuFilhoClient() {
     toast.success('Registrado na sua Jornada')
   }
 
+  const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
+
+  const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
+
+  const bloco3Label =
+    bloco3.status === 'loading'
+      ? 'Ajustando para o seu dia…'
+      : bloco3.status === 'done'
+        ? 'Para encaixar no dia'
+        : 'Para encaixar no dia'
+
+  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
+
   return (
     <main
       data-layout="page-template-v1"
@@ -532,11 +1101,10 @@ export default function MeuFilhoClient() {
                 Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
               </p>
 
-              {/* micro-sinal de personalização (sem chamar atenção) */}
               {childLabel ? (
                 <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
                   Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
-                  {/* Debug only (P26: não mostrar em produção) */}
+                  {/* Debug only */}
                   {/* {process.env.NODE_ENV !== 'production' ? <span className="opacity-70"> • fonte: {profileSource}</span> : null} */}
                 </div>
               ) : null}
@@ -676,77 +1244,163 @@ export default function MeuFilhoClient() {
                         shadow-[0_6px_18px_rgba(184,35,107,0.09)]
                       "
                     >
+                      {/* =========================
+                          BLOCO 1 — CANÔNICO
+                      ========================= */}
                       <div className="flex items-start gap-3">
                         <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                          <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
                         </div>
                         <div className="space-y-1">
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Brincadeiras do dia
+                            Plano pronto para agora
                           </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">{kit.subtitle}</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Você só executa. Sem decidir nada.
+                          </p>
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {(['a', 'b', 'c'] as const).map((k) => {
-                          const it = kit.plan[k]
-                          const active = chosen === k
-                          return (
-                            <button
-                              key={k}
-                              onClick={() => onChoose(k)}
-                              className={[
-                                'rounded-2xl border p-4 text-left transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                              ].join(' ')}
-                            >
-                              <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                {it.tag} • {timeLabel(it.time)}
-                              </div>
-                              <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
-                              <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{it.how}</div>
-                            </button>
-                          )
-                        })}
-                      </div>
-
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">faça agora</div>
-                        <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
+                        {bloco1.status === 'loading' ? (
+                          <div className="text-[13px] text-[#6a6a6a]">
+                            Gerando um plano pronto para agora…
+                          </div>
+                        ) : (
+                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">
+                            {bloco1Text}
+                          </div>
+                        )}
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Fechar com conexão
-                          </button>
-
-                          <button
                             type="button"
-                            onClick={saveSelectedToMyDay}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            title="Salvar esta sugestão no Meu Dia"
+                            disabled={bloco1.status !== 'done'}
+                            onClick={() => {
+                              if (!bloco1Text) return
+                              saveSelectedToMyDay(bloco1Text)
+                              try {
+                                track('meu_filho.bloco1.save', {
+                                  time,
+                                  age,
+                                  source: bloco1.status === 'done' ? bloco1.source : 'unknown',
+                                })
+                              } catch {}
+                            }}
+                            className={[
+                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+                              bloco1.status === 'done'
+                                ? 'bg-[#fd2597] text-white hover:opacity-95'
+                                : 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed',
+                            ].join(' ')}
+                            title="Salvar este plano no Meu Dia"
                           >
                             Salvar no Meu Dia
                           </button>
 
                           <button
-                            onClick={() => go('rotina')}
+                            onClick={() => go('conexao')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Ajuste de rotina
+                            Fechar com conexão
                           </button>
+                        </div>
+                      </div>
 
-                          <button
-                            onClick={() => go('desenvolvimento')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Entender a fase
-                          </button>
+                      {/* =========================
+                          BLOCO 2 — IA + FALLBACK
+                      ========================= */}
+                      <div className="mt-6 border-t border-[#f5d7e5] pt-5">
+                        <div className="flex items-start gap-3">
+                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                            <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                              Brincadeiras do dia
+                            </span>
+                            <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
+                            <p className="text-[13px] text-[#6a6a6a]">{kit.subtitle}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 text-[11px] text-[#6a6a6a]">
+                          {bloco2.status === 'loading'
+                            ? 'Curando 3 opções para hoje…'
+                            : bloco2.status === 'done'
+                              ? bloco2.source === 'ai'
+                                ? 'Opções curadas para hoje'
+                                : 'Opções locais (fallback)'
+                              : null}
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {(['a', 'b', 'c'] as const).map((k) => {
+                            const it = effectivePlan[k]
+                            const active = chosen === k
+                            return (
+                              <button
+                                key={k}
+                                onClick={() => onChoose(k)}
+                                className={[
+                                  'rounded-2xl border p-4 text-left transition',
+                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                ].join(' ')}
+                                disabled={bloco2.status === 'loading'}
+                                aria-disabled={bloco2.status === 'loading'}
+                              >
+                                <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                                  {it.tag} • {timeLabel(it.time)}
+                                </div>
+                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">
+                                  {it.title}
+                                </div>
+                                <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                  {it.how}
+                                </div>
+                              </button>
+                            )
+                          })}
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            opção selecionada
+                          </div>
+                          <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => go('conexao')}
+                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            >
+                              Fechar com conexão
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => saveSelectedToMyDay(selected.title)}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                              title="Salvar esta sugestão no Meu Dia"
+                            >
+                              Salvar no Meu Dia
+                            </button>
+
+                            <button
+                              onClick={() => go('rotina')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Ajuste de rotina
+                            </button>
+
+                            <button
+                              onClick={() => go('desenvolvimento')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Entender a fase
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </SoftCard>
@@ -781,6 +1435,23 @@ export default function MeuFilhoClient() {
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
+
+                        {/* BLOCO 4 — 1 frase (fase/contexto) */}
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            Nessa fase
+                          </div>
+
+                          {bloco4.status === 'loading' ? (
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Ajustando para a fase…
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {bloco4Text}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
@@ -830,6 +1501,23 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
+                        {/* BLOCO 3 — ANCORAGEM (ROTINA) */}
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            {bloco3Label}
+                          </div>
+
+                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Ajustando para o seu dia…
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {bloco3Text}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             onClick={() => go('brincadeiras')}
@@ -877,6 +1565,23 @@ export default function MeuFilhoClient() {
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
+
+                        {/* BLOCO 3 — ANCORAGEM (CONEXÃO) */}
+                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            Para encaixar no dia
+                          </div>
+
+                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Ajustando para o seu dia…
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {bloco3Text}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           <button
