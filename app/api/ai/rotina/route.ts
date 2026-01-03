@@ -7,6 +7,7 @@ import {
   type MaternaChildProfile,
   type RotinaComQuem,
   type RotinaTipoIdeia,
+  type RotinaQuickSuggestion,
 } from '@/app/lib/ai/maternaCore'
 import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
@@ -33,10 +34,58 @@ const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
 }
 
+/**
+ * Bloco 1 (Meu Filho) — Validação canônica no servidor
+ * Regras:
+ * - Exatamente 1 suggestion
+ * - title = ""
+ * - description: 1..280 chars, até 3 frases, sem linguagem proibida
+ * - se falhar: retorna [] para fallback do client
+ */
+function sanitizeMeuFilhoBloco1(
+  raw: RotinaQuickSuggestion[] | null | undefined,
+  tempoDisponivel: number | null | undefined,
+): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  if (!first) return []
+
+  const description = String(first.description ?? '').trim()
+
+  // 1..280 chars
+  if (description.length < 1 || description.length > 280) return []
+
+  // até 3 frases (best-effort)
+  // conta segmentos separados por . ! ? (ignorando vazios)
+  const sentenceParts = description
+    .split(/[.!?]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (sentenceParts.length < 1 || sentenceParts.length > 3) return []
+
+  // bloqueio de linguagem proibida (case-insensitive)
+  const forbidden = /\b(você pode|que tal|talvez|se quiser|uma ideia)\b/i
+  if (forbidden.test(description)) return []
+
+  // força contrato canônico do Bloco 1
+  const estimatedMinutes =
+    typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
+      ? Math.max(1, Math.round(tempoDisponivel))
+      : first.estimatedMinutes
+
+  const sanitized: RotinaQuickSuggestion = {
+    ...first,
+    title: '', // título é proibido no Bloco 1
+    description,
+    withChild: true,
+    estimatedMinutes,
+  }
+
+  return [sanitized]
+}
+
 export async function POST(req: Request) {
   try {
     // Proteção de uso da IA — limite por cliente / janela
-    // (best-effort, ajuda a proteger custos e abusos)
     assertRateLimit(req, 'ai-rotina', {
       limit: 20,
       windowMs: 5 * 60_000, // 20 chamadas a cada 5 minutos
@@ -44,56 +93,56 @@ export async function POST(req: Request) {
 
     const body = (await req.json()) as RotinaRequestBody
 
-    // Agora tentamos personalizar com base no Eu360 (mas com fallback seguro)
-    const { profile, child } = (await loadMaternaContextFromRequest(
-      req,
-    )) as { profile: MaternaProfile | null; child: MaternaChildProfile | null }
+    // Personalização Eu360 (fallback seguro)
+    const { profile, child } = (await loadMaternaContextFromRequest(req)) as {
+      profile: MaternaProfile | null
+      child: MaternaChildProfile | null
+    }
 
-  // -----------------------------------------
-// 1) IDEIAS RÁPIDAS (modo quick-ideas)
-// -----------------------------------------
-if (body.feature === 'quick-ideas') {
-  const tipoIdeia = body.tipoIdeia ?? null
-  const tempoDisponivel = body.tempoDisponivel ?? null
-  const comQuem = body.comQuem ?? null
+    // -----------------------------------------
+    // 1) IDEIAS RÁPIDAS (modo quick-ideas)
+    // -----------------------------------------
+    if (body.feature === 'quick-ideas') {
+      const result = await callMaternaAI({
+        mode: 'quick-ideas',
+        profile,
+        child,
+        context: {
+          tempoDisponivel: body.tempoDisponivel ?? null,
+          comQuem: body.comQuem ?? null,
+          tipoIdeia: body.tipoIdeia ?? null,
+        },
+      })
 
-  // Bloco 1 do Meu Filho: input mínimo (não usa Eu360 completo)
-  const isMeuFilhoBloco1 = tipoIdeia === 'meu-filho-bloco-1'
+      // ✅ Guardrail canônico: Meu Filho — Bloco 1
+      if (body.tipoIdeia === 'meu-filho-bloco-1') {
+        const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
 
-  const safeProfile: MaternaProfile | null = isMeuFilhoBloco1 ? null : profile
+        return NextResponse.json(
+          {
+            suggestions: sanitized, // pode ser [] para cair no fallback silencioso do client
+          },
+          {
+            status: 200,
+            headers: NO_STORE_HEADERS,
+          },
+        )
+      }
 
-  const safeChild: MaternaChildProfile | null = isMeuFilhoBloco1
-    ? child && typeof child.idadeMeses === 'number'
-      ? { idadeMeses: child.idadeMeses }
-      : null
-    : child
-
-  const result = await callMaternaAI({
-    mode: 'quick-ideas',
-    profile: safeProfile,
-    child: safeChild,
-    context: {
-      tempoDisponivel,
-      comQuem,
-      tipoIdeia,
-    },
-  })
-
-  return NextResponse.json(
-    {
-      suggestions: result.suggestions ?? [],
-    },
-    {
-      status: 200,
-      headers: NO_STORE_HEADERS,
-    },
-  )
-}
-
+      // default: contrato original
+      return NextResponse.json(
+        {
+          suggestions: result.suggestions ?? [],
+        },
+        {
+          status: 200,
+          headers: NO_STORE_HEADERS,
+        },
+      )
+    }
 
     // -----------------------------------------
     // 2) RECEITAS INTELIGENTES (modo smart-recipes)
-    //    (feature padrão se não vier nada)
     // -----------------------------------------
     const result = await callMaternaAI({
       mode: 'smart-recipes',
@@ -116,30 +165,19 @@ if (body.feature === 'quick-ideas') {
       },
     )
   } catch (error) {
-    // Tratamento específico de estouro de limite
     if (error instanceof RateLimitError) {
       console.warn('[API /api/ai/rotina] Rate limit atingido:', error.message)
       return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: error.status ?? 429,
-          headers: NO_STORE_HEADERS,
-        },
+        { error: error.message },
+        { status: error.status ?? 429, headers: NO_STORE_HEADERS },
       )
     }
 
     console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', error)
 
     return NextResponse.json(
-      {
-        error: 'Não consegui gerar sugestões agora, tente novamente em instantes.',
-      },
-      {
-        status: 500,
-        headers: NO_STORE_HEADERS,
-      },
+      { error: 'Não consegui gerar sugestões agora, tente novamente em instantes.' },
+      { status: 500, headers: NO_STORE_HEADERS },
     )
   }
 }
