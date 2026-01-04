@@ -60,3 +60,30 @@ export function resetMJPoints(dateKey: string) {
   safeSet(LS.pointsTotal, '0')
   safeSet(LS.dayPrefix + dateKey, '0')
 }
+export function hasMJEventForDay(eventId: string, dateKey: string): boolean {
+  try {
+    if (typeof window === 'undefined') return false
+    const k = `mj_evt_${eventId}_${dateKey}`
+    return window.localStorage.getItem(k) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function markMJEventForDay(eventId: string, dateKey: string) {
+  try {
+    if (typeof window === 'undefined') return
+    const k = `mj_evt_${eventId}_${dateKey}`
+    window.localStorage.setItem(k, '1')
+  } catch {}
+}
+
+/**
+ * Pontua 1x/dia por evento (idempotente).
+ * Ex.: addMJPointsOncePerDay('journey_entry', 5, '2026-01-04')
+ */
+export function addMJPointsOncePerDay(eventId: string, delta: number, dateKey: string) {
+  if (hasMJEventForDay(eventId, dateKey)) return null
+  markMJEventForDay(eventId, dateKey)
+  return addMJPoints(delta, dateKey)
+}
