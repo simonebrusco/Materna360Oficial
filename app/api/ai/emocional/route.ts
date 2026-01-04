@@ -1,4 +1,3 @@
-// app/api/ai/emocional/route.ts
 import { NextResponse } from 'next/server'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses'
@@ -9,14 +8,25 @@ const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
 
 type WeeklyInsightContext = {
   firstName?: string
+
+  // Compat (legado)
   persona?: string | null
   personaLabel?: string | null
+
+  // Novo (preferências neutras — pode vir vazio por enquanto)
+  prefs?: {
+    tone?: 'soft' | 'neutral' | 'firm' | null
+    intensity?: 'low' | 'medium' | null
+    focus?: 'care' | 'organization' | 'pause' | null
+  }
+
   stats?: {
     daysWithPlanner?: number
     moodCheckins?: number
     unlockedAchievements?: number
     todayMissionsDone?: number
   }
+
   // Contexto leve do “agora” (sem conteúdo sensível)
   mood?: string | null
   energy?: string | null
@@ -47,10 +57,6 @@ function safeString(v: unknown): string | null {
   return s.length ? s : null
 }
 
-function isNonEmptyStringArray(v: unknown): v is string[] {
-  return Array.isArray(v) && v.every((x) => typeof x === 'string' && x.trim().length > 0)
-}
-
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY
@@ -65,12 +71,19 @@ export async function POST(request: Request) {
 
     const origin = safeString(body?.origin) ?? 'como-estou-hoje'
     const isMaternar = origin === 'maternar-hub'
+    const isEu360 = origin === 'eu360'
 
     // Contexto “unificado” (prioriza body.context; mantém compat com campos antigos)
     const context: WeeklyInsightContext = {
       firstName: safeString(body?.context?.firstName) ?? undefined,
+
+      // legado
       persona: safeString(body?.context?.persona) ?? null,
       personaLabel: safeString(body?.context?.personaLabel) ?? null,
+
+      // novo (pode vir vazio)
+      prefs: body?.context?.prefs ?? undefined,
+
       stats: body?.context?.stats ?? undefined,
       mood: safeString(body?.context?.mood) ?? safeString(body?.mood) ?? null,
       energy: safeString(body?.context?.energy) ?? safeString(body?.energy) ?? null,
@@ -80,7 +93,6 @@ export async function POST(request: Request) {
 
     /**
      * SYSTEM BASE: tom Materna360 (geral)
-     * Observação: Para o Maternar, aplicamos um addendum com regras canônicas.
      */
     const systemBase = `
 Você é a IA emocional do Materna360, um app para mães que combina organização leve com apoio emocional.
@@ -99,7 +111,6 @@ Regras:
 
     /**
      * ADDENDUM CANÔNICO — MATERNAR (P33.4)
-     * Regra: Maternar sustenta, não ensina.
      */
     const systemMaternarAddendum = `
 Você está respondendo DENTRO DA ABA "MATERNAR".
@@ -129,20 +140,55 @@ Importante:
 - Se precisar “oferecer algo”, ofereça PERMISSÃO e linguagem de cuidado (não instrução).
 `.trim()
 
-    const systemMessage = (isMaternar ? `${systemBase}\n\n${systemMaternarAddendum}` : systemBase).trim()
+    /**
+     * ADDENDUM CANÔNICO — EU360 (P34.2)
+     * Eu360 é leitura + calibração. Não devolve ação.
+     */
+    const systemEu360Addendum = `
+Você está respondendo DENTRO DO HUB "EU360".
+Aqui a IA entrega LEITURA NARRATIVA e RECONHECIMENTO — nunca direção.
+
+PROIBIDO em Eu360:
+- conselhos, sugestões, técnicas, métodos, exercícios
+- linguagem de melhoria ("tente", "faça", "você precisa", "o ideal")
+- lista de passos, planos, metas, desafios, CTAs
+- comparação temporal ("mais", "menos", "melhor", "pior", "evoluiu", "regrediu")
+- termos clínicos/diagnósticos
+
+Regras de linguagem:
+- tom adulto, respeitoso, não performático
+- frases curtas
+- sem imperativo
+- a leitura deve parecer óbvia em retrospecto (sem "surpresa")
+
+Se houver um campo chamado "suggestions" no schema:
+- trate como "observações de cuidado / reconhecimentos"
+- devem ser frases que aliviam, não orientam
+`.trim()
+
+    const systemMessage = (
+      isMaternar ? `${systemBase}\n\n${systemMaternarAddendum}` : isEu360 ? `${systemBase}\n\n${systemEu360Addendum}` : systemBase
+    ).trim()
 
     // Contexto do usuário (a IA usa isso para calibrar tom e conteúdo)
     const userContext = {
       origem: origin,
       firstName: context.firstName ?? null,
+
+      // legado (pode ir sumindo com o tempo)
       persona: context.persona ?? null,
       personaLabel: context.personaLabel ?? null,
+
+      // novo (preferências neutras)
+      prefs: context.prefs ?? null,
+
       humorAtual: context.mood ?? null,
       energiaAtual: context.energy ?? null,
       focoHoje: context.focusToday ?? null,
       tempoSlot: context.slot ?? null,
       stats: context.stats ?? null,
-      // Mantido para compatibilidade (mas ideal é enviar vazio ou resumo não sensível)
+
+      // Mantido para compatibilidade (ideal é enviar vazio ou resumo não sensível)
       resumoNotas: safeString(body?.notesPreview) ?? null,
     }
 
@@ -151,16 +197,7 @@ Dados de contexto (podem estar vazios):
 ${JSON.stringify(userContext, null, 2)}
 `.trim()
 
-    /**
-     * Schemas (Structured Outputs strict)
-     *
-     * Mudança aprovada:
-     * - weekly_overview passa a devolver "observations" (observações/reconhecimentos) no lugar de "suggestions" (passos).
-     *
-     * Compatibilidade:
-     * - Mantemos "suggestions" como campo OPCIONAL (para não quebrar consumidores legados).
-     * - No retorno, normalizamos para sempre devolver ambos (observations + suggestions) com o mesmo conteúdo.
-     */
+    // Schemas (Structured Outputs strict)
     const weeklySchema = {
       name: 'weekly_insight',
       strict: true,
@@ -174,23 +211,12 @@ ${JSON.stringify(userContext, null, 2)}
             properties: {
               title: { type: 'string', minLength: 1 },
               summary: { type: 'string', minLength: 1 },
-
-              // Novo (preferido): observações/reconhecimentos sem direção
-              observations: {
-                type: 'array',
-                minItems: 2,
-                maxItems: 5,
-                items: { type: 'string', minLength: 1 },
-              },
-
-              // Legado (opcional): mantido por compatibilidade
               suggestions: {
                 type: 'array',
                 minItems: 2,
                 maxItems: 5,
                 items: { type: 'string', minLength: 1 },
               },
-
               highlights: {
                 type: 'object',
                 additionalProperties: false,
@@ -201,8 +227,7 @@ ${JSON.stringify(userContext, null, 2)}
                 required: ['bestDay', 'toughDays'],
               },
             },
-            // Requeremos observations (novo). suggestions fica opcional.
-            required: ['title', 'summary', 'observations', 'highlights'],
+            required: ['title', 'summary', 'suggestions', 'highlights'],
           },
         },
         required: ['weeklyInsight'],
@@ -237,34 +262,40 @@ ${JSON.stringify(userContext, null, 2)}
     if (feature === 'weekly_overview') {
       schemaToUse = weeklySchema
 
-      // Aqui aplicamos a mudança para TODO weekly_overview (maternar e não-maternar):
-      // observations = leitura + reconhecimento; sem passos, sem tarefas, sem micro-desafio.
       if (isMaternar) {
         inputText = `
 Gere um insight emocional da semana para a mãe, a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
 - "summary": 3 a 5 linhas, sem julgar, sem orientar.
-- "observations": 2 a 5 observações/reconhecimentos (DESCRITIVOS), sem passos, sem tarefas, sem técnicas.
-  - Evite verbos no imperativo.
-  - Prefira "parece", "tem aparecido", "há sinais de", "quando X acontece, Y pesa/ajuda".
+- "suggestions": 2 a 5 frases de permissão/acolhimento (NÃO passos, NÃO tarefas, NÃO técnicas).
 - "highlights.bestDay": quando a semana flui melhor (sem culpa).
-- "highlights.toughDays": quando pesa mais + lembrete de gentileza (sem direção).
+- "highlights.toughDays": quando pesa mais + lembrete de gentileza.
+${userMessageCommon}
+`.trim()
+      } else if (isEu360) {
+        // EU360 (P34.2): leitura + reconhecimento (sem direção)
+        inputText = `
+Gere um relatório emocional em formato de leitura narrativa da semana, a partir do contexto fornecido.
+Requisitos:
+- "title": curto, adulto, respeitoso.
+- "summary": 2 a 4 parágrafos curtos (ou 3 a 5 linhas), leitura sem julgamento, sem orientar.
+- "suggestions": 2 a 5 "observações de cuidado" (reconhecimentos, permissões, validações). NÃO são passos, NÃO são tarefas.
+- "highlights.bestDay": descreva quando a semana flui melhor (sem mérito, sem comparação).
+- "highlights.toughDays": descreva quando pesa mais + lembrete de gentileza (sem indicar o que fazer).
 ${userMessageCommon}
 `.trim()
       } else {
+        // fora de Maternar/Eu360 mantém comportamento atual
         inputText = `
 Gere um insight emocional da semana da mãe a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
-- "summary": 3 a 5 linhas, sem julgar e sem frases motivacionais vazias.
-- "observations": 2 a 5 observações/reconhecimentos (DESCRITIVOS), sem passos práticos, sem tarefa, sem técnica, sem micro-desafio.
-  - Evite verbos no imperativo.
-  - Prefira linguagem de leitura ("parece", "tem sido", "aparece", "há sinais de").
-- "highlights.bestDay": quando a semana flui melhor (sem culpa).
-- "highlights.toughDays": quando pesa mais + lembrete de gentileza (sem direção).
+- "summary": 3 a 5 linhas, sem julgar.
+- "suggestions": 2 a 5 passos pequenos, práticos e realistas.
 
-Se houver persona/personaLabel, use APENAS para calibrar o tom (mais suave/mais direto), sem criar sugestões ou tarefas.
+Ajuste o tom se existir "prefs" (sem mencionar que existem preferências).
+Se não houver prefs, use o contexto disponível.
 ${userMessageCommon}
 `.trim()
       }
@@ -272,12 +303,21 @@ ${userMessageCommon}
       schemaToUse = dailySchema
 
       if (isMaternar) {
-        // Maternar: manter schema, mas “ritual” não pode virar técnica/exercício.
         inputText = `
 Gere um apoio emocional para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
 - "phrase": 1 linha acolhedora, sem imperativo.
 - "care": 3 a 6 linhas, acolhimento concreto, sem instruções, sem métodos.
+- "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
+${userMessageCommon}
+`.trim()
+      } else if (isEu360) {
+        // Eu360 raramente chamará daily, mas se chamar, mantém leitura sem direção.
+        inputText = `
+Gere uma leitura breve para o dia da mãe, considerando humor, energia e foco.
+Requisitos:
+- "phrase": 1 linha adulta e acolhedora, sem imperativo.
+- "care": 3 a 6 linhas com reconhecimento e organização do que ela vive (sem instruções).
 - "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
 ${userMessageCommon}
 `.trim()
@@ -289,9 +329,7 @@ Requisitos:
 - "care": 3 a 6 linhas, acolhedor e concreto.
 - "ritual": 1 sugestão prática (cabe num dia corrido).
 
-Ajuste o tom para a persona, se existir:
-- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
-- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
+Ajuste o tom se existir "prefs" (sem mencionar que existem preferências).
 ${userMessageCommon}
 `.trim()
       }
@@ -305,7 +343,9 @@ ${userMessageCommon}
         feature,
         origin,
         isMaternar,
-        hasPersona: Boolean(context.persona || context.personaLabel),
+        isEu360,
+        hasPrefs: Boolean(context.prefs),
+        hasPersonaLegacy: Boolean(context.persona || context.personaLabel),
       })
     } catch {}
 
@@ -326,7 +366,7 @@ ${userMessageCommon}
           { role: 'system', content: systemMessage },
           { role: 'user', content: inputText },
         ],
-        temperature: isMaternar ? 0.4 : 0.7,
+        temperature: isMaternar || isEu360 ? 0.4 : 0.7,
         text: {
           format: {
             type: 'json_schema',
@@ -371,30 +411,6 @@ ${userMessageCommon}
       const last = rawText.lastIndexOf('}')
       if (first >= 0 && last > first) parsed = JSON.parse(rawText.slice(first, last + 1))
       else throw new Error('Resposta da IA sem JSON válido')
-    }
-
-    /**
-     * Normalização de compatibilidade (weekly_overview):
-     * - Sempre devolvemos observations + suggestions com o MESMO conteúdo,
-     *   para não quebrar consumidores que ainda leem "suggestions".
-     */
-    if (feature === 'weekly_overview' && parsed?.weeklyInsight && typeof parsed.weeklyInsight === 'object') {
-      const wi = parsed.weeklyInsight as any
-      const obs = wi?.observations
-      const sug = wi?.suggestions
-
-      if (!isNonEmptyStringArray(obs) && isNonEmptyStringArray(sug)) {
-        wi.observations = sug
-      } else if (isNonEmptyStringArray(obs) && !isNonEmptyStringArray(sug)) {
-        wi.suggestions = obs
-      } else if (!isNonEmptyStringArray(obs) && !isNonEmptyStringArray(sug)) {
-        // Segurança final: evita quebrar o client caso venha vazio por algum motivo
-        wi.observations = [
-          'Há sinais de que a sua semana teve momentos de cansaço e também pequenos respiros.',
-          'Mesmo com oscilações, parece que você seguiu sustentando o essencial do seu jeito.',
-        ]
-        wi.suggestions = wi.observations
-      }
     }
 
     return NextResponse.json(parsed, { status: 200 })
