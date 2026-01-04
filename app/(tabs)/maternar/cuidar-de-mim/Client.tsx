@@ -188,6 +188,18 @@ export default function Client() {
 
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
+  const scrollToSection = (id: string, label?: string) => {
+    try {
+      if (label) track('cuidar_de_mim.top.chip', { label, target: id })
+    } catch {}
+
+    try {
+      const el = document.getElementById(id)
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } catch {}
+  }
+
   return (
     <main
       data-layout="page-template-v1"
@@ -286,9 +298,7 @@ export default function Client() {
                         try {
                           track('cuidar_de_mim.top.start', { ritmo })
                         } catch {}
-                        try {
-                          document.getElementById('para-agora')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        } catch {}
+                        scrollToSection('cdm-para-agora', 'Começar')
                       }}
                       className="
                         rounded-full
@@ -306,23 +316,79 @@ export default function Client() {
                   </div>
                 </div>
 
+                {/* CHIPS CLICÁVEIS (scroll interno) */}
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {['Para agora', 'Ritmo', 'Dia', 'Norte'].map((label) => (
-                    <span
-                      key={label}
-                      className="
-                        inline-flex items-center
-                        rounded-full
-                        bg-white/10
-                        border border-white/20
-                        px-2.5 py-0.5
-                        text-[10px]
-                        text-white/90
-                      "
-                    >
-                      {label}
-                    </span>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('cdm-para-agora', 'Para agora')}
+                    className="
+                      inline-flex items-center
+                      rounded-full
+                      bg-white/10
+                      border border-white/20
+                      px-2.5 py-0.5
+                      text-[10px]
+                      text-white/90
+                      hover:bg-white/15
+                      transition
+                    "
+                  >
+                    Para agora
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('cdm-ritmo', 'Ritmo')}
+                    className="
+                      inline-flex items-center
+                      rounded-full
+                      bg-white/10
+                      border border-white/20
+                      px-2.5 py-0.5
+                      text-[10px]
+                      text-white/90
+                      hover:bg-white/15
+                      transition
+                    "
+                  >
+                    Ritmo
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('cdm-dia', 'Dia')}
+                    className="
+                      inline-flex items-center
+                      rounded-full
+                      bg-white/10
+                      border border-white/20
+                      px-2.5 py-0.5
+                      text-[10px]
+                      text-white/90
+                      hover:bg-white/15
+                      transition
+                    "
+                  >
+                    Dia
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('cdm-norte', 'Norte')}
+                    className="
+                      inline-flex items-center
+                      rounded-full
+                      bg-white/10
+                      border border-white/20
+                      px-2.5 py-0.5
+                      text-[10px]
+                      text-white/90
+                      hover:bg-white/15
+                      transition
+                    "
+                  >
+                    Norte
+                  </button>
                 </div>
               </div>
 
@@ -330,7 +396,7 @@ export default function Client() {
               <div className="mt-2 sm:mt-4 rounded-[24px] bg-white/95 backdrop-blur border border-[#f5d7e5] shadow-[0_18px_45px_rgba(184,35,107,0.14)]">
                 <div className="p-4 sm:p-5 md:p-7">
                   {/* BLOCO 0 — PARA AGORA */}
-                  <section className="pb-6" id="para-agora">
+                  <section className="pb-6" id="cdm-para-agora">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
                         <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
@@ -338,7 +404,8 @@ export default function Client() {
 
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
-                        <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
+                        {/* Removido para evitar repetição com o topo */}
+                        {/* <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div> */}
                         <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
                         <div className="mt-5">
@@ -372,7 +439,7 @@ export default function Client() {
                   <div className="border-t border-[#f5d7e5]" />
 
                   {/* BLOCO 1 — CHECK-IN */}
-                  <section className="py-6" id="ritmo">
+                  <section className="py-6" id="cdm-ritmo">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
                         <AppIcon name="heart" size={16} className="text-[#fd2597]" />
@@ -412,7 +479,7 @@ export default function Client() {
                   <div className="border-t border-[#f5d7e5]" />
 
                   {/* BLOCO 2 — SEU DIA */}
-                  <section className="py-6">
+                  <section className="py-6" id="cdm-dia">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
                         <AppIcon name="list" size={16} className="text-[#fd2597]" />
@@ -462,8 +529,8 @@ export default function Client() {
 
                   <div className="border-t border-[#f5d7e5]" />
 
-                  {/* BLOCO 3 — ORIENTAÇÃO */}
-                  <section className="py-6">
+                  {/* BLOCO 3 — ORIENTAÇÃO (NORTE) */}
+                  <section className="py-6" id="cdm-norte">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
                         <AppIcon name="info" size={16} className="text-[#fd2597]" />
@@ -483,7 +550,7 @@ export default function Client() {
                   <div className="border-t border-[#f5d7e5]" />
 
                   {/* BLOCO 4 — MICRO CUIDADO */}
-                  <section className="pt-6" id="pausas">
+                  <section className="pt-6" id="cdm-micro">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
                         <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
