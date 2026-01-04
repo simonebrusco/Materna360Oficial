@@ -2,6 +2,7 @@
 
 import { track } from '@/app/lib/telemetry'
 import { load, save } from '@/app/lib/persist'
+import { addMJPoints } from '@/app/lib/mjPoints.client'
 
 /**
  * P7/P8/P12 — Meu Dia Tasks (client-only)
@@ -115,6 +116,13 @@ export type GroupedTasks = Record<
  * Observação: "done" não conta para o limite.
  */
 const OPEN_TASKS_LIMIT_PER_DAY = 18
+
+/**
+ * Pontuação canônica:
+ * Primeira tarefa criada no dia (planejamento consciente conta).
+ * 1x por dia.
+ */
+const MJ_POINTS_FIRST_TASK_OF_DAY = 5
 
 /** ---------- Helpers ---------- */
 
@@ -365,6 +373,28 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     ]
 
     writeTasksByDateKey(dk, next)
+
+    /**
+     * 🎯 Pontuação canônica:
+     * Primeira tarefa criada no dia (planejamento consciente conta).
+     * 1x por dia.
+     */
+    const hadAnyTaskToday = tasks.some((t) => {
+      if (!t.createdAt) return false
+      return t.createdAt.startsWith(dk)
+    })
+
+    if (!hadAnyTaskToday) {
+      addMJPoints(MJ_POINTS_FIRST_TASK_OF_DAY, dk)
+      try {
+        track('mj.points.added', {
+          source: 'meu-dia:first-task',
+          dateKey: dk,
+          delta: MJ_POINTS_FIRST_TASK_OF_DAY,
+        })
+      } catch {}
+    }
+
     return { ok: true, id, created: true, dateKey: dk }
   } catch {
     return { ok: false }
