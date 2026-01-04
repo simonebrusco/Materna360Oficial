@@ -11,8 +11,7 @@ import { addMJPointsOncePerDay } from '@/app/lib/mjPoints.client'
  * - leitura consistente (snapshot)
  * - helpers de mark (para padronizar escrita futura)
  * - nenhum “if premium”, nenhum UI coupling
- */
-/**
+ *
  * P26 — PRINCÍPIO DA JORNADA (ANTI-CULPA)
  *
  * A Jornada é acompanhamento silencioso, não produtividade.
@@ -40,7 +39,7 @@ export type JourneySnapshot = {
   }
 }
 
-/** Keys atuais já usados na P26 nos clients */
+/** Keys atuais usados pela Jornada */
 const LS = {
   selfcareDoneOn: 'journey/selfcare/doneOn',
   selfcareDoneCount: 'journey/selfcare/doneCount',
@@ -49,6 +48,13 @@ const LS = {
   familyDoneOn: 'journey/family/doneOn',
   familyDoneCount: 'journey/family/doneCount',
 }
+
+/**
+ * Compat de storage:
+ * Alguns hubs usam prefixo `m360:` para não “sumir” valores em refactors.
+ * Regra: ler em ambos (sem prefixo e com prefixo) e escrever em ambos.
+ */
+const LS_PREFIX = 'm360:'
 
 function dateKeyOfNow(): string {
   const d = new Date()
@@ -61,7 +67,9 @@ function dateKeyOfNow(): string {
 function safeGet(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
+    const direct = window.localStorage.getItem(key)
+    if (direct !== null) return direct
+    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
   } catch {
     return null
   }
@@ -70,6 +78,8 @@ function safeGet(key: string): string | null {
 function safeSet(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
+    // escreve nas duas chaves (compat)
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
     window.localStorage.setItem(key, value)
   } catch {}
 }
@@ -123,10 +133,14 @@ export function getJourneySnapshot(now: Date = new Date()): JourneySnapshot {
  * - family: 5 pts (1x/dia)
  * - selfcare: 5 pts (1x/dia)
  */
+
 export function markJourneySelfcareDone(source?: string) {
   try {
     const dk = dateKeyOfNow()
     const alreadyDoneToday = safeGet(LS.selfcareDoneOn) === dk
+
+    // Fonte é metadado: pode atualizar mesmo se já foi marcado hoje
+    if (source) safeSet(LS.selfcareLastSource, source)
 
     if (!alreadyDoneToday) {
       safeSet(LS.selfcareDoneOn, dk)
@@ -135,14 +149,13 @@ export function markJourneySelfcareDone(source?: string) {
       const n = safeNumber(raw, 0)
       safeSet(LS.selfcareDoneCount, String(n + 1))
 
-      if (source) safeSet(LS.selfcareLastSource, source)
-
       // 🎯 Pontuação (1x/dia)
       const delta = 5
       const res = addMJPointsOncePerDay('journey_selfcare', delta, dk)
 
       try {
         track('mj.points.added', {
+          key: 'journey_selfcare',
           source: 'journey:selfcare',
           dateKey: dk,
           delta,
@@ -160,33 +173,4 @@ export function markJourneySelfcareDone(source?: string) {
 
 export function markJourneyFamilyDone(source?: string) {
   try {
-    const dk = dateKeyOfNow()
-    const alreadyDoneToday = safeGet(LS.familyDoneOn) === dk
-
-    if (!alreadyDoneToday) {
-      safeSet(LS.familyDoneOn, dk)
-
-      const raw = safeGet(LS.familyDoneCount)
-      const n = safeNumber(raw, 0)
-      safeSet(LS.familyDoneCount, String(n + 1))
-
-      // 🎯 Pontuação (1x/dia)
-      const delta = 5
-      const res = addMJPointsOncePerDay('journey_family', delta, dk)
-
-      try {
-        track('mj.points.added', {
-          source: 'journey:family',
-          dateKey: dk,
-          delta,
-          totalAfter: res?.nextTotal ?? null,
-          dayAfter: res?.nextDay ?? null,
-        })
-      } catch {}
-    }
-
-    try {
-      track('journey.family.done', { source: source ?? 'unknown', alreadyDoneToday })
-    } catch {}
-  } catch {}
-}
+    const
