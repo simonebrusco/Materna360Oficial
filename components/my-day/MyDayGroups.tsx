@@ -10,13 +10,17 @@ import {
   type MyDayTaskItem,
   removeTask,
   snoozeTask,
+  toggleDone,
   unsnoozeTask,
 } from '@/app/lib/myDayTasks.client'
+
 import type { AiLightContext } from '@/app/lib/ai/buildAiContext'
 import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
 import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
+import { getBrazilDateKey } from '@/app/lib/dateKey'
+import { markJourneyFamilyDone, markJourneySelfcareDone } from '@/app/lib/journey.client'
 
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
@@ -90,6 +94,7 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?
   }
 
   return [...items].sort((a, b) => {
+    // premium: sobrevivência/organização mostra mais recente primeiro (pra “tirar do caminho”)
     if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
       const sa = timeOf(a)
       const sb = timeOf(b)
@@ -130,6 +135,17 @@ export default function MyDayGroups({
 
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const hasAny = tasks.length > 0
+
+  // evita pontuar/alterar “jornada” em telas de histórico
+  const canAffectJourneyToday = useMemo(() => {
+    try {
+      const today = getBrazilDateKey(new Date())
+      const target = getBrazilDateKey(initialDate ?? new Date())
+      return today === target
+    } catch {
+      return true
+    }
+  }, [initialDate])
 
   const effectiveLimit = useMemo(() => {
     const raw = Number((euSignal as any)?.listLimit)
@@ -200,7 +216,15 @@ export default function MyDayGroups({
   /* ---------- ações ---------- */
 
   async function onDone(t: MyDayTaskItem) {
-    const res = removeTask(t.id, initialDate)
+    // Aqui é onde a Jornada deve ser marcada (o componente conhece a origin).
+    if (canAffectJourneyToday) {
+      try {
+        if (t.origin === 'selfcare') markJourneySelfcareDone('meu-dia')
+        if (t.origin === 'family') markJourneyFamilyDone('meu-dia')
+      } catch {}
+    }
+
+    const res = toggleDone(t.id, initialDate)
     if (res.ok) refresh()
   }
 
@@ -288,6 +312,10 @@ export default function MyDayGroups({
                               <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
                                 Deixado para depois{snoozeLabel ? ` • até ${snoozeLabel}` : ''}.
                               </p>
+                            ) : null}
+
+                            {st === 'done' ? (
+                              <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">Concluído.</p>
                             ) : null}
                           </div>
 
