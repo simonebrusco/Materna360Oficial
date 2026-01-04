@@ -24,7 +24,7 @@ import { getContinuityTone } from '@/app/lib/experience/continuityTone'
 type WeeklyInsight = {
   title: string
   summary: string
-  suggestions: string[]
+  observations: string[]
 }
 
 type WeeklyInsightContext = {
@@ -35,14 +35,13 @@ type WeeklyInsightContext = {
     unlockedAchievements?: number
     todayMissionsDone?: number
   }
-  persona?: {
-    id?: string
-    label?: string
+  preferences?: {
+    toneLabel?: string
     microCopy?: string
+    focusHint?: string
+    helpStyle?: 'diretas' | 'guiadas' | 'explorar' | undefined
   }
 }
-
-type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
 type QuestionnaireAnswers = {
   q1?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
@@ -53,16 +52,18 @@ type QuestionnaireAnswers = {
   q6?: 'passar' | 'basico' | 'momento' | 'organizada' | 'avancar'
 }
 
-type PersonaResult = {
-  persona: PersonaId
-  label: string
+type Eu360Preferences = {
+  toneLabel: string
   microCopy: string
+  focusHint?: string
+  helpStyle?: 'diretas' | 'guiadas' | 'explorar'
   updatedAtISO: string
   answers: QuestionnaireAnswers
 }
 
+// Preferências (não “persona”)
 const LS_KEYS = {
-  eu360Persona: 'eu360_persona_v1',
+  eu360Prefs: 'eu360_prefs_v1',
 }
 
 function safeGetLS(key: string): string | null {
@@ -98,105 +99,65 @@ function safeDateKey(d = new Date()) {
   return `${y}-${m}-${day}`
 }
 
-function computePersona(answers: QuestionnaireAnswers): PersonaId {
-  let score = 0
+/**
+ * Derivação qualitativa de preferências (sem “score” e sem rótulo fixo).
+ * Objetivo: calibrar tom e foco, não classificar.
+ */
+function computePrefsFromAnswers(answers: QuestionnaireAnswers) {
+  // Tom base: mais acolhedor quanto mais “puxado” o estado relatado
+  const feltHeavy =
+    answers.q1 === 'exausta' || answers.q1 === 'cansada' || answers.q4 === 'sobrevivencia' || answers.q6 === 'passar' || answers.q6 === 'basico'
 
-  if (answers.q1 === 'exausta') score -= 4
-  if (answers.q1 === 'cansada') score -= 2
-  if (answers.q1 === 'oscilando') score -= 1
-  if (answers.q1 === 'equilibrada') score += 1
-  if (answers.q1 === 'energia') score += 3
+  const hasEnergy = answers.q1 === 'energia' || answers.q4 === 'alem' || answers.q6 === 'avancar'
 
-  if (answers.q2 === 'nenhum') score -= 3
-  if (answers.q2 === '5a10') score -= 2
-  if (answers.q2 === '15a30') score += 0
-  if (answers.q2 === 'mais30') score += 1
-
-  if (answers.q4 === 'sobrevivencia') score -= 4
-  if (answers.q4 === 'organizar') score -= 1
-  if (answers.q4 === 'conexao') score += 0
-  if (answers.q4 === 'equilibrio') score += 2
-  if (answers.q4 === 'alem') score += 4
-
-  if (answers.q3 === 'emocional') score -= 1
-  if (answers.q3 === 'tudo') score -= 2
-  if (answers.q3 === 'organizacao') score -= 1
-  if (answers.q3 === 'conexao') score += 0
-  if (answers.q3 === 'tempo') score -= 1
-
-  if (score <= -5) return 'sobrevivencia'
-  if (score <= -2) return 'organizacao'
-  if (score <= 1) return 'conexao'
-  if (score <= 4) return 'equilibrio'
-  return 'expansao'
-}
-
-function personaCopy(persona: PersonaId) {
-  switch (persona) {
-    case 'sobrevivencia':
-      return {
-        label: 'Modo sobrevivência',
-        microCopy: 'Aqui a regra é simples: menos cobrança, mais respiro. Vamos pelo possível.',
-      }
-    case 'organizacao':
-      return {
-        label: 'Organização leve',
-        microCopy: 'Pequenos ajustes que tiram peso da rotina — sem te exigir perfeição.',
-      }
-    case 'conexao':
-      return {
-        label: 'Conexão',
-        microCopy: 'Mais presença com menos esforço: 5 minutos intencionais já mudam o clima.',
-      }
-    case 'equilibrio':
-      return {
-        label: 'Equilíbrio',
-        microCopy: 'Você está encontrando ritmo. Vamos manter constância gentil e clareza.',
-      }
-    case 'expansao':
-      return {
-        label: 'Expansão',
-        microCopy: 'Você tem energia para avançar. Vamos aprofundar com escolhas mais conscientes.',
-      }
+  const focusHintMap: Record<NonNullable<QuestionnaireAnswers['q3']>, string> = {
+    tempo: 'tempo e sobrecarga',
+    emocional: 'peso emocional',
+    organizacao: 'organização leve',
+    conexao: 'conexão com seu filho',
+    tudo: 'muitas frentes ao mesmo tempo',
   }
+
+  const focusHint = answers.q3 ? focusHintMap[answers.q3] : undefined
+  const helpStyle = answers.q5
+
+  // Labels (sem “modo”, sem etiqueta)
+  const toneLabel = feltHeavy ? 'Tom mais leve' : hasEnergy ? 'Tom mais claro' : 'Tom gentil'
+
+  // Microcopy coerente com “leitura” (sem empuxo)
+  const microCopy = feltHeavy
+    ? 'Aqui a prioridade é aliviar o peso: acolhimento primeiro, sem cobrança.'
+    : hasEnergy
+      ? 'Aqui a ideia é dar clareza sem te empurrar: um retrato honesto do seu momento.'
+      : 'Aqui é um espaço de leitura gentil: organizar sentimentos sem virar tarefa.'
+
+  return { toneLabel, microCopy, focusHint, helpStyle }
 }
 
 /**
  * P23 — Tom de conversa (invisível):
  * - Free: sempre gentil (seguro, acolhedor)
  * - Premium: respeita o tom real do momento
- *
- * Observação:
- * - Não altera features, não altera layout.
- * - Apenas ajusta o texto quando o tom resolvido é "gentil".
  */
-function refineMicroCopyForTone(input: { persona: PersonaId; base: string; tone: NonNullable<Eu360Signal['tone']> }) {
-  const { persona, base, tone } = input
+function refineMicroCopyForTone(input: { base: string; tone: NonNullable<Eu360Signal['tone']> }) {
+  const { base, tone } = input
   if (tone !== 'gentil') return base
-
-  // Quando o tom for gentil, evitamos “pressa/empuxo” em personas mais expansivas.
-  if (persona === 'equilibrio') {
-    return 'Você está encontrando ritmo. Um passo por vez, com clareza e menos peso.'
-  }
-  if (persona === 'expansao') {
-    return 'Você tem energia para avançar. Se fizer sentido, escolha um foco por vez — sem se cobrar.'
-  }
-
-  return base
+  // Quando “gentil”, evitamos qualquer sensação de empuxo.
+  return base.replace('clareza', 'cuidado').replace('honesto', 'gentil')
 }
 
-function readPersonaFromLS(): PersonaResult | null {
-  const raw = safeGetLS(LS_KEYS.eu360Persona)
-  return safeParseJSON<PersonaResult>(raw)
+function readPrefsFromLS(): Eu360Preferences | null {
+  const raw = safeGetLS(LS_KEYS.eu360Prefs)
+  return safeParseJSON<Eu360Preferences>(raw)
 }
 
-function writePersonaToLS(result: PersonaResult) {
-  safeSetLS(LS_KEYS.eu360Persona, JSON.stringify(result))
+function writePrefsToLS(result: Eu360Preferences) {
+  safeSetLS(LS_KEYS.eu360Prefs, JSON.stringify(result))
 
-  //  P12: avisa o app (Meu Dia / outros hubs) que a persona mudou — sem reload
+  // Evento neutro: informa atualização de preferências (não “perfil”).
   try {
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('eu360:persona-updated'))
+      window.dispatchEvent(new Event('eu360:prefs-updated'))
     }
   } catch {
     // nunca quebra o fluxo
@@ -240,7 +201,9 @@ async function fetchWeeklyInsight(context: WeeklyInsightContext): Promise<Weekly
       moodCheckins: context.stats?.moodCheckins ?? null,
       unlockedAchievements: context.stats?.unlockedAchievements ?? null,
       todayMissionsDone: context.stats?.todayMissionsDone ?? null,
-      personaId: context.persona?.id ?? null,
+      toneLabel: context.preferences?.toneLabel ?? null,
+      focusHint: context.preferences?.focusHint ?? null,
+      helpStyle: context.preferences?.helpStyle ?? null,
     })
 
     const res = await fetch('/api/ai/emocional', {
@@ -260,28 +223,35 @@ async function fetchWeeklyInsight(context: WeeklyInsightContext): Promise<Weekly
 
     if (!insight || typeof insight !== 'object') throw new Error('Insight semanal vazio')
 
+    // Preferimos observations; mantemos fallback para suggestions (compat).
+    const observations: string[] =
+      (Array.isArray(insight.observations) && insight.observations.length > 0
+        ? insight.observations
+        : Array.isArray(insight.suggestions) && insight.suggestions.length > 0
+          ? insight.suggestions
+          : []) as string[]
+
     return {
       title: insight.title ?? 'Seu resumo emocional da semana',
       summary:
         insight.summary ??
-        'Pelos seus registros recentes, esta semana parece ter sido marcada por momentos de cansaço, mas também por pequenas vitórias.',
-      suggestions:
-        Array.isArray(insight.suggestions) && insight.suggestions.length > 0
-          ? insight.suggestions
+        'Pelos seus registros recentes, esta semana parece ter sido marcada por momentos de cansaço, mas também por pequenos respiros.',
+      observations:
+        observations.length > 0
+          ? observations
           : [
-              'Separe um momento curto para olhar com carinho para o que você já deu conta.',
-              'Escolha apenas uma prioridade por dia para aliviar a sensação de cobrança.',
+              'Há sinais de que a semana oscilou entre cansaço e momentos em que o essencial foi sustentado.',
+              'Mesmo sem perfeição, o que aparece é continuidade possível — do seu jeito, no ritmo que deu.',
             ],
     }
   } catch (error) {
     console.error('[Eu360] Erro ao buscar insight semanal, usando fallback:', error)
     return {
       title: 'Seu resumo emocional da semana',
-      summary:
-        'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.',
-      suggestions: [
-        'Proteja ao menos um momento do dia que te faz bem, mesmo que sejam 10 minutos.',
-        'Perceba quais situações estão drenando demais sua energia e veja o que pode ser simplificado.',
+      summary: 'Mesmo nos dias mais puxados, sempre existe algo pequeno que se manteve. Aqui é só para enxergar isso com mais cuidado.',
+      observations: [
+        'Parece que você sustentou mais do que percebeu, mesmo com a energia variando.',
+        'Quando o dia pesa, o “mínimo possível” também é uma forma de cuidado — e conta.',
       ],
     }
   }
@@ -300,6 +270,7 @@ export default function Eu360Client() {
   const { name } = useProfile()
   const firstName = (name || '').split(' ')[0] || 'Você'
 
+  // Mantém placeholder; em seguida você vai alinhar com “Minha Jornada / Minhas Conquistas”.
   const stats = useMemo(
     () => ({
       daysWithPlanner: 7,
@@ -313,7 +284,7 @@ export default function Eu360Client() {
   const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
   const [loadingInsight, setLoadingInsight] = useState(false)
 
-  const [personaResult, setPersonaResult] = useState<PersonaResult | null>(null)
+  const [prefsResult, setPrefsResult] = useState<Eu360Preferences | null>(null)
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({})
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
@@ -329,20 +300,20 @@ export default function Eu360Client() {
   }, [euSignal?.tone])
 
   useEffect(() => {
-    const saved = readPersonaFromLS()
+    const saved = readPrefsFromLS()
     if (saved) {
-      setPersonaResult(saved)
+      setPrefsResult(saved)
       setAnswers(saved.answers ?? {})
     }
   }, [])
 
-  const personaPreview = useMemo(() => {
-    const p = computePersona(answers)
-    const base = personaCopy(p)
+  const prefsPreview = useMemo(() => {
+    const base = computePrefsFromAnswers(answers)
     return {
-      persona: p,
-      label: base.label,
-      microCopy: refineMicroCopyForTone({ persona: p, base: base.microCopy, tone: resolvedTone }),
+      toneLabel: base.toneLabel,
+      microCopy: refineMicroCopyForTone({ base: base.microCopy, tone: resolvedTone }),
+      focusHint: base.focusHint,
+      helpStyle: base.helpStyle,
     }
   }, [answers, resolvedTone])
 
@@ -351,15 +322,25 @@ export default function Eu360Client() {
     return keys.filter((k) => Boolean(answers[k])).length
   }, [answers])
 
-  //  P11: persona “resolvida” para mandar no contexto (resultado salvo > preview)
-  const personaForAi = useMemo(() => {
-    if (personaResult) {
-      return { id: personaResult.persona, label: personaResult.label, microCopy: personaResult.microCopy }
+  // Preferências “resolvidas” para mandar no contexto (salvo > preview)
+  const prefsForAi = useMemo(() => {
+    if (prefsResult) {
+      return {
+        toneLabel: prefsResult.toneLabel,
+        microCopy: prefsResult.microCopy,
+        focusHint: prefsResult.focusHint,
+        helpStyle: prefsResult.helpStyle,
+      }
     }
-    return { id: personaPreview.persona, label: personaPreview.label, microCopy: personaPreview.microCopy }
-  }, [personaResult, personaPreview])
+    return {
+      toneLabel: prefsPreview.toneLabel,
+      microCopy: prefsPreview.microCopy,
+      focusHint: prefsPreview.focusHint,
+      helpStyle: prefsPreview.helpStyle,
+    }
+  }, [prefsResult, prefsPreview])
 
-  //  P14 — re-hidrata signal quando persona mudar (storage + custom event)
+  // Re-hidrata signal quando preferências mudarem (storage + custom event)
   useEffect(() => {
     const refresh = () => {
       try {
@@ -374,18 +355,18 @@ export default function Eu360Client() {
 
     try {
       window.addEventListener('storage', onStorage)
-      window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+      window.addEventListener('eu360:prefs-updated', onCustom as EventListener)
     } catch {}
 
     return () => {
       try {
         window.removeEventListener('storage', onStorage)
-        window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+        window.removeEventListener('eu360:prefs-updated', onCustom as EventListener)
       } catch {}
     }
   }, [])
 
-  //  P14 — calcula linha quinzenal (1x/14 dias, respeita regras internas)
+  //  P14 — calcula linha quinzenal (1x/14 dias)
   useEffect(() => {
     try {
       const line = getEu360FortnightLine({ dateKey, tone: resolvedTone })
@@ -404,7 +385,7 @@ export default function Eu360Client() {
         const result = await fetchWeeklyInsight({
           firstName,
           stats,
-          persona: personaForAi,
+          preferences: prefsForAi,
         })
         if (isMounted) setWeeklyInsight(result)
       } finally {
@@ -417,7 +398,7 @@ export default function Eu360Client() {
     return () => {
       isMounted = false
     }
-  }, [firstName, stats, personaForAi])
+  }, [firstName, stats, prefsForAi])
 
   function setAnswer<K extends keyof QuestionnaireAnswers>(key: K, value: NonNullable<QuestionnaireAnswers[K]>) {
     setAnswers((prev) => ({ ...prev, [key]: value }))
@@ -444,22 +425,22 @@ export default function Eu360Client() {
 
     setSaving(true)
     try {
-      const persona = computePersona(answers)
-      const copy = personaCopy(persona)
+      const computed = computePrefsFromAnswers(answers)
 
-      const result: PersonaResult = {
-        persona,
-        label: copy.label,
-        microCopy: copy.microCopy, // mantém base estável (não tier-specific)
+      const result: Eu360Preferences = {
+        toneLabel: computed.toneLabel,
+        microCopy: computed.microCopy, // base estável; refinamento por tone só na UI
+        focusHint: computed.focusHint,
+        helpStyle: computed.helpStyle,
         updatedAtISO: new Date().toISOString(),
         answers,
       }
 
-      writePersonaToLS(result)
-      setPersonaResult(result)
+      writePrefsToLS(result)
+      setPrefsResult(result)
 
       try {
-        track('eu360.questionario.complete', { persona, answered: 6 })
+        track('eu360.questionario.complete', { answered: 6, helpStyle: computed.helpStyle ?? null, focusHint: computed.focusHint ?? null })
       } catch {}
     } finally {
       setSaving(false)
@@ -474,7 +455,7 @@ export default function Eu360Client() {
   }
 
   const heroTitle = 'Seu mundo em perspectiva'
-  const heroSubtitle = 'Um espaço para o Materna360 entender sua fase e te acompanhar com mais leveza, sem cobrança.'
+  const heroSubtitle = 'Um espaço para o Materna360 entender seu momento e acompanhar com mais leveza, sem cobrança.'
 
   // (Mantemos como referência futura; não muda fluxo agora)
   void buildAiContext
@@ -512,12 +493,12 @@ export default function Eu360Client() {
                   <AppIcon name="sparkles" size={18} className="text-white" decorative />
                   <div>
                     <p className="text-sm font-semibold text-white">
-                      {personaResult ? personaResult.label : personaPreview.label}
+                      {prefsResult ? prefsResult.toneLabel : prefsPreview.toneLabel}
                     </p>
                     <p className="text-[12px] text-white/85 leading-relaxed">
-                      {personaResult
-                        ? refineMicroCopyForTone({ persona: personaResult.persona, base: personaResult.microCopy, tone: resolvedTone })
-                        : personaPreview.microCopy}
+                      {prefsResult
+                        ? refineMicroCopyForTone({ base: prefsResult.microCopy, tone: resolvedTone })
+                        : prefsPreview.microCopy}
                     </p>
 
                     {/*  P15 — continuidade quinzenal (leve, 1x/14 dias) */}
@@ -530,7 +511,7 @@ export default function Eu360Client() {
 
               <div className="hidden md:flex items-center gap-1 pt-1">
                 {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <StepDot key={n} active={personaResult ? n === 6 : n === qStep} />
+                  <StepDot key={n} active={prefsResult ? n === 6 : n === qStep} />
                 ))}
               </div>
             </div>
@@ -539,8 +520,8 @@ export default function Eu360Client() {
               <button
                 type="button"
                 onClick={() => {
-                  if (personaResult) {
-                    setPersonaResult(null)
+                  if (prefsResult) {
+                    setPrefsResult(null)
                     setQStep(1)
                     try {
                       track('eu360.questionario.edit', {})
@@ -553,7 +534,7 @@ export default function Eu360Client() {
                 className="rounded-full bg-white/90 hover:bg-white text-[#2f3a56] px-4 py-2 text-[12px] shadow-lg transition inline-flex items-center gap-2"
               >
                 <AppIcon name="sparkles" size={16} decorative />
-                <span>{personaResult ? 'Refazer com calma' : 'Fazer quando fizer sentido (2 min)'}</span>
+                <span>{prefsResult ? 'Refazer com calma' : 'Fazer quando fizer sentido (2 min)'}</span>
               </button>
 
               <Link
@@ -574,7 +555,6 @@ export default function Eu360Client() {
           {/* 2 — QUESTIONÁRIO */}
           <div ref={questionnaireRef} />
 
-          {/*  P15 — menos ruído vertical */}
           <SectionWrapper density="compact">
             <Reveal>
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
@@ -587,25 +567,25 @@ export default function Eu360Client() {
                       Para o app acompanhar o seu momento real
                     </h2>
                     <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
-                      Sem teste, sem diagnóstico. Só um jeito simples de reduzir ruído e deixar o Materna360 mais coerente com a sua fase.
+                      Sem teste, sem diagnóstico. Só um jeito simples de reduzir ruído e deixar o Materna360 mais coerente com o seu dia a dia.
                     </p>
                   </div>
 
                   <div className="hidden md:flex items-center gap-1">
                     {[1, 2, 3, 4, 5, 6].map((n) => (
-                      <StepDot key={n} active={personaResult ? n === 6 : n === qStep} />
+                      <StepDot key={n} active={prefsResult ? n === 6 : n === qStep} />
                     ))}
                   </div>
                 </div>
 
-                {!personaResult ? (
+                {!prefsResult ? (
                   <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 px-4 py-3">
                     <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#6a6a6a]">Prévia do tom</p>
                     <div className="mt-1 flex items-start gap-2">
                       <AppIcon name="sparkles" size={18} className="text-[#fd2597]" decorative />
                       <div>
-                        <p className="text-sm font-semibold text-[#2f3a56]">{personaPreview.label}</p>
-                        <p className="text-[12px] text-[#6a6a6a] leading-relaxed">{personaPreview.microCopy}</p>
+                        <p className="text-sm font-semibold text-[#2f3a56]">{prefsPreview.toneLabel}</p>
+                        <p className="text-[12px] text-[#6a6a6a] leading-relaxed">{prefsPreview.microCopy}</p>
                       </div>
                     </div>
 
@@ -615,7 +595,7 @@ export default function Eu360Client() {
                   </div>
                 ) : null}
 
-                {personaResult ? (
+                {prefsResult ? (
                   <div className="rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-4">
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-2xl bg-[#ffe1f1] flex items-center justify-center shrink-0">
@@ -624,7 +604,7 @@ export default function Eu360Client() {
                       <div>
                         <p className="text-[12px] font-semibold text-[#2f3a56]">Questionário concluído</p>
                         <p className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                          A partir de agora, o Materna360 pode ajustar o tom e o ritmo das sugestões para te acompanhar com menos peso.
+                          A partir de agora, o Materna360 pode ajustar o tom e o foco das mensagens para ficar mais coerente com a sua fase — sem te analisar.
                         </p>
                       </div>
                     </div>
@@ -724,7 +704,7 @@ export default function Eu360Client() {
                         <div className="grid gap-2">
                           <OptionButton
                             active={answers.q5 === 'diretas'}
-                            label="Poucas sugestões, bem diretas"
+                            label="Poucas mensagens, bem diretas"
                             onClick={() => setAnswer('q5', 'diretas')}
                           />
                           <OptionButton
@@ -794,7 +774,7 @@ export default function Eu360Client() {
                     </div>
 
                     <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
-                      Isso fica salvo para personalizar a sua experiência. Você pode refazer quando quiser.
+                      Isso fica salvo como preferências de tom e foco. Você pode refazer quando quiser.
                     </p>
                   </>
                 )}
@@ -813,7 +793,7 @@ export default function Eu360Client() {
                       Um olhar rápido, sem cobrança
                     </h2>
                     <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
-                      Aqui é só para te ajudar a enxergar padrões e reconhecer o que já foi possível.
+                      Aqui é só para enxergar recortes do que apareceu — não é placar e não é cobrança.
                     </p>
                   </div>
                   <AppIcon name="sparkles" className="h-6 w-6 text-[#fd2597] hidden md:block" />
@@ -821,7 +801,7 @@ export default function Eu360Client() {
 
                 <div className="grid grid-cols-3 gap-2.5 md:gap-4">
                   <div className="rounded-2xl bg-[#ffe1f1] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                    <p className="text-[11px] font-medium text-[#6a6a6a]">Dias com planner</p>
+                    <p className="text-[11px] font-medium text-[#6a6a6a]">Registros no planner</p>
                     <p className="mt-1 text-xl font-semibold text-[#fd2597]">{stats.daysWithPlanner}</p>
                   </div>
                   <div className="rounded-2xl bg-[#ffe1f1] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
@@ -829,7 +809,7 @@ export default function Eu360Client() {
                     <p className="mt-1 text-xl font-semibold text-[#fd2597]">{stats.moodCheckins}</p>
                   </div>
                   <div className="rounded-2xl bg-[#ffe1f1] px-3 py-3 text-center shadow-[0_10px_26px_rgba(0,0,0,0.06)]">
-                    <p className="text-[11px] font-medium text-[#6a6a6a]">Conquistas</p>
+                    <p className="text-[11px] font-medium text-[#6a6a6a]">Conquistas registradas</p>
                     <p className="mt-1 text-xl font-semibold text-[#fd2597]">{stats.unlockedAchievements}</p>
                   </div>
                 </div>
@@ -848,7 +828,7 @@ export default function Eu360Client() {
                           {weeklyInsight?.title || 'Seu resumo emocional da semana'}
                         </h3>
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
-                          {firstName}, este espaço é para te ajudar a enxergar seus últimos dias com mais gentileza — não para te cobrar.
+                          {firstName}, este espaço é para leitura: enxergar seus últimos dias com mais gentileza — sem pendência.
                         </p>
                       </div>
                     </div>
@@ -856,22 +836,22 @@ export default function Eu360Client() {
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
                         <p className="text-sm text-[#6a6a6a] leading-relaxed">
-                          Estou olhando com carinho para a sua semana para trazer uma reflexão…
+                          Estou olhando com carinho para a sua semana para trazer uma leitura…
                         </p>
                       ) : (
                         <>
                           <p className="text-sm leading-relaxed text-[#2f3a56]">
                             {weeklyInsight?.summary ??
-                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que deu certo. Tente perceber quais foram esses momentos na sua semana.'}
+                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que se manteve. Aqui é só para enxergar isso com mais cuidado.'}
                           </p>
 
-                          {weeklyInsight?.suggestions && weeklyInsight.suggestions.length > 0 && (
+                          {weeklyInsight?.observations && weeklyInsight.observations.length > 0 && (
                             <div className="space-y-1.5">
                               <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
-                                Pequenos passos, se fizer sentido
+                                Observações, sem cobrança
                               </p>
                               <ul className="space-y-1.5 text-sm text-[#2f3a56]">
-                                {weeklyInsight.suggestions.map((item, idx) => (
+                                {weeklyInsight.observations.map((item, idx) => (
                                   <li key={idx}>• {item}</li>
                                 ))}
                               </ul>
@@ -879,7 +859,7 @@ export default function Eu360Client() {
                           )}
 
                           <p className="text-[11px] text-[#6a6a6a] mt-2 leading-relaxed">
-                            Isso não é um diagnóstico — é só um convite para você se observar com cuidado. Um passo por vez.
+                            Isso não é diagnóstico e não é plano. É só um retrato gentil do que apareceu — e pode ficar por isso mesmo.
                           </p>
                         </>
                       )}
