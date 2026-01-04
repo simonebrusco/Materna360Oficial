@@ -16,8 +16,9 @@ export const revalidate = 0
 type Badge = {
   id: string
   title: string
+  // texto curto (cards)
   desc: string
-  micro?: string
+  // texto extra (apenas no “destaque” do marco em construção)
   aux?: string
   icon: React.ComponentProps<typeof AppIcon>['name']
   minPoints: number
@@ -72,13 +73,14 @@ const LS = {
   // P26: streak removido (anti-culpa). Mantemos o app funcional sem mecânica de sequência.
 }
 
+// Textos ajustados: mais curtos nos cards (2 frases no máximo)
+// Direção madura sem “faltam X” e sem progresso visível
 const BADGES: Badge[] = [
   {
     id: 'b-1',
     title: 'Primeiro passo',
     desc: 'Você começou. O que vem depois depende de repetir — mesmo que aos poucos.',
-    aux: 'Esse marco ganha força quando o começo deixa de ser exceção.',
-    micro: 'Não é sobre pressa. É sobre continuidade possível.',
+    aux: 'Esse marco ganha força quando o começo deixa de ser exceção. Não é sobre pressa. É sobre continuidade possível.',
     icon: 'star',
     minPoints: 10,
   },
@@ -87,16 +89,14 @@ const BADGES: Badge[] = [
     title: 'Dia possível',
     desc: 'Você fez o que cabia. Isso sustenta o caminho quando o dia não permite mais.',
     aux: 'Reconhece escolhas feitas mesmo em dias cheios.',
-    micro: '',
     icon: 'sparkles',
     minPoints: 22,
   },
   {
     id: 'b-3',
     title: 'Presença real',
-    desc: 'Presença não é quantidade. Ela aparece quando você escolhe estar — mesmo em pequenos momentos.',
-    aux: 'Esse marco se constrói quando a presença deixa de ser exceção.',
-    micro: 'Pequenos gestos repetidos mudam a experiência.',
+    desc: 'Presença não é quantidade. Ela se constrói quando você escolhe estar — mesmo em pequenos momentos.',
+    aux: 'Esse marco se constrói quando a presença deixa de ser exceção. Pequenos gestos repetidos mudam a experiência.',
     icon: 'heart',
     minPoints: 40,
   },
@@ -104,8 +104,7 @@ const BADGES: Badge[] = [
     id: 'b-4',
     title: 'Rotina mais leve',
     desc: 'Leveza não surge do acaso. Ela vem de decisões conscientes no meio do dia.',
-    aux: 'Esse marco aparece quando você ajusta o ritmo com intenção.',
-    micro: 'Menos peso também é uma escolha ativa.',
+    aux: 'Esse marco aparece quando você ajusta o ritmo com intenção. Menos peso também é uma escolha ativa.',
     icon: 'sun',
     minPoints: 70,
   },
@@ -125,9 +124,7 @@ function NeutralBar() {
       <div className="h-2.5 rounded-full bg-[#ffe1f1] overflow-hidden border border-[#f5d7e5]">
         <div className="h-full bg-[#fd2597] rounded-full" style={{ width: '100%' }} />
       </div>
-      <div className="mt-2 text-[11px] text-[#6a6a6a]">
-        Continuidade possível dá forma ao caminho.
-      </div>
+      <div className="mt-2 text-[11px] text-[#6a6a6a]">Continuidade possível dá forma ao caminho.</div>
     </div>
   )
 }
@@ -157,13 +154,17 @@ function ViewPill({
   )
 }
 
-function BadgeCard({
-  badge,
-  unlocked,
-}: {
-  badge: Badge
-  unlocked: boolean
-}) {
+const LOCKED_STATUSES = ['Ganhando forma', 'Se fortalecendo', 'Em consolidação', 'Tomando corpo'] as const
+
+function statusForBadge(badge: Badge, unlocked: boolean) {
+  if (unlocked) return 'Reconhecido'
+  const idx = Math.max(0, BADGES.findIndex(b => b.id === badge.id))
+  return LOCKED_STATUSES[idx % LOCKED_STATUSES.length]
+}
+
+function BadgeCard({ badge, unlocked }: { badge: Badge; unlocked: boolean }) {
+  const status = statusForBadge(badge, unlocked)
+
   return (
     <div
       className={[
@@ -192,25 +193,12 @@ function BadgeCard({
                   : 'bg-white text-[#6a6a6a] border-[#f5d7e5]',
               ].join(' ')}
             >
-              {unlocked ? 'Reconhecido' : 'Em construção'}
+              {status}
             </span>
           </div>
 
-          <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-            {badge.desc}
-          </div>
-
-          {badge.aux ? (
-            <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
-              {badge.aux}
-            </div>
-          ) : null}
-
-          {badge.micro ? (
-            <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
-              {badge.micro}
-            </div>
-          ) : null}
+          {/* Card curto: apenas desc (2 frases) */}
+          <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{badge.desc}</div>
         </div>
       </div>
     </div>
@@ -247,7 +235,6 @@ export default function MinhasConquistasClient() {
   const weekKeys = useMemo(() => getWeekKeys(new Date()), [])
   const monthKeys = useMemo(() => getMonthKeys(new Date()), [])
 
-  // Mantemos leitura interna (para lógica de selos), mas sem expor métrica como performance na UI.
   const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
   const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
   const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
@@ -255,13 +242,6 @@ export default function MinhasConquistasClient() {
   const unlocked = useMemo(() => BADGES.filter(b => totalPoints >= b.minPoints), [totalPoints])
   const locked = useMemo(() => BADGES.filter(b => totalPoints < b.minPoints), [totalPoints])
   const nextBadge = useMemo(() => locked[0] ?? null, [locked])
-
-  // Evita lint de variáveis “não usadas” caso build esteja estrito em algum momento
-  void today
-  void daysActive7
-  void daysActive28
-  void weeklyTotal
-  void todayPoints
 
   return (
     <main
@@ -278,10 +258,7 @@ export default function MinhasConquistasClient() {
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -315,9 +292,7 @@ export default function MinhasConquistasClient() {
                     </div>
 
                     <div>
-                      <div className="text-[12px] text-white/85">
-                        Seu caminho registrado aqui
-                      </div>
+                      <div className="text-[12px] text-white/85">Seu caminho registrado aqui</div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Seus marcos, do seu jeito
                       </div>
@@ -383,21 +358,15 @@ export default function MinhasConquistasClient() {
                         <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                           Selos
                         </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          Marcos que se constroem com o tempo
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Eles não aparecem por pressa — aparecem por continuidade.
-                        </p>
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">Marcos que se constroem com o tempo</h2>
+                        <p className="text-[13px] text-[#6a6a6a]">Eles não aparecem por pressa — aparecem por continuidade.</p>
                       </div>
                     </div>
 
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            um marco em construção
-                          </div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">um marco em construção</div>
 
                           {nextBadge ? (
                             <div className="mt-2">
@@ -406,16 +375,10 @@ export default function MinhasConquistasClient() {
                                   <AppIcon name={nextBadge.icon} size={18} className="text-[#fd2597]" />
                                 </div>
                                 <div>
-                                  <div className="text-[14px] font-semibold text-[#2f3a56]">
-                                    {nextBadge.title}
-                                  </div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                    {nextBadge.desc}
-                                  </div>
+                                  <div className="text-[14px] font-semibold text-[#2f3a56]">{nextBadge.title}</div>
+                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.desc}</div>
                                   {nextBadge.aux ? (
-                                    <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                      {nextBadge.aux}
-                                    </div>
+                                    <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.aux}</div>
                                   ) : null}
                                 </div>
                               </div>
@@ -469,46 +432,34 @@ export default function MinhasConquistasClient() {
                         <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                           Resumo
                         </span>
-                        <h2 className="text-lg font-semibold text-[#2f3a56]">
-                          O que sua presença já mostra
-                        </h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Sem comparação. Só leitura gentil.
-                        </p>
+                        <h2 className="text-lg font-semibold text-[#2f3a56]">O que sua presença já mostra</h2>
+                        <p className="text-[13px] text-[#6a6a6a]">Informação com contexto — sem cobrança.</p>
                       </div>
                     </div>
 
+                    {/* Números voltam como informação (sem barras, sem “X/Y”, sem meta) */}
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Hoje foi vivido do jeito que deu.
-                          <br />
-                          Nem todo dia deixa marca visível — e tudo bem.
-                        </div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">O que coube hoje já conta de verdade.</div>
                       </div>
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          A presença não se mede só em registros.
-                          <br />
-                          O que sustentou você também conta.
-                        </div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">{daysActive7} dias com presença registrada</div>
                       </div>
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">28 dias</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                          Este período já faz parte da sua história aqui.
-                          <br />
-                          Alguns ciclos são mais silenciosos — e ainda assim válidos.
-                        </div>
+                        <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{daysActive28} dias</div>
+                        <div className="mt-1 text-[12px] text-[#6a6a6a]">Presença registrada no período</div>
 
                         <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
-                          <div className="text-[12px] font-semibold text-[#2f3a56]">Selos liberados</div>
+                          <div className="text-[12px] font-semibold text-[#2f3a56]">Conquistas reconhecidas</div>
                           <div className="text-[12px] text-[#6a6a6a]">
-                            Alguns marcos já estão reconhecidos — outros ainda estão se construindo.
+                            {unlocked.length} de {BADGES.length}
                           </div>
                         </div>
                       </div>
@@ -517,7 +468,7 @@ export default function MinhasConquistasClient() {
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está em fase difícil, o app não deveria virar mais um lugar de cobrança.
+                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança.
                         O que foi possível já conta — e conta de verdade.
                       </div>
 
@@ -530,11 +481,12 @@ export default function MinhasConquistasClient() {
                           Voltar aos selos
                         </button>
 
+                        {/* Troca pedida: em vez de CTA de “ação”, o Resumo aponta para o espelho (Eu360) */}
                         <Link
-                          href="/maternar/minha-jornada"
+                          href="/eu360"
                           className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
-                          Ir para Minha Jornada
+                          Ir para Eu360
                         </Link>
                       </div>
                     </div>
