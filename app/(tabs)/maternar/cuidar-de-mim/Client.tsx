@@ -7,6 +7,8 @@ import Link from 'next/link'
 import AppIcon from '@/components/ui/AppIcon'
 import LegalFooter from '@/components/common/LegalFooter'
 import { ClientOnly } from '@/components/common/ClientOnly'
+import { Reveal } from '@/components/ui/Reveal'
+import { SoftCard } from '@/components/ui/card'
 
 import { track } from '@/app/lib/telemetry'
 import { load, save } from '@/app/lib/persist'
@@ -123,6 +125,14 @@ function readDaySignals(): DaySignals {
   }
 }
 
+function scrollToId(id: string) {
+  try {
+    const el = document.getElementById(id)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch {}
+}
+
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
@@ -188,263 +198,393 @@ export default function Client() {
 
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
+  // Layout “velho”: chips com 4 entradas (mantém sensação premium e previsível).
+  // Mapeamento (sem criar lógica nova):
+  // - Ritmo -> #ritmo
+  // - Ação -> #para-agora
+  // - Pausa -> #pausas
+  // - Fechar -> #micro-cuidado (mesmo bloco de fechamento)
+  const chips = [
+    { id: 'ritmo', label: 'Ritmo' },
+    { id: 'para-agora', label: 'Ação' },
+    { id: 'pausas', label: 'Pausa' },
+    { id: 'micro-cuidado', label: 'Fechar' },
+  ] as const
+
   return (
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg"
+      className="
+        min-h-[100dvh]
+        pb-32
+        bg-[#ffe1f1]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+      "
     >
       <ClientOnly>
-        <div className="page-shell relative z-10">
-          {/* HEADER */}
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+          {/* HEADER (layout velho) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link
-              href="/maternar"
-              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
-            >
-              <span className="mr-1.5 text-lg leading-none">←</span>
-              Voltar para o Maternar
-            </Link>
+            <div className="space-y-3">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar para o Maternar
+              </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
-              Cuidar de Mim
-            </h1>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Cuidar de Mim
+              </h1>
 
-            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
-              Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
-            </p>
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
+              </p>
+            </div>
           </header>
 
-          {/* CONTAINER EDITORIAL ÚNICO */}
-          <section className="hub-shell">
-            <div className="hub-shell-inner">
-              <div className="bg-white/95 backdrop-blur rounded-3xl p-6 md:p-7 shadow-[0_18px_45px_rgba(184,35,107,0.14)] border border-[#f5d7e5]">
-                {/* BLOCO 0 — PARA AGORA */}
-                <section className="pb-6" id="para-agora">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
+          <div className="space-y-7 md:space-y-8 pb-10">
+            <div
+              className="
+                rounded-3xl
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                p-4 md:p-6
+                space-y-6
+              "
+            >
+              {/* HERO (layout velho) */}
+              <Reveal>
+                <div
+                  className="
+                    rounded-3xl
+                    bg-white/10
+                    border border-white/25
+                    shadow-[0_14px_40px_rgba(0,0,0,0.12)]
+                    p-4 md:p-5
+                  "
+                >
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
+                    <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
+                      <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                        <AppIcon name="heart" size={22} className="text-white" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="text-[12px] text-white/85">Check-in • Dia • IA (sem cobrança)</div>
+
+                        <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                          Sugestão pronta para agora (sem obrigação)
+                        </div>
+
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">
+                          Você pode usar, trocar ou só fechar por aqui. Um passo já ajuda.
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
-                      <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div>
-                      <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => scrollToId('ritmo')}
+                        className="
+                          rounded-full
+                          bg-white/90 hover:bg-white
+                          text-[#2f3a56]
+                          px-4 py-2
+                          text-[12px]
+                          shadow-[0_6px_18px_rgba(0,0,0,0.12)]
+                          transition
+                        "
+                      >
+                        Ajustar
+                      </button>
 
-                      {/* CENTERING RAIL (corrige o "puxado") */}
-                      <div className="mt-5 flex justify-center">
-                        <div className="w-full max-w-[840px]">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch justify-items-stretch">
-                            {/* 0A) Apoio emocional */}
-                            <ParaAgoraSupportCard variant="embedded" className="h-full" />
+                      <button
+                        type="button"
+                        onClick={() => scrollToId('para-agora')}
+                        className="
+                          rounded-full
+                          bg-[#fd2597]
+                          text-white
+                          px-4 py-2
+                          text-[12px]
+                          shadow-[0_10px_26px_rgba(253,37,151,0.35)]
+                          hover:opacity-95
+                          transition
+                        "
+                      >
+                        Começar
+                      </button>
+                    </div>
+                  </div>
 
-                            {/* 0B) Ação prática (QuickIdeaAI) */}
-                            <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
-                              <div className="flex items-start gap-3">
-                                <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
-                                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
-                                </div>
+                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
+                    {chips.map((it) => (
+                      <button
+                        key={it.id}
+                        type="button"
+                        onClick={() => scrollToId(it.id)}
+                        className="rounded-full px-3.5 py-2 text-[12px] border transition bg-white/20 border-white/30 text-white/90 hover:bg-white/25"
+                      >
+                        {it.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
 
-                                <div className="min-w-0 flex-1">
-                                  <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
-                                  <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                                    Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
-                                  </div>
+              {/* CONTEÚDO (novo) dentro do SoftCard (layout velho) */}
+              <Reveal>
+                <SoftCard
+                  className="
+                    p-5 md:p-6 rounded-3xl
+                    bg-white/95
+                    border border-[#f5d7e5]
+                    shadow-[0_10px_28px_rgba(184,35,107,0.12)]
+                  "
+                >
+                  {/* BLOCO 0 — PARA AGORA (novo conteúdo) */}
+                  <section id="para-agora" className="pb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                        <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          PARA AGORA
+                        </div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                          Um apoio para este momento
+                        </div>
+                        <div className="text-[13px] text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
+
+                        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+                          <ParaAgoraSupportCard variant="embedded" className="h-full" />
+
+                          <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
+                            <div className="flex items-start gap-3">
+                              <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
+                                <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <QuickIdeaAI mode="cuidar_de_mim" className="mt-0" />
+                                <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                                  Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-
                     </div>
-                  </div>
-                </section>
+                  </section>
 
-                <div className="border-t border-[#f5d7e5]" />
+                  <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 1 — CHECK-IN */}
-                <section className="py-6" id="ritmo">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="heart" size={16} className="text-[#fd2597]" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="hub-eyebrow text-[#b8236b]">CHECK-IN</div>
-                      <div className="hub-title text-[#2f3a56]">Como você está agora?</div>
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
-                          const active = ritmo === r
-                          return (
-                            <button
-                              key={r}
-                              type="button"
-                              onClick={() => onPickRitmo(r)}
-                              className={[
-                                'rounded-full px-4 py-2 text-[12px] border transition font-semibold',
-                                active
-                                  ? 'bg-[#fd2597] border-[#fd2597] text-white shadow-[0_8px_18px_rgba(253,37,151,0.18)]'
-                                  : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff3f8]',
-                              ].join(' ')}
-                            >
-                              {r}
-                            </button>
-                          )
-                        })}
+                  {/* BLOCO 1 — CHECK-IN (novo conteúdo) */}
+                  <section id="ritmo" className="py-6">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                        <AppIcon name="heart" size={16} className="text-[#fd2597]" />
                       </div>
 
-                      <div className="mt-2 text-[12px] text-[#6a6a6a]">
-                        Só um toque para se reconhecer. Nada além disso.
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <div className="border-t border-[#f5d7e5]" />
-
-                {/* BLOCO 2 — SEU DIA (dados reais) */}
-                <section className="py-6">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="list" size={16} className="text-[#fd2597]" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
-                      <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
-                      <div className="hub-subtitle text-[#6a6a6a]">
-                        Uma visão consolidada, sem agenda e sem cobrança.
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                            Salvos
-                          </div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
-                            {stat(daySignals.savedCount)}
-                          </div>
-                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          CHECK-IN
+                        </div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                          Como você está agora?
                         </div>
 
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                            Compromissos
-                          </div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
-                            {stat(daySignals.commitmentsCount)}
-                          </div>
-                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
+                            const active = ritmo === r
+                            return (
+                              <button
+                                key={r}
+                                type="button"
+                                onClick={() => onPickRitmo(r)}
+                                className={[
+                                  'rounded-full px-4 py-2 text-[12px] border transition font-semibold',
+                                  active
+                                    ? 'bg-[#fd2597] border-[#fd2597] text-white shadow-[0_8px_18px_rgba(253,37,151,0.18)]'
+                                    : 'bg-white border-[#f5d7e5] text-[#545454] hover:bg-[#fff3f8]',
+                                ].join(' ')}
+                              >
+                                {r}
+                              </button>
+                            )
+                          })}
                         </div>
 
-                        <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
-                            Para depois
-                          </div>
-                          <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
-                            {stat(daySignals.laterCount)}
-                          </div>
-                          <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
+                        <div className="mt-2 text-[12px] text-[#6a6a6a]">
+                          Só um toque para se reconhecer. Nada além disso.
                         </div>
                       </div>
                     </div>
-                  </div>
-                </section>
+                  </section>
 
-                <div className="border-t border-[#f5d7e5]" />
+                  <div className="border-t border-[#f5d7e5]" />
 
-                {/* BLOCO 3 — ORIENTAÇÃO */}
-                <section className="py-6">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="info" size={16} className="text-[#fd2597]" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
-                      <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
-
-                      <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
-                        {guidance.text}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <div className="border-t border-[#f5d7e5]" />
-
-                {/* BLOCO 4 — MICRO CUIDADO */}
-                <section className="pt-6" id="pausas">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
-                      <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
-                      <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
-                      <div className="hub-subtitle text-[#6a6a6a]">
-                        Se não couber nada agora, fechar por aqui já é cuidado.
+                  {/* BLOCO 2 — SEU DIA (novo conteúdo) */}
+                  <section className="py-6">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                        <AppIcon name="list" size={16} className="text-[#fd2597]" />
                       </div>
 
-                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            try {
-                              track('cuidar_de_mim.micro_close', { ritmo })
-                            } catch {}
-                          }}
-                          className="
-                            inline-flex items-center justify-center
-                            rounded-full
-                            bg-white
-                            border border-[#f5d7e5]
-                            text-[#2f3a56]
-                            px-5 py-3
-                            text-[12px] font-semibold
-                            hover:bg-[#fff3f8]
-                            transition
-                          "
-                        >
-                          Encerrar por aqui
-                        </button>
-
-                        <Link
-                          href="/meu-dia"
-                          className="
-                            inline-flex items-center justify-center
-                            rounded-full
-                            bg-[#fd2597] hover:opacity-95
-                            text-white
-                            px-5 py-3
-                            text-[12px] font-semibold
-                            shadow-[0_10px_26px_rgba(253,37,151,0.22)]
-                            transition
-                          "
-                        >
-                          Ver Meu Dia
-                        </Link>
-                      </div>
-
-                      {euSignal?.showLessLine ? (
-                        <div className="mt-3 text-[12px] text-[#6a6a6a]">
-                          Hoje pode ser menos. E ainda assim contar.
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          SEU DIA
                         </div>
-                      ) : null}
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                          Do jeito que está
+                        </div>
+                        <div className="text-[13px] text-[#6a6a6a]">
+                          Uma visão consolidada, sem agenda e sem cobrança.
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                              Salvos
+                            </div>
+                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                              {stat(daySignals.savedCount)}
+                            </div>
+                            <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
+                          </div>
+
+                          <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                              Compromissos
+                            </div>
+                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                              {stat(daySignals.commitmentsCount)}
+                            </div>
+                            <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
+                          </div>
+
+                          <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                              Para depois
+                            </div>
+                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                              {stat(daySignals.laterCount)}
+                            </div>
+                            <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </section>
-              </div>
+                  </section>
+
+                  <div className="border-t border-[#f5d7e5]" />
+
+                  {/* BLOCO 3 — ORIENTAÇÃO (novo conteúdo) */}
+                  <section className="py-6">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                        <AppIcon name="info" size={16} className="text-[#fd2597]" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          ORIENTAÇÃO
+                        </div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                          {guidance.title}
+                        </div>
+
+                        <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
+                          {guidance.text}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <div className="border-t border-[#f5d7e5]" />
+
+                  {/* BLOCO 4 — MICRO CUIDADO (novo conteúdo) */}
+                  <section id="pausas" className="pt-6">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                        <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                          MICRO CUIDADO
+                        </div>
+                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                          Um gesto possível
+                        </div>
+                        <div className="text-[13px] text-[#6a6a6a]">
+                          Se não couber nada agora, fechar por aqui já é cuidado.
+                        </div>
+
+                        <div id="micro-cuidado" className="mt-4 flex flex-col sm:flex-row gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                track('cuidar_de_mim.micro_close', { ritmo })
+                              } catch {}
+                              scrollToId('para-agora')
+                            }}
+                            className="
+                              inline-flex items-center justify-center
+                              rounded-full
+                              bg-white
+                              border border-[#f5d7e5]
+                              text-[#2f3a56]
+                              px-5 py-3
+                              text-[12px] font-semibold
+                              hover:bg-[#fff3f8]
+                              transition
+                            "
+                          >
+                            Encerrar por aqui
+                          </button>
+
+                          <Link
+                            href="/meu-dia"
+                            className="
+                              inline-flex items-center justify-center
+                              rounded-full
+                              bg-[#fd2597] hover:opacity-95
+                              text-white
+                              px-5 py-3
+                              text-[12px] font-semibold
+                              shadow-[0_10px_26px_rgba(253,37,151,0.22)]
+                              transition
+                            "
+                          >
+                            Ver Meu Dia
+                          </Link>
+                        </div>
+
+                        {euSignal?.showLessLine ? (
+                          <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </section>
+                </SoftCard>
+              </Reveal>
             </div>
-          </section>
 
-          <div className="mt-6">
-            <LegalFooter />
+            <div className="mt-4">
+              <LegalFooter />
+            </div>
           </div>
-
-          <div className="PageSafeBottom" />
         </div>
       </ClientOnly>
     </main>
