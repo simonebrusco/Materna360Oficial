@@ -146,7 +146,9 @@ function ViewPill({
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+        active
+          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+          : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
       ].join(' ')}
     >
       {label}
@@ -158,7 +160,7 @@ const LOCKED_STATUSES = ['Ganhando forma', 'Se fortalecendo', 'Em consolidação
 
 function statusForBadge(badge: Badge, unlocked: boolean) {
   if (unlocked) return 'Reconhecido'
-  const idx = Math.max(0, BADGES.findIndex(b => b.id === badge.id))
+  const idx = Math.max(0, BADGES.findIndex((b) => b.id === badge.id))
   return LOCKED_STATUSES[idx % LOCKED_STATUSES.length]
 }
 
@@ -207,7 +209,6 @@ function BadgeCard({ badge, unlocked }: { badge: Badge; unlocked: boolean }) {
 
 export default function MinhasConquistasClient() {
   const [view, setView] = useState<View>('selos')
-  const [today, setToday] = useState<string>(todayKey())
   const [totalPoints, setTotalPoints] = useState<number>(0)
   const [todayPoints, setTodayPoints] = useState<number>(0)
 
@@ -219,7 +220,6 @@ export default function MinhasConquistasClient() {
 
   useEffect(() => {
     const t = todayKey()
-    setToday(t)
 
     const total = readTotalPoints()
     const tPoints = readDayPoints(t)
@@ -235,12 +235,12 @@ export default function MinhasConquistasClient() {
   const weekKeys = useMemo(() => getWeekKeys(new Date()), [])
   const monthKeys = useMemo(() => getMonthKeys(new Date()), [])
 
-  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
-  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
+  const daysActive7 = useMemo(() => weekKeys.filter((k) => readDayPoints(k) > 0).length, [weekKeys])
+  const daysActive28 = useMemo(() => monthKeys.filter((k) => readDayPoints(k) > 0).length, [monthKeys])
   const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
 
-  const unlocked = useMemo(() => BADGES.filter(b => totalPoints >= b.minPoints), [totalPoints])
-  const locked = useMemo(() => BADGES.filter(b => totalPoints < b.minPoints), [totalPoints])
+  const unlocked = useMemo(() => BADGES.filter((b) => totalPoints >= b.minPoints), [totalPoints])
+  const locked = useMemo(() => BADGES.filter((b) => totalPoints < b.minPoints), [totalPoints])
   const nextBadge = useMemo(() => locked[0] ?? null, [locked])
 
   return (
@@ -258,7 +258,10 @@ export default function MinhasConquistasClient() {
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -359,14 +362,18 @@ export default function MinhasConquistasClient() {
                           Selos
                         </span>
                         <h2 className="text-lg font-semibold text-[#2f3a56]">Marcos que se constroem com o tempo</h2>
-                        <p className="text-[13px] text-[#6a6a6a]">Eles não aparecem por pressa — aparecem por continuidade.</p>
+                        <p className="text-[13px] text-[#6a6a6a]">
+                          Eles não aparecem por pressa — aparecem por continuidade.
+                        </p>
                       </div>
                     </div>
 
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">um marco em construção</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            um marco em construção
+                          </div>
 
                           {nextBadge ? (
                             <div className="mt-2">
@@ -405,10 +412,10 @@ export default function MinhasConquistasClient() {
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {unlocked.map(b => (
+                      {unlocked.map((b) => (
                         <BadgeCard key={b.id} badge={b} unlocked />
                       ))}
-                      {locked.map(b => (
+                      {locked.map((b) => (
                         <BadgeCard key={b.id} badge={b} unlocked={false} />
                       ))}
                     </div>
