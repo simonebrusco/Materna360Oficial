@@ -1,6 +1,7 @@
 'use client'
 
 import { track } from '@/app/lib/telemetry'
+import { addMJPointsOncePerDay } from '@/app/lib/mjPoints.client'
 
 /**
  * P26 — Minha Jornada (client-only)
@@ -114,23 +115,45 @@ export function getJourneySnapshot(now: Date = new Date()): JourneySnapshot {
 
 /**
  * Helpers opcionais (padronizam escrita).
- * Você já tem marcas sendo feitas em alguns fluxos (Meu Dia / Meu Filho).
- * Estes helpers existem para, se você quiser, trocar os writes espalhados
- * por chamadas centralizadas sem mudar o behavior.
+ * Regra canônica:
+ * - 1x por dia por pilar (idempotente)
+ * - Se já marcou hoje, não incrementa count e não pontua de novo
+ *
+ * Pontuação canônica (P34.1):
+ * - family: 5 pts (1x/dia)
+ * - selfcare: 5 pts (1x/dia)
  */
 export function markJourneySelfcareDone(source?: string) {
   try {
     const dk = dateKeyOfNow()
-    safeSet(LS.selfcareDoneOn, dk)
+    const alreadyDoneToday = safeGet(LS.selfcareDoneOn) === dk
 
-    const raw = safeGet(LS.selfcareDoneCount)
-    const n = safeNumber(raw, 0)
-    safeSet(LS.selfcareDoneCount, String(n + 1))
+    if (!alreadyDoneToday) {
+      safeSet(LS.selfcareDoneOn, dk)
 
-    if (source) safeSet(LS.selfcareLastSource, source)
+      const raw = safeGet(LS.selfcareDoneCount)
+      const n = safeNumber(raw, 0)
+      safeSet(LS.selfcareDoneCount, String(n + 1))
+
+      if (source) safeSet(LS.selfcareLastSource, source)
+
+      // 🎯 Pontuação (1x/dia)
+      const delta = 5
+      const res = addMJPointsOncePerDay('journey_selfcare', delta, dk)
+
+      try {
+        track('mj.points.added', {
+          source: 'journey:selfcare',
+          dateKey: dk,
+          delta,
+          totalAfter: res?.nextTotal ?? null,
+          dayAfter: res?.nextDay ?? null,
+        })
+      } catch {}
+    }
 
     try {
-      track('journey.selfcare.done', { source: source ?? 'unknown' })
+      track('journey.selfcare.done', { source: source ?? 'unknown', alreadyDoneToday })
     } catch {}
   } catch {}
 }
@@ -138,14 +161,32 @@ export function markJourneySelfcareDone(source?: string) {
 export function markJourneyFamilyDone(source?: string) {
   try {
     const dk = dateKeyOfNow()
-    safeSet(LS.familyDoneOn, dk)
+    const alreadyDoneToday = safeGet(LS.familyDoneOn) === dk
 
-    const raw = safeGet(LS.familyDoneCount)
-    const n = safeNumber(raw, 0)
-    safeSet(LS.familyDoneCount, String(n + 1))
+    if (!alreadyDoneToday) {
+      safeSet(LS.familyDoneOn, dk)
+
+      const raw = safeGet(LS.familyDoneCount)
+      const n = safeNumber(raw, 0)
+      safeSet(LS.familyDoneCount, String(n + 1))
+
+      // 🎯 Pontuação (1x/dia)
+      const delta = 5
+      const res = addMJPointsOncePerDay('journey_family', delta, dk)
+
+      try {
+        track('mj.points.added', {
+          source: 'journey:family',
+          dateKey: dk,
+          delta,
+          totalAfter: res?.nextTotal ?? null,
+          dayAfter: res?.nextDay ?? null,
+        })
+      } catch {}
+    }
 
     try {
-      track('journey.family.done', { source: source ?? 'unknown' })
+      track('journey.family.done', { source: source ?? 'unknown', alreadyDoneToday })
     } catch {}
   } catch {}
 }
