@@ -210,20 +210,20 @@ export default function ParaAgoraSupportCard({
     : 'text-[13px] text-black/60 leading-relaxed'
 
   const itemShellClass = isEmbedded
-    ? 'rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3'
-    : 'rounded-2xl border border-black/5 bg-white px-4 py-3'
+    ? 'rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3 overflow-hidden'
+    : 'rounded-2xl border border-black/5 bg-white px-4 py-3 overflow-hidden'
 
   const itemTagClass = isEmbedded
     ? 'inline-flex w-max items-center rounded-full bg-[#ffe1f1]/70 border border-[#f5d7e5]/70 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase'
     : 'inline-flex w-max items-center rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black/70 uppercase'
 
   const itemTitleClass = isEmbedded
-    ? 'mt-1 text-[14px] font-semibold text-[#2f3a56]'
-    : 'mt-1 text-[14px] font-semibold text-black/80'
+    ? 'mt-1 text-[14px] font-semibold text-[#2f3a56] break-words'
+    : 'mt-1 text-[14px] font-semibold text-black/80 break-words'
 
   const itemDescClass = isEmbedded
-    ? 'mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line'
-    : 'mt-1 text-[12px] text-black/60 leading-relaxed whitespace-pre-line'
+    ? 'mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line break-words'
+    : 'mt-1 text-[12px] text-black/60 leading-relaxed whitespace-pre-line break-words'
 
   const dismissBtnClass = isEmbedded
     ? `
@@ -255,55 +255,45 @@ export default function ParaAgoraSupportCard({
 
   const loadingTextClass = isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'
 
-  // Botão embedded (silencioso)
+  // Botão (embedded): responsivo e sem “vazar”
   const embeddedButtonClass =
-    'h-9 px-4 text-[12px] bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)]'
-
-  // ===== FIX RESPONSIVO (o essencial) =====
-  // - No mobile: header em coluna + botão full-width.
-  // - No sm+: volta para linha com botão à direita.
-  const headerRowClass =
-    'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 min-w-0'
-
-  const leftGroupClass = 'flex items-start gap-3 min-w-0 flex-1'
-  const textGroupClass = 'space-y-1 min-w-0'
-  const buttonWrapClass = 'w-full sm:w-auto shrink-0'
-  const buttonSizeClass = 'w-full sm:w-auto max-w-full'
-
-  const primaryCtaLabel =
-    state.status === 'idle' ? 'Ver sugestões' : isEmbedded ? 'Ver outro apoio' : 'Ver outro apoio'
+    'h-10 px-4 text-[12px] w-full sm:w-auto bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)]'
 
   return (
     <SoftCard className={[shellClass, className ?? ''].join(' ')}>
-      <div className={headerRowClass}>
-        <div className={leftGroupClass}>
+      {/* Header responsivo: empilha no mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-3 min-w-0">
           <div className={iconWrapClass}>
             <AppIcon name="sparkles" size={20} className={iconClass} />
           </div>
 
-          <div className={textGroupClass}>
+          <div className="space-y-1 min-w-0">
             <span className={pillClass}>Para agora</span>
             <h3 className={titleClass}>{headerTitle}</h3>
             <p className={subtitleClass}>Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
           </div>
         </div>
 
-        <div className={buttonWrapClass}>
-          {isEmbedded ? (
-            <Button
-              variant="secondary"
-              className={[embeddedButtonClass, buttonSizeClass].join(' ')}
-              onClick={() => void fetchCards()}
-            >
-              {primaryCtaLabel}
-            </Button>
-          ) : state.status === 'idle' ? (
-            <Button className={['px-4', buttonSizeClass].join(' ')} onClick={() => void fetchCards()}>
-              {primaryCtaLabel}
+        {/* CTA: w-full no mobile para não “voar” */}
+        <div className="w-full sm:w-auto">
+          {state.status === 'idle' ? (
+            isEmbedded ? (
+              <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
+                Ver sugestões
+              </Button>
+            ) : (
+              <Button className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
+                Ver sugestões
+              </Button>
+            )
+          ) : isEmbedded ? (
+            <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
+              Ver outro apoio
             </Button>
           ) : (
-            <Button variant="secondary" className={['px-4', buttonSizeClass].join(' ')} onClick={() => void fetchCards()}>
-              {primaryCtaLabel}
+            <Button variant="secondary" className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
+              Ver outro apoio
             </Button>
           )}
         </div>
@@ -335,7 +325,7 @@ export default function ParaAgoraSupportCard({
             visibleItems.map((item) => (
               <div key={item.id} className={itemShellClass}>
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     {item.tag ? <span className={itemTagClass}>{item.tag}</span> : null}
                     <p className={itemTitleClass}>{item.title}</p>
                     {item.description ? <p className={itemDescClass}>{item.description}</p> : null}
