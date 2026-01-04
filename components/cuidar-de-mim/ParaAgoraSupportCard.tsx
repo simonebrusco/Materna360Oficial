@@ -181,12 +181,14 @@ export default function ParaAgoraSupportCard({
       bg-white/60 backdrop-blur
       border border-[#f5d7e5]/70
       shadow-[0_10px_26px_rgba(184,35,107,0.08)]
+      overflow-hidden
     `
     : `
       p-5 md:p-6 rounded-2xl
       bg-white
       border border-black/5
       shadow-[0_6px_18px_rgba(0,0,0,0.06)]
+      overflow-hidden
     `
 
   const iconWrapClass = isEmbedded
@@ -253,43 +255,55 @@ export default function ParaAgoraSupportCard({
 
   const loadingTextClass = isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'
 
-  // Lapidação: botão silencioso no embedded (não usar rosa chapado)
+  // Botão embedded (silencioso)
   const embeddedButtonClass =
     'h-9 px-4 text-[12px] bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)]'
 
+  // ===== FIX RESPONSIVO (o essencial) =====
+  // - No mobile: header em coluna + botão full-width.
+  // - No sm+: volta para linha com botão à direita.
+  const headerRowClass =
+    'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 min-w-0'
+
+  const leftGroupClass = 'flex items-start gap-3 min-w-0 flex-1'
+  const textGroupClass = 'space-y-1 min-w-0'
+  const buttonWrapClass = 'w-full sm:w-auto shrink-0'
+  const buttonSizeClass = 'w-full sm:w-auto max-w-full'
+
+  const primaryCtaLabel =
+    state.status === 'idle' ? 'Ver sugestões' : isEmbedded ? 'Ver outro apoio' : 'Ver outro apoio'
+
   return (
     <SoftCard className={[shellClass, className ?? ''].join(' ')}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
+      <div className={headerRowClass}>
+        <div className={leftGroupClass}>
           <div className={iconWrapClass}>
             <AppIcon name="sparkles" size={20} className={iconClass} />
           </div>
 
-          <div className="space-y-1">
+          <div className={textGroupClass}>
             <span className={pillClass}>Para agora</span>
             <h3 className={titleClass}>{headerTitle}</h3>
             <p className={subtitleClass}>Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
           </div>
         </div>
 
-        <div className="shrink-0">
-          {state.status === 'idle' ? (
-            isEmbedded ? (
-              <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-                Ver sugestões
-              </Button>
-            ) : (
-              <Button className="px-4" onClick={() => void fetchCards()}>
-                Ver sugestões
-              </Button>
-            )
-          ) : isEmbedded ? (
-            <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-              Ver outro apoio
+        <div className={buttonWrapClass}>
+          {isEmbedded ? (
+            <Button
+              variant="secondary"
+              className={[embeddedButtonClass, buttonSizeClass].join(' ')}
+              onClick={() => void fetchCards()}
+            >
+              {primaryCtaLabel}
+            </Button>
+          ) : state.status === 'idle' ? (
+            <Button className={['px-4', buttonSizeClass].join(' ')} onClick={() => void fetchCards()}>
+              {primaryCtaLabel}
             </Button>
           ) : (
-            <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
-              Ver outro apoio
+            <Button variant="secondary" className={['px-4', buttonSizeClass].join(' ')} onClick={() => void fetchCards()}>
+              {primaryCtaLabel}
             </Button>
           )}
         </div>
@@ -301,9 +315,14 @@ export default function ParaAgoraSupportCard({
         </div>
       ) : null}
 
-      {/* Lapidação: quando está idle, não deixar um “vazio grande” — manter proporção premium */}
       {state.status === 'idle' ? (
-        <div className={isEmbedded ? 'mt-4 rounded-2xl border border-[#f5d7e5]/60 bg-white/50 backdrop-blur px-4 py-3' : 'mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3'}>
+        <div
+          className={
+            isEmbedded
+              ? 'mt-4 rounded-2xl border border-[#f5d7e5]/60 bg-white/50 backdrop-blur px-4 py-3'
+              : 'mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3'
+          }
+        >
           <p className={isEmbedded ? 'text-[12px] text-[#6a6a6a] leading-relaxed' : 'text-[13px] text-black/60'}>
             Um pequeno apoio pode mudar o tom do resto do dia.
           </p>
