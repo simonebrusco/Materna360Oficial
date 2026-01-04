@@ -189,18 +189,27 @@ export default function Client() {
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
   return (
-    <main data-layout="page-template-v1" data-tab="maternar" className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg">
+    <main
+      data-layout="page-template-v1"
+      data-tab="maternar"
+      className="relative min-h-[100dvh] pb-24 overflow-hidden eu360-hub-bg"
+    >
       <ClientOnly>
         {/* RAIL MASTER — eixo único (desktop/tablet/mobile) */}
-        <div className="relative z-10 mx-auto w-full max-w-[1080px] px-4 sm:px-5 md:px-6">
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
-            <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition">
+            <Link
+              href="/maternar"
+              className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition"
+            >
               <span className="mr-1.5 text-lg leading-none">←</span>
               Voltar para o Maternar
             </Link>
 
-            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">Cuidar de Mim</h1>
+            <h1 className="mt-3 text-[28px] md:text-[32px] font-semibold text-white leading-tight">
+              Cuidar de Mim
+            </h1>
 
             <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
               Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
@@ -222,12 +231,12 @@ export default function Client() {
               {/* TOPO TRANSLÚCIDO — “Sugestão pronta para agora (sem obrigação)” */}
               <div
                 className="
-                 rounded-[22px]
-    border border-white/20
-    bg-white/12
-    backdrop-blur
-    px-4 py-3
-    sm:px-5 sm:py-55
+                  rounded-[22px]
+                  border border-white/20
+                  bg-white/12
+                  backdrop-blur
+                  px-4 py-3
+                  sm:px-5 sm:py-4
                 "
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -250,7 +259,6 @@ export default function Client() {
                   </div>
 
                   <div className="shrink-0 flex items-center gap-2 sm:mt-0 mt-3">
-                    {/* neutro: mantém layout do print; se tiver rota real, troca depois */}
                     <button
                       type="button"
                       onClick={() => {
@@ -278,7 +286,6 @@ export default function Client() {
                         try {
                           track('cuidar_de_mim.top.start', { ritmo })
                         } catch {}
-                        // scroll suave para Para Agora
                         try {
                           document.getElementById('para-agora')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                         } catch {}
@@ -299,7 +306,6 @@ export default function Client() {
                   </div>
                 </div>
 
-                {/* chips do topo */}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {['Para agora', 'Ritmo', 'Dia', 'Norte'].map((label) => (
                     <span
@@ -396,7 +402,9 @@ export default function Client() {
                           })}
                         </div>
 
-                        <div className="mt-2 text-[12px] text-[#6a6a6a]">Só um toque para se reconhecer. Nada além disso.</div>
+                        <div className="mt-2 text-[12px] text-[#6a6a6a]">
+                          Só um toque para se reconhecer. Nada além disso.
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -413,24 +421,38 @@ export default function Client() {
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
                         <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
-                        <div className="hub-subtitle text-[#6a6a6a]">Uma visão consolidada, sem agenda e sem cobrança.</div>
+                        <div className="hub-subtitle text-[#6a6a6a]">
+                          Uma visão consolidada, sem agenda e sem cobrança.
+                        </div>
 
                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Salvos</div>
-                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.savedCount)}</div>
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                              Salvos
+                            </div>
+                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                              {stat(daySignals.savedCount)}
+                            </div>
                             <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas registradas hoje</div>
                           </div>
 
                           <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Compromissos</div>
-                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.commitmentsCount)}</div>
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                              Compromissos
+                            </div>
+                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                              {stat(daySignals.commitmentsCount)}
+                            </div>
                             <div className="mt-0.5 text-[12px] text-[#6a6a6a]">no seu planner</div>
                           </div>
 
                           <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">Para depois</div>
-                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">{stat(daySignals.laterCount)}</div>
+                            <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                              Para depois
+                            </div>
+                            <div className="mt-1 text-[20px] font-semibold text-[#2f3a56]">
+                              {stat(daySignals.laterCount)}
+                            </div>
                             <div className="mt-0.5 text-[12px] text-[#6a6a6a]">coisas que podem esperar</div>
                           </div>
                         </div>
@@ -451,7 +473,9 @@ export default function Client() {
                         <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
                         <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                        <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">{guidance.text}</div>
+                        <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
+                          {guidance.text}
+                        </div>
                       </div>
                     </div>
                   </section>
@@ -468,7 +492,9 @@ export default function Client() {
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
                         <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
-                        <div className="hub-subtitle text-[#6a6a6a]">Se não couber nada agora, fechar por aqui já é cuidado.</div>
+                        <div className="hub-subtitle text-[#6a6a6a]">
+                          Se não couber nada agora, fechar por aqui já é cuidado.
+                        </div>
 
                         <div className="mt-4 flex flex-col sm:flex-row gap-2">
                           <button
