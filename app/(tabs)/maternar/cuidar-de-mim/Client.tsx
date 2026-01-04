@@ -405,31 +405,31 @@ export default function Client() {
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
                         {/* Removido para evitar repetição com o topo */}
-                        {/* <div className="hub-title text-[#2f3a56]">Um apoio para este momento</div> */}
                         <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
 
                         <div className="mt-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 items-stretch">
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                           <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-4 sm:p-5 md:p-6">
-  <div className="flex flex-col sm:flex-row gap-3">
-    <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0 self-start">
-      <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
-    </div>
+                            {/* CARD: QuickIdeaAI (responsivo no mobile) */}
+                            <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-4 sm:p-5 md:p-6">
+                              <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0 self-start">
+                                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                                </div>
 
-    <div className="min-w-0 flex-1 w-full text-center sm:text-left">
-      {/* garante que o QuickIdeaAI ocupe largura total no mobile */}
-      <div className="w-full">
-        <QuickIdeaAI mode="cuidar_de_mim" className="mt-0 w-full" />
-      </div>
+                                <div className="min-w-0 flex-1 w-full text-center sm:text-left">
+                                  <div className="w-full">
+                                    <QuickIdeaAI mode="cuidar_de_mim" className="mt-0 w-full" />
+                                  </div>
 
-      <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
-        Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
-      </div>
-    </div>
-  </div>
-</div>
+                                  <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                    Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
                           <div className="mt-4 text-[12px] text-[#6a6a6a]">
                             Regra do Materna: se couber só uma coisa, já conta.
