@@ -2,22 +2,22 @@
 
 /**
  * P12 — Eu360 Signals (client-only)
- * Fonte única: LocalStorage (key: eu360_persona_v1)
+ *
+ * Fonte primária (P34.2 evolução):
+ * - LocalStorage (key: eu360_prefs_v1)
+ *   -> preferências neutras: tom / intensidade / foco
+ *
+ * Fallback (legado):
+ * - LocalStorage (key: eu360_persona_v1)
  *
  * Objetivo:
- * - Traduzir a persona do Eu360 em um sinal leve para o app:
- *   - tone: 'gentil' | 'direto'
- *   - listLimit: limite sugerido de itens visíveis (ritmo)
- *   - showLessLine: se mostramos microcopy "hoje pode ser menos"
+ * - Emitir um sinal leve para calibração de UX (volume + tom + ritmo),
+ *   sem parecer “teste/etiqueta” e sem criar perfil fixo nomeado.
  *
  * Importante:
  * - Este sinal não é "diagnóstico".
- * - É apenas calibração de UX: volume + tom + ritmo.
- *
- * P23 — Governança:
- * - Este arquivo NÃO decide free vs premium.
- * - Ele apenas emite sinais "crus".
- * - A decisão final de tom/densidade/prioridade deve acontecer na camada experience/*.
+ * - Não decide free vs premium.
+ * - A decisão final de tom/densidade/prioridade deve acontecer em experience/*.
  */
 
 export type EuTone = 'gentil' | 'direto'
@@ -26,12 +26,25 @@ export type Eu360Signal = {
   tone: EuTone
   listLimit: number
   showLessLine: boolean
+
+  /**
+   * Preferências neutras (não são “persona”):
+   * - focus: para calibrar tipo de linguagem/ênfase
+   * - intensity: para calibrar volume/pressão do conteúdo
+   */
+  focus?: 'care' | 'organization' | 'pause'
+  intensity?: 'low' | 'medium'
+
+  /**
+   * Legado: só preencher se a origem do sinal for a persona antiga,
+   * para compatibilidade com telemetria/integrações já existentes.
+   */
   personaId?: string
 }
 
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
-type PersonaResult = {
+type PersonaResultLegacy = {
   persona: PersonaId
   label?: string
   microCopy?: string
@@ -39,8 +52,20 @@ type PersonaResult = {
   answers?: Record<string, unknown>
 }
 
+/**
+ * Novo formato (P34.2):
+ * preferências neutras, sem nomear “tipo de mãe” / “persona”.
+ */
+type Eu360Prefs = {
+  tone?: EuTone | null
+  intensity?: 'low' | 'medium' | null
+  focus?: 'care' | 'organization' | 'pause' | null
+  updatedAtISO?: string
+}
+
 const LS_KEYS = {
-  eu360Persona: 'eu360_persona_v1',
+  eu360Prefs: 'eu360_prefs_v1',
+  eu360PersonaLegacy: 'eu360_persona_v1',
 } as const
 
 function safeGetLS(key: string): string | null {
@@ -66,96 +91,128 @@ function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, x))
 }
 
-function isPersonaId(p: unknown): p is PersonaId {
-  return (
-    p === 'sobrevivencia' ||
-    p === 'organizacao' ||
-    p === 'conexao' ||
-    p === 'equilibrio' ||
-    p === 'expansao'
-  )
-}
-
-/**
- * Clamp emocional do listLimit:
- * - Evita extremos (muito baixo ou muito alto) que podem parecer “quase premium”.
- * - Mantém o sinal útil para ritmo, sem virar ferramenta de monetização visível.
- */
 function clampListLimit(n: number) {
+  // Mantém sinal útil, sem extremos que parecem "modo premium"
   return clampInt(n, 3, 8)
 }
 
-/**
- * Mapeamento oficial do ritmo por persona.
- * Você pode ajustar esses números sem risco de quebrar tipagem/UI.
- *
- * Observação P23:
- * - Os valores são sugestão de ritmo, não regra rígida.
- * - A camada experience pode reduzir densidade/ruído sem depender desse sinal.
- */
-function mapPersonaToSignal(persona: PersonaId): Eu360Signal {
-  switch (persona) {
-    case 'sobrevivencia':
-      return {
-        tone: 'gentil',
-        listLimit: 3,
-        showLessLine: true,
-        personaId: persona,
-      }
-    case 'organizacao':
-      return {
-        tone: 'gentil',
-        listLimit: 4,
-        showLessLine: true,
-        personaId: persona,
-      }
-    case 'conexao':
-      return {
-        tone: 'gentil',
-        listLimit: 5,
-        showLessLine: false,
-        personaId: persona,
-      }
-    case 'equilibrio':
-      return {
-        tone: 'direto',
-        listLimit: 6,
-        showLessLine: false,
-        personaId: persona,
-      }
-    case 'expansao':
-      return {
-        tone: 'direto',
-        listLimit: 7,
-        showLessLine: false,
-        personaId: persona,
-      }
-  }
+function isPersonaId(p: unknown): p is PersonaId {
+  return p === 'sobrevivencia' || p === 'organizacao' || p === 'conexao' || p === 'equilibrio' || p === 'expansao'
+}
+
+function isEuTone(t: unknown): t is EuTone {
+  return t === 'gentil' || t === 'direto'
+}
+
+function isFocus(f: unknown): f is NonNullable<Eu360Signal['focus']> {
+  return f === 'care' || f === 'organization' || f === 'pause'
+}
+
+function isIntensity(i: unknown): i is NonNullable<Eu360Signal['intensity']> {
+  return i === 'low' || i === 'medium'
 }
 
 /**
- * Fallback seguro quando não há persona salva ainda.
- * Mantém experiência leve (sem “excesso”).
+ * Fallback seguro quando não há prefs/legado.
  */
 function defaultSignal(): Eu360Signal {
-  return { tone: 'gentil', listLimit: 5, showLessLine: false }
+  return { tone: 'gentil', listLimit: 5, showLessLine: false, intensity: 'medium', focus: 'care' }
 }
 
-export function getEu360Signal(): Eu360Signal {
-  const raw = safeGetLS(LS_KEYS.eu360Persona)
-  const parsed = safeParseJSON<PersonaResult>(raw)
+/**
+ * Mapeamento leve de preferências -> sinal.
+ * Importante: isso NÃO cria “perfil”; apenas calibra volume/tom.
+ */
+function mapPrefsToSignal(prefs: Eu360Prefs): Eu360Signal {
+  const base = defaultSignal()
 
-  const persona = parsed?.persona
-  if (!isPersonaId(persona)) {
-    const d = defaultSignal()
-    return { ...d, listLimit: clampListLimit(d.listLimit) }
+  const tone: EuTone = isEuTone(prefs.tone) ? prefs.tone : base.tone
+  const focus = isFocus(prefs.focus) ? prefs.focus : base.focus
+  const intensity = isIntensity(prefs.intensity) ? prefs.intensity : base.intensity
+
+  // Ritmo: controla listLimit + showLessLine (sem virar “regra”)
+  // - low: menos volume, mais permissão de “menos”
+  // - medium: padrão
+  let listLimit = 5
+  let showLessLine = false
+
+  if (intensity === 'low') {
+    listLimit = 4
+    showLessLine = true
+  } else {
+    listLimit = 5
+    showLessLine = false
   }
 
-  const mapped = mapPersonaToSignal(persona)
+  // Ajuste leve por foco (sem exagero)
+  if (focus === 'pause') {
+    showLessLine = true
+    listLimit = Math.max(3, listLimit - 1)
+  }
 
-  // Segurança extra: garante limites aceitáveis mesmo que alguém altere o LS manualmente
   return {
-    ...mapped,
-    listLimit: clampListLimit(mapped.listLimit),
+    tone,
+    listLimit: clampListLimit(listLimit),
+    showLessLine,
+    focus,
+    intensity,
   }
+}
+
+/**
+ * Legado: mapeamento antigo persona -> sinal (mantido como fallback).
+ */
+function mapLegacyPersonaToSignal(persona: PersonaId): Eu360Signal {
+  switch (persona) {
+    case 'sobrevivencia':
+      return { tone: 'gentil', listLimit: 3, showLessLine: true, personaId: persona, intensity: 'low', focus: 'pause' }
+    case 'organizacao':
+      return { tone: 'gentil', listLimit: 4, showLessLine: true, personaId: persona, intensity: 'low', focus: 'organization' }
+    case 'conexao':
+      return { tone: 'gentil', listLimit: 5, showLessLine: false, personaId: persona, intensity: 'medium', focus: 'care' }
+    case 'equilibrio':
+      return { tone: 'direto', listLimit: 6, showLessLine: false, personaId: persona, intensity: 'medium', focus: 'organization' }
+    case 'expansao':
+      return { tone: 'direto', listLimit: 7, showLessLine: false, personaId: persona, intensity: 'medium', focus: 'organization' }
+  }
+}
+
+function readPrefsFromLS(): Eu360Prefs | null {
+  const raw = safeGetLS(LS_KEYS.eu360Prefs)
+  return safeParseJSON<Eu360Prefs>(raw)
+}
+
+function readLegacyPersonaFromLS(): PersonaResultLegacy | null {
+  const raw = safeGetLS(LS_KEYS.eu360PersonaLegacy)
+  return safeParseJSON<PersonaResultLegacy>(raw)
+}
+
+/**
+ * Fonte única para o app:
+ * 1) tenta prefs neutras (eu360_prefs_v1)
+ * 2) fallback legado (eu360_persona_v1)
+ * 3) fallback default
+ */
+export function getEu360Signal(): Eu360Signal {
+  const prefs = readPrefsFromLS()
+  if (prefs && (prefs.tone || prefs.focus || prefs.intensity)) {
+    const mapped = mapPrefsToSignal(prefs)
+    return {
+      ...mapped,
+      listLimit: clampListLimit(mapped.listLimit),
+    }
+  }
+
+  const legacy = readLegacyPersonaFromLS()
+  const persona = legacy?.persona
+  if (isPersonaId(persona)) {
+    const mapped = mapLegacyPersonaToSignal(persona)
+    return {
+      ...mapped,
+      listLimit: clampListLimit(mapped.listLimit),
+    }
+  }
+
+  const d = defaultSignal()
+  return { ...d, listLimit: clampListLimit(d.listLimit) }
 }
