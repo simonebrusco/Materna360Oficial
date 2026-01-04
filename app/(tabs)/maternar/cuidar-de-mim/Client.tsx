@@ -202,8 +202,9 @@ export default function Client() {
       "
     >
       <ClientOnly>
+        {/* CONTAINER “LARGO” (recupera o desktop) */}
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          {/* HEADER (layout antigo) */}
+          {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -225,6 +226,7 @@ export default function Client() {
           </header>
 
           <div className="space-y-7 md:space-y-8 pb-10">
+            {/* MOLDURA */}
             <div
               className="
                 rounded-3xl
@@ -236,6 +238,7 @@ export default function Client() {
               "
             >
               <Reveal>
+                {/* CONTEÚDO */}
                 <SoftCard
                   className="
                     p-5 md:p-6 rounded-3xl
@@ -306,7 +309,6 @@ export default function Client() {
                           Como você está agora?
                         </div>
 
-                        {/* Responsivo: chips quebram corretamente e não “esticam” */}
                         <div className="mt-4 flex flex-wrap gap-2">
                           {(['leve', 'cansada', 'confusa', 'ok'] as Ritmo[]).map((r) => {
                             const active = ritmo === r
@@ -356,7 +358,6 @@ export default function Client() {
                           Uma visão consolidada, sem agenda e sem cobrança.
                         </div>
 
-                        {/* Responsivo: 1 coluna no mobile, 3 no sm+ */}
                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
                             <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
