@@ -2,6 +2,8 @@
 
 import { track } from '@/app/lib/telemetry'
 import { load, save } from '@/app/lib/persist'
+import { addMJPoints } from '@/app/lib/mjPoints.client'
+import { markJourneyFamilyDone, markJourneySelfcareDone } from '@/app/lib/journey.client'
 
 /**
  * P7/P8/P12 — Meu Dia Tasks (client-only)
@@ -115,6 +117,13 @@ export type GroupedTasks = Record<
  * Observação: "done" não conta para o limite.
  */
 const OPEN_TASKS_LIMIT_PER_DAY = 18
+
+/**
+ * Pontuação canônica:
+ * Primeira tarefa criada no dia (planejamento consciente conta).
+ * 1x por dia.
+ */
+const MJ_POINTS_FIRST_TASK_OF_DAY = 5
 
 /** ---------- Helpers ---------- */
 
@@ -365,6 +374,28 @@ export function addTaskToMyDay(input: AddToMyDayInput): AddToMyDayResult {
     ]
 
     writeTasksByDateKey(dk, next)
+
+    /**
+     * 🎯 Pontuação canônica:
+     * Primeira tarefa criada no dia (planejamento consciente conta).
+     * 1x por dia.
+     */
+    const hadAnyTaskToday = tasks.some((t) => {
+      if (!t.createdAt) return false
+      return t.createdAt.startsWith(dk)
+    })
+
+    if (!hadAnyTaskToday) {
+      addMJPoints(MJ_POINTS_FIRST_TASK_OF_DAY, dk)
+      try {
+        track('mj.points.added', {
+          source: 'meu-dia:first-task',
+          dateKey: dk,
+          delta: MJ_POINTS_FIRST_TASK_OF_DAY,
+        })
+      } catch {}
+    }
+
     return { ok: true, id, created: true, dateKey: dk }
   } catch {
     return { ok: false }
@@ -430,6 +461,10 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
     const dk = makeDateKey(date ?? new Date())
     const tasks = readTasksByDateKey(dk)
 
+    // capturar o alvo antes, para saber se houve transição para done
+    const target = tasks.find((t) => t.id === taskId) ?? null
+    const prevStatus: TaskStatus | null = target ? (target.status ?? (target.done ? 'done' : 'active')) : null
+
     const next: MyDayTaskItem[] = tasks.map((t) => {
       if (t.id !== taskId) return t
       const baseStatus = t.status ?? (t.done ? 'done' : 'active')
@@ -438,6 +473,25 @@ export function toggleDone(taskId: string, date?: Date): { ok: boolean } {
     })
 
     writeTasksByDateKey(dk, next)
+
+    // 🎯 Integração com Jornada (P34.1): apenas quando vira DONE
+    // - selfcare -> markJourneySelfcareDone (5 pts 1x/dia)
+    // - family  -> markJourneyFamilyDone (5 pts 1x/dia)
+    if (target && prevStatus !== 'done') {
+      const after = next.find((t) => t.id === taskId) ?? null
+      const afterStatus: TaskStatus | null = after ? (after.status ?? (after.done ? 'done' : 'active')) : null
+
+      if (after && afterStatus === 'done') {
+        try {
+          if (after.origin === 'selfcare') {
+            markJourneySelfcareDone('meu-dia')
+          } else if (after.origin === 'family') {
+            markJourneyFamilyDone('meu-dia')
+          }
+        } catch {}
+      }
+    }
+
     try {
       track('my_day.task.toggle_done', { ok: true })
     } catch {}

@@ -2,12 +2,14 @@
 
 import * as React from 'react'
 import { track } from '@/app/lib/telemetry'
+import { addMJPoints } from '@/app/lib/mjPoints.client'
 import { Smile, Meh, Frown, Activity } from 'lucide-react'
 
 type Entry = { date: string; mood: number; energy: number }
 type Props = { dateKey: string; storageKey?: string }
 
 const MAX_DAYS = 7
+const MJ_POINTS_CHECKIN = 5 // canônico: check-in completo 1x/dia
 
 export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Props) {
   const [mood, setMood] = React.useState<number | null>(null)
@@ -30,9 +32,29 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
   }, [key, history])
 
   const save = (m: number, e: number) => {
+    const existedForDay = history.some((h) => h.date === dateKey)
+
     const next = [{ date: dateKey, mood: m, energy: e }, ...history.filter((h) => h.date !== dateKey)].slice(0, 28)
     setHistory(next)
-    track('mood.checkin', { tab: 'meu-dia', mood: m, energy: e, date: dateKey })
+
+    // Telemetria (sempre)
+    try {
+      track('mood.checkin', { tab: 'meu-dia', mood: m, energy: e, date: dateKey, firstOfDay: !existedForDay })
+    } catch {}
+
+    // Pontuação canônica (apenas 1x por dia)
+    if (!existedForDay) {
+      const res = addMJPoints(MJ_POINTS_CHECKIN, dateKey)
+      try {
+        track('mj.points.added', {
+          source: 'meu-dia:mood-checkin',
+          date: dateKey,
+          delta: MJ_POINTS_CHECKIN,
+          totalAfter: res?.nextTotal ?? null,
+          dayAfter: res?.nextDay ?? null,
+        })
+      } catch {}
+    }
   }
 
   const commitIfReady = (m: number | null, e: number | null) => {
@@ -167,19 +189,8 @@ export function MoodEnergyCheckin({ dateKey, storageKey = 'meu-dia:mood' }: Prop
 
       <div className="flex items-center justify-between">
         <p className="text-[12px] text-[#545454]">Registros recentes</p>
-        <svg
-          width={width}
-          height={height}
-          viewBox={`0 0 ${width} ${height}`}
-          aria-label="Gráfico de humor e energia dos registros recentes"
-        >
-          <polyline
-            points={polyPoints}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-[#2f3a56]"
-          />
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-label="Gráfico de humor e energia dos registros recentes">
+          <polyline points={polyPoints} fill="none" stroke="currentColor" strokeWidth="2" className="text-[#2f3a56]" />
         </svg>
       </div>
     </div>

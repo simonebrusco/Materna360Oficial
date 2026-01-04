@@ -18,6 +18,9 @@ import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
 
+// ✅ Jornada: marcar no ato de concluir (antes de remover)
+import { markJourneyFamilyDone, markJourneySelfcareDone } from '@/app/lib/journey.client'
+
 type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
@@ -200,6 +203,18 @@ export default function MyDayGroups({
   /* ---------- ações ---------- */
 
   async function onDone(t: MyDayTaskItem) {
+    // ✅ Jornada é evento semântico: marcar no ato de concluir (antes de remover)
+    try {
+      if (t.origin === 'selfcare') {
+        markJourneySelfcareDone('meu-dia')
+      }
+      if (t.origin === 'family') {
+        markJourneyFamilyDone('meu-dia')
+      }
+    } catch {
+      // silêncio intencional
+    }
+
     const res = removeTask(t.id, initialDate)
     if (res.ok) refresh()
   }
