@@ -47,6 +47,10 @@ function safeString(v: unknown): string | null {
   return s.length ? s : null
 }
 
+function isNonEmptyStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((x) => typeof x === 'string' && x.trim().length > 0)
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY
@@ -142,17 +146,21 @@ Importante:
       resumoNotas: safeString(body?.notesPreview) ?? null,
     }
 
-    /**
-     * Nota:
-     * - Em Maternar, NÃO usamos “micro-desafio” nem orientação baseada em persona.
-     * - Fora do Maternar, mantemos seu comportamento atual.
-     */
     const userMessageCommon = `
 Dados de contexto (podem estar vazios):
 ${JSON.stringify(userContext, null, 2)}
 `.trim()
 
-    // Schemas (Structured Outputs strict)
+    /**
+     * Schemas (Structured Outputs strict)
+     *
+     * Mudança aprovada:
+     * - weekly_overview passa a devolver "observations" (observações/reconhecimentos) no lugar de "suggestions" (passos).
+     *
+     * Compatibilidade:
+     * - Mantemos "suggestions" como campo OPCIONAL (para não quebrar consumidores legados).
+     * - No retorno, normalizamos para sempre devolver ambos (observations + suggestions) com o mesmo conteúdo.
+     */
     const weeklySchema = {
       name: 'weekly_insight',
       strict: true,
@@ -166,12 +174,23 @@ ${JSON.stringify(userContext, null, 2)}
             properties: {
               title: { type: 'string', minLength: 1 },
               summary: { type: 'string', minLength: 1 },
+
+              // Novo (preferido): observações/reconhecimentos sem direção
+              observations: {
+                type: 'array',
+                minItems: 2,
+                maxItems: 5,
+                items: { type: 'string', minLength: 1 },
+              },
+
+              // Legado (opcional): mantido por compatibilidade
               suggestions: {
                 type: 'array',
                 minItems: 2,
                 maxItems: 5,
                 items: { type: 'string', minLength: 1 },
               },
+
               highlights: {
                 type: 'object',
                 additionalProperties: false,
@@ -182,7 +201,8 @@ ${JSON.stringify(userContext, null, 2)}
                 required: ['bestDay', 'toughDays'],
               },
             },
-            required: ['title', 'summary', 'suggestions', 'highlights'],
+            // Requeremos observations (novo). suggestions fica opcional.
+            required: ['title', 'summary', 'observations', 'highlights'],
           },
         },
         required: ['weeklyInsight'],
@@ -217,16 +237,19 @@ ${JSON.stringify(userContext, null, 2)}
     if (feature === 'weekly_overview') {
       schemaToUse = weeklySchema
 
+      // Aqui aplicamos a mudança para TODO weekly_overview (maternar e não-maternar):
+      // observations = leitura + reconhecimento; sem passos, sem tarefas, sem micro-desafio.
       if (isMaternar) {
-        // Maternar: manter schema por compatibilidade, mas sem “passos práticos”.
         inputText = `
 Gere um insight emocional da semana para a mãe, a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
 - "summary": 3 a 5 linhas, sem julgar, sem orientar.
-- "suggestions": 2 a 5 frases de permissão/acolhimento (NÃO passos, NÃO tarefas, NÃO técnicas).
+- "observations": 2 a 5 observações/reconhecimentos (DESCRITIVOS), sem passos, sem tarefas, sem técnicas.
+  - Evite verbos no imperativo.
+  - Prefira "parece", "tem aparecido", "há sinais de", "quando X acontece, Y pesa/ajuda".
 - "highlights.bestDay": quando a semana flui melhor (sem culpa).
-- "highlights.toughDays": quando pesa mais + lembrete de gentileza.
+- "highlights.toughDays": quando pesa mais + lembrete de gentileza (sem direção).
 ${userMessageCommon}
 `.trim()
       } else {
@@ -234,14 +257,14 @@ ${userMessageCommon}
 Gere um insight emocional da semana da mãe a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
-- "summary": 3 a 5 linhas, sem julgar.
-- "suggestions": 2 a 5 passos pequenos, práticos e realistas.
+- "summary": 3 a 5 linhas, sem julgar e sem frases motivacionais vazias.
+- "observations": 2 a 5 observações/reconhecimentos (DESCRITIVOS), sem passos práticos, sem tarefa, sem técnica, sem micro-desafio.
+  - Evite verbos no imperativo.
+  - Prefira linguagem de leitura ("parece", "tem sido", "aparece", "há sinais de").
 - "highlights.bestDay": quando a semana flui melhor (sem culpa).
-- "highlights.toughDays": quando pesa mais + lembrete de gentileza.
+- "highlights.toughDays": quando pesa mais + lembrete de gentileza (sem direção).
 
-Ajuste o tom para a persona, se existir:
-- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
-- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
+Se houver persona/personaLabel, use APENAS para calibrar o tom (mais suave/mais direto), sem criar sugestões ou tarefas.
 ${userMessageCommon}
 `.trim()
       }
@@ -348,6 +371,30 @@ ${userMessageCommon}
       const last = rawText.lastIndexOf('}')
       if (first >= 0 && last > first) parsed = JSON.parse(rawText.slice(first, last + 1))
       else throw new Error('Resposta da IA sem JSON válido')
+    }
+
+    /**
+     * Normalização de compatibilidade (weekly_overview):
+     * - Sempre devolvemos observations + suggestions com o MESMO conteúdo,
+     *   para não quebrar consumidores que ainda leem "suggestions".
+     */
+    if (feature === 'weekly_overview' && parsed?.weeklyInsight && typeof parsed.weeklyInsight === 'object') {
+      const wi = parsed.weeklyInsight as any
+      const obs = wi?.observations
+      const sug = wi?.suggestions
+
+      if (!isNonEmptyStringArray(obs) && isNonEmptyStringArray(sug)) {
+        wi.observations = sug
+      } else if (isNonEmptyStringArray(obs) && !isNonEmptyStringArray(sug)) {
+        wi.suggestions = obs
+      } else if (!isNonEmptyStringArray(obs) && !isNonEmptyStringArray(sug)) {
+        // Segurança final: evita quebrar o client caso venha vazio por algum motivo
+        wi.observations = [
+          'Há sinais de que a sua semana teve momentos de cansaço e também pequenos respiros.',
+          'Mesmo com oscilações, parece que você seguiu sustentando o essencial do seu jeito.',
+        ]
+        wi.suggestions = wi.observations
+      }
     }
 
     return NextResponse.json(parsed, { status: 200 })
