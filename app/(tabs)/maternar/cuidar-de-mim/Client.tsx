@@ -196,7 +196,7 @@ export default function Client() {
     >
       <ClientOnly>
         {/* RAIL MASTER — eixo único (desktop/tablet/mobile) */}
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <Link
