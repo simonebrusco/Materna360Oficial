@@ -173,4 +173,34 @@ export function markJourneySelfcareDone(source?: string) {
 
 export function markJourneyFamilyDone(source?: string) {
   try {
-    const
+    const dk = dateKeyOfNow()
+    const alreadyDoneToday = safeGet(LS.familyDoneOn) === dk
+
+    if (!alreadyDoneToday) {
+      safeSet(LS.familyDoneOn, dk)
+
+      const raw = safeGet(LS.familyDoneCount)
+      const n = safeNumber(raw, 0)
+      safeSet(LS.familyDoneCount, String(n + 1))
+
+      // 🎯 Pontuação (1x/dia)
+      const delta = 5
+      const res = addMJPointsOncePerDay('journey_family', delta, dk)
+
+      try {
+        track('mj.points.added', {
+          key: 'journey_family',
+          source: 'journey:family',
+          dateKey: dk,
+          delta,
+          totalAfter: res?.nextTotal ?? null,
+          dayAfter: res?.nextDay ?? null,
+        })
+      } catch {}
+    }
+
+    try {
+      track('journey.family.done', { source: source ?? 'unknown', alreadyDoneToday })
+    } catch {}
+  } catch {}
+}
