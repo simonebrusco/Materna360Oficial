@@ -64,7 +64,7 @@ type Eu360Preferences = {
 // Preferências (não “persona”)
 const LS_KEYS = {
   eu360Prefs: 'eu360_prefs_v1',
-}
+} as const
 
 function safeGetLS(key: string): string | null {
   try {
@@ -106,7 +106,11 @@ function safeDateKey(d = new Date()) {
 function computePrefsFromAnswers(answers: QuestionnaireAnswers) {
   // Tom base: mais acolhedor quanto mais “puxado” o estado relatado
   const feltHeavy =
-    answers.q1 === 'exausta' || answers.q1 === 'cansada' || answers.q4 === 'sobrevivencia' || answers.q6 === 'passar' || answers.q6 === 'basico'
+    answers.q1 === 'exausta' ||
+    answers.q1 === 'cansada' ||
+    answers.q4 === 'sobrevivencia' ||
+    answers.q6 === 'passar' ||
+    answers.q6 === 'basico'
 
   const hasEnergy = answers.q1 === 'energia' || answers.q4 === 'alem' || answers.q6 === 'avancar'
 
@@ -154,10 +158,16 @@ function readPrefsFromLS(): Eu360Preferences | null {
 function writePrefsToLS(result: Eu360Preferences) {
   safeSetLS(LS_KEYS.eu360Prefs, JSON.stringify(result))
 
-  // Evento neutro: informa atualização de preferências (não “perfil”).
+  /**
+   * Compatibilidade cross-hub:
+   * - Novo evento neutro: eu360:prefs-updated
+   * - Evento legado (ainda usado por Meu Dia / Planner): eu360:persona-updated
+   *   (mantido temporariamente para não quebrar re-hidratação até migrarmos listeners)
+   */
   try {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('eu360:prefs-updated'))
+      window.dispatchEvent(new Event('eu360:persona-updated')) // legado/compat
     }
   } catch {
     // nunca quebra o fluxo
@@ -340,7 +350,7 @@ export default function Eu360Client() {
     }
   }, [prefsResult, prefsPreview])
 
-  // Re-hidrata signal quando preferências mudarem (storage + custom event)
+  // Re-hidrata signal quando preferências mudarem (storage + custom events)
   useEffect(() => {
     const refresh = () => {
       try {
@@ -351,17 +361,20 @@ export default function Eu360Client() {
     }
 
     const onStorage = (_e: StorageEvent) => refresh()
-    const onCustom = () => refresh()
+    const onCustomPrefs = () => refresh()
+    const onCustomLegacy = () => refresh()
 
     try {
       window.addEventListener('storage', onStorage)
-      window.addEventListener('eu360:prefs-updated', onCustom as EventListener)
+      window.addEventListener('eu360:prefs-updated', onCustomPrefs as EventListener)
+      window.addEventListener('eu360:persona-updated', onCustomLegacy as EventListener) // legado/compat
     } catch {}
 
     return () => {
       try {
         window.removeEventListener('storage', onStorage)
-        window.removeEventListener('eu360:prefs-updated', onCustom as EventListener)
+        window.removeEventListener('eu360:prefs-updated', onCustomPrefs as EventListener)
+        window.removeEventListener('eu360:persona-updated', onCustomLegacy as EventListener)
       } catch {}
     }
   }, [])
@@ -440,7 +453,11 @@ export default function Eu360Client() {
       setPrefsResult(result)
 
       try {
-        track('eu360.questionario.complete', { answered: 6, helpStyle: computed.helpStyle ?? null, focusHint: computed.focusHint ?? null })
+        track('eu360.questionario.complete', {
+          answered: 6,
+          helpStyle: computed.helpStyle ?? null,
+          focusHint: computed.focusHint ?? null,
+        })
       } catch {}
     } finally {
       setSaving(false)
@@ -461,11 +478,7 @@ export default function Eu360Client() {
   void buildAiContext
 
   const content = (
-    <main
-      data-layout="page-template-v1"
-      data-tab="eu360"
-      className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden"
-    >
+    <main data-layout="page-template-v1" data-tab="eu360" className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden">
       <div className="relative z-10 mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
         {/* HERO */}
         <header className="pt-8 md:pt-10 mb-6 md:mb-7 text-left">
@@ -485,26 +498,18 @@ export default function Eu360Client() {
           <div className="mt-4 rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-4 py-4 md:px-5 md:py-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
-                  Seu tom por aqui, nesta fase
-                </p>
+                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">Seu tom por aqui, nesta fase</p>
 
                 <div className="mt-2 flex items-start gap-2">
                   <AppIcon name="sparkles" size={18} className="text-white" decorative />
                   <div>
-                    <p className="text-sm font-semibold text-white">
-                      {prefsResult ? prefsResult.toneLabel : prefsPreview.toneLabel}
-                    </p>
+                    <p className="text-sm font-semibold text-white">{prefsResult ? prefsResult.toneLabel : prefsPreview.toneLabel}</p>
                     <p className="text-[12px] text-white/85 leading-relaxed">
-                      {prefsResult
-                        ? refineMicroCopyForTone({ base: prefsResult.microCopy, tone: resolvedTone })
-                        : prefsPreview.microCopy}
+                      {prefsResult ? refineMicroCopyForTone({ base: prefsResult.microCopy, tone: resolvedTone }) : prefsPreview.microCopy}
                     </p>
 
                     {/*  P15 — continuidade quinzenal (leve, 1x/14 dias) */}
-                    {fortnightLine ? (
-                      <p className="mt-2 text-[12px] text-white/80 leading-relaxed">{fortnightLine}</p>
-                    ) : null}
+                    {fortnightLine ? <p className="mt-2 text-[12px] text-white/80 leading-relaxed">{fortnightLine}</p> : null}
                   </div>
                 </div>
               </div>
@@ -560,9 +565,7 @@ export default function Eu360Client() {
               <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">
-                      Questionário rápido (2 min)
-                    </p>
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">Questionário rápido (2 min)</p>
                     <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
                       Para o app acompanhar o seu momento real
                     </h2>
@@ -622,25 +625,15 @@ export default function Eu360Client() {
                             onClick={() => setAnswer('q1', 'cansada')}
                           />
                           <OptionButton active={answers.q1 === 'oscilando'} label="Oscilando" onClick={() => setAnswer('q1', 'oscilando')} />
-                          <OptionButton
-                            active={answers.q1 === 'equilibrada'}
-                            label="Mais equilibrada"
-                            onClick={() => setAnswer('q1', 'equilibrada')}
-                          />
-                          <OptionButton
-                            active={answers.q1 === 'energia'}
-                            label="Com energia para mais"
-                            onClick={() => setAnswer('q1', 'energia')}
-                          />
+                          <OptionButton active={answers.q1 === 'equilibrada'} label="Mais equilibrada" onClick={() => setAnswer('q1', 'equilibrada')} />
+                          <OptionButton active={answers.q1 === 'energia'} label="Com energia para mais" onClick={() => setAnswer('q1', 'energia')} />
                         </div>
                       </div>
                     ) : null}
 
                     {qStep === 2 ? (
                       <div className="space-y-2">
-                        <p className="text-[12px] font-semibold text-[#2f3a56]">
-                          2) Quanto tempo, de verdade, você costuma ter para você por dia?
-                        </p>
+                        <p className="text-[12px] font-semibold text-[#2f3a56]">2) Quanto tempo, de verdade, você costuma ter para você por dia?</p>
                         <div className="grid gap-2">
                           <OptionButton active={answers.q2 === 'nenhum'} label="Quase nenhum" onClick={() => setAnswer('q2', 'nenhum')} />
                           <OptionButton active={answers.q2 === '5a10'} label="5 a 10 minutos" onClick={() => setAnswer('q2', '5a10')} />
@@ -655,17 +648,9 @@ export default function Eu360Client() {
                         <p className="text-[12px] font-semibold text-[#2f3a56]">3) Hoje, o que mais pesa na sua rotina?</p>
                         <div className="grid gap-2">
                           <OptionButton active={answers.q3 === 'tempo'} label="Falta de tempo" onClick={() => setAnswer('q3', 'tempo')} />
-                          <OptionButton
-                            active={answers.q3 === 'emocional'}
-                            label="Cansaço emocional"
-                            onClick={() => setAnswer('q3', 'emocional')}
-                          />
+                          <OptionButton active={answers.q3 === 'emocional'} label="Cansaço emocional" onClick={() => setAnswer('q3', 'emocional')} />
                           <OptionButton active={answers.q3 === 'organizacao'} label="Organização" onClick={() => setAnswer('q3', 'organizacao')} />
-                          <OptionButton
-                            active={answers.q3 === 'conexao'}
-                            label="Conexão com meu filho"
-                            onClick={() => setAnswer('q3', 'conexao')}
-                          />
+                          <OptionButton active={answers.q3 === 'conexao'} label="Conexão com meu filho" onClick={() => setAnswer('q3', 'conexao')} />
                           <OptionButton active={answers.q3 === 'tudo'} label="Tudo um pouco" onClick={() => setAnswer('q3', 'tudo')} />
                         </div>
                       </div>
@@ -673,26 +658,12 @@ export default function Eu360Client() {
 
                     {qStep === 4 ? (
                       <div className="space-y-2">
-                        <p className="text-[12px] font-semibold text-[#2f3a56]">
-                          4) Quando pensa na sua rotina como mãe, o que mais descreve?
-                        </p>
+                        <p className="text-[12px] font-semibold text-[#2f3a56]">4) Quando pensa na sua rotina como mãe, o que mais descreve?</p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q4 === 'sobrevivencia'}
-                            label="Sobrevivência"
-                            onClick={() => setAnswer('q4', 'sobrevivencia')}
-                          />
-                          <OptionButton
-                            active={answers.q4 === 'organizar'}
-                            label="Tentando organizar"
-                            onClick={() => setAnswer('q4', 'organizar')}
-                          />
+                          <OptionButton active={answers.q4 === 'sobrevivencia'} label="Sobrevivência" onClick={() => setAnswer('q4', 'sobrevivencia')} />
+                          <OptionButton active={answers.q4 === 'organizar'} label="Tentando organizar" onClick={() => setAnswer('q4', 'organizar')} />
                           <OptionButton active={answers.q4 === 'conexao'} label="Buscando conexão" onClick={() => setAnswer('q4', 'conexao')} />
-                          <OptionButton
-                            active={answers.q4 === 'equilibrio'}
-                            label="Encontrando equilíbrio"
-                            onClick={() => setAnswer('q4', 'equilibrio')}
-                          />
+                          <OptionButton active={answers.q4 === 'equilibrio'} label="Encontrando equilíbrio" onClick={() => setAnswer('q4', 'equilibrio')} />
                           <OptionButton active={answers.q4 === 'alem'} label="Querendo ir além" onClick={() => setAnswer('q4', 'alem')} />
                         </div>
                       </div>
@@ -702,16 +673,8 @@ export default function Eu360Client() {
                       <div className="space-y-2">
                         <p className="text-[12px] font-semibold text-[#2f3a56]">5) Como você prefere receber ajuda aqui?</p>
                         <div className="grid gap-2">
-                          <OptionButton
-                            active={answers.q5 === 'diretas'}
-                            label="Poucas mensagens, bem diretas"
-                            onClick={() => setAnswer('q5', 'diretas')}
-                          />
-                          <OptionButton
-                            active={answers.q5 === 'guiadas'}
-                            label="Algumas opções, mas guiadas"
-                            onClick={() => setAnswer('q5', 'guiadas')}
-                          />
+                          <OptionButton active={answers.q5 === 'diretas'} label="Poucas mensagens, bem diretas" onClick={() => setAnswer('q5', 'diretas')} />
+                          <OptionButton active={answers.q5 === 'guiadas'} label="Algumas opções, mas guiadas" onClick={() => setAnswer('q5', 'guiadas')} />
                           <OptionButton active={answers.q5 === 'explorar'} label="Gosto de explorar com calma" onClick={() => setAnswer('q5', 'explorar')} />
                         </div>
                       </div>
@@ -722,21 +685,9 @@ export default function Eu360Client() {
                         <p className="text-[12px] font-semibold text-[#2f3a56]">6) Se hoje fosse um bom dia, o que já seria suficiente?</p>
                         <div className="grid gap-2">
                           <OptionButton active={answers.q6 === 'passar'} label="Conseguir passar pelo dia" onClick={() => setAnswer('q6', 'passar')} />
-                          <OptionButton
-                            active={answers.q6 === 'basico'}
-                            label="Cumprir o básico sem culpa"
-                            onClick={() => setAnswer('q6', 'basico')}
-                          />
-                          <OptionButton
-                            active={answers.q6 === 'momento'}
-                            label="Ter um momento bom com meu filho"
-                            onClick={() => setAnswer('q6', 'momento')}
-                          />
-                          <OptionButton
-                            active={answers.q6 === 'organizada'}
-                            label="Me sentir mais organizada"
-                            onClick={() => setAnswer('q6', 'organizada')}
-                          />
+                          <OptionButton active={answers.q6 === 'basico'} label="Cumprir o básico sem culpa" onClick={() => setAnswer('q6', 'basico')} />
+                          <OptionButton active={answers.q6 === 'momento'} label="Ter um momento bom com meu filho" onClick={() => setAnswer('q6', 'momento')} />
+                          <OptionButton active={answers.q6 === 'organizada'} label="Me sentir mais organizada" onClick={() => setAnswer('q6', 'organizada')} />
                           <OptionButton active={answers.q6 === 'avancar'} label="Avançar um pouco mais" onClick={() => setAnswer('q6', 'avancar')} />
                         </div>
                       </div>
@@ -773,9 +724,7 @@ export default function Eu360Client() {
                       )}
                     </div>
 
-                    <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
-                      Isso fica salvo como preferências de tom e foco. Você pode refazer quando quiser.
-                    </p>
+                    <p className="text-[11px] text-[#6a6a6a] leading-relaxed">Isso fica salvo como preferências de tom e foco. Você pode refazer quando quiser.</p>
                   </>
                 )}
               </SoftCard>
@@ -789,12 +738,8 @@ export default function Eu360Client() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">Painel da sua jornada</p>
-                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">
-                      Um olhar rápido, sem cobrança
-                    </h2>
-                    <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
-                      Aqui é só para enxergar recortes do que apareceu — não é placar e não é cobrança.
-                    </p>
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">Um olhar rápido, sem cobrança</h2>
+                    <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">Aqui é só para enxergar recortes do que apareceu — não é placar e não é cobrança.</p>
                   </div>
                   <AppIcon name="sparkles" className="h-6 w-6 text-[#fd2597] hidden md:block" />
                 </div>
@@ -821,12 +766,8 @@ export default function Eu360Client() {
                         <AppIcon name="heart" size={20} className="text-[#fd2597]" decorative />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
-                          Olhar carinhoso sobre a sua semana
-                        </p>
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
-                          {weeklyInsight?.title || 'Seu resumo emocional da semana'}
-                        </h3>
+                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Olhar carinhoso sobre a sua semana</p>
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">{weeklyInsight?.title || 'Seu resumo emocional da semana'}</h3>
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
                           {firstName}, este espaço é para leitura: enxergar seus últimos dias com mais gentileza — sem pendência.
                         </p>
@@ -835,9 +776,7 @@ export default function Eu360Client() {
 
                     <div className="mt-1 space-y-2.5">
                       {loadingInsight ? (
-                        <p className="text-sm text-[#6a6a6a] leading-relaxed">
-                          Estou olhando com carinho para a sua semana para trazer uma leitura…
-                        </p>
+                        <p className="text-sm text-[#6a6a6a] leading-relaxed">Estou olhando com carinho para a sua semana para trazer uma leitura…</p>
                       ) : (
                         <>
                           <p className="text-sm leading-relaxed text-[#2f3a56]">
@@ -847,9 +786,7 @@ export default function Eu360Client() {
 
                           {weeklyInsight?.observations && weeklyInsight.observations.length > 0 && (
                             <div className="space-y-1.5">
-                              <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
-                                Observações, sem cobrança
-                              </p>
+                              <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Observações, sem cobrança</p>
                               <ul className="space-y-1.5 text-sm text-[#2f3a56]">
                                 {weeklyInsight.observations.map((item, idx) => (
                                   <li key={idx}>• {item}</li>
@@ -878,9 +815,7 @@ export default function Eu360Client() {
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                   <div className="space-y-2 max-w-xl">
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">Materna360+</p>
-                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">
-                      Um apoio a mais, quando você quiser
-                    </h2>
+                    <h2 className="text-xl md:text-2xl font-semibold leading-snug text-white">Um apoio a mais, quando você quiser</h2>
                     <p className="text-sm md:text-base text-white/90 leading-relaxed">
                       Conteúdos e recursos extras para aprofundar o cuidado com você, com a sua rotina e com a sua família — no seu tempo.
                     </p>
@@ -895,9 +830,7 @@ export default function Eu360Client() {
                         Conhecer os planos
                       </button>
                     </Link>
-                    <p className="text-[11px] text-white/85 md:text-right max-w-xs">
-                      Planos pensados para fases diferentes — você escolhe o que faz sentido agora.
-                    </p>
+                    <p className="text-[11px] text-white/85 md:text-right max-w-xs">Planos pensados para fases diferentes — você escolhe o que faz sentido agora.</p>
                   </div>
                 </div>
               </SoftCard>
