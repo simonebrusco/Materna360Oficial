@@ -222,11 +222,12 @@ export default function Client() {
               {/* TOPO TRANSLÚCIDO — “Sugestão pronta para agora (sem obrigação)” */}
               <div
                 className="
-                  rounded-[22px]
-                  border border-white/20
-                  bg-white/12
-                  backdrop-blur
-                  px-4 py-4 sm:px-5 sm:py-5
+                 rounded-[22px]
+    border border-white/20
+    bg-white/12
+    backdrop-blur
+    px-4 py-3
+    sm:px-5 sm:py-55
                 "
               >
                 <div className="flex items-start justify-between gap-4">
