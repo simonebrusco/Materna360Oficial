@@ -170,8 +170,6 @@ export default function ParaAgoraSupportCard({
   }, [])
 
   const isEmbedded = variant === 'embedded'
-
-  // evita repetição no Hub (embedded)
   const headerTitle = isEmbedded ? 'Um respiro para agora' : 'Um apoio para este momento'
 
   const shellClass = isEmbedded
@@ -253,33 +251,34 @@ export default function ParaAgoraSupportCard({
 
   const loadingTextClass = isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'
 
-  // Lapidação: botão silencioso no embedded (não usar rosa chapado)
   const embeddedButtonClass =
-    'h-9 px-4 text-[12px] bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)]'
+    'h-9 px-4 text-[12px] bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)] w-full sm:w-auto'
 
   return (
-    <SoftCard className={[shellClass, className ?? ''].join(' ')}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
+    <SoftCard className={[shellClass, 'min-w-0 max-w-full overflow-hidden', className ?? ''].join(' ')}>
+      {/* FIX MOBILE: header vira coluna no mobile e botão não estoura */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-3 min-w-0">
           <div className={iconWrapClass}>
             <AppIcon name="sparkles" size={20} className={iconClass} />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             <span className={pillClass}>Para agora</span>
             <h3 className={titleClass}>{headerTitle}</h3>
             <p className={subtitleClass}>Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
           </div>
         </div>
 
-        <div className="shrink-0">
+        {/* FIX MOBILE: botão full width */}
+        <div className="w-full sm:w-auto shrink-0">
           {state.status === 'idle' ? (
             isEmbedded ? (
               <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
                 Ver sugestões
               </Button>
             ) : (
-              <Button className="px-4" onClick={() => void fetchCards()}>
+              <Button className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
                 Ver sugestões
               </Button>
             )
@@ -288,7 +287,7 @@ export default function ParaAgoraSupportCard({
               Ver outro apoio
             </Button>
           ) : (
-            <Button variant="secondary" className="px-4" onClick={() => void fetchCards()}>
+            <Button variant="secondary" className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
               Ver outro apoio
             </Button>
           )}
@@ -301,9 +300,14 @@ export default function ParaAgoraSupportCard({
         </div>
       ) : null}
 
-      {/* Lapidação: quando está idle, não deixar um “vazio grande” — manter proporção premium */}
       {state.status === 'idle' ? (
-        <div className={isEmbedded ? 'mt-4 rounded-2xl border border-[#f5d7e5]/60 bg-white/50 backdrop-blur px-4 py-3' : 'mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3'}>
+        <div
+          className={
+            isEmbedded
+              ? 'mt-4 rounded-2xl border border-[#f5d7e5]/60 bg-white/50 backdrop-blur px-4 py-3'
+              : 'mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3'
+          }
+        >
           <p className={isEmbedded ? 'text-[12px] text-[#6a6a6a] leading-relaxed' : 'text-[13px] text-black/60'}>
             Um pequeno apoio pode mudar o tom do resto do dia.
           </p>
@@ -315,6 +319,7 @@ export default function ParaAgoraSupportCard({
           {visibleItems.length ? (
             visibleItems.map((item) => (
               <div key={item.id} className={itemShellClass}>
+                {/* FIX MOBILE: min-w-0 e quebra correta */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     {item.tag ? <span className={itemTagClass}>{item.tag}</span> : null}
