@@ -230,7 +230,7 @@ export default function Client() {
     sm:px-5 sm:py-55
                 "
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="mt-0.5 h-10 w-10 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
                       <AppIcon name="heart" size={18} className="text-white" />
@@ -249,7 +249,7 @@ export default function Client() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 flex items-center gap-2">
+                  <div className="shrink-0 flex items-center gap-2 sm:mt-0 mt-3">
                     {/* neutro: mantém layout do print; se tiver rota real, troca depois */}
                     <button
                       type="button"
@@ -300,7 +300,7 @@ export default function Client() {
                 </div>
 
                 {/* chips do topo */}
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {['Para agora', 'Ritmo', 'Dia', 'Norte'].map((label) => (
                     <span
                       key={label}
@@ -309,8 +309,8 @@ export default function Client() {
                         rounded-full
                         bg-white/10
                         border border-white/20
-                        px-3 py-1
-                        text-[11px]
+                        px-2.5 py-0.5
+                        text-[10px]
                         text-white/90
                       "
                     >
@@ -321,7 +321,7 @@ export default function Client() {
               </div>
 
               {/* CARD BRANCO INTERNO — editorial */}
-              <div className="mt-3 sm:mt-4 rounded-[24px] bg-white/95 backdrop-blur border border-[#f5d7e5] shadow-[0_18px_45px_rgba(184,35,107,0.14)]">
+              <div className="mt-2 sm:mt-4 rounded-[24px] bg-white/95 backdrop-blur border border-[#f5d7e5] shadow-[0_18px_45px_rgba(184,35,107,0.14)]">
                 <div className="p-4 sm:p-5 md:p-7">
                   {/* BLOCO 0 — PARA AGORA */}
                   <section className="pb-6" id="para-agora">
