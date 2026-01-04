@@ -94,7 +94,8 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   return (
     <div className="w-full">
       <div className="h-2.5 rounded-full bg-[#ffe1f1] overflow-hidden border border-[#f5d7e5]">
-        <div className="h-full bg-[#ff005e] rounded-full" style={{ width: `${pct}%` }} />
+        {/* COR OFICIAL (primária viva): #fd2597 */}
+        <div className="h-full bg-[#fd2597] rounded-full" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-2 flex items-center justify-between text-[11px] text-[#6a6a6a]">
         <span>{pct}%</span>
@@ -123,6 +124,8 @@ function ViewPill({
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
+        // Foco padronizado na paleta oficial (#fd2597)
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fd2597]/30 focus-visible:ring-offset-0',
         active
           ? 'bg-white/90 border-white/60 text-[#2f3a56]'
           : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
@@ -131,6 +134,50 @@ function ViewPill({
       {label}
     </button>
   )
+}
+
+/**
+ * Microtexto “IA” (local, leve, sem recomendação, sem cobrança).
+ * Regra: espelhar + contextualizar presença. Nunca avaliar, nunca sugerir constância.
+ */
+function buildMinhaJornadaMicrotext(args: {
+  view: View
+  todayPoints: number
+  totalPoints: number
+  daysActive7: number
+  daysActive28: number
+  weeklyTotal: number
+  monthlyTotal: number
+}) {
+  const { view, todayPoints, totalPoints, daysActive7, daysActive28, weeklyTotal, monthlyTotal } = args
+
+  const top =
+    todayPoints > 0
+      ? 'Hoje já tem um registro. Isso é presença — mesmo que tenha sido pequeno.'
+      : 'Se hoje ficou em silêncio, tudo bem. A Jornada reconhece o que coube (inclusive pausa).'
+
+  const hoje =
+    todayPoints > 0
+      ? 'O que apareceu hoje já vira parte do seu registro — sem precisar “render”.'
+      : 'Quando não dá, não vira falha. O registro não cobra nada de você.'
+
+  const resumo =
+    totalPoints > 0 || monthlyTotal > 0 || weeklyTotal > 0 || daysActive28 > 0
+      ? 'Isso não é desempenho: é um retrato do que existiu quando você esteve aqui.'
+      : 'Ainda não há registros no período — e isso não diz nada sobre você. Só diz que não coube ainda.'
+
+  const cuidado =
+    daysActive7 === 0 && daysActive28 > 0
+      ? 'Às vezes a presença aparece em outros ritmos. O app não transforma intervalo em dívida.'
+      : daysActive28 === 0
+        ? 'Você pode ficar fora pelo tempo que precisar. Voltar, quando fizer sentido, já basta.'
+        : 'A Jornada respeita seu ritmo. Ela registra quando acontece — e só.'
+
+  if (view === 'hoje') {
+    return { top, section: hoje, closing: cuidado }
+  }
+
+  return { top, section: resumo, closing: cuidado }
 }
 
 export default function MinhaJornadaClient() {
@@ -185,6 +232,20 @@ export default function MinhaJornadaClient() {
         ? 'Você esteve aqui 1 dia nas últimas 4 semanas.'
         : `Você esteve aqui ${daysActive28} dias nas últimas 4 semanas.`
 
+  const micro = useMemo(
+    () =>
+      buildMinhaJornadaMicrotext({
+        view,
+        todayPoints,
+        totalPoints,
+        daysActive7,
+        daysActive28,
+        weeklyTotal,
+        monthlyTotal,
+      }),
+    [view, todayPoints, totalPoints, daysActive7, daysActive28, weeklyTotal, monthlyTotal]
+  )
+
   return (
     <main
       data-layout="page-template-v1"
@@ -193,7 +254,7 @@ export default function MinhaJornadaClient() {
         min-h-[100dvh]
         pb-32
         bg-[#ffe1f1]
-        bg-[linear-gradient(to_bottom,#ff005e_0%,#ff005e_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
+        bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
       "
     >
       <ClientOnly>
@@ -235,7 +296,7 @@ export default function MinhaJornadaClient() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
-                      <AppIcon name="sparkles" size={20} className="text-[#ff005e]" />
+                      <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
                     </div>
 
                     <div>
@@ -247,6 +308,11 @@ export default function MinhaJornadaClient() {
                       </div>
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
                         A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece.
+                      </div>
+
+                      {/* Microtexto (IA) — 1–2 frases, sem CTA */}
+                      <div className="text-[12px] text-white/80 mt-2 drop-shadow-[0_1px_6px_rgba(0,0,0,0.18)]">
+                        {micro.top}
                       </div>
                     </div>
                   </div>
@@ -304,7 +370,7 @@ export default function MinhaJornadaClient() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="heart" size={22} className="text-[#ff005e]" />
+                        <AppIcon name="heart" size={22} className="text-[#fd2597]" />
                       </div>
 
                       <div className="space-y-1">
@@ -317,6 +383,9 @@ export default function MinhaJornadaClient() {
                         <p className="text-[13px] text-[#6a6a6a]">
                           Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem.
                         </p>
+
+                        {/* Microtexto (IA) — 1 frase */}
+                        <p className="text-[12px] text-[#6a6a6a]">{micro.section}</p>
                       </div>
                     </div>
 
@@ -362,10 +431,13 @@ export default function MinhaJornadaClient() {
                         O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo.
                       </div>
 
+                      {/* Microtexto (IA) — 1 frase */}
+                      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{micro.closing}</div>
+
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Link
                           href="/maternar"
-                          className="rounded-full bg-[#ff005e] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                         >
                           Voltar para o Maternar
                         </Link>
@@ -392,7 +464,7 @@ export default function MinhaJornadaClient() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                        <AppIcon name="star" size={22} className="text-[#ff005e]" />
+                        <AppIcon name="star" size={22} className="text-[#fd2597]" />
                       </div>
 
                       <div className="space-y-1">
@@ -405,6 +477,9 @@ export default function MinhaJornadaClient() {
                         <p className="text-[13px] text-[#6a6a6a]">
                           Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui.
                         </p>
+
+                        {/* Microtexto (IA) — 1 frase */}
+                        <p className="text-[12px] text-[#6a6a6a]">{micro.section}</p>
                       </div>
                     </div>
 
@@ -431,17 +506,22 @@ export default function MinhaJornadaClient() {
                     </div>
 
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                        nota de cuidado
+                      </div>
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
                         Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança. A Jornada
                         respeita silêncio e pausa. Voltar já é suficiente.
                       </div>
 
+                      {/* Microtexto (IA) — 1 frase */}
+                      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{micro.closing}</div>
+
                       <div className="mt-5 flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => setView('hoje')}
-                          className="rounded-full bg-[#ff005e] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                         >
                           Ver hoje
                         </button>
