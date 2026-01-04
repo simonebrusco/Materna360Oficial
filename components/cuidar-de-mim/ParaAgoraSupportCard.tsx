@@ -170,8 +170,6 @@ export default function ParaAgoraSupportCard({
   }, [])
 
   const isEmbedded = variant === 'embedded'
-
-  // evita repetição no Hub (embedded)
   const headerTitle = isEmbedded ? 'Um respiro para agora' : 'Um apoio para este momento'
 
   const shellClass = isEmbedded
@@ -181,14 +179,12 @@ export default function ParaAgoraSupportCard({
       bg-white/60 backdrop-blur
       border border-[#f5d7e5]/70
       shadow-[0_10px_26px_rgba(184,35,107,0.08)]
-      overflow-hidden
     `
     : `
       p-5 md:p-6 rounded-2xl
       bg-white
       border border-black/5
       shadow-[0_6px_18px_rgba(0,0,0,0.06)]
-      overflow-hidden
     `
 
   const iconWrapClass = isEmbedded
@@ -210,20 +206,20 @@ export default function ParaAgoraSupportCard({
     : 'text-[13px] text-black/60 leading-relaxed'
 
   const itemShellClass = isEmbedded
-    ? 'rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3 overflow-hidden'
-    : 'rounded-2xl border border-black/5 bg-white px-4 py-3 overflow-hidden'
+    ? 'rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3'
+    : 'rounded-2xl border border-black/5 bg-white px-4 py-3'
 
   const itemTagClass = isEmbedded
     ? 'inline-flex w-max items-center rounded-full bg-[#ffe1f1]/70 border border-[#f5d7e5]/70 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase'
     : 'inline-flex w-max items-center rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black/70 uppercase'
 
   const itemTitleClass = isEmbedded
-    ? 'mt-1 text-[14px] font-semibold text-[#2f3a56] break-words'
-    : 'mt-1 text-[14px] font-semibold text-black/80 break-words'
+    ? 'mt-1 text-[14px] font-semibold text-[#2f3a56]'
+    : 'mt-1 text-[14px] font-semibold text-black/80'
 
   const itemDescClass = isEmbedded
-    ? 'mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line break-words'
-    : 'mt-1 text-[12px] text-black/60 leading-relaxed whitespace-pre-line break-words'
+    ? 'mt-1 text-[12px] text-[#6a6a6a] leading-relaxed whitespace-pre-line'
+    : 'mt-1 text-[12px] text-black/60 leading-relaxed whitespace-pre-line'
 
   const dismissBtnClass = isEmbedded
     ? `
@@ -255,13 +251,12 @@ export default function ParaAgoraSupportCard({
 
   const loadingTextClass = isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'
 
-  // Botão (embedded): responsivo e sem “vazar”
   const embeddedButtonClass =
-    'h-10 px-4 text-[12px] w-full sm:w-auto bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)]'
+    'h-9 px-4 text-[12px] bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)] w-full sm:w-auto'
 
   return (
-    <SoftCard className={[shellClass, className ?? ''].join(' ')}>
-      {/* Header responsivo: empilha no mobile */}
+    <SoftCard className={[shellClass, 'min-w-0 max-w-full overflow-hidden', className ?? ''].join(' ')}>
+      {/* FIX MOBILE: header vira coluna no mobile e botão não estoura */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           <div className={iconWrapClass}>
@@ -275,8 +270,8 @@ export default function ParaAgoraSupportCard({
           </div>
         </div>
 
-        {/* CTA: w-full no mobile para não “voar” */}
-        <div className="w-full sm:w-auto">
+        {/* FIX MOBILE: botão full width */}
+        <div className="w-full sm:w-auto shrink-0">
           {state.status === 'idle' ? (
             isEmbedded ? (
               <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
@@ -324,8 +319,9 @@ export default function ParaAgoraSupportCard({
           {visibleItems.length ? (
             visibleItems.map((item) => (
               <div key={item.id} className={itemShellClass}>
+                {/* FIX MOBILE: min-w-0 e quebra correta */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     {item.tag ? <span className={itemTagClass}>{item.tag}</span> : null}
                     <p className={itemTitleClass}>{item.title}</p>
                     {item.description ? <p className={itemDescClass}>{item.description}</p> : null}
