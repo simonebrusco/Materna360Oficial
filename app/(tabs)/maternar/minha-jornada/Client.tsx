@@ -123,6 +123,8 @@ function ViewPill({
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
+        // padroniza foco (evita ring azul padrão do browser)
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff005e]/35 focus-visible:ring-offset-0',
         active
           ? 'bg-white/90 border-white/60 text-[#2f3a56]'
           : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
@@ -131,6 +133,50 @@ function ViewPill({
       {label}
     </button>
   )
+}
+
+/**
+ * Microtexto “IA” (local, leve, sem recomendação, sem cobrança).
+ * Regra: espelhar + contextualizar presença. Nunca avaliar, nunca sugerir constância.
+ */
+function buildMinhaJornadaMicrotext(args: {
+  view: View
+  todayPoints: number
+  totalPoints: number
+  daysActive7: number
+  daysActive28: number
+  weeklyTotal: number
+  monthlyTotal: number
+}) {
+  const { view, todayPoints, totalPoints, daysActive7, daysActive28, weeklyTotal, monthlyTotal } = args
+
+  const top =
+    todayPoints > 0
+      ? 'Hoje já tem um registro. Isso é presença — mesmo que tenha sido pequeno.'
+      : 'Se hoje ficou em silêncio, tudo bem. A Jornada reconhece o que coube (inclusive pausa).'
+
+  const hoje =
+    todayPoints > 0
+      ? 'O que apareceu hoje já vira parte do seu registro — sem precisar “render”.'
+      : 'Quando não dá, não vira falha. O registro não cobra nada de você.'
+
+  const resumo =
+    totalPoints > 0 || monthlyTotal > 0 || weeklyTotal > 0 || daysActive28 > 0
+      ? 'Isso não é desempenho: é um retrato do que existiu quando você esteve aqui.'
+      : 'Ainda não há registros no período — e isso não diz nada sobre você. Só diz que não coube ainda.'
+
+  const cuidado =
+    daysActive7 === 0 && daysActive28 > 0
+      ? 'Às vezes a presença aparece em outros ritmos. O app não transforma intervalo em dívida.'
+      : daysActive28 === 0
+        ? 'Você pode ficar fora pelo tempo que precisar. Voltar, quando fizer sentido, já basta.'
+        : 'A Jornada respeita seu ritmo. Ela registra quando acontece — e só.'
+
+  if (view === 'hoje') {
+    return { top, section: hoje, closing: cuidado }
+  }
+
+  return { top, section: resumo, closing: cuidado }
 }
 
 export default function MinhaJornadaClient() {
@@ -184,6 +230,20 @@ export default function MinhaJornadaClient() {
       : daysActive28 === 1
         ? 'Você esteve aqui 1 dia nas últimas 4 semanas.'
         : `Você esteve aqui ${daysActive28} dias nas últimas 4 semanas.`
+
+  const micro = useMemo(
+    () =>
+      buildMinhaJornadaMicrotext({
+        view,
+        todayPoints,
+        totalPoints,
+        daysActive7,
+        daysActive28,
+        weeklyTotal,
+        monthlyTotal,
+      }),
+    [view, todayPoints, totalPoints, daysActive7, daysActive28, weeklyTotal, monthlyTotal]
+  )
 
   return (
     <main
@@ -247,6 +307,11 @@ export default function MinhaJornadaClient() {
                       </div>
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
                         A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece.
+                      </div>
+
+                      {/* Microtexto (IA) — 1–2 frases, sem CTA */}
+                      <div className="text-[12px] text-white/80 mt-2 drop-shadow-[0_1px_6px_rgba(0,0,0,0.18)]">
+                        {micro.top}
                       </div>
                     </div>
                   </div>
@@ -317,6 +382,11 @@ export default function MinhaJornadaClient() {
                         <p className="text-[13px] text-[#6a6a6a]">
                           Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem.
                         </p>
+
+                        {/* Microtexto (IA) — 1 frase */}
+                        <p className="text-[12px] text-[#6a6a6a]">
+                          {micro.section}
+                        </p>
                       </div>
                     </div>
 
@@ -362,6 +432,11 @@ export default function MinhaJornadaClient() {
                         O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo.
                       </div>
 
+                      {/* Microtexto (IA) — 1 frase */}
+                      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+                        {micro.closing}
+                      </div>
+
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Link
                           href="/maternar"
@@ -405,6 +480,11 @@ export default function MinhaJornadaClient() {
                         <p className="text-[13px] text-[#6a6a6a]">
                           Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui.
                         </p>
+
+                        {/* Microtexto (IA) — 1 frase */}
+                        <p className="text-[12px] text-[#6a6a6a]">
+                          {micro.section}
+                        </p>
                       </div>
                     </div>
 
@@ -435,6 +515,11 @@ export default function MinhaJornadaClient() {
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
                         Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança. A Jornada
                         respeita silêncio e pausa. Voltar já é suficiente.
+                      </div>
+
+                      {/* Microtexto (IA) — 1 frase */}
+                      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+                        {micro.closing}
                       </div>
 
                       <div className="mt-5 flex flex-wrap gap-2">
