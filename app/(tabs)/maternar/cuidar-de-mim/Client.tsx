@@ -198,19 +198,6 @@ export default function Client() {
 
   const stat = (n: number | null | undefined) => (typeof n === 'number' ? String(n) : '—')
 
-  // Layout “velho”: chips com 4 entradas (mantém sensação premium e previsível).
-  // Mapeamento (sem criar lógica nova):
-  // - Ritmo -> #ritmo
-  // - Ação -> #para-agora
-  // - Pausa -> #pausas
-  // - Fechar -> #micro-cuidado (mesmo bloco de fechamento)
-  const chips = [
-    { id: 'ritmo', label: 'Ritmo' },
-    { id: 'para-agora', label: 'Ação' },
-    { id: 'pausas', label: 'Pausa' },
-    { id: 'micro-cuidado', label: 'Fechar' },
-  ] as const
-
   return (
     <main
       data-layout="page-template-v1"
@@ -223,8 +210,8 @@ export default function Client() {
       "
     >
       <ClientOnly>
-        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          {/* HEADER (layout velho) */}
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 sm:px-5 md:px-6">
+          {/* HEADER (layout antigo preservado) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -239,7 +226,7 @@ export default function Client() {
                 Cuidar de Mim
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
                 Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
               </p>
             </div>
@@ -253,11 +240,11 @@ export default function Client() {
                 border border-white/35
                 backdrop-blur-xl
                 shadow-[0_18px_45px_rgba(184,35,107,0.25)]
-                p-4 md:p-6
+                p-3 sm:p-4 md:p-6
                 space-y-6
               "
             >
-              {/* HERO (layout velho) */}
+              {/* “Hero” (layout antigo) — agora com conteúdo do novo (QuickIdeaAI + suporte) */}
               <Reveal>
                 <div
                   className="
@@ -265,29 +252,29 @@ export default function Client() {
                     bg-white/10
                     border border-white/25
                     shadow-[0_14px_40px_rgba(0,0,0,0.12)]
-                    p-4 md:p-5
+                    p-3 sm:p-4 md:p-5
                   "
                 >
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 items-stretch sm:items-center">
-                    <div className="flex flex-col sm:flex-row items-start gap-3 items-stretch sm:items-center">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4 sm:items-center">
+                    <div className="flex flex-col sm:flex-row items-start gap-3 sm:items-center">
                       <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
                         <AppIcon name="heart" size={22} className="text-white" />
                       </div>
 
                       <div className="space-y-1">
-                        <div className="text-[12px] text-white/85">Check-in • Dia • IA (sem cobrança)</div>
+                        <div className="text-[12px] text-white/85">Sugestão pronta para agora (sem obrigação)</div>
 
                         <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
-                          Sugestão pronta para agora (sem obrigação)
+                          Um apoio para este momento
                         </div>
 
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-xl">
-                          Você pode usar, trocar ou só fechar por aqui. Um passo já ajuda.
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-2xl">
+                          Pequeno, prático e sem cobrança. Se não servir, você troca ou fecha por aqui.
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => scrollToId('ritmo')}
@@ -303,7 +290,6 @@ export default function Client() {
                       >
                         Ajustar
                       </button>
-
                       <button
                         type="button"
                         onClick={() => scrollToId('para-agora')}
@@ -323,8 +309,13 @@ export default function Client() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 items-stretch sm:items-center">
-                    {chips.map((it) => (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {[
+                      { id: 'para-agora', label: 'Para agora' },
+                      { id: 'ritmo', label: 'Ritmo' },
+                      { id: 'seu-dia', label: 'Dia' },
+                      { id: 'orientacao', label: 'Norte' },
+                    ].map((it) => (
                       <button
                         key={it.id}
                         type="button"
@@ -338,20 +329,20 @@ export default function Client() {
                 </div>
               </Reveal>
 
-              {/* CONTEÚDO (novo) dentro do SoftCard (layout velho) */}
+              {/* Conteúdo (cards do novo) dentro do shell antigo */}
               <Reveal>
                 <SoftCard
                   className="
-                    p-5 md:p-6 rounded-3xl
+                    p-4 sm:p-5 md:p-6 rounded-3xl
                     bg-white/95
                     border border-[#f5d7e5]
                     shadow-[0_10px_28px_rgba(184,35,107,0.12)]
                   "
                 >
-                  {/* BLOCO 0 — PARA AGORA (novo conteúdo) */}
+                  {/* BLOCO 0 — PARA AGORA */}
                   <section id="para-agora" className="pb-6">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5] shrink-0">
                         <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                       </div>
 
@@ -359,15 +350,18 @@ export default function Client() {
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                           PARA AGORA
                         </div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                        <div className="mt-0.5 text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
                           Um apoio para este momento
                         </div>
-                        <div className="text-[13px] text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
+                        <div className="mt-0.5 text-[12px] md:text-[13px] text-[#6a6a6a]">
+                          Pequeno, prático e sem cobrança.
+                        </div>
 
-                        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+                        {/* Responsivo: 1 coluna no mobile/tablet; 2 colunas só no desktop */}
+                        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 items-stretch">
                           <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                          <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-5 md:p-6">
+                          <div className="h-full min-w-0 rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-4 sm:p-5 md:p-6">
                             <div className="flex items-start gap-3">
                               <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
                                 <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
@@ -388,10 +382,10 @@ export default function Client() {
 
                   <div className="border-t border-[#f5d7e5]" />
 
-                  {/* BLOCO 1 — CHECK-IN (novo conteúdo) */}
+                  {/* BLOCO 1 — CHECK-IN */}
                   <section id="ritmo" className="py-6">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5] shrink-0">
                         <AppIcon name="heart" size={16} className="text-[#fd2597]" />
                       </div>
 
@@ -399,7 +393,7 @@ export default function Client() {
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                           CHECK-IN
                         </div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                        <div className="mt-0.5 text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
                           Como você está agora?
                         </div>
 
@@ -433,10 +427,10 @@ export default function Client() {
 
                   <div className="border-t border-[#f5d7e5]" />
 
-                  {/* BLOCO 2 — SEU DIA (novo conteúdo) */}
-                  <section className="py-6">
+                  {/* BLOCO 2 — SEU DIA */}
+                  <section id="seu-dia" className="py-6">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5] shrink-0">
                         <AppIcon name="list" size={16} className="text-[#fd2597]" />
                       </div>
 
@@ -444,10 +438,10 @@ export default function Client() {
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                           SEU DIA
                         </div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                        <div className="mt-0.5 text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
                           Do jeito que está
                         </div>
-                        <div className="text-[13px] text-[#6a6a6a]">
+                        <div className="mt-0.5 text-[12px] md:text-[13px] text-[#6a6a6a]">
                           Uma visão consolidada, sem agenda e sem cobrança.
                         </div>
 
@@ -488,10 +482,10 @@ export default function Client() {
 
                   <div className="border-t border-[#f5d7e5]" />
 
-                  {/* BLOCO 3 — ORIENTAÇÃO (novo conteúdo) */}
-                  <section className="py-6">
+                  {/* BLOCO 3 — ORIENTAÇÃO */}
+                  <section id="orientacao" className="py-6">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5] shrink-0">
                         <AppIcon name="info" size={16} className="text-[#fd2597]" />
                       </div>
 
@@ -499,7 +493,7 @@ export default function Client() {
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                           ORIENTAÇÃO
                         </div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                        <div className="mt-0.5 text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
                           {guidance.title}
                         </div>
 
@@ -512,10 +506,10 @@ export default function Client() {
 
                   <div className="border-t border-[#f5d7e5]" />
 
-                  {/* BLOCO 4 — MICRO CUIDADO (novo conteúdo) */}
-                  <section id="pausas" className="pt-6">
+                  {/* BLOCO 4 — MICRO CUIDADO */}
+                  <section id="micro-cuidado" className="pt-6">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5]">
+                      <div className="mt-0.5 h-9 w-9 rounded-2xl bg-[#ffe1f1] flex items-center justify-center border border-[#f5d7e5] shrink-0">
                         <AppIcon name="sparkles" size={16} className="text-[#fd2597]" />
                       </div>
 
@@ -523,21 +517,21 @@ export default function Client() {
                         <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
                           MICRO CUIDADO
                         </div>
-                        <div className="text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
+                        <div className="mt-0.5 text-[16px] md:text-[18px] font-semibold text-[#2f3a56]">
                           Um gesto possível
                         </div>
-                        <div className="text-[13px] text-[#6a6a6a]">
+
+                        <div className="mt-0.5 text-[12px] md:text-[13px] text-[#6a6a6a]">
                           Se não couber nada agora, fechar por aqui já é cuidado.
                         </div>
 
-                        <div id="micro-cuidado" className="mt-4 flex flex-col sm:flex-row gap-2">
+                        <div className="mt-4 flex flex-col sm:flex-row gap-2">
                           <button
                             type="button"
                             onClick={() => {
                               try {
                                 track('cuidar_de_mim.micro_close', { ritmo })
                               } catch {}
-                              scrollToId('para-agora')
                             }}
                             className="
                               inline-flex items-center justify-center
