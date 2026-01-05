@@ -3,19 +3,19 @@
 /**
  * Eu360 Signals (client-only)
  *
- * Fonte (preferencial): LocalStorage (key: eu360_prefs_v1)
- * Fallback legado: LocalStorage (key: eu360_persona_v1)
+ * Fonte principal: LocalStorage (key: eu360_prefs_v1)
+ * Compat: eu360_persona_v1 (legado)
  *
  * Objetivo:
- * - Emitir sinais “crus” de UX para o app (Meu Dia / Planner):
+ * - Traduzir o “estado atual” e preferências do Eu360 em sinal leve para UX:
+ *   - stateId: 5 estados (derivados do q1)
  *   - tone: 'gentil' | 'direto'
- *   - listLimit: limite sugerido de itens visíveis (ritmo)
- *   - showLessLine: se mostramos microcopy "hoje pode ser menos"
+ *   - listLimit: limite sugerido de itens (ritmo/volume)
+ *   - showLessLine: microcopy “hoje pode ser menos”
  *
  * Importante:
- * - Não é diagnóstico.
- * - Não decide free vs premium.
- * - Apenas calibra volume + tom + ritmo.
+ * - Isso NÃO é diagnóstico e NÃO é placar.
+ * - É calibração de experiência: volume + tom + ritmo.
  */
 
 export type EuTone = 'gentil' | 'direto'
@@ -24,8 +24,7 @@ export type Eu360Signal = {
   tone: EuTone
   listLimit: number
   showLessLine: boolean
-  stateId?: Eu360StateId
-  helpStyle?: 'diretas' | 'guiadas' | 'explorar'
+  stateId?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
 }
 
 type QuestionnaireAnswers = {
@@ -37,15 +36,7 @@ type QuestionnaireAnswers = {
   q6?: 'passar' | 'basico' | 'momento' | 'organizada' | 'avancar'
 }
 
-export type Eu360StateId =
-  | 'cansaco_acumulado'
-  | 'sobrecarga_emocional'
-  | 'reorganizacao'
-  | 'equilibrio_conexao'
-  | 'mais_energia'
-
 type Eu360PreferencesLS = {
-  // estes campos existem no Eu360Client atual
   toneLabel?: string
   microCopy?: string
   focusHint?: string
@@ -54,10 +45,8 @@ type Eu360PreferencesLS = {
   answers?: QuestionnaireAnswers
 }
 
-// legado (não vamos depender disso, mas mantemos fallback)
-type LegacyPersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 type LegacyPersonaLS = {
-  persona: LegacyPersonaId
+  persona?: string
   label?: string
   microCopy?: string
   updatedAtISO?: string
@@ -65,8 +54,10 @@ type LegacyPersonaLS = {
 }
 
 const LS_KEYS = {
+  // Novo
   eu360Prefs: 'eu360_prefs_v1',
-  eu360PersonaLegacy: 'eu360_persona_v1',
+  // Legado (compat)
+  eu360Persona: 'eu360_persona_v1',
 } as const
 
 function safeGetLS(key: string): string | null {
@@ -94,146 +85,94 @@ function clampInt(n: number, min: number, max: number) {
 
 /**
  * Clamp emocional do listLimit:
- * - Evita extremos.
- * - Mantém o sinal útil para ritmo, sem virar “feature”.
+ * - evita extremos (muito baixo / muito alto)
+ * - mantém utilidade de ritmo sem virar “mecanismo”
  */
 function clampListLimit(n: number) {
   return clampInt(n, 3, 8)
 }
 
-/* ======================================================
-   1) Derivação do ESTADO atual a partir das respostas
-====================================================== */
-
-function deriveStateFromAnswers(answers: QuestionnaireAnswers): Eu360StateId {
-  const q1 = answers.q1
-  const q3 = answers.q3
-  const q4 = answers.q4
-  const q6 = answers.q6
-
-  const heavy =
-    q1 === 'exausta' ||
-    q1 === 'cansada' ||
-    q4 === 'sobrevivencia' ||
-    q6 === 'passar' ||
-    q6 === 'basico'
-
-  const emotionalOverload =
-    q3 === 'emocional' ||
-    q3 === 'tudo' ||
-    q1 === 'oscilando'
-
-  const reorg =
-    q4 === 'organizar' ||
-    q3 === 'organizacao' ||
-    q3 === 'tempo' ||
-    q6 === 'organizada'
-
-  const balanceConnection =
-    q4 === 'conexao' ||
-    q4 === 'equilibrio' ||
-    q3 === 'conexao' ||
-    q6 === 'momento'
-
-  const energy =
-    q1 === 'energia' ||
-    q4 === 'alem' ||
-    q6 === 'avancar'
-
-  // prioridade intencional: primeiro alívio, depois leitura, depois ritmo
-  if (heavy) return 'cansaco_acumulado'
-  if (emotionalOverload) return 'sobrecarga_emocional'
-  if (reorg) return 'reorganizacao'
-  if (balanceConnection) return 'equilibrio_conexao'
-  if (energy) return 'mais_energia'
-
-  return 'reorganizacao'
-}
-
-/* ======================================================
-   2) Mapeamento: estado -> sinal do app
-====================================================== */
-
-function mapStateToSignal(stateId: Eu360StateId): Eu360Signal {
-  switch (stateId) {
-    case 'cansaco_acumulado':
-      return { tone: 'gentil', listLimit: 3, showLessLine: true, stateId }
-    case 'sobrecarga_emocional':
-      return { tone: 'gentil', listLimit: 4, showLessLine: true, stateId }
-    case 'reorganizacao':
-      return { tone: 'gentil', listLimit: 5, showLessLine: false, stateId }
-    case 'equilibrio_conexao':
-      return { tone: 'direto', listLimit: 6, showLessLine: false, stateId }
-    case 'mais_energia':
-      return { tone: 'direto', listLimit: 7, showLessLine: false, stateId }
-  }
-}
-
-/**
- * Ajuste fino por “estilo de ajuda”
- * - diretas: menos itens
- * - explorar: um pouco mais de opções (sem exagero)
- */
-function applyHelpStyle(signal: Eu360Signal, helpStyle?: Eu360PreferencesLS['helpStyle']): Eu360Signal {
-  if (!helpStyle) return signal
-  const delta = helpStyle === 'diretas' ? -1 : helpStyle === 'explorar' ? +1 : 0
-  return {
-    ...signal,
-    helpStyle,
-    listLimit: clampListLimit(signal.listLimit + delta),
-  }
-}
-
-/**
- * Fallback seguro quando não há prefs ainda.
- */
 function defaultSignal(): Eu360Signal {
   return { tone: 'gentil', listLimit: 5, showLessLine: false }
 }
 
 /**
- * Fallback legado (se ainda existir eu360_persona_v1 em alguns ambientes).
+ * Mapeamento dos 5 ESTADOS (q1) -> sinal
+ * Intenção:
+ * - exausta/cansada: menor volume, tom gentil, “pode ser menos”
+ * - oscilando: tom gentil, volume médio
+ * - equilibrada: tom mais claro, volume um pouco maior
+ * - energia: tom direto, volume maior (sem empuxo visível — só ritmo)
  */
-function mapLegacyPersonaToSignal(persona: LegacyPersonaId): Eu360Signal {
-  switch (persona) {
-    case 'sobrevivencia':
-      return { tone: 'gentil', listLimit: 3, showLessLine: true }
-    case 'organizacao':
-      return { tone: 'gentil', listLimit: 4, showLessLine: true }
-    case 'conexao':
-      return { tone: 'gentil', listLimit: 5, showLessLine: false }
-    case 'equilibrio':
-      return { tone: 'direto', listLimit: 6, showLessLine: false }
-    case 'expansao':
-      return { tone: 'direto', listLimit: 7, showLessLine: false }
+function mapStateToSignal(state: NonNullable<QuestionnaireAnswers['q1']>): Eu360Signal {
+  switch (state) {
+    case 'exausta':
+      return { stateId: 'exausta', tone: 'gentil', listLimit: 3, showLessLine: true }
+    case 'cansada':
+      return { stateId: 'cansada', tone: 'gentil', listLimit: 4, showLessLine: true }
+    case 'oscilando':
+      return { stateId: 'oscilando', tone: 'gentil', listLimit: 5, showLessLine: false }
+    case 'equilibrada':
+      return { stateId: 'equilibrada', tone: 'direto', listLimit: 6, showLessLine: false }
+    case 'energia':
+      return { stateId: 'energia', tone: 'direto', listLimit: 7, showLessLine: false }
   }
 }
 
-export function getEu360Signal(): Eu360Signal {
-  // 1) Preferencial: prefs atuais
-  const rawPrefs = safeGetLS(LS_KEYS.eu360Prefs)
-  const parsedPrefs = safeParseJSON<Eu360PreferencesLS>(rawPrefs)
+/**
+ * Ajuste fino pelo “estilo de ajuda” (q5 / helpStyle), sem mudar o estado.
+ * - diretas: reduz um pouco volume
+ * - explorar: permite um pouco mais volume
+ */
+function applyHelpStyleTuning(base: Eu360Signal, helpStyle?: Eu360PreferencesLS['helpStyle']): Eu360Signal {
+  if (!helpStyle) return base
 
-  const answers = parsedPrefs?.answers
-  if (answers && typeof answers === 'object') {
-    const stateId = deriveStateFromAnswers(answers)
-    const base = mapStateToSignal(stateId)
-    const withStyle = applyHelpStyle(base, parsedPrefs?.helpStyle)
+  if (helpStyle === 'diretas') {
+    return { ...base, listLimit: clampListLimit(base.listLimit - 1) }
+  }
+  if (helpStyle === 'explorar') {
+    return { ...base, listLimit: clampListLimit(base.listLimit + 1) }
+  }
+  return base
+}
+
+/**
+ * Fallback compat para legado (quando ainda não existe eu360_prefs_v1)
+ * Mantém o app funcional, mas sem forçar uma “persona” na UI.
+ */
+function legacyFallbackSignal(): Eu360Signal {
+  const raw = safeGetLS(LS_KEYS.eu360Persona)
+  const parsed = safeParseJSON<LegacyPersonaLS>(raw)
+
+  const persona = (parsed?.persona ?? '').toLowerCase()
+  // Mapeamento conservador: mantém o app estável
+  if (persona.includes('sobre')) return { tone: 'gentil', listLimit: 3, showLessLine: true }
+  if (persona.includes('org')) return { tone: 'gentil', listLimit: 4, showLessLine: true }
+  if (persona.includes('con')) return { tone: 'gentil', listLimit: 5, showLessLine: false }
+  if (persona.includes('equi')) return { tone: 'direto', listLimit: 6, showLessLine: false }
+  if (persona.includes('exp')) return { tone: 'direto', listLimit: 7, showLessLine: false }
+
+  return defaultSignal()
+}
+
+export function getEu360Signal(): Eu360Signal {
+  // 1) Novo (preferido)
+  const rawPrefs = safeGetLS(LS_KEYS.eu360Prefs)
+  const prefs = safeParseJSON<Eu360PreferencesLS>(rawPrefs)
+
+  const state = prefs?.answers?.q1
+  const helpStyle = prefs?.helpStyle ?? prefs?.answers?.q5
+
+  if (state) {
+    const base = mapStateToSignal(state)
+    const tuned = applyHelpStyleTuning(base, helpStyle)
     return {
-      ...withStyle,
-      listLimit: clampListLimit(withStyle.listLimit),
+      ...tuned,
+      listLimit: clampListLimit(tuned.listLimit),
     }
   }
 
-  // 2) Fallback legado: persona antiga
-  const rawLegacy = safeGetLS(LS_KEYS.eu360PersonaLegacy)
-  const parsedLegacy = safeParseJSON<LegacyPersonaLS>(rawLegacy)
-  if (parsedLegacy?.persona) {
-    const mapped = mapLegacyPersonaToSignal(parsedLegacy.persona)
-    return { ...mapped, listLimit: clampListLimit(mapped.listLimit) }
-  }
-
-  // 3) Default
-  const d = defaultSignal()
-  return { ...d, listLimit: clampListLimit(d.listLimit) }
+  // 2) Legado (compat)
+  const legacy = legacyFallbackSignal()
+  return { ...legacy, listLimit: clampListLimit(legacy.listLimit) }
 }
