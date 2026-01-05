@@ -64,6 +64,22 @@ type Eu360Prefs = {
   answers: QuestionnaireAnswers
 }
 
+type Eu360ReportInput = {
+  answers: {
+    q1?: string
+    q2?: string
+    q3?: string
+    q4?: string
+    q5?: string
+    q6?: string
+  }
+  signal: {
+    stateId?: string
+    tone: 'gentil' | 'direto'
+  }
+  timeframe: 'current' | 'fortnight'
+}
+
 const LS_KEYS = {
   eu360Prefs: 'eu360_prefs_v1',
 
@@ -304,6 +320,41 @@ async function fetchWeeklyInsight(context: WeeklyInsightContext): Promise<Weekly
   }
 }
 
+async function fetchEu360Report(input: Eu360ReportInput): Promise<string> {
+  try {
+    track('ai.request', {
+      feature: 'eu360_report',
+      origin: 'eu360',
+      timeframe: input.timeframe,
+      tone: input.signal.tone,
+      stateId: input.signal.stateId ?? null,
+      hasAnswers: Object.values(input.answers).some(Boolean),
+    })
+  } catch {}
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 12_000)
+
+  try {
+    const res = await fetch('/api/ai/eu360/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify(input),
+    })
+
+    if (!res.ok) throw new Error('Relatório indisponível')
+
+    const data = await res.json()
+    const report = typeof data?.report === 'string' ? data.report.trim() : ''
+    if (!report) throw new Error('Relatório vazio')
+
+    return report
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -335,6 +386,10 @@ export default function Eu360Client() {
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({})
   const [qStep, setQStep] = useState<number>(1)
   const [saving, setSaving] = useState(false)
+
+  // P34.3 — Relatório IA Eu360 (somente leitura)
+  const [eu360Report, setEu360Report] = useState<string | null>(null)
+  const [loadingReport, setLoadingReport] = useState(false)
 
   // P14 — signal + linha quinzenal
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
@@ -437,6 +492,48 @@ export default function Eu360Client() {
       isMounted = false
     }
   }, [firstName, stats, prefsForAi])
+
+  // P34.3 — Carrega Relatório IA (somente leitura)
+  useEffect(() => {
+    let isMounted = true
+
+    const loadReport = async () => {
+      setLoadingReport(true)
+      try {
+        const input: Eu360ReportInput = {
+          answers: {
+            q1: answers.q1,
+            q2: answers.q2,
+            q3: answers.q3,
+            q4: answers.q4,
+            q5: answers.q5,
+            q6: answers.q6,
+          },
+          signal: {
+            stateId: (euSignal as any)?.stateId ?? (prefsResult?.stateId ?? statePreview.stateId),
+            tone: resolvedTone === 'direto' ? 'direto' : 'gentil',
+          },
+          timeframe: 'current',
+        }
+
+        const report = await fetchEu360Report(input)
+        if (isMounted) setEu360Report(report)
+      } catch (e) {
+        console.error('[Eu360] Erro ao buscar relatório, mantendo fallback do servidor:', e)
+        // Se o servidor falhar, não criamos fallback no client (governança pede fallback canônico pós-geração)
+        if (isMounted) setEu360Report(null)
+      } finally {
+        if (isMounted) setLoadingReport(false)
+      }
+    }
+
+    void loadReport()
+
+    return () => {
+      isMounted = false
+    }
+    // Importante: re-fetch quando sinal/tom muda OU quando respostas mudam
+  }, [answers, euSignal, resolvedTone, prefsResult, statePreview.stateId])
 
   function setAnswer<K extends keyof QuestionnaireAnswers>(key: K, value: NonNullable<QuestionnaireAnswers[K]>) {
     setAnswers((prev) => ({ ...prev, [key]: value }))
@@ -756,6 +853,45 @@ export default function Eu360Client() {
                       Isso fica salvo para personalizar a experiência. Você pode refazer quando quiser.
                     </p>
                   </>
+                )}
+              </SoftCard>
+            </Reveal>
+          </SectionWrapper>
+
+          {/* P34.3 — RELATÓRIO IA (somente leitura) */}
+          <SectionWrapper density="compact">
+            <Reveal>
+              <SoftCard className="rounded-3xl bg-white border border-[#F5D7E5] shadow-[0_10px_26px_rgba(0,0,0,0.10)] px-5 py-5 md:px-7 md:py-7 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">Relatório IA</p>
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">Uma leitura do seu momento</h2>
+                    <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
+                      Não é conselho, não é tarefa. É só um retrato curto para organizar por dentro.
+                    </p>
+                  </div>
+                  <AppIcon name="sparkles" className="h-6 w-6 text-[#fd2597] hidden md:block" />
+                </div>
+
+                {loadingReport ? (
+                  <p className="text-sm text-[#6a6a6a] leading-relaxed">Estou montando uma leitura curta do seu momento…</p>
+                ) : eu360Report ? (
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-4">
+                    <p className="text-sm text-[#2f3a56] leading-relaxed whitespace-pre-line">{eu360Report}</p>
+                    <p className="mt-3 text-[11px] text-[#6a6a6a] leading-relaxed">
+                      Isso existe para acolher e organizar — e pode ficar por isso mesmo.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-4">
+                    <p className="text-sm text-[#2f3a56] leading-relaxed whitespace-pre-line">
+                      Este momento parece pedir mais contenção do que expansão.
+                      {'\n\n'}
+                      Quando muitas frentes coexistem, é comum que a energia se fragmente.
+                      {'\n\n'}
+                      Situações assim costumam responder melhor a menos pressão interna.
+                    </p>
+                  </div>
                 )}
               </SoftCard>
             </Reveal>
