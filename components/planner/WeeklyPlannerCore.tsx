@@ -1739,6 +1739,7 @@ export default function WeeklyPlannerCore() {
         initialDateKey={editingAppointment?.dateKey ?? selectedDateKey}
         initialTitle={editingAppointment?.title ?? ''}
         initialTime={editingAppointment?.time ?? ''}
+        density={density === 'compact' ? 'compact' : 'normal'}
         onClose={() => {
           setAppointmentModalOpen(false)
           setEditingAppointment(null)
