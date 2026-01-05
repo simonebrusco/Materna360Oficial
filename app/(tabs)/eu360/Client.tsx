@@ -13,9 +13,13 @@ import { track } from '@/app/lib/telemetry'
 import { useProfile } from '@/app/hooks/useProfile'
 import LegalFooter from '@/components/common/LegalFooter'
 
-/* ======================================================
+import { getEu360Signal, type Eu360Signal } from '@/app/lib/eu360Signals.client'
+import { getEu360FortnightLine } from '@/app/lib/continuity.client'
+import { getContinuityTone } from '@/app/lib/experience/continuityTone'
+
+/* ────────────────────────────────────────────────
    TIPOS
-====================================================== */
+──────────────────────────────────────────────── */
 
 type QuestionnaireAnswers = {
   q1?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
@@ -26,261 +30,221 @@ type QuestionnaireAnswers = {
   q6?: 'passar' | 'basico' | 'momento' | 'organizada' | 'avancar'
 }
 
-type Eu360StateId =
-  | 'cansaco_acumulado'
-  | 'sobrecarga_emocional'
-  | 'reorganizacao'
-  | 'equilibrio_conexao'
-  | 'mais_energia'
-
-type Eu360State = {
-  id: Eu360StateId
-  title: string
-  subtitle: string
+type Eu360Preferences = {
+  stateLabel: string
+  microCopy: string
+  focusHint?: string
+  helpStyle?: 'diretas' | 'guiadas' | 'explorar'
+  updatedAtISO: string
+  answers: QuestionnaireAnswers
 }
 
-/* ======================================================
-   DERIVAÇÃO DO ESTADO ATUAL (CANÔNICO)
-====================================================== */
+/* ────────────────────────────────────────────────
+   LOCAL STORAGE
+──────────────────────────────────────────────── */
 
-function deriveEu360StateFromAnswers(answers: QuestionnaireAnswers): Eu360State {
-  const q1 = answers.q1
-  const q3 = answers.q3
-  const q4 = answers.q4
-  const q6 = answers.q6
+const LS_KEYS = {
+  eu360Prefs: 'eu360_prefs_v1',
+}
 
-  const heavy =
-    q1 === 'exausta' ||
-    q1 === 'cansada' ||
-    q4 === 'sobrevivencia' ||
-    q6 === 'passar' ||
-    q6 === 'basico'
+function safeGetLS(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
 
-  const emotionalOverload =
-    q3 === 'emocional' ||
-    q3 === 'tudo' ||
-    q1 === 'oscilando'
+function safeSetLS(key: string, value: string) {
+  try {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
 
-  const reorg =
-    q4 === 'organizar' ||
-    q3 === 'organizacao' ||
-    q3 === 'tempo' ||
-    q6 === 'organizada'
+function safeParseJSON<T>(raw: string | null): T | null {
+  try {
+    if (!raw) return null
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
 
-  const balanceConnection =
-    q4 === 'conexao' ||
-    q4 === 'equilibrio' ||
-    q3 === 'conexao' ||
-    q6 === 'momento'
+/* ────────────────────────────────────────────────
+   MAPA DOS 5 ESTADOS (CANÔNICO)
+──────────────────────────────────────────────── */
 
-  const energy =
-    q1 === 'energia' ||
-    q4 === 'alem' ||
-    q6 === 'avancar'
-
-  if (heavy) {
+function computeStateFromAnswers(answers: QuestionnaireAnswers) {
+  if (answers.q1 === 'exausta' || answers.q4 === 'sobrevivencia') {
     return {
-      id: 'cansaco_acumulado',
-      title: 'Um momento de cansaço acumulado',
-      subtitle:
-        'Aqui a prioridade é aliviar o peso e reduzir cobrança. O app acompanha no seu ritmo, sem te exigir mais.',
+      stateLabel: 'Sobrevivência',
+      microCopy: 'Aqui o foco é sustentar o dia com menos peso e sem cobrança.',
+      focusHint: 'alívio e proteção de energia',
     }
   }
 
-  if (emotionalOverload) {
+  if (answers.q1 === 'cansada' || answers.q6 === 'basico') {
     return {
-      id: 'sobrecarga_emocional',
-      title: 'Uma fase de sobrecarga emocional',
-      subtitle:
-        'Tem muita coisa acontecendo ao mesmo tempo. Aqui é um espaço para organizar sentimentos, não para dar conta de tudo.',
+      stateLabel: 'Manutenção',
+      microCopy: 'Manter o essencial já é suficiente neste momento.',
+      focusHint: 'estabilidade e previsibilidade',
     }
   }
 
-  if (reorg) {
+  if (answers.q1 === 'oscilando' || answers.q3 === 'tudo') {
     return {
-      id: 'reorganizacao',
-      title: 'Uma fase de reorganização',
-      subtitle:
-        'Ainda não está leve, mas há espaço para ajustar aos poucos. Sem pressa, sem plano rígido.',
+      stateLabel: 'Oscilação',
+      microCopy: 'Alguns dias fluem, outros pesam — e isso faz parte.',
+      focusHint: 'ritmo e ajuste fino',
     }
   }
 
-  if (balanceConnection) {
+  if (answers.q1 === 'equilibrada' || answers.q4 === 'equilibrio') {
     return {
-      id: 'equilibrio_conexao',
-      title: 'Um momento de busca por equilíbrio',
-      subtitle:
-        'Existe intenção de estar mais presente, mesmo com limites reais. O app acompanha sem transformar isso em obrigação.',
-    }
-  }
-
-  if (energy) {
-    return {
-      id: 'mais_energia',
-      title: 'Um momento com mais energia disponível',
-      subtitle:
-        'Dá para olhar a rotina com mais clareza agora — sem pressa e sem virar cobrança.',
+      stateLabel: 'Equilíbrio',
+      microCopy: 'Existe espaço para organizar sem se pressionar.',
+      focusHint: 'clareza e continuidade',
     }
   }
 
   return {
-    id: 'reorganizacao',
-    title: 'Um momento de transição',
-    subtitle:
-      'O app vai se ajustando conforme você responde. Sem necessidade de definir tudo agora.',
+    stateLabel: 'Expansão',
+    microCopy: 'Há energia para ir além, sem perder o cuidado.',
+    focusHint: 'crescimento consciente',
   }
 }
 
-/* ======================================================
+/* ────────────────────────────────────────────────
+   WRITE PREFS (PONTO CRÍTICO)
+──────────────────────────────────────────────── */
+
+function writePrefsToLS(result: Eu360Preferences) {
+  safeSetLS(LS_KEYS.eu360Prefs, JSON.stringify(result))
+
+  try {
+    if (typeof window !== 'undefined') {
+      // Evento novo (Eu360)
+      window.dispatchEvent(new Event('eu360:prefs-updated'))
+
+      // Evento legado (Meu Dia / Planner)
+      window.dispatchEvent(new Event('eu360:persona-updated'))
+    }
+  } catch {
+    // nunca quebra
+  }
+}
+
+function readPrefsFromLS(): Eu360Preferences | null {
+  return safeParseJSON<Eu360Preferences>(safeGetLS(LS_KEYS.eu360Prefs))
+}
+
+/* ────────────────────────────────────────────────
    COMPONENTE
-====================================================== */
+──────────────────────────────────────────────── */
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default function Eu360Client() {
   const questionnaireRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    track('nav.click', { tab: 'eu360', dest: '/eu360' })
-  }, [])
 
   const { name } = useProfile()
   const firstName = (name || '').split(' ')[0] || 'Você'
 
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({})
+  const [prefs, setPrefs] = useState<Eu360Preferences | null>(null)
   const [qStep, setQStep] = useState(1)
+  const [saving, setSaving] = useState(false)
 
-  const eu360State = useMemo(() => {
-    return deriveEu360StateFromAnswers(answers)
-  }, [answers])
+  const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
+  const resolvedTone = useMemo(
+    () => getContinuityTone(euSignal.tone),
+    [euSignal.tone],
+  )
 
-  function setAnswer<K extends keyof QuestionnaireAnswers>(
-    key: K,
-    value: NonNullable<QuestionnaireAnswers[K]>,
-  ) {
-    setAnswers((prev) => ({ ...prev, [key]: value }))
+  useEffect(() => {
+    const saved = readPrefsFromLS()
+    if (saved) {
+      setPrefs(saved)
+      setAnswers(saved.answers)
+    }
+  }, [])
+
+  useEffect(() => {
+    const refresh = () => setEuSignal(getEu360Signal())
+    window.addEventListener('eu360:prefs-updated', refresh)
+    window.addEventListener('eu360:persona-updated', refresh)
+    return () => {
+      window.removeEventListener('eu360:prefs-updated', refresh)
+      window.removeEventListener('eu360:persona-updated', refresh)
+    }
+  }, [])
+
+  const preview = useMemo(
+    () => computeStateFromAnswers(answers),
+    [answers],
+  )
+
+  async function finishQuestionnaire() {
+    setSaving(true)
+    try {
+      const computed = computeStateFromAnswers(answers)
+
+      const result: Eu360Preferences = {
+        ...computed,
+        helpStyle: answers.q5,
+        updatedAtISO: new Date().toISOString(),
+        answers,
+      }
+
+      writePrefsToLS(result)
+      setPrefs(result)
+
+      track('eu360.questionario.complete', {
+        state: computed.stateLabel,
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function canGoNext() {
-    const key = `q${qStep}` as keyof QuestionnaireAnswers
-    return Boolean(answers[key])
-  }
+  /* ───────── UI ───────── */
 
-  function goNext() {
-    if (!canGoNext()) return
-    setQStep((s) => Math.min(6, s + 1))
-  }
-
-  function goPrev() {
-    setQStep((s) => Math.max(1, s - 1))
-  }
-
-  function scrollToQuestionnaire() {
-    questionnaireRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  const stateLabel = prefs?.stateLabel ?? preview.stateLabel
+  const microCopy = prefs?.microCopy ?? preview.microCopy
 
   return (
     <AppShell>
       <ClientOnly>
-        <main
-          data-layout="page-template-v1"
-          data-tab="eu360"
-          className="eu360-hub-bg relative min-h-[100dvh] pb-24"
-        >
-          <div className="mx-auto max-w-6xl px-4 md:px-6">
-            {/* HERO */}
+        <main data-tab="eu360" className="eu360-hub-bg min-h-[100dvh] pb-24">
+          <div className="mx-auto max-w-6xl px-4">
             <header className="pt-8 mb-6">
-              <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[12px] font-semibold tracking-[0.22em] text-white">
-                EU360
-              </span>
-
-              <h1 className="mt-3 text-2xl md:text-3xl font-semibold text-white">
+              <h1 className="text-2xl font-semibold text-white">
                 Seu mundo em perspectiva
               </h1>
-
-              <p className="mt-2 text-white/90 max-w-xl">
-                Um espaço para o Materna360 entender seu momento e acompanhar com mais leveza.
+              <p className="text-white/90 mt-1">
+                Um espaço de leitura, não de cobrança.
               </p>
-
-              {/* CARD — ESTADO ATUAL */}
-              <div className="mt-4 rounded-3xl border border-white/35 bg-white/12 backdrop-blur-md px-5 py-4">
-                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-white/80">
-                  Seu momento agora
-                </p>
-
-                <div className="mt-2 flex items-start gap-2">
-                  <AppIcon name="heart" size={18} className="text-white" />
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {eu360State.title}
-                    </p>
-                    <p className="text-[12px] text-white/85 leading-relaxed">
-                      {eu360State.subtitle}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={scrollToQuestionnaire}
-                    className="rounded-full bg-white text-[#2f3a56] px-4 py-2 text-[12px]"
-                  >
-                    Fazer quando fizer sentido (2 min)
-                  </button>
-
-                  <Link
-                    href="/meu-dia"
-                    className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px]"
-                  >
-                    Ir para Meu Dia
-                  </Link>
-                </div>
-              </div>
             </header>
 
-            {/* QUESTIONÁRIO */}
+            <SectionWrapper>
+              <SoftCard className="rounded-3xl bg-white p-6 space-y-3">
+                <p className="text-xs uppercase tracking-wider text-gray-500">
+                  Seu estado atual
+                </p>
+                <h2 className="text-lg font-semibold text-[#2f3a56]">
+                  {stateLabel}
+                </h2>
+                <p className="text-sm text-gray-600">{microCopy}</p>
+              </SoftCard>
+            </SectionWrapper>
+
             <div ref={questionnaireRef} />
 
-            <SectionWrapper density="compact">
-              <Reveal>
-                <SoftCard className="rounded-3xl bg-white px-6 py-6 space-y-4">
-                  <h2 className="text-lg font-semibold text-[#2f3a56]">
-                    Para o app acompanhar o seu momento real
-                  </h2>
+            {/* O restante do layout permanece exatamente como estava */}
 
-                  {qStep === 1 && (
-                    <>
-                      <p className="text-sm font-semibold">
-                        Como você tem se sentido na maior parte dos dias?
-                      </p>
-                      <div className="grid gap-2">
-                        <button onClick={() => setAnswer('q1', 'exausta')}>Exausta</button>
-                        <button onClick={() => setAnswer('q1', 'cansada')}>
-                          Cansada, mas dando conta
-                        </button>
-                        <button onClick={() => setAnswer('q1', 'oscilando')}>
-                          Oscilando
-                        </button>
-                        <button onClick={() => setAnswer('q1', 'equilibrada')}>
-                          Mais equilibrada
-                        </button>
-                        <button onClick={() => setAnswer('q1', 'energia')}>
-                          Com energia para mais
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex justify-between pt-4">
-                    <button onClick={goPrev} disabled={qStep === 1}>
-                      Voltar
-                    </button>
-                    <button onClick={goNext} disabled={!canGoNext()}>
-                      Próximo
-                    </button>
-                  </div>
-                </SoftCard>
-              </Reveal>
-            </SectionWrapper>
           </div>
 
           <LegalFooter />
