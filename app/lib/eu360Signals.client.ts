@@ -1,3 +1,4 @@
+// app/lib/eu360Signals.client.ts
 'use client'
 
 /**
@@ -19,16 +20,31 @@
  */
 
 export type EuTone = 'gentil' | 'direto'
+export type EuDensity = 'compact' | 'normal'
+export type PlannerDefaultView = 'day' | 'week'
+
+export type EuStateId = 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
 
 export type Eu360Signal = {
   tone: EuTone
   listLimit: number
   showLessLine: boolean
-  stateId?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
+
+  // Estado atual (q1)
+  stateId?: EuStateId
+
+  /**
+   * Campos opcionais de “encaixe” (não quebram consumidores atuais).
+   * Se o Meu Dia/Planner quiser usar:
+   * - density: calibrar o nível de densidade (ex.: getDensityLevel)
+   * - defaultPlannerView: sugestão de modo default (Dia/Semana)
+   */
+  density?: EuDensity
+  defaultPlannerView?: PlannerDefaultView
 }
 
 type QuestionnaireAnswers = {
-  q1?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
+  q1?: EuStateId
   q2?: 'nenhum' | '5a10' | '15a30' | 'mais30'
   q3?: 'tempo' | 'emocional' | 'organizacao' | 'conexao' | 'tudo'
   q4?: 'sobrevivencia' | 'organizar' | 'conexao' | 'equilibrio' | 'alem'
@@ -93,29 +109,68 @@ function clampListLimit(n: number) {
 }
 
 function defaultSignal(): Eu360Signal {
-  return { tone: 'gentil', listLimit: 5, showLessLine: false }
+  return { tone: 'gentil', listLimit: 5, showLessLine: false, density: 'normal', defaultPlannerView: 'day' }
 }
 
 /**
  * Mapeamento dos 5 ESTADOS (q1) -> sinal
  * Intenção:
- * - exausta/cansada: menor volume, tom gentil, “pode ser menos”
+ * - exausta/cansada: menor volume, tom gentil, “pode ser menos”, densidade compacta
  * - oscilando: tom gentil, volume médio
- * - equilibrada: tom mais claro, volume um pouco maior
+ * - equilibrada: tom mais claro, volume maior
  * - energia: tom direto, volume maior (sem empuxo visível — só ritmo)
+ *
+ * + sugestões opcionais para Planner:
+ * - density (compact/normal)
+ * - defaultPlannerView (day/week) — opcional, se quiser usar depois
  */
-function mapStateToSignal(state: NonNullable<QuestionnaireAnswers['q1']>): Eu360Signal {
+function mapStateToSignal(state: EuStateId): Eu360Signal {
   switch (state) {
     case 'exausta':
-      return { stateId: 'exausta', tone: 'gentil', listLimit: 3, showLessLine: true }
+      return {
+        stateId: 'exausta',
+        tone: 'gentil',
+        listLimit: 3,
+        showLessLine: true,
+        density: 'compact',
+        defaultPlannerView: 'day',
+      }
     case 'cansada':
-      return { stateId: 'cansada', tone: 'gentil', listLimit: 4, showLessLine: true }
+      return {
+        stateId: 'cansada',
+        tone: 'gentil',
+        listLimit: 4,
+        showLessLine: true,
+        density: 'compact',
+        defaultPlannerView: 'day',
+      }
     case 'oscilando':
-      return { stateId: 'oscilando', tone: 'gentil', listLimit: 5, showLessLine: false }
+      return {
+        stateId: 'oscilando',
+        tone: 'gentil',
+        listLimit: 5,
+        showLessLine: false,
+        density: 'normal',
+        defaultPlannerView: 'day',
+      }
     case 'equilibrada':
-      return { stateId: 'equilibrada', tone: 'direto', listLimit: 6, showLessLine: false }
+      return {
+        stateId: 'equilibrada',
+        tone: 'direto',
+        listLimit: 6,
+        showLessLine: false,
+        density: 'normal',
+        defaultPlannerView: 'day',
+      }
     case 'energia':
-      return { stateId: 'energia', tone: 'direto', listLimit: 7, showLessLine: false }
+      return {
+        stateId: 'energia',
+        tone: 'direto',
+        listLimit: 7,
+        showLessLine: false,
+        density: 'normal',
+        defaultPlannerView: 'week', // sugestão opcional
+      }
   }
 }
 
@@ -145,12 +200,13 @@ function legacyFallbackSignal(): Eu360Signal {
   const parsed = safeParseJSON<LegacyPersonaLS>(raw)
 
   const persona = (parsed?.persona ?? '').toLowerCase()
+
   // Mapeamento conservador: mantém o app estável
-  if (persona.includes('sobre')) return { tone: 'gentil', listLimit: 3, showLessLine: true }
-  if (persona.includes('org')) return { tone: 'gentil', listLimit: 4, showLessLine: true }
-  if (persona.includes('con')) return { tone: 'gentil', listLimit: 5, showLessLine: false }
-  if (persona.includes('equi')) return { tone: 'direto', listLimit: 6, showLessLine: false }
-  if (persona.includes('exp')) return { tone: 'direto', listLimit: 7, showLessLine: false }
+  if (persona.includes('sobre')) return { tone: 'gentil', listLimit: 3, showLessLine: true, density: 'compact', defaultPlannerView: 'day' }
+  if (persona.includes('org')) return { tone: 'gentil', listLimit: 4, showLessLine: true, density: 'compact', defaultPlannerView: 'day' }
+  if (persona.includes('con')) return { tone: 'gentil', listLimit: 5, showLessLine: false, density: 'normal', defaultPlannerView: 'day' }
+  if (persona.includes('equi')) return { tone: 'direto', listLimit: 6, showLessLine: false, density: 'normal', defaultPlannerView: 'day' }
+  if (persona.includes('exp')) return { tone: 'direto', listLimit: 7, showLessLine: false, density: 'normal', defaultPlannerView: 'week' }
 
   return defaultSignal()
 }
