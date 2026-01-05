@@ -430,6 +430,20 @@ export default function WeeklyPlannerCore() {
   // P12 — Eu360 signal (reativo)
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
+  /**
+   * ✅ FIX CANÔNICO:
+   * plannerLimit é o limitador único usado no Planner para:
+   * - lembretes
+   * - compromissos
+   * (evita variáveis soltas e elimina "plannerLimit is not defined")
+   */
+  const plannerLimit = useMemo(() => {
+    const raw = Number((euSignal as any)?.listLimit)
+    const resolved = Number.isFinite(raw) ? raw : 5
+    // clamp para manter experiência leve e estável
+    return Math.max(3, Math.min(8, resolved))
+  }, [euSignal])
+
   const [showAllReminders, setShowAllReminders] = useState(false)
   const [showAllAppointments, setShowAllAppointments] = useState(false)
 
@@ -438,6 +452,12 @@ export default function WeeklyPlannerCore() {
 
   const isGentleTone = euSignal.tone === 'gentil'
 
+  // (opcional) densidade: ajusta padding/typography de itens (linhas)
+  const density = euSignal.density ?? 'normal'
+  const rowPadClass = density === 'compact' ? 'py-1.5' : 'py-2'
+  const rowTextClass = density === 'compact' ? 'text-[13px]' : 'text-sm'
+  const subTextClass = density === 'compact' ? 'text-[10px]' : 'text-[11px]'
+
   const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
   const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
   const shortcutLabelSelfcare = 'Como estou agora'
@@ -445,7 +465,7 @@ export default function WeeklyPlannerCore() {
 
   const lessLine = 'Hoje pode ser menos — e ainda assim conta.'
 
-  // Atualiza signal quando persona mudar
+  // Atualiza signal quando persona/prefs mudar
   useEffect(() => {
     const refresh = () => {
       try {
@@ -459,12 +479,14 @@ export default function WeeklyPlannerCore() {
     try {
       window.addEventListener('storage', onStorage)
       window.addEventListener('eu360:persona-updated', onCustom as EventListener)
+      window.addEventListener('eu360:prefs-updated', onCustom as EventListener)
     } catch {}
 
     return () => {
       try {
         window.removeEventListener('storage', onStorage)
         window.removeEventListener('eu360:persona-updated', onCustom as EventListener)
+        window.removeEventListener('eu360:prefs-updated', onCustom as EventListener)
       } catch {}
     }
   }, [])
@@ -1017,7 +1039,7 @@ export default function WeeklyPlannerCore() {
             ) : null}
           </SoftCard>
 
-          {viewMode === 'week' && <WeekView weekData={weekData} />}
+          {viewMode === 'week' && <WeekView weekData={weekData} density={density} />}
 
           {viewMode === 'day' && (
             <div className="space-y-6">
@@ -1043,9 +1065,7 @@ export default function WeeklyPlannerCore() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {shouldRenderCoach && (
-                      <InfoDot onClick={() => openCoach('reminders')} label="Como usar lembretes" />
-                    )}
+                    {shouldRenderCoach && <InfoDot onClick={() => openCoach('reminders')} label="Como usar lembretes" />}
 
                     <button
                       type="button"
@@ -1076,7 +1096,7 @@ export default function WeeklyPlannerCore() {
                     </p>
                   ) : (
                     (() => {
-                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const limit = plannerLimit
                       const all = plannerData.tasks
                       const visible = showAllReminders ? all : all.slice(0, limit)
                       const hasMore = all.length > visible.length
@@ -1090,7 +1110,7 @@ export default function WeeklyPlannerCore() {
                             return (
                               <div
                                 key={task.id}
-                                className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2 text-sm text-left transition-all ${
+                                className={`w-full flex items-center gap-3 rounded-xl border px-3 ${rowPadClass} ${rowTextClass} text-left transition-all ${
                                   task.done
                                     ? 'bg-[#FFE8F2] border-[#FFB3D3] text-[var(--color-text-muted)]'
                                     : 'bg-white border-[#F1E4EC] hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]'
@@ -1318,7 +1338,7 @@ export default function WeeklyPlannerCore() {
                     </p>
                   ) : (
                     (() => {
-                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const limit = plannerLimit
                       const all = sortedAppointments
                       const visible = showAllAppointments ? all : all.slice(0, limit)
                       const hasMore = all.length > visible.length
@@ -1330,7 +1350,7 @@ export default function WeeklyPlannerCore() {
                               key={appt.id}
                               type="button"
                               onClick={() => openEditAppointmentModal(appt)}
-                              className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 py-2 text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]"
+                              className={`w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 ${rowPadClass} text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]`}
                             >
                               <div className="flex items-center gap-2">
                                 <span className="inline-flex h-7 min-w-[44px] items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)] px-2">
@@ -1341,13 +1361,14 @@ export default function WeeklyPlannerCore() {
                                   <span className="text-sm font-medium text-[var(--color-text-main)]">
                                     {appt.title || 'Compromisso'}
                                   </span>
-                                  <span className="text-[11px] text-[var(--color-text-muted)]">
-                                    {appt.time ? `Horário: ${appt.time}` : 'Sem horário definido'} · {dateLabel(appt.dateKey)}
+                                  <span className={`${subTextClass} text-[var(--color-text-muted)]`}>
+                                    {appt.time ? `Horário: ${appt.time}` : 'Sem horário definido'} ·{' '}
+                                    {dateLabel(appt.dateKey)}
                                   </span>
                                 </div>
                               </div>
 
-                              <span className="text-[11px] text-[var(--color-text-muted)]">Editar</span>
+                              <span className={`${subTextClass} text-[var(--color-text-muted)]`}>Editar</span>
                             </button>
                           ))}
 
@@ -1718,6 +1739,7 @@ export default function WeeklyPlannerCore() {
         initialDateKey={editingAppointment?.dateKey ?? selectedDateKey}
         initialTitle={editingAppointment?.title ?? ''}
         initialTime={editingAppointment?.time ?? ''}
+        density={density === 'compact' ? 'compact' : 'normal'}
         onClose={() => {
           setAppointmentModalOpen(false)
           setEditingAppointment(null)

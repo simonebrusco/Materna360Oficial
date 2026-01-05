@@ -1,3 +1,4 @@
+// components/my-day/MyDayGroups.tsx
 'use client'
 
 import * as React from 'react'
@@ -25,6 +26,8 @@ type GroupId = keyof GroupedTasks
 type PersonaId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
 const GROUP_ORDER: GroupId[] = ['para-hoje', 'familia', 'autocuidado', 'rotina-casa', 'outros']
+
+// Limite seguro caso o sinal não exista ainda
 const DEFAULT_LIMIT = 5
 
 /* =========================
@@ -68,7 +71,7 @@ function formatSnoozeUntil(raw: unknown): string | null {
 }
 
 /* =========================
-   Persona segura
+   Persona segura (legado)
 ========================= */
 
 function getPersonaId(aiContext?: AiLightContext): PersonaId | undefined {
@@ -93,6 +96,7 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?
   }
 
   return [...items].sort((a, b) => {
+    // Premium + persona (legado) — mantém como está
     if (premium && (persona === 'sobrevivencia' || persona === 'organizacao')) {
       const sa = timeOf(a)
       const sb = timeOf(b)
@@ -105,6 +109,41 @@ function sortForGroup(items: MyDayTaskItem[], opts: { premium: boolean; persona?
 
     return premium ? timeOf(b) - timeOf(a) : timeOf(a) - timeOf(b)
   })
+}
+
+/* =========================
+   TOM / MICROCOPY (só UX)
+========================= */
+
+function labelsForTone(tone: Eu360Signal['tone']) {
+  // Sem agressividade; apenas mais direto/curto quando tone === 'direto'
+  if (tone === 'direto') {
+    return {
+      emptyTitle: 'Seu dia pode começar por uma coisa.',
+      emptyLine1: 'Sem organizar tudo agora.',
+      emptyLine2: 'Quando fizer sentido, registre uma coisa pequena — ou volte depois.',
+      lessLine: 'Hoje pode ser menos — e ainda assim conta.',
+      done: 'Feito',
+      snooze: 'Amanhã',
+      remove: 'Remover',
+      unsnooze: 'Para hoje',
+      expand: 'Ver tudo',
+      collapse: 'Recolher',
+    }
+  }
+
+  return {
+    emptyTitle: 'Seu dia pode começar simples.',
+    emptyLine1: 'Você não precisa organizar tudo agora.',
+    emptyLine2: 'Quando quiser, registre uma coisa pequena — ou apenas volte depois. O Materna360 continua aqui.',
+    lessLine: 'Hoje pode ser menos — e ainda assim está tudo bem.',
+    done: 'Concluir',
+    snooze: 'Deixar para amanhã',
+    remove: 'Remover',
+    unsnooze: 'Trazer para hoje',
+    expand: 'Ver tudo',
+    collapse: 'Recolher',
+  }
 }
 
 /* =========================
@@ -134,14 +173,30 @@ export default function MyDayGroups({
   const grouped = useMemo(() => groupTasks(tasks), [tasks])
   const hasAny = tasks.length > 0
 
+  // Tom do comportamento
+  const tone = (euSignal?.tone ?? 'gentil') as NonNullable<Eu360Signal['tone']>
+  const labels = useMemo(() => labelsForTone(tone), [tone])
+
+  /**
+   * Limite efetivo (canônico):
+   * - Respeita euSignal.listLimit como base
+   * - Ajusta por density (compact reduz um pouco)
+   * - Mantém clamp seguro para não “sumir” nem “entupir”
+   */
   const effectiveLimit = useMemo(() => {
     const raw = Number((euSignal as any)?.listLimit)
-    const resolved = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
+    const base = Number.isFinite(raw) ? raw : DEFAULT_LIMIT
+
+    // clamp base do sinal (defensivo)
+    const clampedBase = Math.max(3, Math.min(8, base))
 
     if (densityLevel === 'normal') {
-      return Math.max(5, Math.min(6, resolved))
+      // Normal: respeita bem o sinal (com clamp suave)
+      return Math.max(4, Math.min(7, clampedBase))
     }
-    return Math.max(3, Math.min(4, resolved))
+
+    // Compact: reduz densidade, sem amputar a experiência
+    return Math.max(3, Math.min(5, clampedBase - 1))
   }, [euSignal, densityLevel])
 
   function refresh() {
@@ -169,12 +224,17 @@ export default function MyDayGroups({
 
     window.addEventListener('storage', sync)
     window.addEventListener('m360:plan-updated', sync as EventListener)
+
+    // ✅ compat (legado)
     window.addEventListener('eu360:persona-updated', sync as EventListener)
+    // ✅ novo (preferências)
+    window.addEventListener('eu360:prefs-updated', sync as EventListener)
 
     return () => {
       window.removeEventListener('storage', sync)
       window.removeEventListener('m360:plan-updated', sync as EventListener)
       window.removeEventListener('eu360:persona-updated', sync as EventListener)
+      window.removeEventListener('eu360:prefs-updated', sync as EventListener)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -240,13 +300,11 @@ export default function MyDayGroups({
     <section className="mt-6 md:mt-8 space-y-6 md:space-y-7">
       {!hasAny ? (
         <div className="bg-white rounded-3xl p-6 shadow-[0_2px_14px_rgba(0,0,0,0.05)] border border-[var(--color-border-soft)]">
-          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">Seu dia pode começar simples.</h4>
+          <h4 className="text-[16px] font-semibold text-[var(--color-text-main)]">{labels.emptyTitle}</h4>
 
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">Você não precisa organizar tudo agora.</p>
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{labels.emptyLine1}</p>
 
-          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">
-            Quando quiser, registre uma coisa pequena — ou apenas volte depois. O Materna360 continua aqui.
-          </p>
+          <p className="mt-3 text-[12px] text-[var(--color-text-muted)]">{labels.emptyLine2}</p>
         </div>
       ) : (
         <div className="space-y-4 md:space-y-5">
@@ -274,19 +332,22 @@ export default function MyDayGroups({
                 ].join(' ')}
               >
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">
-                    {group.title}
-                  </h4>
+                  <h4 className="text-[16px] md:text-[18px] font-semibold text-[var(--color-text-main)]">{group.title}</h4>
 
                   {hasMore ? (
                     <button
                       onClick={() => toggleGroup(groupId)}
                       className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                     >
-                      {isExpanded ? 'Recolher' : 'Ver tudo'}
+                      {isExpanded ? labels.collapse : labels.expand}
                     </button>
                   ) : null}
                 </div>
+
+                {/* ✅ “Hoje pode ser menos” (somente quando o sinal pedir) */}
+                {!isExpanded && euSignal?.showLessLine ? (
+                  <p className="mt-2 text-[12px] text-[var(--color-text-muted)]">{labels.lessLine}</p>
+                ) : null}
 
                 <div className="mt-4 space-y-2">
                   {visible.map((t) => {
@@ -313,21 +374,21 @@ export default function MyDayGroups({
                                   onClick={() => onDone(t)}
                                   className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
                                 >
-                                  Concluir
+                                  {labels.done}
                                 </button>
 
                                 <button
                                   onClick={() => onSnooze(t)}
                                   className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                                 >
-                                  Deixar para amanhã
+                                  {labels.snooze}
                                 </button>
 
                                 <button
                                   onClick={() => onRemove(t)}
                                   className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                                 >
-                                  Remover
+                                  {labels.remove}
                                 </button>
                               </>
                             ) : st === 'snoozed' ? (
@@ -336,14 +397,14 @@ export default function MyDayGroups({
                                   onClick={() => onUnsnooze(t)}
                                   className="rounded-full bg-[#fd2597] text-white px-3.5 py-2 text-[12px] font-semibold hover:opacity-95 transition"
                                 >
-                                  Trazer para hoje
+                                  {labels.unsnooze}
                                 </button>
 
                                 <button
                                   onClick={() => onRemove(t)}
                                   className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                                 >
-                                  Remover
+                                  {labels.remove}
                                 </button>
                               </>
                             ) : (
@@ -351,7 +412,7 @@ export default function MyDayGroups({
                                 onClick={() => onRemove(t)}
                                 className="rounded-full border border-[var(--color-border-soft)] px-3.5 py-2 text-[12px] font-semibold text-[var(--color-text-main)] hover:bg-[rgba(0,0,0,0.02)] transition"
                               >
-                                Remover
+                                {labels.remove}
                               </button>
                             )}
                           </div>

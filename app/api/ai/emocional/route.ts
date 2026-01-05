@@ -1,23 +1,44 @@
-// app/api/ai/emocional/route.ts
 import { NextResponse } from 'next/server'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses'
-
-// Você pode trocar depois. Mantive o seu por compatibilidade,
-// mas no Responses API você pode usar modelos mais novos quando quiser.
 const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
 
 type WeeklyInsightContext = {
   firstName?: string
+
+  // Compat (legado antigo)
   persona?: string | null
   personaLabel?: string | null
+
+  /**
+   * Novo (EU360): preferências neutras vindas do questionário
+   * - NÃO é persona, não é etiqueta fixa.
+   * - serve para calibrar tom/foco/estilo sem “parecer teste”.
+   */
+  preferences?: {
+    toneLabel?: string
+    microCopy?: string
+    focusHint?: string
+    helpStyle?: 'diretas' | 'guiadas' | 'explorar' | undefined
+  }
+
+  /**
+   * Compat (pode existir em algum client antigo): prefs simplificado
+   * Mantemos por segurança, mas o Eu360 novo usa "preferences".
+   */
+  prefs?: {
+    tone?: 'soft' | 'neutral' | 'firm' | null
+    intensity?: 'low' | 'medium' | null
+    focus?: 'care' | 'organization' | 'pause' | null
+  }
+
   stats?: {
     daysWithPlanner?: number
     moodCheckins?: number
     unlockedAchievements?: number
     todayMissionsDone?: number
   }
-  // Contexto leve do “agora” (sem conteúdo sensível)
+
   mood?: string | null
   energy?: string | null
   focusToday?: string | null
@@ -28,12 +49,12 @@ type EmotionalRequestBody = {
   feature: 'weekly_overview' | 'daily_inspiration'
   origin?: string
 
-  // Compat: campos antigos (podem continuar vindo, mas agora preferimos "context")
+  // Compat: campos antigos
   mood?: string | null
   energy?: string | null
   notesPreview?: string | null
 
-  // Novo: contexto rico vindo do client (Eu360, Meu Dia, etc.)
+  // Novo: contexto rico
   context?: WeeklyInsightContext
 }
 
@@ -61,12 +82,21 @@ export async function POST(request: Request) {
 
     const origin = safeString(body?.origin) ?? 'como-estou-hoje'
     const isMaternar = origin === 'maternar-hub'
+    const isEu360 = origin === 'eu360'
 
-    // Contexto “unificado” (prioriza body.context; mantém compat com campos antigos)
     const context: WeeklyInsightContext = {
       firstName: safeString(body?.context?.firstName) ?? undefined,
+
+      // legado
       persona: safeString(body?.context?.persona) ?? null,
       personaLabel: safeString(body?.context?.personaLabel) ?? null,
+
+      // novo eu360
+      preferences: body?.context?.preferences ?? undefined,
+
+      // compat
+      prefs: body?.context?.prefs ?? undefined,
+
       stats: body?.context?.stats ?? undefined,
       mood: safeString(body?.context?.mood) ?? safeString(body?.mood) ?? null,
       energy: safeString(body?.context?.energy) ?? safeString(body?.energy) ?? null,
@@ -74,10 +104,6 @@ export async function POST(request: Request) {
       slot: safeString(body?.context?.slot) ?? null,
     }
 
-    /**
-     * SYSTEM BASE: tom Materna360 (geral)
-     * Observação: Para o Maternar, aplicamos um addendum com regras canônicas.
-     */
     const systemBase = `
 Você é a IA emocional do Materna360, um app para mães que combina organização leve com apoio emocional.
 Sua missão é oferecer textos curtos, acolhedores e sem julgamentos, sempre no TOM DE VOZ Materna360:
@@ -93,10 +119,6 @@ Regras:
 - Respeite SEMPRE o formato JSON pedido (sem texto fora do JSON).
 `.trim()
 
-    /**
-     * ADDENDUM CANÔNICO — MATERNAR (P33.4)
-     * Regra: Maternar sustenta, não ensina.
-     */
     const systemMaternarAddendum = `
 Você está respondendo DENTRO DA ABA "MATERNAR".
 Aqui a IA atua como presença acolhedora e estável: escuta organizada e tradução de sentimentos.
@@ -125,34 +147,63 @@ Importante:
 - Se precisar “oferecer algo”, ofereça PERMISSÃO e linguagem de cuidado (não instrução).
 `.trim()
 
-    const systemMessage = (isMaternar ? `${systemBase}\n\n${systemMaternarAddendum}` : systemBase).trim()
+    const systemEu360Addendum = `
+Você está respondendo DENTRO DO HUB "EU360".
+Aqui a IA entrega LEITURA NARRATIVA e RECONHECIMENTO — nunca direção.
 
-    // Contexto do usuário (a IA usa isso para calibrar tom e conteúdo)
+PROIBIDO em Eu360:
+- conselhos, sugestões, técnicas, métodos, exercícios
+- linguagem de melhoria ("tente", "faça", "você precisa", "o ideal")
+- lista de passos, planos, metas, desafios, CTAs
+- comparação temporal ("mais", "menos", "melhor", "pior", "evoluiu", "regrediu")
+- termos clínicos/diagnósticos
+
+Regras de linguagem:
+- tom adulto, respeitoso, não performático
+- frases curtas
+- sem imperativo
+- a leitura deve parecer óbvia em retrospecto (sem "surpresa")
+
+Se houver um campo chamado "suggestions" no schema:
+- trate como "observações de cuidado / reconhecimentos"
+- devem ser frases que aliviam, não orientam
+`.trim()
+
+    const systemMessage = (isMaternar
+      ? `${systemBase}\n\n${systemMaternarAddendum}`
+      : isEu360
+        ? `${systemBase}\n\n${systemEu360Addendum}`
+        : systemBase
+    ).trim()
+
     const userContext = {
       origem: origin,
       firstName: context.firstName ?? null,
+
+      // legado
       persona: context.persona ?? null,
       personaLabel: context.personaLabel ?? null,
+
+      // novo eu360
+      preferences: context.preferences ?? null,
+
+      // compat
+      prefs: context.prefs ?? null,
+
       humorAtual: context.mood ?? null,
       energiaAtual: context.energy ?? null,
       focoHoje: context.focusToday ?? null,
       tempoSlot: context.slot ?? null,
       stats: context.stats ?? null,
-      // Mantido para compatibilidade (mas ideal é enviar vazio ou resumo não sensível)
+
       resumoNotas: safeString(body?.notesPreview) ?? null,
     }
 
-    /**
-     * Nota:
-     * - Em Maternar, NÃO usamos “micro-desafio” nem orientação baseada em persona.
-     * - Fora do Maternar, mantemos seu comportamento atual.
-     */
     const userMessageCommon = `
 Dados de contexto (podem estar vazios):
 ${JSON.stringify(userContext, null, 2)}
 `.trim()
 
-    // Schemas (Structured Outputs strict)
     const weeklySchema = {
       name: 'weekly_insight',
       strict: true,
@@ -218,7 +269,6 @@ ${JSON.stringify(userContext, null, 2)}
       schemaToUse = weeklySchema
 
       if (isMaternar) {
-        // Maternar: manter schema por compatibilidade, mas sem “passos práticos”.
         inputText = `
 Gere um insight emocional da semana para a mãe, a partir do contexto fornecido.
 Requisitos:
@@ -229,6 +279,20 @@ Requisitos:
 - "highlights.toughDays": quando pesa mais + lembrete de gentileza.
 ${userMessageCommon}
 `.trim()
+      } else if (isEu360) {
+        inputText = `
+Gere um relatório emocional em formato de leitura narrativa da semana, a partir do contexto fornecido.
+Requisitos:
+- "title": curto, adulto, respeitoso.
+- "summary": 2 a 4 parágrafos curtos (ou 3 a 5 linhas), leitura sem julgamento, sem orientar.
+- "suggestions": 2 a 5 "observações de cuidado" (reconhecimentos, permissões, validações). NÃO são passos, NÃO são tarefas.
+- "highlights.bestDay": descreva quando a semana flui melhor (sem mérito, sem comparação).
+- "highlights.toughDays": descreva quando pesa mais + lembrete de gentileza (sem indicar o que fazer).
+
+Use as "preferences" (se existirem) apenas para calibrar tom e foco,
+SEM mencionar preferências, questionário, perfil, persona ou “resultado”.
+${userMessageCommon}
+`.trim()
       } else {
         inputText = `
 Gere um insight emocional da semana da mãe a partir do contexto fornecido.
@@ -236,12 +300,8 @@ Requisitos:
 - "title": curto e acolhedor.
 - "summary": 3 a 5 linhas, sem julgar.
 - "suggestions": 2 a 5 passos pequenos, práticos e realistas.
-- "highlights.bestDay": quando a semana flui melhor (sem culpa).
-- "highlights.toughDays": quando pesa mais + lembrete de gentileza.
 
-Ajuste o tom para a persona, se existir:
-- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
-- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
+Ajuste o tom se existir "preferences" ou "prefs" (sem mencionar que existem preferências).
 ${userMessageCommon}
 `.trim()
       }
@@ -249,13 +309,24 @@ ${userMessageCommon}
       schemaToUse = dailySchema
 
       if (isMaternar) {
-        // Maternar: manter schema, mas “ritual” não pode virar técnica/exercício.
         inputText = `
 Gere um apoio emocional para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
 - "phrase": 1 linha acolhedora, sem imperativo.
 - "care": 3 a 6 linhas, acolhimento concreto, sem instruções, sem métodos.
 - "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
+${userMessageCommon}
+`.trim()
+      } else if (isEu360) {
+        inputText = `
+Gere uma leitura breve para o dia da mãe, considerando humor, energia e foco.
+Requisitos:
+- "phrase": 1 linha adulta e acolhedora, sem imperativo.
+- "care": 3 a 6 linhas com reconhecimento e organização do que ela vive (sem instruções).
+- "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
+
+Use as "preferences" (se existirem) apenas para calibrar tom e foco,
+SEM mencionar preferências, questionário, perfil, persona ou “resultado”.
 ${userMessageCommon}
 `.trim()
       } else {
@@ -266,9 +337,7 @@ Requisitos:
 - "care": 3 a 6 linhas, acolhedor e concreto.
 - "ritual": 1 sugestão prática (cabe num dia corrido).
 
-Ajuste o tom para a persona, se existir:
-- Se personaLabel indicar "sobrevivência": mínimo de passos, muito acolhimento, zero cobrança.
-- Se indicar "expansão": ainda gentil, mas com 1 micro-desafio possível.
+Ajuste o tom se existir "preferences" ou "prefs" (sem mencionar que existem preferências).
 ${userMessageCommon}
 `.trim()
       }
@@ -276,17 +345,18 @@ ${userMessageCommon}
       return jsonError('Feature inválida para IA emocional.', 400)
     }
 
-    // Telemetria básica (sem dados sensíveis)
     try {
       console.log('[IA Emocional] request', {
         feature,
         origin,
         isMaternar,
-        hasPersona: Boolean(context.persona || context.personaLabel),
+        isEu360,
+        hasPreferences: Boolean(context.preferences),
+        hasPrefsCompat: Boolean(context.prefs),
+        hasPersonaLegacy: Boolean(context.persona || context.personaLabel),
       })
     } catch {}
 
-    // Chamada para OpenAI (Responses API) + timeout
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 15_000)
 
@@ -303,7 +373,7 @@ ${userMessageCommon}
           { role: 'system', content: systemMessage },
           { role: 'user', content: inputText },
         ],
-        temperature: isMaternar ? 0.4 : 0.7,
+        temperature: isMaternar || isEu360 ? 0.4 : 0.7,
         text: {
           format: {
             type: 'json_schema',
@@ -314,17 +384,12 @@ ${userMessageCommon}
     }).finally(() => clearTimeout(timeout))
 
     if (!openAiRes.ok) {
-      console.error(
-        '[IA Emocional] Erro HTTP da OpenAI:',
-        openAiRes.status,
-        await openAiRes.text().catch(() => '(sem corpo)'),
-      )
+      console.error('[IA Emocional] Erro HTTP da OpenAI:', openAiRes.status, await openAiRes.text().catch(() => '(sem corpo)'))
       return jsonError('Não consegui gerar a análise emocional agora.', 502)
     }
 
     const response = await openAiRes.json()
 
-    // Robustez: extrai texto e faz parse JSON
     const rawText: string =
       response?.output_text?.trim?.() ||
       (() => {
