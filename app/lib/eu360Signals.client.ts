@@ -9,7 +9,7 @@
  *
  * Objetivo:
  * - Traduzir o “estado atual” e preferências do Eu360 em sinal leve para UX:
- *   - stateId: 5 estados (derivados do q1)
+ *   - stateId: 5 estados canônicos (derivados preferencialmente do q4; compat via q1/persona)
  *   - tone: 'gentil' | 'direto'
  *   - listLimit: limite sugerido de itens (ritmo/volume)
  *   - showLessLine: microcopy “hoje pode ser menos”
@@ -23,20 +23,23 @@ export type EuTone = 'gentil' | 'direto'
 export type EuDensity = 'compact' | 'normal'
 export type PlannerDefaultView = 'day' | 'week'
 
-export type EuStateId = 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
+/**
+ * Estado canônico (compat com eu360_persona_v1 mapeado pelo Eu360Client)
+ */
+export type EuStateId = 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao'
 
 export type Eu360Signal = {
   tone: EuTone
   listLimit: number
   showLessLine: boolean
 
-  // Estado atual (q1)
+  // Estado atual canônico
   stateId?: EuStateId
 
   /**
    * Campos opcionais de “encaixe” (não quebram consumidores atuais).
    * Se o Meu Dia/Planner quiser usar:
-   * - density: calibrar o nível de densidade (ex.: getDensityLevel)
+   * - density: calibrar o nível de densidade (compact/normal)
    * - defaultPlannerView: sugestão de modo default (Dia/Semana)
    */
   density?: EuDensity
@@ -44,10 +47,20 @@ export type Eu360Signal = {
 }
 
 type QuestionnaireAnswers = {
-  q1?: EuStateId
+  /**
+   * q1 (legado/antigo): estados “sentimento/energia”
+   * Observação: em versões antigas, q1 era usado como estado principal.
+   */
+  q1?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
+
   q2?: 'nenhum' | '5a10' | '15a30' | 'mais30'
   q3?: 'tempo' | 'emocional' | 'organizacao' | 'conexao' | 'tudo'
-  q4?: 'sobrevivencia' | 'organizar' | 'conexao' | 'equilibrio' | 'alem'
+
+  /**
+   * q4 (canônico): 5 estados que viram persona/stateId
+   */
+  q4?: EuStateId | 'organizar' | 'alem'
+
   q5?: 'diretas' | 'guiadas' | 'explorar'
   q6?: 'passar' | 'basico' | 'momento' | 'organizada' | 'avancar'
 }
@@ -109,64 +122,110 @@ function clampListLimit(n: number) {
 }
 
 function defaultSignal(): Eu360Signal {
-  return { tone: 'gentil', listLimit: 5, showLessLine: false, density: 'normal', defaultPlannerView: 'day' }
+  return {
+    tone: 'gentil',
+    listLimit: 5,
+    showLessLine: false,
+    density: 'normal',
+    defaultPlannerView: 'day',
+  }
 }
 
 /**
- * Mapeamento dos 5 ESTADOS (q1) -> sinal
+ * Normaliza q4 (canônico) que pode vir como:
+ * - 'sobrevivencia' | 'organizacao' | 'conexao' | 'equilibrio' | 'expansao' (ideal)
+ * - 'organizar' (legado intermediário) -> 'organizacao'
+ * - 'alem' (legado intermediário) -> 'expansao'
+ */
+function normalizeQ4ToStateId(q4?: QuestionnaireAnswers['q4']): EuStateId | undefined {
+  if (!q4) return undefined
+  if (q4 === 'organizar') return 'organizacao'
+  if (q4 === 'alem') return 'expansao'
+  // se já for canônico
+  if (q4 === 'sobrevivencia' || q4 === 'organizacao' || q4 === 'conexao' || q4 === 'equilibrio' || q4 === 'expansao') {
+    return q4
+  }
+  return undefined
+}
+
+/**
+ * Compat: converte q1 (sentimento/energia) para o state canônico.
+ * Conservador por design: evita “saltos” agressivos.
+ */
+function mapQ1ToStateId(q1?: QuestionnaireAnswers['q1']): EuStateId | undefined {
+  if (!q1) return undefined
+  switch (q1) {
+    case 'exausta':
+      return 'sobrevivencia'
+    case 'cansada':
+      return 'sobrevivencia'
+    case 'oscilando':
+      return 'conexao'
+    case 'equilibrada':
+      return 'equilibrio'
+    case 'energia':
+      return 'expansao'
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Mapeamento do estado CANÔNICO -> sinal
  * Intenção:
- * - exausta/cansada: menor volume, tom gentil, “pode ser menos”, densidade compacta
- * - oscilando: tom gentil, volume médio
- * - equilibrada: tom mais claro, volume maior
- * - energia: tom direto, volume maior (sem empuxo visível — só ritmo)
+ * - sobrevivencia: menor volume, tom gentil, “pode ser menos”, densidade compacta
+ * - organizacao: tom mais direto, volume maior, sem “pode ser menos”
+ * - conexao: tom gentil, volume médio, pode ter “pode ser menos”
+ * - equilibrio: tom gentil, volume médio, sem linha “pode ser menos”
+ * - expansao: tom direto, volume maior, sugestão opcional week
  *
  * + sugestões opcionais para Planner:
  * - density (compact/normal)
- * - defaultPlannerView (day/week) — opcional, se quiser usar depois
+ * - defaultPlannerView (day/week) — opcional
  */
 function mapStateToSignal(state: EuStateId): Eu360Signal {
   switch (state) {
-    case 'exausta':
+    case 'sobrevivencia':
       return {
-        stateId: 'exausta',
+        stateId: 'sobrevivencia',
         tone: 'gentil',
         listLimit: 3,
         showLessLine: true,
         density: 'compact',
         defaultPlannerView: 'day',
       }
-    case 'cansada':
+    case 'organizacao':
       return {
-        stateId: 'cansada',
+        stateId: 'organizacao',
+        tone: 'direto',
+        listLimit: 6,
+        showLessLine: false,
+        density: 'normal',
+        defaultPlannerView: 'week', // sugestão opcional
+      }
+    case 'conexao':
+      return {
+        stateId: 'conexao',
         tone: 'gentil',
-        listLimit: 4,
+        listLimit: 5,
         showLessLine: true,
-        density: 'compact',
+        density: 'normal',
         defaultPlannerView: 'day',
       }
-    case 'oscilando':
+    case 'equilibrio':
       return {
-        stateId: 'oscilando',
+        stateId: 'equilibrio',
         tone: 'gentil',
         listLimit: 5,
         showLessLine: false,
         density: 'normal',
         defaultPlannerView: 'day',
       }
-    case 'equilibrada':
+    case 'expansao':
       return {
-        stateId: 'equilibrada',
+        stateId: 'expansao',
         tone: 'direto',
         listLimit: 6,
-        showLessLine: false,
-        density: 'normal',
-        defaultPlannerView: 'day',
-      }
-    case 'energia':
-      return {
-        stateId: 'energia',
-        tone: 'direto',
-        listLimit: 7,
         showLessLine: false,
         density: 'normal',
         defaultPlannerView: 'week', // sugestão opcional
@@ -201,12 +260,12 @@ function legacyFallbackSignal(): Eu360Signal {
 
   const persona = (parsed?.persona ?? '').toLowerCase()
 
-  // Mapeamento conservador: mantém o app estável
-  if (persona.includes('sobre')) return { tone: 'gentil', listLimit: 3, showLessLine: true, density: 'compact', defaultPlannerView: 'day' }
-  if (persona.includes('org')) return { tone: 'gentil', listLimit: 4, showLessLine: true, density: 'compact', defaultPlannerView: 'day' }
-  if (persona.includes('con')) return { tone: 'gentil', listLimit: 5, showLessLine: false, density: 'normal', defaultPlannerView: 'day' }
-  if (persona.includes('equi')) return { tone: 'direto', listLimit: 6, showLessLine: false, density: 'normal', defaultPlannerView: 'day' }
-  if (persona.includes('exp')) return { tone: 'direto', listLimit: 7, showLessLine: false, density: 'normal', defaultPlannerView: 'week' }
+  // Mapeamento conservador (compat com o mapeamento escrito pelo Eu360Client)
+  if (persona.includes('sobre')) return mapStateToSignal('sobrevivencia')
+  if (persona.includes('org')) return mapStateToSignal('organizacao')
+  if (persona.includes('con')) return mapStateToSignal('conexao')
+  if (persona.includes('equi')) return mapStateToSignal('equilibrio')
+  if (persona.includes('exp')) return mapStateToSignal('expansao')
 
   return defaultSignal()
 }
@@ -216,7 +275,10 @@ export function getEu360Signal(): Eu360Signal {
   const rawPrefs = safeGetLS(LS_KEYS.eu360Prefs)
   const prefs = safeParseJSON<Eu360PreferencesLS>(rawPrefs)
 
-  const state = prefs?.answers?.q1
+  const q4State = normalizeQ4ToStateId(prefs?.answers?.q4)
+  const q1Compat = mapQ1ToStateId(prefs?.answers?.q1)
+  const state: EuStateId | undefined = q4State ?? q1Compat
+
   const helpStyle = prefs?.helpStyle ?? prefs?.answers?.q5
 
   if (state) {
