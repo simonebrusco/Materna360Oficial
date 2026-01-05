@@ -21,28 +21,6 @@ import { getEu360FortnightLine } from '@/app/lib/continuity.client'
 // P23 — Tom por camada de experiência (free sempre gentil)
 import { getContinuityTone } from '@/app/lib/experience/continuityTone'
 
-type WeeklyInsight = {
-  title: string
-  summary: string
-  observations: string[]
-}
-
-type WeeklyInsightContext = {
-  firstName?: string
-  stats?: {
-    daysWithPlanner?: number
-    moodCheckins?: number
-    unlockedAchievements?: number
-    todayMissionsDone?: number
-  }
-  prefs?: {
-    // preferências neutras para a IA (não “persona”)
-    state?: 'sobrevivencia' | 'manutencao' | 'oscilacao' | 'equilibrio' | 'expansao'
-    focusHint?: string
-    helpStyle?: 'diretas' | 'guiadas' | 'explorar'
-  }
-}
-
 type QuestionnaireAnswers = {
   q1?: 'exausta' | 'cansada' | 'oscilando' | 'equilibrada' | 'energia'
   q2?: 'nenhum' | '5a10' | '15a30' | 'mais30'
@@ -62,6 +40,10 @@ type Eu360Prefs = {
   helpStyle?: 'diretas' | 'guiadas' | 'explorar'
   updatedAtISO: string
   answers: QuestionnaireAnswers
+}
+
+type Eu360ReportApiResponse = {
+  report: string
 }
 
 const LS_KEYS = {
@@ -239,69 +221,47 @@ function OptionButton({ active, label, onClick }: { active?: boolean; label: str
   )
 }
 
-async function fetchWeeklyInsight(context: WeeklyInsightContext): Promise<WeeklyInsight> {
+function toReportTone(tone: unknown): 'gentil' | 'direto' {
+  return tone === 'direto' ? 'direto' : 'gentil'
+}
+
+async function fetchEu360Report(input: {
+  answers: {
+    q1?: string
+    q2?: string
+    q3?: string
+    q4?: string
+    q5?: string
+    q6?: string
+  }
+  signal: {
+    stateId?: string
+    tone: 'gentil' | 'direto'
+  }
+  timeframe: 'current' | 'fortnight'
+}): Promise<string> {
   try {
     track('ai.request', {
-      feature: 'weekly_overview',
+      feature: 'eu360_report',
       origin: 'eu360',
-      daysWithPlanner: context.stats?.daysWithPlanner ?? null,
-      moodCheckins: context.stats?.moodCheckins ?? null,
-      unlockedAchievements: context.stats?.unlockedAchievements ?? null,
-      todayMissionsDone: context.stats?.todayMissionsDone ?? null,
-      state: context.prefs?.state ?? null,
-      focusHint: context.prefs?.focusHint ?? null,
-      helpStyle: context.prefs?.helpStyle ?? null,
+      timeframe: input.timeframe,
+      tone: input.signal.tone,
+      stateId: input.signal.stateId ?? null,
+      hasAnswers: Object.values(input.answers).some(Boolean),
     })
+  } catch {}
 
-    const res = await fetch('/api/ai/emocional', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        feature: 'weekly_overview',
-        origin: 'eu360',
-        context,
-      }),
-    })
+  const res = await fetch('/api/ai/eu360/report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 
-    if (!res.ok) throw new Error('Resposta inválida da IA')
-
-    const data = await res.json()
-    const insight = data?.weeklyInsight
-    if (!insight || typeof insight !== 'object') throw new Error('Insight semanal vazio')
-
-    // EU360 route retorna "suggestions" por schema atual.
-    // Aqui exibimos como "observations" (sem ação).
-    const observations: string[] =
-      (Array.isArray(insight.observations) && insight.observations.length > 0
-        ? insight.observations
-        : Array.isArray(insight.suggestions) && insight.suggestions.length > 0
-          ? insight.suggestions
-          : []) as string[]
-
-    return {
-      title: insight.title ?? 'Seu resumo emocional da semana',
-      summary:
-        insight.summary ??
-        'Pelos seus registros recentes, esta semana parece ter sido marcada por momentos de cansaço, mas também por pequenos respiros.',
-      observations:
-        observations.length > 0
-          ? observations
-          : [
-              'Há sinais de que a semana oscilou entre cansaço e momentos em que o essencial foi sustentado.',
-              'Mesmo sem perfeição, o que aparece é continuidade possível — do seu jeito, no ritmo que deu.',
-            ],
-    }
-  } catch (error) {
-    console.error('[Eu360] Erro ao buscar insight semanal, usando fallback:', error)
-    return {
-      title: 'Seu resumo emocional da semana',
-      summary: 'Mesmo nos dias mais puxados, sempre existe algo pequeno que se manteve. Aqui é só para enxergar isso com mais cuidado.',
-      observations: [
-        'Parece que você sustentou mais do que percebeu, mesmo com a energia variando.',
-        'Quando o dia pesa, o “mínimo possível” também é uma forma de cuidado — e conta.',
-      ],
-    }
-  }
+  if (!res.ok) throw new Error('Resposta inválida do relatório IA')
+  const data = (await res.json()) as Eu360ReportApiResponse
+  const report = typeof data?.report === 'string' ? data.report.trim() : ''
+  if (!report) throw new Error('Relatório vazio')
+  return report
 }
 
 export const dynamic = 'force-dynamic'
@@ -328,9 +288,6 @@ export default function Eu360Client() {
     [],
   )
 
-  const [weeklyInsight, setWeeklyInsight] = useState<WeeklyInsight | null>(null)
-  const [loadingInsight, setLoadingInsight] = useState(false)
-
   const [prefsResult, setPrefsResult] = useState<Eu360Prefs | null>(null)
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({})
   const [qStep, setQStep] = useState<number>(1)
@@ -345,6 +302,10 @@ export default function Eu360Client() {
   const resolvedTone = useMemo(() => {
     return getContinuityTone((euSignal?.tone ?? 'gentil') as any) as NonNullable<Eu360Signal['tone']>
   }, [euSignal?.tone])
+
+  // Relatório IA (P34.3)
+  const [reportText, setReportText] = useState<string | null>(null)
+  const [loadingReport, setLoadingReport] = useState(false)
 
   useEffect(() => {
     const saved = readPrefsFromLS()
@@ -362,18 +323,6 @@ export default function Eu360Client() {
     const keys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] as const
     return keys.filter((k) => Boolean(answers[k])).length
   }, [answers])
-
-  const prefsForAi = useMemo(() => {
-    const base = prefsResult
-      ? { stateId: prefsResult.stateId, focusHint: prefsResult.focusHint, helpStyle: prefsResult.helpStyle }
-      : { stateId: statePreview.stateId, focusHint: statePreview.focusHint, helpStyle: answers.q5 }
-
-    return {
-      state: base.stateId,
-      focusHint: base.focusHint,
-      helpStyle: base.helpStyle,
-    } as WeeklyInsightContext['prefs']
-  }, [prefsResult, statePreview.stateId, statePreview.focusHint, answers.q5])
 
   // Re-hidrata signal quando preferências mudarem (storage + custom event)
   useEffect(() => {
@@ -413,30 +362,6 @@ export default function Eu360Client() {
       setFortnightLine(null)
     }
   }, [dateKey, resolvedTone])
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadInsight = async () => {
-      setLoadingInsight(true)
-      try {
-        const result = await fetchWeeklyInsight({
-          firstName,
-          stats,
-          prefs: prefsForAi,
-        })
-        if (isMounted) setWeeklyInsight(result)
-      } finally {
-        if (isMounted) setLoadingInsight(false)
-      }
-    }
-
-    void loadInsight()
-
-    return () => {
-      isMounted = false
-    }
-  }, [firstName, stats, prefsForAi])
 
   function setAnswer<K extends keyof QuestionnaireAnswers>(key: K, value: NonNullable<QuestionnaireAnswers[K]>) {
     setAnswers((prev) => ({ ...prev, [key]: value }))
@@ -498,14 +423,67 @@ export default function Eu360Client() {
     questionnaireRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // Carrega Relatório IA (P34.3) — somente leitura
+  useEffect(() => {
+    let isMounted = true
+
+    const loadReport = async () => {
+      setLoadingReport(true)
+      try {
+        const toneForReport = toReportTone(resolvedTone)
+
+        const payload = {
+          answers: {
+            q1: answers.q1,
+            q2: answers.q2,
+            q3: answers.q3,
+            q4: answers.q4,
+            q5: answers.q5,
+            q6: answers.q6,
+          },
+          signal: {
+            stateId: prefsResult?.stateId ?? (euSignal?.stateId as any) ?? undefined,
+            tone: toneForReport,
+          },
+          timeframe: 'current' as const,
+        }
+
+        const text = await fetchEu360Report(payload)
+        if (isMounted) setReportText(text)
+      } catch (e) {
+        console.error('[Eu360] Erro ao buscar relatório IA:', e)
+        if (isMounted) setReportText(null)
+      } finally {
+        if (isMounted) setLoadingReport(false)
+      }
+    }
+
+    void loadReport()
+
+    return () => {
+      isMounted = false
+    }
+  }, [answers.q1, answers.q2, answers.q3, answers.q4, answers.q5, answers.q6, prefsResult?.stateId, euSignal?.stateId, resolvedTone])
+
   const heroTitle = 'Seu mundo em perspectiva'
   const heroSubtitle = 'Um espaço de leitura, não de cobrança.'
 
   // (Mantemos como referência futura; não muda fluxo agora)
   void buildAiContext
+  void firstName
+  void stats
 
   const resolvedStateLabel = prefsResult ? prefsResult.stateLabel : statePreview.stateLabel
   const resolvedMicroCopy = prefsResult ? prefsResult.microCopy : statePreview.microCopy
+
+  const reportBlocks = useMemo(() => {
+    const raw = (reportText || '').trim()
+    if (!raw) return []
+    return raw
+      .split('\n\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  }, [reportText])
 
   const content = (
     <main data-layout="page-template-v1" data-tab="eu360" className="eu360-hub-bg relative min-h-[100dvh] pb-24 overflow-hidden">
@@ -798,42 +776,35 @@ export default function Eu360Client() {
                         <AppIcon name="heart" size={20} className="text-[#fd2597]" decorative />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Olhar carinhoso sobre a sua semana</p>
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
-                          {weeklyInsight?.title || 'Seu resumo emocional da semana'}
-                        </h3>
+<p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Leitura do seu momento</p>
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">Um retrato breve, sem pendência</h3>
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
-                          {firstName}, este espaço é para leitura: enxergar seus últimos dias com mais gentileza — sem pendência.
+                          Este espaço é só de leitura: reconhecimento do que aparece, sem te empurrar para nada.
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-1 space-y-2.5">
-                      {loadingInsight ? (
-                        <p className="text-sm text-[#6a6a6a] leading-relaxed">Estou olhando com carinho para a sua semana para trazer uma leitura…</p>
+                    <div className="mt-1 space-y-3">
+                      {loadingReport ? (
+                        <p className="text-sm text-[#6a6a6a] leading-relaxed">Estou organizando uma leitura breve do seu momento…</p>
+                      ) : reportBlocks.length === 3 ? (
+                        <div className="space-y-3">
+                          {reportBlocks.map((block, idx) => (
+                            <p key={idx} className="text-sm leading-relaxed text-[#2f3a56]">
+                              {block}
+                            </p>
+                          ))}
+                        </div>
                       ) : (
-                        <>
-                          <p className="text-sm leading-relaxed text-[#2f3a56]">
-                            {weeklyInsight?.summary ??
-                              'Mesmo nos dias mais puxados, sempre existe algo pequeno que se manteve. Aqui é só para enxergar isso com mais cuidado.'}
-                          </p>
-
-                          {weeklyInsight?.observations && weeklyInsight.observations.length > 0 && (
-                            <div className="space-y-1.5">
-                              <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Observações, sem cobrança</p>
-                              <ul className="space-y-1.5 text-sm text-[#2f3a56]">
-                                {weeklyInsight.observations.map((item, idx) => (
-                                  <li key={idx}>• {item}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          <p className="text-[11px] text-[#6a6a6a] mt-2 leading-relaxed">
-                            Isso não é diagnóstico e não é plano. É só um retrato gentil do que apareceu — e pode ficar por isso mesmo.
-                          </p>
-                        </>
+                        <p className="text-sm leading-relaxed text-[#2f3a56]">
+                          Este momento parece pedir mais contenção do que expansão. Quando muitas frentes coexistem, é comum que a energia se
+                          fragmente. Situações assim costumam responder melhor a menos pressão interna.
+                        </p>
                       )}
+
+                      <p className="text-[11px] text-[#6a6a6a] mt-2 leading-relaxed">
+                        Isso não é diagnóstico, não é plano e não vira tarefa. Pode ficar por isso mesmo.
+                      </p>
                     </div>
                   </div>
                 </SoftCard>
