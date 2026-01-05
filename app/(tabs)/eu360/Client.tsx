@@ -445,8 +445,7 @@ export default function Eu360Client() {
         const text = await fetchEu360Report(payload)
         if (isMounted) setReportText(text)
       } catch (e) {
-        console.error('[Eu360] Erro ao buscar relatório IA, mantendo fallback do servidor:', e)
-        // se falhar aqui, não quebra UI; o próprio endpoint já tem fallback
+        console.error('[Eu360] Erro ao buscar relatório IA:', e)
         if (isMounted) setReportText(null)
       } finally {
         if (isMounted) setLoadingReport(false)
@@ -458,7 +457,6 @@ export default function Eu360Client() {
     return () => {
       isMounted = false
     }
-    // Importante: não disparar por stats/firstName; apenas por inputs reais do relatório
   }, [answers.q1, answers.q2, answers.q3, answers.q4, answers.q5, answers.q6, prefsResult?.stateId, euSignal?.stateId, resolvedTone])
 
   const heroTitle = 'Seu mundo em perspectiva'
@@ -475,7 +473,10 @@ export default function Eu360Client() {
   const reportBlocks = useMemo(() => {
     const raw = (reportText || '').trim()
     if (!raw) return []
-    return raw.split('\n\n').map((s) => s.trim()).filter(Boolean)
+    return raw
+      .split('\n\n')
+      .map((s) => s.trim())
+      .filter(Boolean)
   }, [reportText])
 
   const content = (
@@ -769,12 +770,8 @@ export default function Eu360Client() {
                         <AppIcon name="heart" size={20} className="text-[#fd2597]" decorative />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">
-                          Leitura do seu momento (Relatório IA)
-                        </p>
-                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">
-                          Um retrato breve, sem pendência
-                        </h3>
+                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Leitura do seu momento (Relatório IA)</p>
+                        <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">Um retrato breve, sem pendência</h3>
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
                           Este espaço é só de leitura: reconhecimento do que aparece, sem te empurrar para nada.
                         </p>
@@ -832,9 +829,7 @@ export default function Eu360Client() {
                         Conhecer os planos
                       </button>
                     </Link>
-                    <p className="text-[11px] text-white/85 md:text-right max-w-xs">
-                      Planos pensados para fases diferentes — você escolhe o que faz sentido agora.
-                    </p>
+                    <p className="text-[11px] text-white/85 md:text-right max-w-xs">Planos pensados para fases diferentes — você escolhe o que faz sentido agora.</p>
                   </div>
                 </div>
               </SoftCard>
