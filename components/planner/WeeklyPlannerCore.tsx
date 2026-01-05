@@ -1076,7 +1076,7 @@ export default function WeeklyPlannerCore() {
                     </p>
                   ) : (
                     (() => {
-                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const limit = plannerLimit
                       const all = plannerData.tasks
                       const visible = showAllReminders ? all : all.slice(0, limit)
                       const hasMore = all.length > visible.length
@@ -1318,7 +1318,7 @@ export default function WeeklyPlannerCore() {
                     </p>
                   ) : (
                     (() => {
-                      const limit = Math.max(1, Number(euSignal.listLimit) || 5)
+                      const limit = plannerLimit
                       const all = sortedAppointments
                       const visible = showAllAppointments ? all : all.slice(0, limit)
                       const hasMore = all.length > visible.length
