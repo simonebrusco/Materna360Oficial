@@ -776,7 +776,7 @@ export default function Eu360Client() {
                         <AppIcon name="heart" size={20} className="text-[#fd2597]" decorative />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Leitura do seu momento (Relatório IA)</p>
+<p className="text-[10px] font-semibold text-[#6a6a6a] uppercase tracking-[0.16em]">Leitura do seu momento</p>
                         <h3 className="text-base md:text-lg font-semibold text-[#2f3a56] leading-snug">Um retrato breve, sem pendência</h3>
                         <p className="text-[11px] text-[#6a6a6a] leading-relaxed">
                           Este espaço é só de leitura: reconhecimento do que aparece, sem te empurrar para nada.
