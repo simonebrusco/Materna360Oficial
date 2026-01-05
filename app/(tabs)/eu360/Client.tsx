@@ -221,6 +221,10 @@ function OptionButton({ active, label, onClick }: { active?: boolean; label: str
   )
 }
 
+function toReportTone(tone: unknown): 'gentil' | 'direto' {
+  return tone === 'direto' ? 'direto' : 'gentil'
+}
+
 async function fetchEu360Report(input: {
   answers: {
     q1?: string
@@ -426,6 +430,8 @@ export default function Eu360Client() {
     const loadReport = async () => {
       setLoadingReport(true)
       try {
+        const toneForReport = toReportTone(resolvedTone)
+
         const payload = {
           answers: {
             q1: answers.q1,
@@ -437,7 +443,7 @@ export default function Eu360Client() {
           },
           signal: {
             stateId: prefsResult?.stateId ?? (euSignal?.stateId as any) ?? undefined,
-            tone: resolvedTone === 'direto' ? 'direto' : 'gentil',
+            tone: toneForReport,
           },
           timeframe: 'current' as const,
         }
