@@ -451,11 +451,12 @@ export default function WeeklyPlannerCore() {
   const [continuityLine, setContinuityLine] = useState<string>('')
 
   const isGentleTone = euSignal.tone === 'gentil'
-  const density = euSignal.density ?? 'normal'
 
-const rowPadClass = density === 'compact' ? 'py-1.5' : 'py-2'
-const rowTextClass = density === 'compact' ? 'text-[13px]' : 'text-sm'
-const subTextClass = density === 'compact' ? 'text-[10px]' : 'text-[11px]
+  // (opcional) densidade: ajusta padding/typography de itens (linhas)
+  const density = euSignal.density ?? 'normal'
+  const rowPadClass = density === 'compact' ? 'py-1.5' : 'py-2'
+  const rowTextClass = density === 'compact' ? 'text-[13px]' : 'text-sm'
+  const subTextClass = density === 'compact' ? 'text-[10px]' : 'text-[11px]'
 
   const shortcutLabelTop3 = isGentleTone ? 'O que importa por agora' : 'O que realmente importa hoje'
   const shortcutLabelAgenda = isGentleTone ? 'Só registrar um combinado' : 'Compromissos e combinados'
@@ -1304,7 +1305,9 @@ const subTextClass = density === 'compact' ? 'text-[10px]' : 'text-[11px]
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {shouldRenderCoach && <InfoDot onClick={() => openCoach('appointments')} label="Como usar compromissos" />}
+                    {shouldRenderCoach && (
+                      <InfoDot onClick={() => openCoach('appointments')} label="Como usar compromissos" />
+                    )}
 
                     <button
                       type="button"
@@ -1347,7 +1350,7 @@ const subTextClass = density === 'compact' ? 'text-[10px]' : 'text-[11px]
                               key={appt.id}
                               type="button"
                               onClick={() => openEditAppointmentModal(appt)}
-className={`w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 ${rowPadClass} text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]`}
+                              className={`w-full flex items-center justify-between gap-3 rounded-xl border border-[#F1E4EC] bg-white px-3 ${rowPadClass} text-left hover:border-[var(--color-brand)]/60 hover:bg-[#FFF3F8]`}
                             >
                               <div className="flex items-center gap-2">
                                 <span className="inline-flex h-7 min-w-[44px] items-center justify-center rounded-full bg-[#FFE8F2] text-[11px] font-semibold text-[var(--color-brand)] px-2">
@@ -1359,12 +1362,13 @@ className={`w-full flex items-center justify-between gap-3 rounded-xl border bor
                                     {appt.title || 'Compromisso'}
                                   </span>
                                   <span className={`${subTextClass} text-[var(--color-text-muted)]`}>
-                                    {appt.time ? `Horário: ${appt.time}` : 'Sem horário definido'} · {dateLabel(appt.dateKey)}
+                                    {appt.time ? `Horário: ${appt.time}` : 'Sem horário definido'} ·{' '}
+                                    {dateLabel(appt.dateKey)}
                                   </span>
                                 </div>
                               </div>
 
-                              <span className="text-[11px] text-[var(--color-text-muted)]">Editar</span>
+                              <span className={`${subTextClass} text-[var(--color-text-muted)]`}>Editar</span>
                             </button>
                           ))}
 
