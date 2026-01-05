@@ -1039,7 +1039,7 @@ export default function WeeklyPlannerCore() {
             ) : null}
           </SoftCard>
 
-          {viewMode === 'week' && <WeekView weekData={weekData} />}
+          {viewMode === 'week' && <WeekView weekData={weekData} density={density} />}
 
           {viewMode === 'day' && (
             <div className="space-y-6">
