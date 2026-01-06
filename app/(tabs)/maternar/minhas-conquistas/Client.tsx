@@ -11,15 +11,9 @@ import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 
 import { BADGES, type Badge } from '@/app/lib/minhas-conquistas/catalog'
-import { statusForBadge } from '@/app/lib/minhas-conquistas/state'
+import { computeCounts, computeNarrativeState, statusForBadge } from '@/app/lib/minhas-conquistas/state'
 import { getBehaviorBadgesForConquistas } from '@/app/lib/minhas-conquistas/behaviorBadges'
-import {
-  getMonthKeys,
-  getWeekKeys,
-  readDayPoints,
-  readTotalPoints,
-  todayKey,
-} from '@/app/lib/minhas-conquistas/storage'
+import { getMonthKeys, getWeekKeys, readDayPoints, readTotalPoints, todayKey } from '@/app/lib/minhas-conquistas/storage'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -109,7 +103,16 @@ export default function MinhasConquistasClient() {
   const [view, setView] = useState<View>('selos')
   const [totalPoints, setTotalPoints] = useState<number>(0)
   const [todayPoints, setTodayPoints] = useState<number>(0)
-  const [behaviorBadges, setBehaviorBadges] = useState<Badge[]>([])
+
+  // Inicializa já com a leitura possível do storage para reduzir “flicker” na contagem.
+  // (Client Component: roda no browser; computeBadges também é guardado por window check.)
+  const [behaviorBadges, setBehaviorBadges] = useState<Badge[]>(() => {
+    try {
+      return getBehaviorBadgesForConquistas()
+    } catch {
+      return []
+    }
+  })
 
   useEffect(() => {
     try {
@@ -126,8 +129,10 @@ export default function MinhasConquistasClient() {
     setTotalPoints(total)
     setTodayPoints(tPoints)
 
-    const bbadges = getBehaviorBadgesForConquistas()
-    setBehaviorBadges(bbadges)
+    // Atualiza 1x no mount para refletir storage real do momento.
+    try {
+      setBehaviorBadges(getBehaviorBadgesForConquistas())
+    } catch {}
 
     try {
       track('minhas_conquistas.open', { today: t, totalPoints: total })
@@ -141,14 +146,20 @@ export default function MinhasConquistasClient() {
   const daysActive28 = useMemo(() => monthKeys.filter((k) => readDayPoints(k) > 0).length, [monthKeys])
   const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
 
-  const narrativeUnlocked = useMemo(() => BADGES.filter((b) => totalPoints >= b.minPoints), [totalPoints])
+  const { narrativeUnlocked, locked, nextBadge } = useMemo(() => computeNarrativeState(totalPoints), [totalPoints])
+
   const unlocked = useMemo(() => [...narrativeUnlocked, ...behaviorBadges], [narrativeUnlocked, behaviorBadges])
 
-  const locked = useMemo(() => BADGES.filter((b) => totalPoints < b.minPoints), [totalPoints])
-  const nextBadge = useMemo(() => locked[0] ?? null, [locked])
-
-  const recognizedCount = useMemo(() => narrativeUnlocked.length + behaviorBadges.length, [narrativeUnlocked.length, behaviorBadges.length])
-  const possibleCount = useMemo(() => BADGES.length + behaviorBadges.length, [behaviorBadges.length])
+  const { recognizedCount, possibleCount } = useMemo(
+    () =>
+      computeCounts({
+        narrativeUnlockedCount: narrativeUnlocked.length,
+        behaviorCount: behaviorBadges.length,
+        narrativeTotal: BADGES.length,
+        behaviorTotal: behaviorBadges.length,
+      }),
+    [narrativeUnlocked.length, behaviorBadges.length]
+  )
 
   return (
     <main
@@ -269,9 +280,7 @@ export default function MinhasConquistasClient() {
                           Selos
                         </span>
                         <h2 className="text-lg font-semibold text-[#2f3a56]">Marcos que se constroem com o tempo</h2>
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Eles não aparecem por pressa — aparecem por continuidade.
-                        </p>
+                        <p className="text-[13px] text-[#6a6a6a]">Eles não aparecem por pressa — aparecem por continuidade.</p>
                       </div>
                     </div>
 
@@ -382,8 +391,8 @@ export default function MinhasConquistasClient() {
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança.
-                        O que foi possível já conta — e conta de verdade.
+                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança. O que foi
+                        possível já conta — e conta de verdade.
                       </div>
 
                       <div className="mt-5 flex flex-wrap gap-2">
