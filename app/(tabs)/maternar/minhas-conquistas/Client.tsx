@@ -9,114 +9,12 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+import { BADGES, type Badge } from '@/app/lib/minhas-conquistas/catalog'
+import { statusForBadge } from '@/app/lib/minhas-conquistas/state'
+import { getMonthKeys, getWeekKeys, readDayPoints, readTotalPoints, todayKey } from '@/app/lib/minhas-conquistas/storage'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-type Badge = {
-  id: string
-  title: string
-  // texto curto (cards)
-  desc: string
-  // texto extra (apenas no “destaque” do marco em construção)
-  aux?: string
-  icon: React.ComponentProps<typeof AppIcon>['name']
-  minPoints: number
-}
-
-function safeGetLS(key: string): string | null {
-  try {
-    if (typeof window === 'undefined') return null
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeParseInt(v: string | null, fallback = 0) {
-  const n = Number.parseInt(String(v ?? ''), 10)
-  return Number.isFinite(n) ? n : fallback
-}
-
-function todayKey() {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function addDaysKey(date: Date, delta: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + delta)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function getWeekKeys(anchor = new Date()) {
-  const keys: string[] = []
-  for (let i = -6; i <= 0; i++) keys.push(addDaysKey(anchor, i))
-  return keys
-}
-
-function getMonthKeys(anchor = new Date()) {
-  const keys: string[] = []
-  for (let i = -27; i <= 0; i++) keys.push(addDaysKey(anchor, i))
-  return keys
-}
-
-const LS = {
-  pointsTotal: 'mj_points_total',
-  dayPrefix: 'mj_day_',
-  // P26: streak removido (anti-culpa). Mantemos o app funcional sem mecânica de sequência.
-}
-
-// Textos ajustados: mais curtos nos cards (2 frases no máximo)
-// Direção madura sem “faltam X” e sem progresso visível
-const BADGES: Badge[] = [
-  {
-    id: 'b-1',
-    title: 'Primeiro passo',
-    desc: 'Você começou. O que vem depois depende de repetir — mesmo que aos poucos.',
-    aux: 'Esse marco ganha força quando o começo deixa de ser exceção. Não é sobre pressa. É sobre continuidade possível.',
-    icon: 'star',
-    minPoints: 10,
-  },
-  {
-    id: 'b-2',
-    title: 'Dia possível',
-    desc: 'Você fez o que cabia. Isso sustenta o caminho quando o dia não permite mais.',
-    aux: 'Reconhece escolhas feitas mesmo em dias cheios.',
-    icon: 'sparkles',
-    minPoints: 22,
-  },
-  {
-    id: 'b-3',
-    title: 'Presença real',
-    desc: 'Presença não é quantidade. Ela se constrói quando você escolhe estar — mesmo em pequenos momentos.',
-    aux: 'Esse marco se constrói quando a presença deixa de ser exceção. Pequenos gestos repetidos mudam a experiência.',
-    icon: 'heart',
-    minPoints: 40,
-  },
-  {
-    id: 'b-4',
-    title: 'Rotina mais leve',
-    desc: 'Leveza não surge do acaso. Ela vem de decisões conscientes no meio do dia.',
-    aux: 'Esse marco aparece quando você ajusta o ritmo com intenção. Menos peso também é uma escolha ativa.',
-    icon: 'sun',
-    minPoints: 70,
-  },
-]
-
-function readDayPoints(key: string) {
-  return safeParseInt(safeGetLS(LS.dayPrefix + key), 0)
-}
-
-function readTotalPoints() {
-  return safeParseInt(safeGetLS(LS.pointsTotal), 0)
-}
 
 function NeutralBar() {
   return (
@@ -154,14 +52,6 @@ function ViewPill({
       {label}
     </button>
   )
-}
-
-const LOCKED_STATUSES = ['Ganhando forma', 'Se fortalecendo', 'Em consolidação', 'Tomando corpo'] as const
-
-function statusForBadge(badge: Badge, unlocked: boolean) {
-  if (unlocked) return 'Reconhecido'
-  const idx = Math.max(0, BADGES.findIndex((b) => b.id === badge.id))
-  return LOCKED_STATUSES[idx % LOCKED_STATUSES.length]
 }
 
 function BadgeCard({ badge, unlocked }: { badge: Badge; unlocked: boolean }) {
@@ -453,7 +343,9 @@ export default function MinhasConquistasClient() {
                       </div>
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          últimos 7 dias
+                        </div>
                         <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
                         <div className="mt-1 text-[12px] text-[#6a6a6a]">{daysActive7} dias com presença registrada</div>
                       </div>
@@ -475,8 +367,8 @@ export default function MinhasConquistasClient() {
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança.
-                        O que foi possível já conta — e conta de verdade.
+                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança. O que foi
+                        possível já conta — e conta de verdade.
                       </div>
 
                       <div className="mt-5 flex flex-wrap gap-2">
