@@ -9,9 +9,17 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
+
 import { BADGES, type Badge } from '@/app/lib/minhas-conquistas/catalog'
 import { statusForBadge } from '@/app/lib/minhas-conquistas/state'
-import { getMonthKeys, getWeekKeys, readDayPoints, readTotalPoints, todayKey } from '@/app/lib/minhas-conquistas/storage'
+import { getBehaviorBadgesForConquistas } from '@/app/lib/minhas-conquistas/behaviorBadges'
+import {
+  getMonthKeys,
+  getWeekKeys,
+  readDayPoints,
+  readTotalPoints,
+  todayKey,
+} from '@/app/lib/minhas-conquistas/storage'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -101,6 +109,7 @@ export default function MinhasConquistasClient() {
   const [view, setView] = useState<View>('selos')
   const [totalPoints, setTotalPoints] = useState<number>(0)
   const [todayPoints, setTodayPoints] = useState<number>(0)
+  const [behaviorBadges, setBehaviorBadges] = useState<Badge[]>([])
 
   useEffect(() => {
     try {
@@ -117,6 +126,9 @@ export default function MinhasConquistasClient() {
     setTotalPoints(total)
     setTodayPoints(tPoints)
 
+    const bbadges = getBehaviorBadgesForConquistas()
+    setBehaviorBadges(bbadges)
+
     try {
       track('minhas_conquistas.open', { today: t, totalPoints: total })
     } catch {}
@@ -129,9 +141,14 @@ export default function MinhasConquistasClient() {
   const daysActive28 = useMemo(() => monthKeys.filter((k) => readDayPoints(k) > 0).length, [monthKeys])
   const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
 
-  const unlocked = useMemo(() => BADGES.filter((b) => totalPoints >= b.minPoints), [totalPoints])
+  const narrativeUnlocked = useMemo(() => BADGES.filter((b) => totalPoints >= b.minPoints), [totalPoints])
+  const unlocked = useMemo(() => [...narrativeUnlocked, ...behaviorBadges], [narrativeUnlocked, behaviorBadges])
+
   const locked = useMemo(() => BADGES.filter((b) => totalPoints < b.minPoints), [totalPoints])
   const nextBadge = useMemo(() => locked[0] ?? null, [locked])
+
+  const recognizedCount = useMemo(() => narrativeUnlocked.length + behaviorBadges.length, [narrativeUnlocked.length, behaviorBadges.length])
+  const possibleCount = useMemo(() => BADGES.length + behaviorBadges.length, [behaviorBadges.length])
 
   return (
     <main
@@ -343,9 +360,7 @@ export default function MinhasConquistasClient() {
                       </div>
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                          últimos 7 dias
-                        </div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">últimos 7 dias</div>
                         <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{weeklyTotal} pts</div>
                         <div className="mt-1 text-[12px] text-[#6a6a6a]">{daysActive7} dias com presença registrada</div>
                       </div>
@@ -358,7 +373,7 @@ export default function MinhasConquistasClient() {
                         <div className="mt-3 rounded-2xl bg-[#ffe1f1] p-3 border border-[#f5d7e5]">
                           <div className="text-[12px] font-semibold text-[#2f3a56]">Conquistas reconhecidas</div>
                           <div className="text-[12px] text-[#6a6a6a]">
-                            {unlocked.length} de {BADGES.length}
+                            {recognizedCount} de {possibleCount}
                           </div>
                         </div>
                       </div>
@@ -367,8 +382,8 @@ export default function MinhasConquistasClient() {
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
                       <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança. O que foi
-                        possível já conta — e conta de verdade.
+                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança.
+                        O que foi possível já conta — e conta de verdade.
                       </div>
 
                       <div className="mt-5 flex flex-wrap gap-2">
