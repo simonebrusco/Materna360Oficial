@@ -17,12 +17,13 @@ function iconFor(id: BadgeId): Badge['icon'] {
   }
 }
 
+// Texto neutro, descritivo, sem prescrição, sem “você deveria”.
 function descFor(id: BadgeId): string {
   switch (id) {
     case 'autocuidado_7':
-      return 'Reconhecido por constância no seu cuidado, do seu jeito.'
+      return 'Reconhecido por cuidado possível, no seu ritmo.'
     case 'mae_presente':
-      return 'Reconhecido por pequenos gestos que sustentam o dia.'
+      return 'Reconhecido por presença registrada em pequenos gestos.'
     case 'conexao_sem_culpa':
       return 'Reconhecido por escolhas que aproximam, sem peso.'
     default:
