@@ -224,7 +224,7 @@ export default function Client() {
             </h1>
 
             <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
-              Um espaço para pausar, entender o dia como ele está e seguir com mais clareza.
+              Um espaço para pausar. Entender o dia como ele está. Seguir com mais clareza.
             </p>
           </header>
 
@@ -265,7 +265,9 @@ export default function Client() {
                         Um apoio para este momento
                       </div>
                       <div className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-[56ch]">
-                        Pequeno, prático e sem cobrança. Se não servir, você troca ou fecha por aqui.
+                        Pequeno e prático. Sem cobrança.
+                        <br />
+                        Se não servir, troque ou feche por aqui.
                       </div>
                     </div>
                   </div>
@@ -424,7 +426,9 @@ export default function Client() {
                                   </div>
 
                                   <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                    Se não servir, pode trocar ou fechar por aqui. Sem obrigação.
+                                    Se não servir, troque ou feche por aqui.
+                                    <br />
+                                    Sem obrigação.
                                   </div>
                                 </div>
                               </div>
@@ -563,7 +567,7 @@ export default function Client() {
                         <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
                         <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
                         <div className="hub-subtitle text-[#6a6a6a]">
-                          Se não couber nada agora, fechar por aqui já é cuidado.
+                          Se não couber nada agora, encerrar por aqui já é cuidado.
                         </div>
 
                         <div className="mt-4 flex flex-col sm:flex-row gap-2">
@@ -607,7 +611,9 @@ export default function Client() {
                         </div>
 
                         {euSignal?.showLessLine ? (
-                          <div className="mt-3 text-[12px] text-[#6a6a6a]">Hoje pode ser menos. E ainda assim contar.</div>
+                          <div className="mt-3 text-[12px] text-[#6a6a6a]">
+                            Hoje pode ser menos. E ainda assim contar.
+                          </div>
                         ) : null}
                       </div>
                     </div>
