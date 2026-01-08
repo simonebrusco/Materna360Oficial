@@ -1135,8 +1135,13 @@ export default function MeuFilhoClient() {
                 Meu Filho
               </h1>
 
+              {/* P34.10: quebra em linhas curtas (sem travessão) */}
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
+                Você entra sem ideias.
+                <br />
+                Sai com um plano simples para agora.
+                <br />
+                Sem precisar pensar.
               </p>
 
               {childLabel ? (
@@ -1166,12 +1171,19 @@ export default function MeuFilhoClient() {
                     </div>
 
                     <div>
+                      {/* P34.10: status em 2 linhas no mobile */}
                       <div className="text-[12px] text-white/85">
-                        Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
+                        <div>
+                          Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)}
+                        </div>
+                        <div>Faixa {age}</div>
                       </div>
+
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sugestão pronta para agora
                       </div>
+
+                      {/* P34.10: 2 linhas curtas */}
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
                         {timeHint(time)}
                       </div>
@@ -1504,7 +1516,7 @@ export default function MeuFilhoClient() {
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
+                            Um ajuste pequeno para o dia fluir melhor. Sem “rotina perfeita”.
                           </p>
                         </div>
                       </div>
@@ -1560,7 +1572,9 @@ export default function MeuFilhoClient() {
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
+                            Um final simples.
+                            <br />
+                            Só para a criança sentir presença.
                           </p>
                         </div>
                       </div>
