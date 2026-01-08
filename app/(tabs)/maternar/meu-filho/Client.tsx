@@ -77,6 +77,15 @@ function safeSetLS(key: string, value: string) {
   } catch {}
 }
 
+function safeParseJSON<T>(raw: string | null): T | null {
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
 function stepIndex(s: Step) {
   return s === 'brincadeiras' ? 1 : s === 'desenvolvimento' ? 2 : s === 'rotina' ? 3 : 4
 }
@@ -112,6 +121,18 @@ const HUB_PREF = {
 }
 
 /**
+ * P34.11 (ajuste guiado) — Preferências de curadoria do Bloco 2
+ */
+type PlayGoal = 'motor' | 'calma' | 'linguagem' | 'autonomia'
+type PlayWhere = 'casa' | 'ar_livre'
+
+const HUB_B2_PREF = {
+  goal: 'maternar/meu-filho/bloco2/pref/goal',
+  where: 'maternar/meu-filho/bloco2/pref/where',
+  recentTitles: 'maternar/meu-filho/bloco2/recent_titles.v1',
+}
+
+/**
  * Deriva AgeBand do ageMonths.
  * 0–2: 0..35
  * 3–4: 36..59
@@ -137,6 +158,18 @@ function normalizeAgeBand(v: unknown): AgeBand | null {
 function normalizeTimeMode(v: unknown): TimeMode | null {
   const s = String(v ?? '').trim()
   if (s === '5' || s === '10' || s === '15') return s
+  return null
+}
+
+function normalizePlayGoal(v: unknown): PlayGoal | null {
+  const s = String(v ?? '').trim()
+  if (s === 'motor' || s === 'calma' || s === 'linguagem' || s === 'autonomia') return s
+  return null
+}
+
+function normalizePlayWhere(v: unknown): PlayWhere | null {
+  const s = String(v ?? '').trim()
+  if (s === 'casa' || s === 'ar_livre') return s
   return null
 }
 
@@ -289,22 +322,61 @@ function safeBloco2How(raw: unknown): string | null {
   return t
 }
 
-function pick3Suggestions(data: any): { title: string; description: string }[] | null {
-  const arr = Array.isArray(data?.suggestions) ? data.suggestions : null
-  if (!arr || arr.length < 3) return null
-  const s0 = arr[0]
-  const s1 = arr[1]
-  const s2 = arr[2]
-  const pack = [s0, s1, s2].map((s) => ({
-    title: String(s?.title ?? '').trim(),
-    description: String(s?.description ?? '').trim(),
-  }))
-  if (pack.some((p) => !p.title || !p.description)) return null
-  return pack
+function normalizeTitleKey(t: string) {
+  return String(t ?? '').trim().toLowerCase()
 }
 
-async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand }): Promise<Bloco2Items | null> {
+function pick3Suggestions(data: any, excludeTitleKeys: Set<string>) {
+  const arr = Array.isArray(data?.suggestions) ? data.suggestions : null
+  if (!arr || arr.length < 3) return null
+
+  const pack = arr
+    .map((s: any) => ({
+      title: String(s?.title ?? '').trim(),
+      description: String(s?.description ?? '').trim(),
+    }))
+    .filter((p: any) => p.title && p.description)
+
+  // remove repetidos e excluídos
+  const uniq: { title: string; description: string }[] = []
+  const seen = new Set<string>()
+  for (const p of pack) {
+    const key = normalizeTitleKey(p.title)
+    if (!key) continue
+    if (excludeTitleKeys.has(key)) continue
+    if (seen.has(key)) continue
+    seen.add(key)
+    uniq.push(p)
+    if (uniq.length === 3) break
+  }
+
+  if (uniq.length < 3) return null
+  return uniq
+}
+
+function loadRecentTitles(): string[] {
+  const raw = safeGetLS(HUB_B2_PREF.recentTitles)
+  const arr = safeParseJSON<string[]>(raw)
+  if (!Array.isArray(arr)) return []
+  return arr.map((x) => String(x ?? '').trim()).filter(Boolean).slice(0, 12)
+}
+
+function saveRecentTitles(next: string[]) {
+  const cleaned = next.map((x) => String(x ?? '').trim()).filter(Boolean).slice(0, 12)
+  safeSetLS(HUB_B2_PREF.recentTitles, JSON.stringify(cleaned))
+}
+
+async function fetchBloco2Cards(args: {
+  tempoDisponivel: number
+  age: AgeBand
+  goal: PlayGoal
+  where: PlayWhere
+}): Promise<Bloco2Items | null> {
   try {
+    const recent = loadRecentTitles()
+    const excludeKeys = new Set(recent.map(normalizeTitleKey))
+
+    // 1 tentativa “normal”; se não conseguir 3 sem repetir, cai no fallback local.
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -317,12 +389,16 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
         tipoIdeia: 'meu-filho-bloco-2',
         ageBand: args.age,
         contexto: 'exploracao',
+        objetivo: args.goal,
+        onde: args.where,
+        excluir_titulos: recent.slice(0, 6),
       }),
     })
 
     if (!res.ok) return null
     const data = await res.json().catch(() => null)
-    const picked = pick3Suggestions(data)
+
+    const picked = pick3Suggestions(data, excludeKeys)
     if (!picked) return null
 
     const mk = (i: { title: string; description: string }): PlanItem | null => {
@@ -342,6 +418,10 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
     const c = mk(picked[2])
     if (!a || !b || !c) return null
 
+    // atualiza “recent titles” (anti-repetição leve)
+    const nextRecent = [a.title, b.title, c.title, ...recent].map((x) => String(x).trim())
+    saveRecentTitles(nextRecent)
+
     return { a, b, c }
   } catch {
     return null
@@ -350,10 +430,14 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
 
 /* =========================
    BLOCO 3 — ROTINAS / CONEXÃO (continuidade sem cobrança)
+   - Agora: “escolha → gerar”
 ========================= */
 
 type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
 type Bloco3Type = 'rotina' | 'conexao'
+
+type RotinaTema = 'transicao' | 'refeicao' | 'banho' | 'sono'
+type ConexaoTema = 'chegada' | 'pos_tela' | 'pos_briga' | 'antes_dormir'
 
 type Bloco3State =
   | { status: 'idle' }
@@ -415,6 +499,7 @@ async function fetchBloco3Suggestion(args: {
   momento_do_dia: MomentoDoDia
   tipo_experiencia: Bloco3Type
   contexto: 'continuidade'
+  tema: RotinaTema | ConexaoTema
 }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
@@ -430,6 +515,7 @@ async function fetchBloco3Suggestion(args: {
         momento_do_dia: args.momento_do_dia,
         tipo_experiencia: args.tipo_experiencia,
         contexto: args.contexto,
+        tema: args.tema,
       }),
     })
 
@@ -454,9 +540,7 @@ async function fetchBloco3Suggestion(args: {
 
 /* =========================
    BLOCO 4 — “FASES / CONTEXTO” (Tradução Prática)
-   - 1 frase
-   - máx 140 caracteres
-   - sem tom normativo/diagnóstico
+   - Agora: “escolha → gerar”
 ========================= */
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
@@ -801,13 +885,20 @@ export default function MeuFilhoClient() {
   const [bloco2, setBloco2] = useState<Bloco2State>({ status: 'idle' })
   const bloco2ReqSeq = useRef(0)
 
-  // Bloco 3 (Rotina/Conexão — continuidade)
+  // Bloco 2: curadoria guiada
+  const [b2Goal, setB2Goal] = useState<PlayGoal>('motor')
+  const [b2Where, setB2Where] = useState<PlayWhere>('casa')
+
+  // Bloco 3 (Rotina/Conexão — continuidade) -> agora com “gate”
   const [bloco3, setBloco3] = useState<Bloco3State>({ status: 'idle' })
   const bloco3ReqSeq = useRef(0)
+  const [rotinaTema, setRotinaTema] = useState<RotinaTema | null>(null)
+  const [conexaoTema, setConexaoTema] = useState<ConexaoTema | null>(null)
 
-  // Bloco 4 (Fase/Contexto — 1 frase)
+  // Bloco 4 (Fase/Contexto — 1 frase) -> agora com “gate”
   const [bloco4, setBloco4] = useState<Bloco4State>({ status: 'idle' })
   const bloco4ReqSeq = useRef(0)
+  const [faseChoice, setFaseChoice] = useState<MomentoDesenvolvimento | null>(null)
 
   useEffect(() => {
     try {
@@ -830,15 +921,40 @@ export default function MeuFilhoClient() {
       setFamilyDoneToday(js.family.doneToday)
     } catch {}
 
+    // Bloco 2 prefs (best effort)
+    const prefGoal = normalizePlayGoal(safeGetLS(HUB_B2_PREF.goal)) ?? 'motor'
+    const prefWhere = normalizePlayWhere(safeGetLS(HUB_B2_PREF.where)) ?? 'casa'
+    setB2Goal(prefGoal)
+    setB2Where(prefWhere)
+
+    // Fase: default sugerido, mas não dispara geração sem clique
+    const suggestedFase = inferMomentoDesenvolvimento(inferred.age) ?? null
+    setFaseChoice(suggestedFase)
+
     try {
       track('meu_filho.open', {
         time: inferred.time,
         age: inferred.age,
         childLabel: inferred.childLabel ?? null,
         profileSource: snap.source,
+        b2Goal: prefGoal,
+        b2Where: prefWhere,
       })
     } catch {}
   }, [])
+
+  // quando troca step, limpa o “resultado” até a próxima escolha (somente para blocos gateados)
+  useEffect(() => {
+    if (step === 'rotina') {
+      setBloco3({ status: 'idle' })
+    }
+    if (step === 'conexao') {
+      setBloco3({ status: 'idle' })
+    }
+    if (step === 'desenvolvimento') {
+      setBloco4({ status: 'idle' })
+    }
+  }, [step])
 
   const kit = useMemo(() => KITS[age][time], [age, time])
 
@@ -890,21 +1006,27 @@ export default function MeuFilhoClient() {
       setBloco2({ status: 'loading' })
 
       const tempoDisponivel = Number(time)
-      const ai = await fetchBloco2Cards({ tempoDisponivel, age })
+
+      const ai = await fetchBloco2Cards({
+        tempoDisponivel,
+        age,
+        goal: b2Goal,
+        where: b2Where,
+      })
 
       if (!alive || seq !== bloco2ReqSeq.current) return
 
       if (ai) {
         setBloco2({ status: 'done', items: ai, source: 'ai' })
         try {
-          track('meu_filho.bloco2.done', { source: 'ai', time, age })
+          track('meu_filho.bloco2.done', { source: 'ai', time, age, goal: b2Goal, where: b2Where })
         } catch {}
         return
       }
 
       setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
       try {
-        track('meu_filho.bloco2.done', { source: 'fallback', time, age })
+        track('meu_filho.bloco2.done', { source: 'fallback', time, age, goal: b2Goal, where: b2Where })
       } catch {}
     }
 
@@ -912,18 +1034,21 @@ export default function MeuFilhoClient() {
     return () => {
       alive = false
     }
-  }, [time, age, kit.plan])
+  }, [time, age, kit.plan, b2Goal, b2Where])
 
+  // BLOCO 3: agora só gera quando existe tema selecionado
   useEffect(() => {
     if (step !== 'rotina' && step !== 'conexao') return
+
+    const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
+    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+    if (!tema) return
 
     let alive = true
     const seq = ++bloco3ReqSeq.current
 
     async function run() {
-      const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
       const momento = momentForStep(step)
-
       setBloco3({ status: 'loading', kind })
 
       const ai = await fetchBloco3Suggestion({
@@ -931,6 +1056,7 @@ export default function MeuFilhoClient() {
         momento_do_dia: momento,
         tipo_experiencia: kind,
         contexto: 'continuidade',
+        tema,
       })
 
       if (!alive || seq !== bloco3ReqSeq.current) return
@@ -938,7 +1064,7 @@ export default function MeuFilhoClient() {
       if (ai) {
         setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
         try {
-          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento })
+          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
         } catch {}
         return
       }
@@ -946,7 +1072,7 @@ export default function MeuFilhoClient() {
       const fb = BLOCO3_FALLBACK[kind][age]
       setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
       try {
-        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento })
+        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
       } catch {}
     }
 
@@ -954,10 +1080,12 @@ export default function MeuFilhoClient() {
     return () => {
       alive = false
     }
-  }, [step, age])
+  }, [step, age, rotinaTema, conexaoTema])
 
+  // BLOCO 4: agora só gera quando existe escolha de fase
   useEffect(() => {
     if (step !== 'desenvolvimento') return
+    if (!faseChoice) return
 
     let alive = true
     const seq = ++bloco4ReqSeq.current
@@ -965,27 +1093,26 @@ export default function MeuFilhoClient() {
     async function run() {
       setBloco4({ status: 'loading' })
 
-      const momento = inferMomentoDesenvolvimento(age)
       const ai = await fetchBloco4Suggestion({
         faixa_etaria: age,
-        momento_desenvolvimento: momento,
+        momento_desenvolvimento: faseChoice,
         contexto: 'fase',
       })
 
       if (!alive || seq !== bloco4ReqSeq.current) return
 
       if (ai) {
-        setBloco4({ status: 'done', text: ai, source: 'ai', momento })
+        setBloco4({ status: 'done', text: ai, source: 'ai', momento: faseChoice })
         try {
-          track('meu_filho.bloco4.done', { source: 'ai', age, momento })
+          track('meu_filho.bloco4.done', { source: 'ai', age, momento: faseChoice })
         } catch {}
         return
       }
 
       const fb = BLOCO4_FALLBACK[age]
-      setBloco4({ status: 'done', text: fb, source: 'fallback', momento })
+      setBloco4({ status: 'done', text: fb, source: 'fallback', momento: faseChoice })
       try {
-        track('meu_filho.bloco4.done', { source: 'fallback', age, momento })
+        track('meu_filho.bloco4.done', { source: 'fallback', age, momento: faseChoice })
       } catch {}
     }
 
@@ -993,7 +1120,7 @@ export default function MeuFilhoClient() {
     return () => {
       alive = false
     }
-  }, [step, age])
+  }, [step, age, faseChoice])
 
   function go(next: Step) {
     setStep(next)
@@ -1021,6 +1148,11 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
 
+    // Atualiza sugestão default para fase (mas não dispara geração sem clique)
+    const suggested = inferMomentoDesenvolvimento(next) ?? null
+    setFaseChoice(suggested)
+    setBloco4({ status: 'idle' })
+
     try {
       track('meu_filho.age.select', { age: next, reason: 'manual_override' })
     } catch {}
@@ -1035,6 +1167,22 @@ export default function MeuFilhoClient() {
         age,
         source: bloco2.status === 'done' ? bloco2.source : 'unknown',
       })
+    } catch {}
+  }
+
+  function onSelectB2Goal(next: PlayGoal) {
+    setB2Goal(next)
+    safeSetLS(HUB_B2_PREF.goal, next)
+    try {
+      track('meu_filho.bloco2.goal.select', { goal: next })
+    } catch {}
+  }
+
+  function onSelectB2Where(next: PlayWhere) {
+    setB2Where(next)
+    safeSetLS(HUB_B2_PREF.where, next)
+    try {
+      track('meu_filho.bloco2.where.select', { where: next })
     } catch {}
   }
 
@@ -1098,6 +1246,7 @@ export default function MeuFilhoClient() {
 
   const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
   const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
+  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   const bloco3Label =
     bloco3.status === 'loading'
@@ -1105,8 +1254,6 @@ export default function MeuFilhoClient() {
       : bloco3.status === 'done'
         ? 'Para encaixar no dia'
         : 'Para encaixar no dia'
-
-  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   return (
     <main
@@ -1135,13 +1282,8 @@ export default function MeuFilhoClient() {
                 Meu Filho
               </h1>
 
-              {/* P34.10: quebra em linhas curtas (sem travessão) */}
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem ideias.
-                <br />
-                Sai com um plano simples para agora.
-                <br />
-                Sem precisar pensar.
+                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
               </p>
 
               {childLabel ? (
@@ -1171,19 +1313,12 @@ export default function MeuFilhoClient() {
                     </div>
 
                     <div>
-                      {/* P34.10: status em 2 linhas no mobile */}
                       <div className="text-[12px] text-white/85">
-                        <div>
-                          Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)}
-                        </div>
-                        <div>Faixa {age}</div>
+                        Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
                       </div>
-
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sugestão pronta para agora
                       </div>
-
-                      {/* P34.10: 2 linhas curtas */}
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
                         {timeHint(time)}
                       </div>
@@ -1363,6 +1498,67 @@ export default function MeuFilhoClient() {
                           </div>
                         </div>
 
+                        {/* Curadoria guiada (Objetivo + Onde) */}
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="rounded-2xl border border-[#f5d7e5] bg-white p-3">
+                            <div className="text-[12px] text-[#6a6a6a] mb-2">Objetivo</div>
+                            <div className="flex flex-wrap gap-2">
+                              {(
+                                [
+                                  { id: 'motor' as const, label: 'Motor' },
+                                  { id: 'calma' as const, label: 'Calma' },
+                                  { id: 'linguagem' as const, label: 'Linguagem' },
+                                  { id: 'autonomia' as const, label: 'Autonomia' },
+                                ] as const
+                              ).map((it) => {
+                                const active = b2Goal === it.id
+                                return (
+                                  <button
+                                    key={it.id}
+                                    onClick={() => onSelectB2Goal(it.id)}
+                                    className={[
+                                      'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                      active
+                                        ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                        : 'bg-[#fff7fb] border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                    ].join(' ')}
+                                  >
+                                    {it.label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl border border-[#f5d7e5] bg-white p-3">
+                            <div className="text-[12px] text-[#6a6a6a] mb-2">Onde</div>
+                            <div className="flex flex-wrap gap-2">
+                              {(
+                                [
+                                  { id: 'casa' as const, label: 'Em casa' },
+                                  { id: 'ar_livre' as const, label: 'Ar livre' },
+                                ] as const
+                              ).map((it) => {
+                                const active = b2Where === it.id
+                                return (
+                                  <button
+                                    key={it.id}
+                                    onClick={() => onSelectB2Where(it.id)}
+                                    className={[
+                                      'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                      active
+                                        ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                        : 'bg-[#fff7fb] border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                    ].join(' ')}
+                                  >
+                                    {it.label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="mt-3 text-[11px] text-[#6a6a6a]">
                           {bloco2.status === 'loading'
                             ? 'Curando 3 opções para hoje…'
@@ -1474,14 +1670,60 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
 
+                        {/* Gate: escolher uma leitura da fase */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Nessa fase</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            Escolha 1 leitura da fase
+                          </div>
 
-                          {bloco4.status === 'loading' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase…</div>
-                          ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
-                          )}
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {(
+                              [
+                                { id: 'exploracao' as const, label: 'Exploração' },
+                                { id: 'imitacao' as const, label: 'Imitação' },
+                                { id: 'afirmacao' as const, label: 'Afirmação' },
+                                { id: 'autonomia' as const, label: 'Autonomia' },
+                              ] as const
+                            ).map((it) => {
+                              const active = faseChoice === it.id
+                              return (
+                                <button
+                                  key={it.id}
+                                  onClick={() => {
+                                    setFaseChoice(it.id)
+                                    setBloco4({ status: 'idle' })
+                                    try {
+                                      track('meu_filho.bloco4.choice', { momento: it.id, age })
+                                    } catch {}
+                                  }}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    active
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                      : 'bg-[#fff7fb] border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  {it.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                              Nessa fase
+                            </div>
+
+                            {bloco4.status === 'idle' ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                Escolha uma opção acima para gerar uma frase curta.
+                              </div>
+                            ) : bloco4.status === 'loading' ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase…</div>
+                            ) : (
+                              <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -1516,7 +1758,7 @@ export default function MeuFilhoClient() {
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Um ajuste pequeno para o dia fluir melhor. Sem “rotina perfeita”.
+                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
                           </p>
                         </div>
                       </div>
@@ -1525,19 +1767,63 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
+                        {/* Gate: escolher tema antes de gerar */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            {bloco3Label}
+                            Escolha o que está pegando agora
                           </div>
 
-                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
-                          ) : (
-                            <RenderEditorialText
-                              text={bloco3Text}
-                              className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
-                            />
-                          )}
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {(
+                              [
+                                { id: 'transicao' as const, label: 'Transição' },
+                                { id: 'refeicao' as const, label: 'Refeição' },
+                                { id: 'banho' as const, label: 'Banho' },
+                                { id: 'sono' as const, label: 'Sono' },
+                              ] as const
+                            ).map((it) => {
+                              const active = rotinaTema === it.id
+                              return (
+                                <button
+                                  key={it.id}
+                                  onClick={() => {
+                                    setRotinaTema(it.id)
+                                    setBloco3({ status: 'idle' })
+                                    try {
+                                      track('meu_filho.bloco3.choice', { kind: 'rotina', tema: it.id, age })
+                                    } catch {}
+                                  }}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    active
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                      : 'bg-[#fff7fb] border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  {it.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                              {bloco3Label}
+                            </div>
+
+                            {bloco3.status === 'idle' ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                Escolha uma opção acima para gerar um ajuste curto.
+                              </div>
+                            ) : bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
+                            ) : (
+                              <RenderEditorialText
+                                text={bloco3Text}
+                                className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
+                              />
+                            )}
+                          </div>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -1572,9 +1858,7 @@ export default function MeuFilhoClient() {
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
                           <p className="text-[13px] text-[#6a6a6a]">
-                            Um final simples.
-                            <br />
-                            Só para a criança sentir presença.
+                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
                           </p>
                         </div>
                       </div>
@@ -1583,19 +1867,63 @@ export default function MeuFilhoClient() {
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
 
+                        {/* Gate: escolher tema antes de gerar */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            Para encaixar no dia
+                            Escolha 1 cenário
                           </div>
 
-                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
-                          ) : (
-                            <RenderEditorialText
-                              text={bloco3Text}
-                              className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
-                            />
-                          )}
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {(
+                              [
+                                { id: 'chegada' as const, label: 'Chegada' },
+                                { id: 'pos_tela' as const, label: 'Pós-tela' },
+                                { id: 'pos_briga' as const, label: 'Pós-briga' },
+                                { id: 'antes_dormir' as const, label: 'Antes de dormir' },
+                              ] as const
+                            ).map((it) => {
+                              const active = conexaoTema === it.id
+                              return (
+                                <button
+                                  key={it.id}
+                                  onClick={() => {
+                                    setConexaoTema(it.id)
+                                    setBloco3({ status: 'idle' })
+                                    try {
+                                      track('meu_filho.bloco3.choice', { kind: 'conexao', tema: it.id, age })
+                                    } catch {}
+                                  }}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    active
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                      : 'bg-[#fff7fb] border-[#f5d7e5] text-[#6a6a6a] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  {it.label}
+                                </button>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                              Para encaixar no dia
+                            </div>
+
+                            {bloco3.status === 'idle' ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                Escolha um cenário acima para gerar um gesto curto.
+                              </div>
+                            ) : bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                              <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
+                            ) : (
+                              <RenderEditorialText
+                                text={bloco3Text}
+                                className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
+                              />
+                            )}
+                          </div>
                         </div>
 
                         <div className="mt-5 flex flex-wrap gap-2">
