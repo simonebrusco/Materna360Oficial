@@ -94,9 +94,110 @@ function timeTitle(t: TimeMode) {
 }
 
 function timeHint(t: TimeMode) {
-  if (t === '5') return 'Para quando você só precisa conectar e seguir.'
+  if (t === '5') return 'Para quando você só precisa “conectar e seguir”.'
   if (t === '10') return 'Para quando dá para brincar sem complicar.'
   return 'Para quando você quer fechar o dia com presença de verdade.'
+}
+
+/* =========================
+   P34.10 — Legibilidade no mobile (editorial local, sem alterar conceito)
+   - quebra visual no mobile
+   - preserva leitura “inline” no desktop via classes responsivas
+========================= */
+
+function normalizeSpaces(s: string) {
+  return String(s ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .trim()
+}
+
+function splitIntoSentences(s: string): string[] {
+  const t = normalizeSpaces(s)
+  if (!t) return []
+  // split “best effort” por final de frase
+  return t
+    .split(/(?<=[.!?])\s+/g)
+    .map((x) => x.trim())
+    .filter(Boolean)
+}
+
+function mobileChunksFromText(
+  raw: unknown,
+  opts?: {
+    maxChunks?: number
+    includeColonBreak?: boolean
+    breakBefore?: RegExp
+  }
+): string[] {
+  const maxChunks = opts?.maxChunks ?? 3
+  const includeColonBreak = opts?.includeColonBreak ?? true
+  const breakBefore =
+    opts?.breakBefore ??
+    /\s+(No final,|No fim,|Depois,|Em seguida,|Em seguida|Depois|No final|No fim)\b/g
+
+  const base = normalizeSpaces(String(raw ?? ''))
+  if (!base) return []
+
+  // 1) marca respiros editoriais (não muda sentido)
+  let marked = base
+  if (includeColonBreak) {
+    // quebra após “:” quando introduz sequência prática
+    marked = marked.replace(/:\s+/g, ':\n')
+  }
+  marked = marked.replace(breakBefore, '\n$1')
+
+  // 2) quebra por linhas explícitas primeiro
+  const prelim = marked
+    .split('\n')
+    .map((x) => x.trim())
+    .filter(Boolean)
+
+  // 3) quebra por frase dentro de cada bloco, respeitando maxChunks
+  const out: string[] = []
+  for (const block of prelim) {
+    if (out.length >= maxChunks) break
+    const sentences = splitIntoSentences(block)
+    if (sentences.length <= 1) {
+      out.push(block)
+      continue
+    }
+    for (const s of sentences) {
+      if (out.length >= maxChunks) break
+      out.push(s)
+    }
+  }
+
+  // fallback: se não quebrou, retorna o original
+  if (!out.length) return [base]
+  return out
+}
+
+function renderMobileStackedText(
+  raw: unknown,
+  opts?: {
+    maxChunks?: number
+    includeColonBreak?: boolean
+    breakBefore?: RegExp
+  }
+): React.ReactNode {
+  const chunks = mobileChunksFromText(raw, opts)
+  if (!chunks.length) return null
+
+  return (
+    <>
+      {chunks.map((chunk, idx) => (
+        <React.Fragment key={`${idx}-${chunk.slice(0, 12)}`}>
+          {/* Mobile: quebra (block). Desktop+: segue inline (sm:inline). */}
+          <span className="block sm:inline">{chunk}</span>
+          {/* Espaço apenas no desktop quando estiver inline */}
+          {idx < chunks.length - 1 ? <span className="hidden sm:inline"> </span> : null}
+          {/* Respiro no mobile entre blocos */}
+          {idx < chunks.length - 1 ? <span className="block sm:hidden h-2" /> : null}
+        </React.Fragment>
+      ))}
+    </>
+  )
 }
 
 /**
@@ -194,24 +295,24 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 
 const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
   '0-2': {
-    '5': 'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
-    '10': 'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
-    '15': 'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
+    '5': 'Sente no chão com ele e faça 3 gestos simples para ele copiar.\n\nRepita cada um duas vezes e comemore cada acerto com um sorriso.\n\nNo fim, abrace e diga “agora vamos guardar”.',
+    '10': 'Faça um caminho curto com almofadas e atravessem juntos três vezes.\n\nA cada volta, nomeie um movimento (“pula”, “passa”, “senta”).\n\nNo final, guardem uma almofada por vez lado a lado.',
+    '15': 'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos.\n\nRepita dois itens que ele mais gostar e mantenha o ritmo curto.\n\nNo final, guardem tudo juntos e feche com um abraço.',
   },
   '3-4': {
-    '5': 'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
-    '10': 'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
-    '15': 'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
+    '5': 'Escolham três objetos da casa para procurar juntos.\n\nCada achado vira uma pequena comemoração com palma e sorriso.\n\nNo final, guardem tudo lado a lado.',
+    '10': 'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando.\n\nNa última volta, ele escolhe um movimento para você copiar.\n\nNo final, vocês guardam e fecham com um abraço curto.',
+    '15': 'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho.\n\nVocê narra como se fosse uma aventura e ele executa.\n\nNo final, guardem juntos e diga “missão cumprida”.',
   },
   '5-6': {
-    '5': 'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
-    '10': 'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
-    '15': 'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
+    '5': 'Faça duas perguntas curtas sobre o dia e escute sem corrigir.\n\nEm seguida, escolham um desafio rápido de 1 minuto de movimento.\n\nNo final, feche com um abraço e um “obrigada por me contar”.',
+    '10': 'Monte um circuito com três movimentos e façam duas rodadas cronometradas.\n\nNa segunda, ele escolhe a ordem e você segue.\n\nNo final, guardem um item juntos e encerre com um elogio do esforço.',
+    '15': 'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar.\n\nDepois, ele ajuda 5 minutos em uma tarefa pequena da casa.\n\nNo final, agradeça e feche com um abraço curto.',
   },
   '6+': {
-    '5': 'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
-    '10': 'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
-    '15': 'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
+    '5': 'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira.\n\nFaçam 2 minutos de alongamento e 2 minutos de respiração juntos.\n\nNo final, combinem uma coisa simples para agora e siga.',
+    '10': 'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos.\n\nDepois, organizem um cantinho por 3 minutos com música.\n\nNo final, feche com um “valeu por fazer junto”.',
+    '15': 'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado.\n\nEm seguida, façam 5 minutos de organização mínima do espaço.\n\nNo final, reconheça o esforço e encerre sem estender.',
   },
 }
 
@@ -1091,9 +1192,7 @@ export default function MeuFilhoClient() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem ideias.
-                <span className="block">Sai com um plano simples para agora.</span>
-                <span className="block">Sem precisar pensar.</span>
+                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
               </p>
 
               {childLabel ? (
@@ -1245,20 +1344,17 @@ export default function MeuFilhoClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Plano pronto para agora
                           </span>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Você só executa.
-                            <span className="block">Sem decidir nada.</span>
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">
-                            Gerando um plano pronto para agora…
-                          </div>
+                          <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
                         ) : (
-                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">{bloco1Text}</div>
+                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">
+                            {renderMobileStackedText(bloco1Text, { maxChunks: 3, includeColonBreak: true })}
+                          </div>
                         )}
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -1339,7 +1435,9 @@ export default function MeuFilhoClient() {
                                   {it.tag} • {timeLabel(it.time)}
                                 </div>
                                 <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
-                                <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{it.how}</div>
+                                <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                  {renderMobileStackedText(it.how, { maxChunks: 2, includeColonBreak: false })}
+                                </div>
                               </button>
                             )
                           })}
@@ -1348,7 +1446,9 @@ export default function MeuFilhoClient() {
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">opção selecionada</div>
                           <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
-                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                            {renderMobileStackedText(selected.how, { maxChunks: 2, includeColonBreak: false })}
+                          </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
@@ -1399,10 +1499,7 @@ export default function MeuFilhoClient() {
                             Desenvolvimento por fase
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Pistas simples para ajustar o jeito de fazer hoje.
-                            <span className="block">Sem rótulos.</span>
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</p>
                         </div>
                       </div>
 
@@ -1451,10 +1548,7 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Um ajuste pequeno para o dia fluir melhor.
-                            <span className="block">Sem “rotina perfeita”.</span>
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
                         </div>
                       </div>
 
@@ -1468,7 +1562,9 @@ export default function MeuFilhoClient() {
                           {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco3Text}</div>
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {renderMobileStackedText(bloco3Text, { maxChunks: 3, includeColonBreak: false })}
+                            </div>
                           )}
                         </div>
 
@@ -1503,10 +1599,7 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Um final simples.
-                            <span className="block">Para ele sentir: “minha mãe tá aqui”.</span>
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
                         </div>
                       </div>
 
@@ -1520,7 +1613,9 @@ export default function MeuFilhoClient() {
                           {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco3Text}</div>
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">
+                              {renderMobileStackedText(bloco3Text, { maxChunks: 3, includeColonBreak: false })}
+                            </div>
                           )}
                         </div>
 
