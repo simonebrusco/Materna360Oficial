@@ -100,95 +100,6 @@ function timeHint(t: TimeMode) {
 }
 
 /**
- * P34.10 (Legibilidade mobile)
- * Renderiza texto longo em blocos curtos, sem mudar conteúdo.
- * - 1) Quebra por sentença
- * - 2) Se ainda ficar longo, quebra por vírgula (best effort)
- * - 3) Limite de partes para evitar “listas”
- */
-function splitForReading(raw: unknown, opts?: { maxParts?: number; hardMaxLen?: number }) {
-  const text = String(raw ?? '').trim()
-  if (!text) return []
-
-  const maxParts = Math.max(2, Math.min(opts?.maxParts ?? 4, 6))
-  const hardMaxLen = Math.max(80, Math.min(opts?.hardMaxLen ?? 140, 220))
-
-  // 1) Quebra por sentenças (mantendo pontuação)
-  const sentenceParts: string[] = []
-  {
-    const re = /[^.!?]+[.!?]+|[^.!?]+$/g
-    const m = text.match(re) ?? [text]
-    for (const s of m) {
-      const t = s.trim()
-      if (t) sentenceParts.push(t)
-    }
-  }
-
-  // Se já está curto o suficiente, retorna como 1 bloco
-  if (sentenceParts.length === 1 && sentenceParts[0].length <= hardMaxLen) return [sentenceParts[0]]
-
-  // 2) Se as sentenças ainda forem longas, quebra por vírgula (sem inventar novo texto)
-  const refined: string[] = []
-  for (const s of sentenceParts) {
-    const t = s.trim()
-    if (!t) continue
-    if (t.length <= hardMaxLen) {
-      refined.push(t)
-      continue
-    }
-
-    // quebra por vírgula, agrupando em pedaços que “cabem”
-    const chunks = t.split(',').map((x) => x.trim()).filter(Boolean)
-    if (chunks.length <= 1) {
-      refined.push(t)
-      continue
-    }
-
-    let acc = ''
-    for (const c of chunks) {
-      const next = acc ? `${acc}, ${c}` : c
-      if (next.length > hardMaxLen && acc) {
-        refined.push(acc.trim())
-        acc = c
-      } else {
-        acc = next
-      }
-    }
-    if (acc.trim()) refined.push(acc.trim())
-  }
-
-  // 3) Controle de quantidade (evitar virar lista longa)
-  const out = refined.filter(Boolean)
-  if (out.length <= maxParts) return out
-
-  // junta “o resto” no último bloco
-  const head = out.slice(0, maxParts - 1)
-  const tail = out.slice(maxParts - 1).join(' ')
-  return [...head, tail.trim()].filter(Boolean)
-}
-
-function ReadingText(props: {
-  text: unknown
-  className?: string
-  partClassName?: string
-  maxParts?: number
-  hardMaxLen?: number
-}) {
-  const parts = splitForReading(props.text, { maxParts: props.maxParts, hardMaxLen: props.hardMaxLen })
-  if (!parts.length) return null
-
-  return (
-    <div className={['space-y-2', props.className ?? ''].join(' ').trim()}>
-      {parts.map((p, idx) => (
-        <p key={idx} className={props.partClassName ?? ''}>
-          {p}
-        </p>
-      ))}
-    </div>
-  )
-}
-
-/**
  * Preferências “silenciosas” do hub Meu Filho.
  * - time: quanto tempo ela tem
  * - ageBand override: se ela trocar manualmente (sem exigir)
@@ -762,8 +673,8 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
         c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
-      connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
     },
     '15': {
       id: 'k-5-6-15',
@@ -826,6 +737,51 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
   },
 }
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial de texto
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+
+  const text = String(raw).trim()
+
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
+
+  let working = text
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s*${m}`, 'g'), `\n\n${m}`)
+  })
+
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const parts = splitEditorialText(text)
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export default function MeuFilhoClient() {
   const [step, setStep] = useState<Step>('brincadeiras')
   const [time, setTime] = useState<TimeMode>('15')
@@ -886,7 +842,7 @@ export default function MeuFilhoClient() {
 
   const kit = useMemo(() => KITS[age][time], [age, time])
 
-  const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } = useMemo(() => {
+  const effectivePlan: Bloco2Items = useMemo(() => {
     if (bloco2.status === 'done') return bloco2.items
     return kit.plan
   }, [bloco2, kit.plan])
@@ -1340,12 +1296,9 @@ export default function MeuFilhoClient() {
                         {bloco1.status === 'loading' ? (
                           <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
                         ) : (
-                          <ReadingText
+                          <RenderEditorialText
                             text={bloco1Text}
                             className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
-                            partClassName="leading-relaxed"
-                            maxParts={4}
-                            hardMaxLen={130}
                           />
                         )}
 
@@ -1426,14 +1379,13 @@ export default function MeuFilhoClient() {
                                 <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
                                   {it.tag} • {timeLabel(it.time)}
                                 </div>
-                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
+                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">
+                                  {it.title}
+                                </div>
 
-                                <ReadingText
+                                <RenderEditorialText
                                   text={it.how}
                                   className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed"
-                                  partClassName="leading-relaxed"
-                                  maxParts={3}
-                                  hardMaxLen={110}
                                 />
                               </button>
                             )
@@ -1441,15 +1393,14 @@ export default function MeuFilhoClient() {
                         </div>
 
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">opção selecionada</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            opção selecionada
+                          </div>
                           <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
 
-                          <ReadingText
+                          <RenderEditorialText
                             text={selected.how}
                             className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
-                            partClassName="leading-relaxed"
-                            maxParts={3}
-                            hardMaxLen={120}
                           />
 
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -1501,20 +1452,15 @@ export default function MeuFilhoClient() {
                             Desenvolvimento por fase
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.
+                          </p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
-
-                        <ReadingText
-                          text={kit.development.note}
-                          className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
-                          partClassName="leading-relaxed"
-                          maxParts={3}
-                          hardMaxLen={120}
-                        />
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
 
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Nessa fase</div>
@@ -1522,13 +1468,7 @@ export default function MeuFilhoClient() {
                           {bloco4.status === 'loading' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase…</div>
                           ) : (
-                            <ReadingText
-                              text={bloco4Text}
-                              className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
-                              partClassName="leading-relaxed"
-                              maxParts={2}
-                              hardMaxLen={135}
-                            />
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
                           )}
                         </div>
 
@@ -1563,33 +1503,27 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
+                          </p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
-
-                        <ReadingText
-                          text={kit.routine.note}
-                          className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
-                          partClassName="leading-relaxed"
-                          maxParts={3}
-                          hardMaxLen={120}
-                        />
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            {bloco3Label}
+                          </div>
 
                           {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
                           ) : (
-                            <ReadingText
+                            <RenderEditorialText
                               text={bloco3Text}
                               className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
-                              partClassName="leading-relaxed"
-                              maxParts={3}
-                              hardMaxLen={130}
                             />
                           )}
                         </div>
@@ -1625,32 +1559,27 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
+                          </p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
-                        <ReadingText
-                          text={kit.connection.note}
-                          className="mt-2 text-[14px] font-semibold text-[#2f3a56]"
-                          partClassName="leading-relaxed"
-                          maxParts={3}
-                          hardMaxLen={120}
-                        />
+                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
 
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            Para encaixar no dia
+                          </div>
 
                           {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
                             <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
                           ) : (
-                            <ReadingText
+                            <RenderEditorialText
                               text={bloco3Text}
                               className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
-                              partClassName="leading-relaxed"
-                              maxParts={3}
-                              hardMaxLen={130}
                             />
                           )}
                         </div>
@@ -1661,7 +1590,9 @@ export default function MeuFilhoClient() {
                             disabled={familyDoneToday}
                             className={[
                               'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              familyDoneToday ? 'bg-[#ffd8e6] text-[#b8236b] cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+                              familyDoneToday
+                                ? 'bg-[#ffd8e6] text-[#b8236b] cursor-not-allowed'
+                                : 'bg-[#fd2597] text-white hover:opacity-95',
                             ].join(' ')}
                             title="Conta para a sua Jornada"
                           >
