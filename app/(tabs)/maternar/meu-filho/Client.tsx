@@ -94,7 +94,7 @@ function timeTitle(t: TimeMode) {
 }
 
 function timeHint(t: TimeMode) {
-  if (t === '5') return 'Para quando você só precisa “conectar e seguir”.'
+  if (t === '5') return 'Para quando você só precisa conectar e seguir.'
   if (t === '10') return 'Para quando dá para brincar sem complicar.'
   return 'Para quando você quer fechar o dia com presença de verdade.'
 }
@@ -674,7 +674,6 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
-      // ✅ CORREÇÃO: connection precisa de label + note
       connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
     },
     '15': {
@@ -1092,7 +1091,9 @@ export default function MeuFilhoClient() {
               </h1>
 
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
+                Você entra sem ideias.
+                <span className="block">Sai com um plano simples para agora.</span>
+                <span className="block">Sem precisar pensar.</span>
               </p>
 
               {childLabel ? (
@@ -1244,13 +1245,18 @@ export default function MeuFilhoClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Plano pronto para agora
                           </span>
-                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Você só executa.
+                            <span className="block">Sem decidir nada.</span>
+                          </p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
+                          <div className="text-[13px] text-[#6a6a6a]">
+                            Gerando um plano pronto para agora…
+                          </div>
                         ) : (
                           <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">{bloco1Text}</div>
                         )}
@@ -1393,7 +1399,10 @@ export default function MeuFilhoClient() {
                             Desenvolvimento por fase
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Pistas simples para ajustar o jeito de fazer hoje.
+                            <span className="block">Sem rótulos.</span>
+                          </p>
                         </div>
                       </div>
 
@@ -1442,7 +1451,10 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Um ajuste pequeno para o dia fluir melhor.
+                            <span className="block">Sem “rotina perfeita”.</span>
+                          </p>
                         </div>
                       </div>
 
@@ -1491,7 +1503,10 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Um final simples.
+                            <span className="block">Para ele sentir: “minha mãe tá aqui”.</span>
+                          </p>
                         </div>
                       </div>
 
