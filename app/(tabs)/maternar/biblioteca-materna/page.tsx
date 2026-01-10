@@ -98,6 +98,69 @@ const MATERIALS: MaterialCard[] = [
 type PresetFilter = 'guias' | 'pdfs-ebooks' | 'trilhas' | 'tema-fase' | null
 type ViewStep = 'sugestao' | 'filtrar' | 'materiais' | 'insight'
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial (somente mobile)
+   - mantém o conteúdo/copy
+   - melhora ritmo no mobile
+   - desktop preservado em 1 bloco
+   - no máximo 3 partes
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+
+  const text = String(raw).trim()
+  if (!text) return []
+
+  // marcadores típicos para “respirar” sem mudar sentido
+  // (sem "E" para evitar quebras artificiais)
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'Mas']
+
+  let working = text
+
+  markers.forEach((m) => {
+    // quebra quando o marcador vem após espaço/pontuação, para não quebrar palavras
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const raw = (text ?? '').trim()
+  const parts = splitEditorialText(raw)
+
+  if (!raw) return null
+
+  return (
+    <>
+      {/* desktop: preserva 1 bloco */}
+      <p className={`hidden md:block ${className}`}>{raw}</p>
+
+      {/* mobile: respira em até 3 blocos */}
+      <div className="md:hidden space-y-2">
+        {parts.map((p, i) => (
+          <p key={i} className={className}>
+            {p}
+          </p>
+        ))}
+      </div>
+    </>
+  )
+}
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
@@ -298,9 +361,10 @@ export default function BibliotecaMaternaPage() {
                 Biblioteca Materna
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando.
-              </p>
+              <RenderEditorialText
+                text="Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando."
+                className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              />
             </div>
           </header>
 
@@ -344,9 +408,10 @@ export default function BibliotecaMaternaPage() {
                           {suggestionTitle}
                         </div>
 
-                        <div className="text-[13px] text-white/85 leading-relaxed max-w-2xl">
-                          {suggestionSubtitle}
-                        </div>
+                        <RenderEditorialText
+                          text={suggestionSubtitle}
+                          className="text-[13px] text-white/85 leading-relaxed max-w-2xl"
+                        />
                       </div>
                     </div>
 
@@ -442,9 +507,10 @@ export default function BibliotecaMaternaPage() {
                         >
                           <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
                           <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Guias & checklists</div>
-                          <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Passo a passo curto pra resolver mais rápido.
-                          </div>
+                          <RenderEditorialText
+                            text="Passo a passo curto pra resolver mais rápido."
+                            className="text-[12px] text-[#6a6a6a] mt-2 leading-relaxed"
+                          />
                         </button>
 
                         <button
@@ -457,9 +523,10 @@ export default function BibliotecaMaternaPage() {
                         >
                           <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
                           <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">PDFs & e-books</div>
-                          <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Leitura direta, sem excesso de tela.
-                          </div>
+                          <RenderEditorialText
+                            text="Leitura direta, sem excesso de tela."
+                            className="text-[12px] text-[#6a6a6a] mt-2 leading-relaxed"
+                          />
                         </button>
 
                         <button
@@ -472,9 +539,10 @@ export default function BibliotecaMaternaPage() {
                         >
                           <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
                           <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Trilhas educativas</div>
-                          <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Uma sequência pronta pra seguir.
-                          </div>
+                          <RenderEditorialText
+                            text="Uma sequência pronta pra seguir."
+                            className="text-[12px] text-[#6a6a6a] mt-2 leading-relaxed"
+                          />
                         </button>
 
                         <button
@@ -487,20 +555,23 @@ export default function BibliotecaMaternaPage() {
                         >
                           <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">em breve</div>
                           <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Por idade & fase</div>
-                          <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Vai conectar com o Eu360 e sugerir sozinho.
-                          </div>
+                          <RenderEditorialText
+                            text="Vai conectar com o Eu360 e sugerir sozinho."
+                            className="text-[12px] text-[#6a6a6a] mt-2 leading-relaxed"
+                          />
                         </button>
                       </div>
 
                       {!hasActiveFilter ? (
-                        <div className="text-[12px] text-[#6a6a6a]">
-                          Nenhum filtro ativo — você está vendo uma amostra geral da biblioteca.
-                        </div>
+                        <RenderEditorialText
+                          text="Nenhum filtro ativo — você está vendo uma amostra geral da biblioteca."
+                          className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
                       ) : (
-                        <div className="text-[12px] text-[#6a6a6a]">
-                          {presetLabel ? presetLabel : 'Filtro ativo'} • {filteredMaterials.length} resultado(s) agora.
-                        </div>
+                        <RenderEditorialText
+                          text={`${presetLabel ? presetLabel : 'Filtro ativo'} • ${filteredMaterials.length} resultado(s) agora.`}
+                          className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
                       )}
                     </div>
                   ) : null}
@@ -510,9 +581,11 @@ export default function BibliotecaMaternaPage() {
                     <div className="space-y-5">
                       <div className="flex flex-col gap-1">
                         <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido</div>
-                        <div className="text-[12px] text-[#6a6a6a]">
-                          Se quiser refinar, escolha tema e/ou formato. Se não quiser, só vá em “Materiais”.
-                        </div>
+
+                        <RenderEditorialText
+                          text='Se quiser refinar, escolha tema e/ou formato. Se não quiser, só vá em “Materiais”.'
+                          className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
 
                         {presetLabel ? (
                           <div className="inline-flex w-max items-center gap-2 rounded-full bg-[#ffe1f1] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#b8236b] mt-2">
@@ -558,16 +631,25 @@ export default function BibliotecaMaternaPage() {
 
                           <div className="flex flex-wrap gap-2">
                             {FORMATS.map((format) => (
-                              <FilterPill key={format} active={formatIsActive(format)} onClick={() => handleFormatSelect(format)}>
+                              <FilterPill
+                                key={format}
+                                active={formatIsActive(format)}
+                                onClick={() => handleFormatSelect(format)}
+                              >
                                 {format}
                               </FilterPill>
                             ))}
                           </div>
 
-                          <div className="mt-4 text-[12px] text-[#6a6a6a]">
-                            {filteredMaterials.length === 0
-                              ? 'Nenhum material encontrado para esse ajuste.'
-                              : `${filteredMaterials.length} material(is) para esse ajuste.`}
+                          <div className="mt-4">
+                            <RenderEditorialText
+                              text={
+                                filteredMaterials.length === 0
+                                  ? 'Nenhum material encontrado para esse ajuste.'
+                                  : `${filteredMaterials.length} material(is) para esse ajuste.`
+                              }
+                              className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                            />
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -599,17 +681,24 @@ export default function BibliotecaMaternaPage() {
                     <div ref={materialsRef} className="space-y-4">
                       <div className="flex flex-col gap-1">
                         <div className="text-[14px] text-[#2f3a56] font-semibold">Materiais disponíveis</div>
-                        <div className="text-[12px] text-[#6a6a6a]">
-                          Clique em um card para abrir. (Downloads: em breve.)
-                        </div>
-                        <div className="text-[12px] text-[#6a6a6a]">
-                          {filteredMaterials.length} resultado(s) agora.
-                        </div>
+
+                        <RenderEditorialText
+                          text="Clique em um card para abrir. (Downloads: em breve.)"
+                          className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
+
+                        <RenderEditorialText
+                          text={`${filteredMaterials.length} resultado(s) agora.`}
+                          className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
                       </div>
 
                       {filteredMaterials.length === 0 ? (
-                        <SoftCard className="rounded-3xl bg-white p-6 text-sm text-[#6A6A6A] shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
-                          Nenhum material encontrado para esse filtro. Ajuste em “Filtrar” ou limpe os filtros.
+                        <SoftCard className="rounded-3xl bg-white p-6 shadow-[0_4px_18px_rgba(0,0,0,0.06)] border border-[#F5D7E5]">
+                          <RenderEditorialText
+                            text="Nenhum material encontrado para esse filtro. Ajuste em “Filtrar” ou limpe os filtros."
+                            className="text-sm text-[#6A6A6A] leading-relaxed"
+                          />
                         </SoftCard>
                       ) : (
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 md:gap-5">
@@ -625,12 +714,19 @@ export default function BibliotecaMaternaPage() {
                                 {material.format.toUpperCase()} · {material.theme.toUpperCase()}
                               </p>
 
-                              <h3 className="mb-1 text-sm font-semibold text-[#545454] md:text-base">{material.title}</h3>
+                              <h3 className="mb-1 text-sm font-semibold text-[#545454] md:text-base">
+                                {material.title}
+                              </h3>
 
-                              <p className="mb-3 text-xs text-[#6A6A6A] md:text-sm">{material.description}</p>
+                              <RenderEditorialText
+                                text={material.description}
+                                className="text-xs text-[#6A6A6A] md:text-sm leading-relaxed"
+                              />
 
-                              <div className="mt-auto pt-1 text-[11px] font-semibold text-[#fd2597]">
-                                {material.href && material.href !== '#' ? 'Clique para acessar o material' : 'Em breve disponível para download'}
+                              <div className="mt-auto pt-3 text-[11px] font-semibold text-[#fd2597]">
+                                {material.href && material.href !== '#'
+                                  ? 'Clique para acessar o material'
+                                  : 'Em breve disponível para download'}
                               </div>
                             </SoftCard>
                           ))}
@@ -644,6 +740,7 @@ export default function BibliotecaMaternaPage() {
                         >
                           Ajustar filtros
                         </button>
+
                         <Button
                           type="button"
                           variant="ghost"
@@ -661,25 +758,27 @@ export default function BibliotecaMaternaPage() {
                   {view === 'insight' ? (
                     <div className="space-y-4">
                       <div className="text-[14px] text-[#2f3a56] font-semibold">Insight personalizado</div>
-                      <div className="text-[12px] text-[#6a6a6a] max-w-2xl">
-                        Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida para a fase do seu filho
-                        e explicar por que aquele material é o “certo para agora”.
-                      </div>
+
+                      <RenderEditorialText
+                        text="Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida para a fase do seu filho e explicar por que aquele material é o “certo para agora”."
+                        className="text-[12px] text-[#6a6a6a] max-w-2xl leading-relaxed"
+                      />
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
                         <div className="flex items-start gap-3">
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffe1f1]">
                             <AppIcon name="idea" className="h-5 w-5 text-[#fd2597]" />
                           </div>
+
                           <div className="space-y-1">
-                            <div className="text-[13px] font-semibold text-[#2f3a56]">Como vai funcionar</div>
-                            <div className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                              1) Eu360 entende seu dia e a fase do seu filho.
-                              <br />
-                              2) A Biblioteca sugere um material e diz o motivo.
-                              <br />
-                              3) Você aplica sem ficar procurando.
+                            <div className="text-[13px] font-semibold text-[#2f3a56]">
+                              Como vai funcionar
                             </div>
+
+                            <RenderEditorialText
+                              text="O Eu360 entende seu dia e a fase do seu filho. A Biblioteca sugere um material e explica o motivo. A ideia é você aplicar sem ficar procurando."
+                              className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                            />
                           </div>
                         </div>
 
