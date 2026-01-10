@@ -573,7 +573,8 @@ async function fetchBloco4Suggestion(args: {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
       body: JSON.stringify({
-        feature: 'fase-contexto',
+        // ✅ IMPORTANTÍSSIMO: a rota server considera "fase" como quick-ideas (ver /api/ai/rotina).
+        feature: 'fase',
         origin: 'maternar/meu-filho',
         tipoIdeia: 'meu-filho-bloco-4',
         idade: args.faixa_etaria,
@@ -875,7 +876,7 @@ export default function MeuFilhoClient() {
 
   const [familyDoneToday, setFamilyDoneToday] = useState(false)
 
-  // ✅ P34.10: seleção mínima de tema antes de gerar Bloco 3
+  // ✅ seleção mínima de tema antes de gerar Bloco 3
   const [rotinaTema, setRotinaTema] = useState<RotinaTema | null>(null)
   const [conexaoTema, setConexaoTema] = useState<ConexaoTema | null>(null)
 
@@ -942,192 +943,137 @@ export default function MeuFilhoClient() {
 
   const selected = useMemo(() => effectivePlan[chosen], [effectivePlan, chosen])
 
-  useEffect(() => {
-    let alive = true
-    const seq = ++bloco1ReqSeq.current
-
-    async function run() {
-      setBloco1({ status: 'loading' })
-
-      const tempoDisponivel = Number(time)
-      const ai = await fetchBloco1Plan({ tempoDisponivel })
-
-      if (!alive || seq !== bloco1ReqSeq.current) return
-
-      if (ai) {
-        setBloco1({ status: 'done', text: ai, source: 'ai' })
-        try {
-          track('meu_filho.bloco1.done', { source: 'ai', time, age })
-        } catch {}
-        return
-      }
-
-      const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
-      setBloco1({ status: 'done', text: fb, source: 'fallback' })
-      try {
-        track('meu_filho.bloco1.done', { source: 'fallback', time, age })
-      } catch {}
-    }
-
-    run()
-    return () => {
-      alive = false
-    }
-  }, [time, age])
-
-  useEffect(() => {
-    let alive = true
-    const seq = ++bloco2ReqSeq.current
-
-    async function run() {
-      setBloco2({ status: 'loading' })
-
-      const tempoDisponivel = Number(time)
-      const ai = await fetchBloco2Cards({ tempoDisponivel, age })
-
-      if (!alive || seq !== bloco2ReqSeq.current) return
-
-      if (ai) {
-        setBloco2({ status: 'done', items: ai, source: 'ai' })
-        try {
-          track('meu_filho.bloco2.done', { source: 'ai', time, age })
-        } catch {}
-        return
-      }
-
-      setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
-      try {
-        track('meu_filho.bloco2.done', { source: 'fallback', time, age })
-      } catch {}
-    }
-
-    run()
-    return () => {
-      alive = false
-    }
-  }, [time, age, kit.plan])
-
   /**
-   * ✅ BLOCO 3 — versão typesafe
-   * Só gera quando existe tema escolhido (rotinaTema/conexaoTema).
+   * ✅ Regra-mãe solicitada:
+   * - Nada de IA automática no load / troca de faixa / troca de tempo.
+   * - Sempre existir a opção "Gerar".
+   * - O fallback local pode aparecer imediatamente (sem IA).
    */
   useEffect(() => {
-    if (step !== 'rotina' && step !== 'conexao') return
+    // Bloco 1 fallback imediato
+    const fb1 = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
+    setBloco1({ status: 'done', text: fb1, source: 'fallback' })
 
-    let alive = true
+    // Bloco 2 fallback imediato
+    setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
+
+    // Bloco 4 fallback imediato
+    const fb4 = BLOCO4_FALLBACK[age]
+    setBloco4({ status: 'done', text: fb4, source: 'fallback', momento: inferMomentoDesenvolvimento(age) })
+
+    // reset bloco 3 (evita “tema antigo” / conteúdo antigo)
+    setRotinaTema(null)
+    setConexaoTema(null)
+    setBloco3({ status: 'idle' })
+  }, [time, age, kit.plan])
+
+  async function generateBloco1() {
+    const seq = ++bloco1ReqSeq.current
+    setBloco1({ status: 'loading' })
+
+    const tempoDisponivel = Number(time)
+    const ai = await fetchBloco1Plan({ tempoDisponivel })
+
+    if (seq !== bloco1ReqSeq.current) return
+
+    if (ai) {
+      setBloco1({ status: 'done', text: ai, source: 'ai' })
+      try {
+        track('meu_filho.bloco1.done', { source: 'ai', time, age })
+      } catch {}
+      return
+    }
+
+    const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
+    setBloco1({ status: 'done', text: fb, source: 'fallback' })
+    try {
+      track('meu_filho.bloco1.done', { source: 'fallback', time, age })
+    } catch {}
+  }
+
+  async function generateBloco2() {
+    const seq = ++bloco2ReqSeq.current
+    setBloco2({ status: 'loading' })
+
+    const tempoDisponivel = Number(time)
+    const ai = await fetchBloco2Cards({ tempoDisponivel, age })
+
+    if (seq !== bloco2ReqSeq.current) return
+
+    if (ai) {
+      setBloco2({ status: 'done', items: ai, source: 'ai' })
+      try {
+        track('meu_filho.bloco2.done', { source: 'ai', time, age })
+      } catch {}
+      return
+    }
+
+    setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
+    try {
+      track('meu_filho.bloco2.done', { source: 'fallback', time, age })
+    } catch {}
+  }
+
+  async function generateBloco3(kind: Bloco3Type) {
+    const momento = momentForStep(kind === 'rotina' ? 'rotina' : 'conexao')
+    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+    if (!tema) return
+
     const seq = ++bloco3ReqSeq.current
+    setBloco3({ status: 'loading', kind })
 
-    async function run() {
-      const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
-      const momento = momentForStep(step)
+    const ai = await fetchBloco3Suggestion({
+      faixa_etaria: age,
+      momento_do_dia: momento,
+      tipo_experiencia: kind,
+      contexto: 'continuidade',
+      tema,
+    })
 
-      if (kind === 'rotina') {
-        const tema = rotinaTema
-        if (!tema) return
+    if (seq !== bloco3ReqSeq.current) return
 
-        setBloco3({ status: 'loading', kind })
-
-        const ai = await fetchBloco3Suggestion({
-          faixa_etaria: age,
-          momento_do_dia: momento,
-          tipo_experiencia: kind,
-          contexto: 'continuidade',
-          tema,
-        })
-
-        if (!alive || seq !== bloco3ReqSeq.current) return
-
-        if (ai) {
-          setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
-          try {
-            track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
-          } catch {}
-          return
-        }
-
-        const fb = BLOCO3_FALLBACK[kind][age]
-        setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
-        try {
-          track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
-        } catch {}
-        return
-      }
-
-      // kind === 'conexao'
-      const tema = conexaoTema
-      if (!tema) return
-
-      setBloco3({ status: 'loading', kind })
-
-      const ai = await fetchBloco3Suggestion({
-        faixa_etaria: age,
-        momento_do_dia: momento,
-        tipo_experiencia: kind,
-        contexto: 'continuidade',
-        tema,
-      })
-
-      if (!alive || seq !== bloco3ReqSeq.current) return
-
-      if (ai) {
-        setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
-        try {
-          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
-        } catch {}
-        return
-      }
-
-      const fb = BLOCO3_FALLBACK[kind][age]
-      setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+    if (ai) {
+      setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
       try {
-        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
+        track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
       } catch {}
+      return
     }
 
-    run()
-    return () => {
-      alive = false
-    }
-  }, [step, age, rotinaTema, conexaoTema])
+    const fb = BLOCO3_FALLBACK[kind][age]
+    setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+    try {
+      track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
+    } catch {}
+  }
 
-  useEffect(() => {
-    if (step !== 'desenvolvimento') return
-
-    let alive = true
+  async function generateBloco4() {
     const seq = ++bloco4ReqSeq.current
+    setBloco4({ status: 'loading' })
 
-    async function run() {
-      setBloco4({ status: 'loading' })
+    const momento = inferMomentoDesenvolvimento(age)
+    const ai = await fetchBloco4Suggestion({
+      faixa_etaria: age,
+      momento_desenvolvimento: momento,
+      contexto: 'fase',
+    })
 
-      const momento = inferMomentoDesenvolvimento(age)
-      const ai = await fetchBloco4Suggestion({
-        faixa_etaria: age,
-        momento_desenvolvimento: momento,
-        contexto: 'fase',
-      })
+    if (seq !== bloco4ReqSeq.current) return
 
-      if (!alive || seq !== bloco4ReqSeq.current) return
-
-      if (ai) {
-        setBloco4({ status: 'done', text: ai, source: 'ai', momento })
-        try {
-          track('meu_filho.bloco4.done', { source: 'ai', age, momento })
-        } catch {}
-        return
-      }
-
-      const fb = BLOCO4_FALLBACK[age]
-      setBloco4({ status: 'done', text: fb, source: 'fallback', momento })
+    if (ai) {
+      setBloco4({ status: 'done', text: ai, source: 'ai', momento })
       try {
-        track('meu_filho.bloco4.done', { source: 'fallback', age, momento })
+        track('meu_filho.bloco4.done', { source: 'ai', age, momento })
       } catch {}
+      return
     }
 
-    run()
-    return () => {
-      alive = false
-    }
-  }, [step, age])
+    const fb = BLOCO4_FALLBACK[age]
+    setBloco4({ status: 'done', text: fb, source: 'fallback', momento })
+    try {
+      track('meu_filho.bloco4.done', { source: 'fallback', age, momento })
+    } catch {}
+  }
 
   function go(next: Step) {
     setStep(next)
@@ -1143,11 +1089,6 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.time, next)
     safeSetLS('eu360_time_with_child', next)
 
-    // reset tema (evita “tema antigo” com novo contexto)
-    setRotinaTema(null)
-    setConexaoTema(null)
-    setBloco3({ status: 'idle' })
-
     try {
       track('meu_filho.time.select', { time: next })
     } catch {}
@@ -1159,11 +1100,6 @@ export default function MeuFilhoClient() {
 
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
-
-    // reset tema (evita “tema antigo” com novo contexto)
-    setRotinaTema(null)
-    setConexaoTema(null)
-    setBloco3({ status: 'idle' })
 
     try {
       track('meu_filho.age.select', { age: next, reason: 'manual_override' })
@@ -1242,6 +1178,7 @@ export default function MeuFilhoClient() {
 
   const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
   const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
+  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   const bloco3Label =
     bloco3.status === 'loading'
@@ -1249,8 +1186,6 @@ export default function MeuFilhoClient() {
       : bloco3.status === 'done'
         ? 'Para encaixar no dia'
         : 'Para encaixar no dia'
-
-  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   return (
     <main
@@ -1432,13 +1367,13 @@ export default function MeuFilhoClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Plano pronto para agora
                           </span>
-                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Se quiser, pode gerar uma variação com IA.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
+                          <div className="text-[13px] text-[#6a6a6a]">Gerando uma variação com IA…</div>
                         ) : (
                           <RenderEditorialText
                             text={bloco1Text}
@@ -1447,6 +1382,26 @@ export default function MeuFilhoClient() {
                         )}
 
                         <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={bloco1.status === 'loading'}
+                            onClick={() => {
+                              generateBloco1()
+                              try {
+                                track('meu_filho.bloco1.generate', { time, age })
+                              } catch {}
+                            }}
+                            className={[
+                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+                              bloco1.status === 'loading'
+                                ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed'
+                                : 'bg-white border border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                            ].join(' ')}
+                            title="Gerar uma variação com IA"
+                          >
+                            Gerar com IA
+                          </button>
+
                           <button
                             type="button"
                             disabled={bloco1.status !== 'done'}
@@ -1495,14 +1450,36 @@ export default function MeuFilhoClient() {
                           </div>
                         </div>
 
-                        <div className="mt-3 text-[11px] text-[#6a6a6a]">
-                          {bloco2.status === 'loading'
-                            ? 'Curando 3 opções para hoje…'
-                            : bloco2.status === 'done'
-                              ? bloco2.source === 'ai'
-                                ? 'Opções curadas para hoje'
-                                : 'Opções locais (fallback)'
-                              : null}
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <div className="text-[11px] text-[#6a6a6a]">
+                            {bloco2.status === 'loading'
+                              ? 'Curando 3 opções com IA…'
+                              : bloco2.status === 'done'
+                                ? bloco2.source === 'ai'
+                                  ? 'Opções curadas com IA'
+                                  : 'Opções locais (fallback)'
+                                : null}
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={bloco2.status === 'loading'}
+                            onClick={() => {
+                              generateBloco2()
+                              try {
+                                track('meu_filho.bloco2.generate', { time, age })
+                              } catch {}
+                            }}
+                            className={[
+                              'rounded-full px-3 py-1.5 text-[12px] border transition',
+                              bloco2.status === 'loading'
+                                ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#b8236b] opacity-70 cursor-not-allowed'
+                                : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                            ].join(' ')}
+                            title="Gerar 3 opções curadas com IA"
+                          >
+                            Gerar com IA
+                          </button>
                         </div>
 
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1600,7 +1577,9 @@ export default function MeuFilhoClient() {
                             Desenvolvimento por fase
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">
+                            Pistas simples para ajustar o jeito de fazer hoje. Se quiser, gere uma frase mais específica com IA.
+                          </p>
                         </div>
                       </div>
 
@@ -1609,10 +1588,31 @@ export default function MeuFilhoClient() {
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
 
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Nessa fase</div>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Nessa fase</div>
+                            <button
+                              type="button"
+                              disabled={bloco4.status === 'loading'}
+                              onClick={() => {
+                                generateBloco4()
+                                try {
+                                  track('meu_filho.bloco4.generate', { age })
+                                } catch {}
+                              }}
+                              className={[
+                                'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                bloco4.status === 'loading'
+                                  ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#b8236b] opacity-70 cursor-not-allowed'
+                                  : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                              ].join(' ')}
+                              title="Gerar com IA (não é automático)"
+                            >
+                              Gerar com IA
+                            </button>
+                          </div>
 
                           {bloco4.status === 'loading' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase…</div>
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase com IA…</div>
                           ) : (
                             <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
                           )}
@@ -1657,7 +1657,7 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
-                        {/* ✅ Seleção de tema (obrigatória) */}
+                        {/* ✅ Seleção de tema (obrigatória) + botão Gerar */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -1668,6 +1668,7 @@ export default function MeuFilhoClient() {
                                   key={t.id}
                                   onClick={() => {
                                     setRotinaTema(t.id)
+                                    // não dispara IA automaticamente
                                     setBloco3({ status: 'idle' })
                                     try {
                                       track('meu_filho.bloco3.tema.select', { kind: 'rotina', tema: t.id })
@@ -1688,7 +1689,23 @@ export default function MeuFilhoClient() {
 
                           {rotinaTema ? (
                             <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
+                                <button
+                                  type="button"
+                                  disabled={bloco3.status === 'loading'}
+                                  onClick={() => generateBloco3('rotina')}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    bloco3.status === 'loading'
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#b8236b] opacity-70 cursor-not-allowed'
+                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                  title="Gerar com IA (não é automático)"
+                                >
+                                  Gerar com IA
+                                </button>
+                              </div>
 
                               {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
                                 <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
@@ -1699,14 +1716,16 @@ export default function MeuFilhoClient() {
                                   pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
                                 />
                               ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Pronto — com o tema escolhido eu ajusto a sugestão.
-                                </div>
+                                <RenderEditorialText
+                                  text={BLOCO3_FALLBACK.rotina[age]}
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                />
                               )}
                             </div>
                           ) : (
                             <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Selecione um tema acima para eu ajustar a sugestão.
+                              Selecione um tema acima. Se quiser, você pode gerar uma variação com IA.
                             </div>
                           )}
                         </div>
@@ -1750,7 +1769,7 @@ export default function MeuFilhoClient() {
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
 
-                        {/* ✅ Seleção de tema (obrigatória) */}
+                        {/* ✅ Seleção de tema (obrigatória) + botão Gerar */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -1761,6 +1780,7 @@ export default function MeuFilhoClient() {
                                   key={t.id}
                                   onClick={() => {
                                     setConexaoTema(t.id)
+                                    // não dispara IA automaticamente
                                     setBloco3({ status: 'idle' })
                                     try {
                                       track('meu_filho.bloco3.tema.select', { kind: 'conexao', tema: t.id })
@@ -1781,7 +1801,23 @@ export default function MeuFilhoClient() {
 
                           {conexaoTema ? (
                             <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
+                                <button
+                                  type="button"
+                                  disabled={bloco3.status === 'loading'}
+                                  onClick={() => generateBloco3('conexao')}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    bloco3.status === 'loading'
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#b8236b] opacity-70 cursor-not-allowed'
+                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                  title="Gerar com IA (não é automático)"
+                                >
+                                  Gerar com IA
+                                </button>
+                              </div>
 
                               {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
                                 <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
@@ -1792,14 +1828,16 @@ export default function MeuFilhoClient() {
                                   pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
                                 />
                               ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Pronto — com o tema escolhido eu ajusto a sugestão.
-                                </div>
+                                <RenderEditorialText
+                                  text={BLOCO3_FALLBACK.conexao[age]}
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                />
                               )}
                             </div>
                           ) : (
                             <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Selecione um tema acima para eu ajustar a sugestão.
+                              Selecione um tema acima. Se quiser, você pode gerar uma variação com IA.
                             </div>
                           )}
                         </div>
