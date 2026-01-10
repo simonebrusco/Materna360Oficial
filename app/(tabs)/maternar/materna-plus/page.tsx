@@ -55,6 +55,17 @@ const HUB_SECTIONS: { id: HubSectionId; label: string }[] = [
   { id: 'servicos', label: 'Serviços' },
 ]
 
+function BulletLine({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#fd2597] shrink-0" />
+      <p className="text-[12px] md:text-[13px] text-[#545454] leading-relaxed">
+        {children}
+      </p>
+    </div>
+  )
+}
+
 export default function MaternaPlusPage() {
   const [selectedSpecialty, setSelectedSpecialty] =
     useState<SpecialtyFilterId>('todos')
@@ -129,7 +140,6 @@ export default function MaternaPlusPage() {
 
     const observer = new IntersectionObserver(
       entries => {
-        // pega a seção mais visível no momento
         const visible = entries
           .filter(e => e.isIntersecting)
           .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0]
@@ -140,7 +150,6 @@ export default function MaternaPlusPage() {
       },
       {
         root: null,
-        // o “top” considera header; deixa o highlight trocar quando a seção entra no terço superior
         rootMargin: '-120px 0px -55% 0px',
         threshold: [0.05, 0.15, 0.25, 0.35],
       },
@@ -151,13 +160,7 @@ export default function MaternaPlusPage() {
     return () => observer.disconnect()
   }, [])
 
-  const Pill = ({
-    id,
-    label,
-  }: {
-    id: HubSectionId
-    label: string
-  }) => {
+  const Pill = ({ id, label }: { id: HubSectionId; label: string }) => {
     const isActive = activeSection === id
     return (
       <button
@@ -179,14 +182,14 @@ export default function MaternaPlusPage() {
   }
 
   return (
- <PageTemplate
-  headerTone="light"
-  label="MATERNAR"
-  showLabel={false}
-  headerTop={<BackToMaternar />}
-  title="Materna+"
-  subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção — sem enrolação, no seu tempo."
->
+    <PageTemplate
+      headerTone="light"
+      label="MATERNAR"
+      showLabel={false}
+      headerTop={<BackToMaternar />}
+      title="Materna+"
+      subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção. Sem enrolação, no seu tempo."
+    >
       <ClientOnly>
         <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10">
           {/* HERO HUB-LIKE */}
@@ -221,7 +224,8 @@ export default function MaternaPlusPage() {
 
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-[12px] text-[#545454]">
-                      Se estiver sem tempo: comece por <span className="font-semibold">Profissionais</span>.
+                      Se estiver sem tempo: comece por{' '}
+                      <span className="font-semibold">Profissionais</span>.
                     </p>
 
                     <Button
@@ -242,7 +246,7 @@ export default function MaternaPlusPage() {
                       Profissionais
                     </p>
                     <p className="text-[13px] text-[#545454] leading-snug">
-                      Curadoria + contato direto no WhatsApp.
+                      Curadoria e contato direto no WhatsApp.
                     </p>
                   </div>
 
@@ -260,7 +264,7 @@ export default function MaternaPlusPage() {
                       Serviços
                     </p>
                     <p className="text-[13px] text-[#545454] leading-snug">
-                      MaternaBox + concierge (em evolução).
+                      MaternaBox e concierge (em evolução).
                     </p>
                   </div>
                 </div>
@@ -280,7 +284,7 @@ export default function MaternaPlusPage() {
                     Seu plano: Essencial
                   </h2>
                   <p className="text-[12px] md:text-[13px] text-[#6A6A6A] leading-relaxed max-w-xl">
-                    Trilhas + Biblioteca premium + IA personalizada (em breve).
+                    Trilhas, Biblioteca premium e IA personalizada (em breve).
                   </p>
                 </div>
 
@@ -310,17 +314,17 @@ export default function MaternaPlusPage() {
                     PREMIUM
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Trilhas e conteúdos — no seu tempo.
+                    Trilhas e conteúdos, no seu tempo.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
                     Um caminho claro para quando você quer sair do modo “caça”.
                   </p>
 
-                  <ul className="mt-2 space-y-1 text-[12px] text-[#545454]">
-                    <li>• Trilhas por fase (0–12m, 1–3, 3–5, 5–7)</li>
-                    <li>• Biblioteca premium com guias e checklists</li>
-                    <li>• Integração Eu360 + IA Premium (planejado)</li>
-                  </ul>
+                  <div className="mt-3 space-y-2">
+                    <BulletLine>Trilhas por fase (0–12m, 1–3, 3–5, 5–7)</BulletLine>
+                    <BulletLine>Biblioteca premium com guias e checklists</BulletLine>
+                    <BulletLine>Integração Eu360 e IA Premium (planejado)</BulletLine>
+                  </div>
                 </header>
 
                 <div className="grid gap-4 md:grid-cols-2 items-stretch">
@@ -339,7 +343,7 @@ export default function MaternaPlusPage() {
                       </span>
                     </div>
                     <p className="text-[13px] text-[#545454] leading-relaxed">
-                      Rotina, sono, vínculo e rituais simples — com desbloqueios diários.
+                      Rotina, sono, vínculo e rituais simples. Com desbloqueios diários.
                     </p>
                     <Button
                       variant="secondary"
@@ -366,7 +370,7 @@ export default function MaternaPlusPage() {
                       </span>
                     </div>
                     <p className="text-[13px] text-[#545454] leading-relaxed">
-                      Ideias por faixa etária com passos curtos e aplicáveis.
+                      Ideias por faixa etária, com passos curtos e aplicáveis.
                     </p>
                     <Button
                       variant="secondary"
@@ -385,12 +389,14 @@ export default function MaternaPlusPage() {
                     <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
                       Conteúdos exclusivos Materna+
                     </h3>
-                    <ul className="space-y-1 text-[12px] text-[#545454]">
-                      <li>• Guias avançados por idade e tema</li>
-                      <li>• Checklists extensos para momentos críticos</li>
-                      <li>• Roteiros rápidos para situações difíceis</li>
-                    </ul>
-                    <p className="text-[12px] text-[#6A6A6A]">
+
+                    <div className="space-y-2">
+                      <BulletLine>Guias avançados por idade e tema</BulletLine>
+                      <BulletLine>Checklists extensos para momentos críticos</BulletLine>
+                      <BulletLine>Roteiros rápidos para situações difíceis</BulletLine>
+                    </div>
+
+                    <p className="text-[12px] text-[#6A6A6A] pt-1">
                       Acesso completo para assinantes Materna+ e Materna+360.
                     </p>
                   </div>
@@ -400,10 +406,10 @@ export default function MaternaPlusPage() {
                       EU360 & IA PREMIUM · PLANEJADO
                     </p>
                     <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
-                      Personalização com cuidado (sem fórmulas).
+                      Personalização com cuidado, sem fórmulas.
                     </h3>
                     <p className="text-[13px] text-[#545454] leading-relaxed">
-                      Sua jornada alimenta sugestões melhores — com limites e controle.
+                      Sua jornada alimenta sugestões melhores. Com limites e controle.
                     </p>
                     <span className="inline-flex rounded-full border border-[#F5D7E5] bg-white px-3 py-1 text-[11px] font-medium text-[#545454]">
                       Fase de IA Premium
@@ -430,10 +436,10 @@ export default function MaternaPlusPage() {
                     PROFISSIONAIS PARCEIROS
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Rede Materna+ — contato direto no WhatsApp.
+                    Rede Materna+. Contato direto no WhatsApp.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
-                    Filtre por área e fale direto no WhatsApp.
+                    Filtre por área. Escolha um profissional. Fale direto no WhatsApp.
                   </p>
                   <p className="text-[12px] text-[#6A6A6A]">
                     <span className="font-semibold">Importante:</span> o Materna360 não intermedia pagamentos.
@@ -470,17 +476,17 @@ export default function MaternaPlusPage() {
                       <p className="text-[13px] font-semibold text-[#545454]">
                         Como funciona
                       </p>
-                      <ol className="space-y-1.5 text-[12px] text-[#545454]">
-                        <li>
-                          <span className="font-semibold">1.</span> Filtre a área e escolha um profissional.
-                        </li>
-                        <li>
-                          <span className="font-semibold">2.</span> Veja detalhes e vá para o WhatsApp.
-                        </li>
-                        <li>
-                          <span className="font-semibold">3.</span> Combine direto: horários, valores e pagamento.
-                        </li>
-                      </ol>
+                      <div className="space-y-2">
+                        <BulletLine>
+                          Filtre a área e escolha um profissional.
+                        </BulletLine>
+                        <BulletLine>
+                          Veja detalhes e vá para o WhatsApp.
+                        </BulletLine>
+                        <BulletLine>
+                          Combine direto: horários, valores e pagamento.
+                        </BulletLine>
+                      </div>
                     </SoftCard>
                   </div>
 
@@ -580,14 +586,14 @@ export default function MaternaPlusPage() {
                     COMUNIDADE · EM BREVE
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Um lugar seguro para trocar sem julgamento.
+                    Um lugar seguro para trocar, sem julgamento.
                   </h2>
 
-                  <ul className="space-y-1.5 text-[13px] text-[#545454]">
-                    <li>• Trocas moderadas, com cuidado</li>
-                    <li>• Temas guiados por fase</li>
-                    <li>• Materiais de apoio e encontros</li>
-                  </ul>
+                  <div className="space-y-2">
+                    <BulletLine>Trocas moderadas, com cuidado</BulletLine>
+                    <BulletLine>Temas guiados por fase</BulletLine>
+                    <BulletLine>Materiais de apoio e encontros</BulletLine>
+                  </div>
 
                   <p className="text-[12px] text-[#6A6A6A]">
                     Assinantes Materna+ e Materna+360 serão avisadas primeiro.
@@ -596,8 +602,8 @@ export default function MaternaPlusPage() {
 
                 <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="font-semibold text-[#545454]">O que entra aqui:</p>
-                  <p>Rodas de conversa + tópicos guiados.</p>
-                  <p>Materiais curtos para ajudar na prática.</p>
+                  <p>Rodas de conversa e tópicos guiados.</p>
+                  <p>Materiais curtos, para ajudar na prática.</p>
                   <p>Zero perfeição. Só vida real.</p>
                 </div>
               </div>
@@ -615,7 +621,7 @@ export default function MaternaPlusPage() {
                   SERVIÇOS MATERNA360
                 </p>
                 <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                  Experiências fora do app — com a mesma lógica de rotina real.
+                  Experiências fora do app, com a mesma lógica de rotina real.
                 </h2>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -627,7 +633,7 @@ export default function MaternaPlusPage() {
                       Uma caixa mensal para criar rituais de conexão.
                     </p>
                     <p className="text-[13px] text-[#545454]">
-                      Curadoria + conteúdos prontos para usar.
+                      Curadoria e conteúdos prontos para usar.
                     </p>
                     <Button
                       variant="secondary"
@@ -651,7 +657,7 @@ export default function MaternaPlusPage() {
                       Ajuda para encontrar o apoio certo.
                     </p>
                     <p className="text-[13px] text-[#545454]">
-                      Indicação e direcionamento — sem burocracia.
+                      Indicação e direcionamento, sem burocracia.
                     </p>
                     <p className="text-[12px] text-[#6A6A6A]">
                       Em fase de testes. Assinantes serão convidadas primeiro.
