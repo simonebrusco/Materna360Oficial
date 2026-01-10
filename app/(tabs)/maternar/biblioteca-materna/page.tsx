@@ -1,9 +1,9 @@
-// app/(tabs)/maternar/biblioteca-materna/page.tsx
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+
 import { SoftCard } from '@/components/ui/card'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { Button } from '@/components/ui/Button'
@@ -12,40 +12,65 @@ import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 /* =========================
    P34.10 — Legibilidade Mobile
    Quebra editorial de texto
    - mantém o conteúdo
    - melhora ritmo no mobile
-   - no máximo 3 “respiros”
+   - evita “—” órfão
+   - sem regex avançada (safe)
 ========================= */
 
 function splitEditorialText(raw: string | null | undefined): string[] {
   if (!raw) return []
-  let text = String(raw).trim()
+  const text = String(raw).trim()
   if (!text) return []
 
-  // 1) travessão: evita ficar “órfão” no fim da linha
-  // antes: "momento —" / depois: "— sem ficar caçando."
-  text = text.replace(/\s+—\s+/g, '\n\n— ')
+  // 1) Travessão: sempre vira um novo “respiro”
+  // evita: "momento —" ficar sozinho no fim da linha
+  const withDashBreak = text.replace(/\s+—\s+/g, '\n\n— ')
 
-  // 2) marcadores típicos para “respirar” sem mudar sentido
+  // 2) Quebras por “marcadores” comuns, sem mudar sentido
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'Mas', 'E']
+  let working = withDashBreak
 
-  let working = text
-  markers.forEach((m) => {
+  for (const m of markers) {
+    // quebra só quando o marcador aparece como “começo de trecho”
     working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
-  })
+  }
 
-  // 3) quebra por frases, com limite de 3 partes
-  const parts = working
-    .split(/\n\n|(?<=[.!?])\s+/)
+  // 3) Se ainda não houve quebra, tenta quebrar por frases SEM lookbehind
+  // (mais compatível; não derruba render)
+  let parts = working
+    .split('\n\n')
     .map((p) => p.trim())
     .filter(Boolean)
 
+  if (parts.length === 1) {
+    // quebra simples por pontuação + espaço
+    const sentenceParts = working
+      .split(/([.!?])\s+/) // mantém o separador em itens alternados
+      .map((p) => p.trim())
+      .filter(Boolean)
+
+    // recompõe frases (texto + pontuação)
+    const rebuilt: string[] = []
+    for (let i = 0; i < sentenceParts.length; i++) {
+      const cur = sentenceParts[i]
+      const next = sentenceParts[i + 1]
+      if (cur === '.' || cur === '!' || cur === '?') continue
+      if (next === '.' || next === '!' || next === '?') {
+        rebuilt.push(`${cur}${next}`)
+        i += 1
+      } else {
+        rebuilt.push(cur)
+      }
+    }
+
+    parts = rebuilt.length ? rebuilt : parts
+  }
+
+  // limite de 3 “respiros”
   return parts.slice(0, 3)
 }
 
@@ -174,20 +199,16 @@ function safeSetLS(key: string, value: string) {
 }
 
 function inferSuggestionFromEu360(): { preset: PresetFilter; theme: string | null } {
-  // Best effort (sem acoplamento): se não existir nada, cai no padrão “Rotinas + Guias”
   const euRitmo = safeGetLS('eu360_ritmo') // leve | cansada | animada | sobrecarregada
-  const euFocus = safeGetLS('eu360_focus') // opcional (se você quiser usar depois)
-  const euChildAge = safeGetLS('eu360_child_age_band') // opcional: "0-2" | "3-4" | "5-6" | "6+"
+  const euFocus = safeGetLS('eu360_focus')
+  const euChildAge = safeGetLS('eu360_child_age_band')
 
-  // Heurística operacional (não “terapia”): sugere o que resolve mais rápido
   if (euRitmo === 'sobrecarregada') return { preset: 'guias', theme: 'Rotinas' }
   if (euRitmo === 'cansada') return { preset: 'pdfs-ebooks', theme: 'Sono' }
   if (euRitmo === 'animada') return { preset: 'trilhas', theme: null }
 
-  // Se tiver idade, podemos sugerir tema leve (placeholder, ajusta depois)
   if (euChildAge) return { preset: 'tema-fase', theme: null }
 
-  // fallback
   void euFocus
   return { preset: 'guias', theme: 'Rotinas' }
 }
@@ -202,7 +223,6 @@ export default function BibliotecaMaternaPage() {
 
   const materialsRef = useRef<HTMLDivElement | null>(null)
 
-  // --- URL preset (?filtro=...)
   useEffect(() => {
     const filtro = searchParams.get('filtro')
     if (!filtro) return
@@ -215,28 +235,22 @@ export default function BibliotecaMaternaPage() {
     else if (filtro === 'trilhas') setPresetFilter('trilhas')
     else if (filtro === 'tema-fase' || filtro === 'idade-tema') setPresetFilter('tema-fase')
 
-    // quando vem do hub, já cai em “Materiais”
     setView('materiais')
   }, [searchParams])
 
-  // --- “Pensa por ela”: se não veio nada do hub, sugere um caminho pronto
   useEffect(() => {
     const cameFromHub = !!searchParams.get('filtro')
     if (cameFromHub) return
 
     const inferred = inferSuggestionFromEu360()
-
-    // não força tema se a pessoa não quer; mas dá um ponto de partida “pronto”
     setPresetFilter(inferred.preset)
     setSelectedTheme(inferred.theme)
     setSelectedFormat(null)
 
-    // guarda pra personalização futura (opcional)
     safeSetLS('biblioteca_last_preset', inferred.preset ?? '')
     if (inferred.theme) safeSetLS('biblioteca_last_theme', inferred.theme)
   }, [searchParams])
 
-  // scroll suave quando abre materiais
   useEffect(() => {
     if (view === 'materiais' && materialsRef.current) {
       materialsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -244,12 +258,10 @@ export default function BibliotecaMaternaPage() {
   }, [view])
 
   const handleThemeSelect = (theme: string) => {
-    // tema não “quebra” preset — ele refina a seleção
     setSelectedTheme((prev) => (prev === theme ? null : theme))
   }
 
   const handleFormatSelect = (format: string) => {
-    // ao escolher formato manual, sai do preset “atalho”
     setPresetFilter(null)
     setSelectedFormat((prev) => (prev === format ? null : format))
   }
@@ -272,8 +284,7 @@ export default function BibliotecaMaternaPage() {
         } else if (presetFilter === 'trilhas') {
           if (material.format !== 'Trilha educativa') return false
         } else if (presetFilter === 'tema-fase') {
-          // hoje: sem backend de fase — mantém “amostra geral”
-          // depois: aqui entra a lógica Eu360 (idade/fase) real.
+          // placeholder: mantém amostra geral
         }
       } else if (selectedFormat && material.format !== selectedFormat) {
         return false
@@ -342,7 +353,7 @@ export default function BibliotecaMaternaPage() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          {/* HERO (mesmo padrão das outras) */}
+          {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -357,7 +368,7 @@ export default function BibliotecaMaternaPage() {
                 Biblioteca Materna
               </h1>
 
-              {/* P34.10: quebra editorial + travessão sem “órfão” */}
+              {/* P34.10: agora quebra corretamente e não deixa “—” órfão */}
               <RenderEditorialText
                 text="Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando."
                 className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
@@ -366,7 +377,7 @@ export default function BibliotecaMaternaPage() {
           </header>
 
           <div className="space-y-7 md:space-y-8 pb-10">
-            {/* PAINEL TRANSLÚCIDO (mesmo container) */}
+            {/* PAINEL */}
             <div
               className="
                 rounded-3xl
@@ -378,7 +389,7 @@ export default function BibliotecaMaternaPage() {
                 space-y-6
               "
             >
-              {/* Top “Sugestão pronta” (modo jornada) */}
+              {/* Top “Sugestão pronta” */}
               <Reveal>
                 <div
                   className="
@@ -389,7 +400,7 @@ export default function BibliotecaMaternaPage() {
                     p-4 md:p-5
                   "
                 >
-                  {/* FIX P34.10: no mobile vira coluna (para não “espremer” o título) */}
+                  {/* FIX mobile: vira coluna para não esmagar título */}
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3">
                       <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
@@ -402,6 +413,7 @@ export default function BibliotecaMaternaPage() {
                           {selectedTheme ? ` • tema: ${selectedTheme}` : ''}
                         </div>
 
+                        {/* FIX: título agora é uma linha normal (não “coluna estreita”) */}
                         <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                           {suggestionTitle}
                         </div>
@@ -412,7 +424,7 @@ export default function BibliotecaMaternaPage() {
                       </div>
                     </div>
 
-                    {/* FIX P34.10: botões ocupam largura no mobile (sem “coluna estreita”) */}
+                    {/* FIX: botões em linha com largura no mobile */}
                     <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
                       <button
                         onClick={() => setChip('filtrar')}
@@ -449,7 +461,7 @@ export default function BibliotecaMaternaPage() {
                     </div>
                   </div>
 
-                  {/* Chips internos */}
+                  {/* Chips */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {(
                       [
@@ -489,7 +501,7 @@ export default function BibliotecaMaternaPage() {
                     shadow-[0_10px_28px_rgba(184,35,107,0.12)]
                   "
                 >
-                  {/* VIEW: Sugestão (atalhos rápidos) */}
+                  {/* VIEW: Sugestão */}
                   {view === 'sugestao' ? (
                     <div className="space-y-4">
                       <div className="text-[14px] text-[#2f3a56] font-semibold">
@@ -774,8 +786,6 @@ export default function BibliotecaMaternaPage() {
                             <div className="text-[13px] font-semibold text-[#2f3a56]">
                               Como vai funcionar
                             </div>
-
-                            {/* Mantido (sem virar lista “artificial”): é explicação sequencial do produto */}
                             <div className="text-[12px] text-[#6a6a6a] leading-relaxed">
                               1) Eu360 entende seu dia e a fase do seu filho.
                               <br />
