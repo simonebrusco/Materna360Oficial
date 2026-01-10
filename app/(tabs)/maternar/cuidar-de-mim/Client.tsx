@@ -123,6 +123,57 @@ function readDaySignals(): DaySignals {
   }
 }
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Helpers locais (sem refator)
+   - quebrar blocos longos
+   - manter texto original
+   - melhorar ritmo no mobile
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  const text = String(raw).trim()
+  if (!text) return []
+
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas']
+
+  let working = text
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const parts = splitEditorialText(text)
+
+  // fallback ultra seguro
+  if (parts.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
@@ -223,9 +274,10 @@ export default function Client() {
               Cuidar de Mim
             </h1>
 
-            <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl">
-              Um espaço para pausar. Entender o dia como ele está. Seguir com mais clareza.
-            </p>
+            <RenderEditorialText
+              text="Um espaço para pausar. Entender o dia como ele está. Seguir com mais clareza."
+              className="mt-1 text-sm md:text-base text-white/90 max-w-2xl leading-relaxed"
+            />
           </header>
 
           {/* ENVELOPE TRANSLÚCIDO — volta o “card do topo” + contém o card branco */}
@@ -264,11 +316,12 @@ export default function Client() {
                       <div className="mt-1 text-[18px] md:text-[20px] font-semibold text-white leading-tight">
                         Um apoio para este momento
                       </div>
-                      <div className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-[56ch]">
-                        Pequeno e prático. Sem cobrança.
-                        <br />
-                        Se não servir, troque ou feche por aqui.
-                      </div>
+
+                      {/* Ritmo mobile: quebrar em 2-3 linhas, sem alterar texto */}
+                      <RenderEditorialText
+                        text={`Pequeno e prático. Sem cobrança.\n\nSe não servir, troque ou feche por aqui.`}
+                        className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-[56ch] leading-relaxed"
+                      />
                     </div>
                   </div>
 
@@ -425,11 +478,10 @@ export default function Client() {
                                     <QuickIdeaAI mode="cuidar_de_mim" className="mt-0 w-full" />
                                   </div>
 
-                                  <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
-                                    Se não servir, troque ou feche por aqui.
-                                    <br />
-                                    Sem obrigação.
-                                  </div>
+                                  <RenderEditorialText
+                                    text={`Se não servir, troque ou feche por aqui.\n\nSem obrigação.`}
+                                    className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed"
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -476,9 +528,10 @@ export default function Client() {
                           })}
                         </div>
 
-                        <div className="mt-2 text-[12px] text-[#6a6a6a]">
-                          Só um toque para se reconhecer. Nada além disso.
-                        </div>
+                        <RenderEditorialText
+                          text="Só um toque para se reconhecer. Nada além disso."
+                          className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
                       </div>
                     </div>
                   </section>
@@ -495,9 +548,11 @@ export default function Client() {
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">SEU DIA</div>
                         <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
-                        <div className="hub-subtitle text-[#6a6a6a]">
-                          Uma visão consolidada, sem agenda e sem cobrança.
-                        </div>
+
+                        <RenderEditorialText
+                          text="Uma visão consolidada, sem agenda e sem cobrança."
+                          className="hub-subtitle text-[#6a6a6a] leading-relaxed"
+                        />
 
                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div className="rounded-2xl border border-[#f5d7e5] bg-white px-4 py-3 shadow-[0_6px_18px_rgba(184,35,107,0.06)]">
@@ -547,9 +602,11 @@ export default function Client() {
                         <div className="hub-eyebrow text-[#b8236b]">ORIENTAÇÃO</div>
                         <div className="hub-title text-[#2f3a56]">{guidance.title}</div>
 
-                        <div className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl">
-                          {guidance.text}
-                        </div>
+                        {/* Ajuste principal de ritmo: quebrar guidance.text em 2-3 “respiros” */}
+                        <RenderEditorialText
+                          text={guidance.text}
+                          className="mt-2 text-[13px] md:text-[14px] text-[#545454] leading-relaxed max-w-2xl"
+                        />
                       </div>
                     </div>
                   </section>
@@ -566,9 +623,11 @@ export default function Client() {
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">MICRO CUIDADO</div>
                         <div className="hub-title text-[#2f3a56]">Um gesto possível</div>
-                        <div className="hub-subtitle text-[#6a6a6a]">
-                          Se não couber nada agora, encerrar por aqui já é cuidado.
-                        </div>
+
+                        <RenderEditorialText
+                          text="Se não couber nada agora, encerrar por aqui já é cuidado."
+                          className="hub-subtitle text-[#6a6a6a] leading-relaxed"
+                        />
 
                         <div className="mt-4 flex flex-col sm:flex-row gap-2">
                           <button
