@@ -18,6 +18,55 @@ import { getMonthKeys, getWeekKeys, readDayPoints, readTotalPoints, todayKey } f
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Helpers locais (sem refator)
+   - quebrar blocos longos
+   - manter texto original (sem reescrita)
+   - melhorar ritmo no mobile
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  const text = String(raw).trim()
+  if (!text) return []
+
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas']
+
+  let working = text
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const parts = splitEditorialText(text)
+  if (parts.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 function NeutralBar() {
   return (
     <div className="w-full">
@@ -91,8 +140,11 @@ function BadgeCard({ badge, unlocked }: { badge: Badge; unlocked: boolean }) {
             </span>
           </div>
 
-          {/* Card curto: apenas desc (2 frases) */}
-          <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{badge.desc}</div>
+          {/* Mobile: sempre em respiros curtos (sem reescrever) */}
+          <RenderEditorialText
+            text={badge.desc}
+            className="text-[12px] text-[#6a6a6a] leading-relaxed"
+          />
         </div>
       </div>
     </div>
@@ -188,9 +240,10 @@ export default function MinhasConquistasClient() {
                 Conquistas & Selos
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Uma vitrine leve do que você está construindo — sem vitrine de perfeição.
-              </p>
+              <RenderEditorialText
+                text="Uma vitrine leve do que você está construindo — sem vitrine de perfeição."
+                className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              />
             </div>
           </header>
 
@@ -212,14 +265,16 @@ export default function MinhasConquistasClient() {
                       <AppIcon name="heart" size={20} className="text-[#fd2597]" />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-[12px] text-white/85">Seu caminho registrado aqui</div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Seus marcos, do seu jeito
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        Você constrói com presença. Sem “tudo ou nada”.
-                      </div>
+
+                      <RenderEditorialText
+                        text="Você constrói com presença. Sem “tudo ou nada”."
+                        className="text-[13px] text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)] leading-relaxed"
+                      />
                     </div>
                   </div>
 
@@ -275,18 +330,21 @@ export default function MinhasConquistasClient() {
                       <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
                         <AppIcon name="sparkles" size={22} className="text-[#fd2597]" />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 min-w-0">
                         <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                           Selos
                         </span>
                         <h2 className="text-lg font-semibold text-[#2f3a56]">Marcos que se constroem com o tempo</h2>
-                        <p className="text-[13px] text-[#6a6a6a]">Eles não aparecem por pressa — aparecem por continuidade.</p>
+                        <RenderEditorialText
+                          text="Eles não aparecem por pressa — aparecem por continuidade."
+                          className="text-[13px] text-[#6a6a6a] leading-relaxed"
+                        />
                       </div>
                     </div>
 
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="min-w-0">
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
                             um marco em construção
                           </div>
@@ -297,11 +355,19 @@ export default function MinhasConquistasClient() {
                                 <div className="h-10 w-10 rounded-2xl bg-white border border-[#f5d7e5] flex items-center justify-center shrink-0">
                                   <AppIcon name={nextBadge.icon} size={18} className="text-[#fd2597]" />
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                   <div className="text-[14px] font-semibold text-[#2f3a56]">{nextBadge.title}</div>
-                                  <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.desc}</div>
+
+                                  <RenderEditorialText
+                                    text={nextBadge.desc}
+                                    className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed"
+                                  />
+
                                   {nextBadge.aux ? (
-                                    <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{nextBadge.aux}</div>
+                                    <RenderEditorialText
+                                      text={nextBadge.aux}
+                                      className="text-[12px] text-[#6a6a6a] leading-relaxed"
+                                    />
                                   ) : null}
                                 </div>
                               </div>
@@ -311,16 +377,17 @@ export default function MinhasConquistasClient() {
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a]">
-                              Você já atravessou os marcos atuais. O resto vem com o tempo — sem pressa.
-                            </div>
+                            <RenderEditorialText
+                              text="Você já atravessou os marcos atuais. O resto vem com o tempo — sem pressa."
+                              className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
+                            />
                           )}
                         </div>
 
                         <button
                           type="button"
                           onClick={() => setView('resumo')}
-                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                          className="shrink-0 rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                         >
                           Ver resumo
                         </button>
@@ -351,12 +418,15 @@ export default function MinhasConquistasClient() {
                       <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
                         <AppIcon name="star" size={22} className="text-[#fd2597]" />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 min-w-0">
                         <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                           Resumo
                         </span>
                         <h2 className="text-lg font-semibold text-[#2f3a56]">O que sua presença já mostra</h2>
-                        <p className="text-[13px] text-[#6a6a6a]">Informação com contexto — sem cobrança.</p>
+                        <RenderEditorialText
+                          text="Informação com contexto — sem cobrança."
+                          className="text-[13px] text-[#6a6a6a] leading-relaxed"
+                        />
                       </div>
                     </div>
 
@@ -365,7 +435,10 @@ export default function MinhasConquistasClient() {
                       <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">hoje</div>
                         <div className="mt-1 text-[22px] font-semibold text-[#2f3a56]">{todayPoints} pts</div>
-                        <div className="mt-1 text-[12px] text-[#6a6a6a]">O que coube hoje já conta de verdade.</div>
+                        <RenderEditorialText
+                          text="O que coube hoje já conta de verdade."
+                          className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
                       </div>
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-4">
@@ -390,10 +463,11 @@ export default function MinhasConquistasClient() {
 
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">nota de cuidado</div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança. O que foi
-                        possível já conta — e conta de verdade.
-                      </div>
+
+                      <RenderEditorialText
+                        text="Se você está em fase difícil, o Materna360 não deveria virar mais um lugar de cobrança. O que foi possível já conta — e conta de verdade."
+                        className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed max-w-2xl"
+                      />
 
                       <div className="mt-5 flex flex-wrap gap-2">
                         <button
