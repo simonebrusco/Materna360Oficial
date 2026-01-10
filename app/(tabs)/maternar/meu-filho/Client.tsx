@@ -615,12 +615,25 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        a: {
+          tag: 'rápido',
+          time: '5',
+          title: 'Cópia de gestos',
+          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
+        },
         b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
-        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
+        c: {
+          tag: 'sensório',
+          time: '5',
+          title: 'Texturas da casa',
+          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
+      routine: {
+        label: 'Ajuste que ajuda hoje',
+        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
+      },
       connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
@@ -643,9 +656,24 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
-        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
-        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
+        a: {
+          tag: 'rotina',
+          time: '15',
+          title: 'Mini ritual pré-janta',
+          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
+        },
+        b: {
+          tag: 'sensório',
+          time: '15',
+          title: 'Caixa de “coisas seguras”',
+          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
+        },
+        c: {
+          tag: 'calmo',
+          time: '15',
+          title: 'Banho de brinquedos',
+          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
@@ -815,17 +843,20 @@ function splitEditorialText(raw: string | null | undefined): string[] {
 
 function RenderEditorialText({
   text,
-  className,
+  wrapClassName,
+  pClassName,
 }: {
   text: string | null | undefined
-  className: string
+  wrapClassName?: string
+  pClassName: string
 }) {
   const parts = splitEditorialText(text)
+  if (parts.length === 0) return null
 
   return (
-    <div className="space-y-2">
+    <div className={['space-y-2', wrapClassName ?? ''].join(' ').trim()}>
       {parts.map((p, i) => (
-        <p key={i} className={className}>
+        <p key={i} className={pClassName}>
           {p}
         </p>
       ))}
@@ -1411,7 +1442,7 @@ export default function MeuFilhoClient() {
                         ) : (
                           <RenderEditorialText
                             text={bloco1Text}
-                            className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
+                            pClassName="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
                           />
                         )}
 
@@ -1484,7 +1515,9 @@ export default function MeuFilhoClient() {
                                 onClick={() => onChoose(k)}
                                 className={[
                                   'rounded-2xl border p-4 text-left transition',
-                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  active
+                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                                 disabled={bloco2.status === 'loading'}
                                 aria-disabled={bloco2.status === 'loading'}
@@ -1498,7 +1531,8 @@ export default function MeuFilhoClient() {
 
                                 <RenderEditorialText
                                   text={it.how}
-                                  className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed"
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[12px] text-[#6a6a6a] leading-relaxed"
                                 />
                               </button>
                             )
@@ -1513,7 +1547,8 @@ export default function MeuFilhoClient() {
 
                           <RenderEditorialText
                             text={selected.how}
-                            className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
+                            wrapClassName="mt-2"
+                            pClassName="text-[13px] text-[#6a6a6a] leading-relaxed"
                           />
 
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -1565,9 +1600,7 @@ export default function MeuFilhoClient() {
                             Desenvolvimento por fase
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</p>
                         </div>
                       </div>
 
@@ -1616,9 +1649,7 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
                         </div>
                       </div>
 
@@ -1628,9 +1659,7 @@ export default function MeuFilhoClient() {
 
                         {/* ✅ Seleção de tema (obrigatória) */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            Escolha o tema
-                          </div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
                           <div className="mt-3 flex flex-wrap gap-2">
                             {ROTINA_TEMAS.map((t) => {
                               const active = rotinaTema === t.id
@@ -1659,18 +1688,15 @@ export default function MeuFilhoClient() {
 
                           {rotinaTema ? (
                             <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                {bloco3Label}
-                              </div>
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
 
                               {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Ajustando para o seu dia…
-                                </div>
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
                               ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
                                 <RenderEditorialText
                                   text={bloco3Text}
-                                  className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
                                 />
                               ) : (
                                 <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
@@ -1716,9 +1742,7 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
                         </div>
                       </div>
 
@@ -1728,9 +1752,7 @@ export default function MeuFilhoClient() {
 
                         {/* ✅ Seleção de tema (obrigatória) */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            Escolha o tema
-                          </div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
                           <div className="mt-3 flex flex-wrap gap-2">
                             {CONEXAO_TEMAS.map((t) => {
                               const active = conexaoTema === t.id
@@ -1759,18 +1781,15 @@ export default function MeuFilhoClient() {
 
                           {conexaoTema ? (
                             <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                Para encaixar no dia
-                              </div>
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
 
                               {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Ajustando para o seu dia…
-                                </div>
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
                               ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
                                 <RenderEditorialText
                                   text={bloco3Text}
-                                  className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
                                 />
                               ) : (
                                 <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
