@@ -51,6 +51,29 @@ type Kit = {
   connection: { label: string; note: string } // ✅ note é obrigatório
 }
 
+/**
+ * P34.10 — Tema (decisão mínima) para Bloco 3
+ * - Rotina: temas de transição/fluxo
+ * - Conexão: temas de fechamento/gesto
+ */
+type RotinaTema = 'transicao' | 'banho' | 'jantar' | 'sono' | 'manha'
+type ConexaoTema = 'checkin' | 'carinho' | 'conversa' | 'calmaria'
+
+const ROTINA_TEMAS: { id: RotinaTema; label: string }[] = [
+  { id: 'transicao', label: 'Transição' },
+  { id: 'banho', label: 'Banho' },
+  { id: 'jantar', label: 'Jantar' },
+  { id: 'sono', label: 'Sono' },
+  { id: 'manha', label: 'Manhã' },
+]
+
+const CONEXAO_TEMAS: { id: ConexaoTema; label: string }[] = [
+  { id: 'checkin', label: 'Check-in' },
+  { id: 'carinho', label: 'Carinho' },
+  { id: 'conversa', label: 'Conversa' },
+  { id: 'calmaria', label: 'Calmaria' },
+]
+
 const LS_PREFIX = 'm360:'
 
 function safeGetLS(key: string): string | null {
@@ -260,8 +283,20 @@ type Bloco2State =
   | { status: 'loading' }
   | { status: 'done'; items: Bloco2Items; source: 'ai' | 'fallback' }
 
+/**
+ * Importante:
+ * - NÃO remover hífen do meio das frases (ex.: “pré-janta”, “check-in”, “0–2”).
+ * - Remover apenas bullets de lista quando aparecem no início de linha.
+ */
 function stripEmojiAndBullets(s: string) {
-  const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
+  const text = String(s ?? '')
+
+  const noBullets = text
+    .replace(/(^|\n)\s*[•●▪▫◦]\s+/g, '$1')
+    .replace(/(^|\n)\s*[-–—]\s+/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
+
   return noBullets
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
     .replace(/\s+/g, ' ')
@@ -358,7 +393,13 @@ type Bloco3Type = 'rotina' | 'conexao'
 type Bloco3State =
   | { status: 'idle' }
   | { status: 'loading'; kind: Bloco3Type }
-  | { status: 'done'; kind: Bloco3Type; text: string; source: 'ai' | 'fallback'; momento: MomentoDoDia }
+  | {
+      status: 'done'
+      kind: Bloco3Type
+      text: string
+      source: 'ai' | 'fallback'
+      momento: MomentoDoDia
+    }
 
 function momentForStep(step: Step): MomentoDoDia {
   if (step === 'rotina') return 'transição'
@@ -389,7 +430,10 @@ function clampBloco3Text(raw: unknown): string | null {
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
   // limitar frases (best effort): até 3
-  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  const sentences = t
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (sentences.length > 3) return null
 
   return t
@@ -415,6 +459,7 @@ async function fetchBloco3Suggestion(args: {
   momento_do_dia: MomentoDoDia
   tipo_experiencia: Bloco3Type
   contexto: 'continuidade'
+  tema: RotinaTema | ConexaoTema
 }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
@@ -430,6 +475,7 @@ async function fetchBloco3Suggestion(args: {
         momento_do_dia: args.momento_do_dia,
         tipo_experiencia: args.tipo_experiencia,
         contexto: args.contexto,
+        tema: args.tema,
       }),
     })
 
@@ -500,7 +546,10 @@ function clampBloco4Text(raw: unknown): string | null {
 
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
-  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  const sentences = t
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (sentences.length !== 1) return null
 
   return t
@@ -566,12 +615,25 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        a: {
+          tag: 'rápido',
+          time: '5',
+          title: 'Cópia de gestos',
+          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
+        },
         b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
-        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
+        c: {
+          tag: 'sensório',
+          time: '5',
+          title: 'Texturas da casa',
+          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
+      routine: {
+        label: 'Ajuste que ajuda hoje',
+        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
+      },
       connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
@@ -594,9 +656,24 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
-        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
-        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
+        a: {
+          tag: 'rotina',
+          time: '15',
+          title: 'Mini ritual pré-janta',
+          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
+        },
+        b: {
+          tag: 'sensório',
+          time: '15',
+          title: 'Caixa de “coisas seguras”',
+          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
+        },
+        c: {
+          tag: 'calmo',
+          time: '15',
+          title: 'Banho de brinquedos',
+          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
+        },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
@@ -674,7 +751,6 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
-      // ✅ CORREÇÃO: connection precisa de label + note
       connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
     },
     '15': {
@@ -738,6 +814,56 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
   },
 }
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial de texto
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+
+  const text = String(raw).trim()
+  if (!text) return []
+
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
+
+  let working = text
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s*${m}`, 'g'), `\n\n${m}`)
+  })
+
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  if (parts.length === 0) return [text]
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  wrapClassName,
+  pClassName,
+}: {
+  text: string | null | undefined
+  wrapClassName?: string
+  pClassName: string
+}) {
+  const parts = splitEditorialText(text)
+  if (parts.length === 0) return null
+
+  return (
+    <div className={['space-y-2', wrapClassName ?? ''].join(' ').trim()}>
+      {parts.map((p, i) => (
+        <p key={i} className={pClassName}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 export default function MeuFilhoClient() {
   const [step, setStep] = useState<Step>('brincadeiras')
   const [time, setTime] = useState<TimeMode>('15')
@@ -748,6 +874,10 @@ export default function MeuFilhoClient() {
   const [profileSource, setProfileSource] = useState<ProfileSource>('none')
 
   const [familyDoneToday, setFamilyDoneToday] = useState(false)
+
+  // ✅ P34.10: seleção mínima de tema antes de gerar Bloco 3
+  const [rotinaTema, setRotinaTema] = useState<RotinaTema | null>(null)
+  const [conexaoTema, setConexaoTema] = useState<ConexaoTema | null>(null)
 
   // Bloco 1 (canônico)
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
@@ -772,27 +902,34 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
-    const inferred = inferContext()
+    // ✅ blindagem: não deixar storage/perfil derrubar a tela
+    let inferred: { time: TimeMode; age: AgeBand; childLabel?: string } = { time: '15', age: '3-4' }
+    try {
+      inferred = inferContext()
+    } catch {}
+
     setTime(inferred.time)
     setAge(inferred.age)
     setChildLabel(inferred.childLabel)
     setStep('brincadeiras')
 
-    const snap = getProfileSnapshot()
-    setProfileSource(snap.source)
+    try {
+      const snap = getProfileSnapshot()
+      setProfileSource(snap.source)
+
+      try {
+        track('meu_filho.open', {
+          time: inferred.time,
+          age: inferred.age,
+          childLabel: inferred.childLabel ?? null,
+          profileSource: snap.source,
+        })
+      } catch {}
+    } catch {}
 
     try {
       const js = getJourneySnapshot()
       setFamilyDoneToday(js.family.doneToday)
-    } catch {}
-
-    try {
-      track('meu_filho.open', {
-        time: inferred.time,
-        age: inferred.age,
-        childLabel: inferred.childLabel ?? null,
-        profileSource: snap.source,
-      })
     } catch {}
   }, [])
 
@@ -870,6 +1007,10 @@ export default function MeuFilhoClient() {
     }
   }, [time, age, kit.plan])
 
+  /**
+   * ✅ BLOCO 3 — versão typesafe
+   * Só gera quando existe tema escolhido (rotinaTema/conexaoTema).
+   */
   useEffect(() => {
     if (step !== 'rotina' && step !== 'conexao') return
 
@@ -880,6 +1021,42 @@ export default function MeuFilhoClient() {
       const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
       const momento = momentForStep(step)
 
+      if (kind === 'rotina') {
+        const tema = rotinaTema
+        if (!tema) return
+
+        setBloco3({ status: 'loading', kind })
+
+        const ai = await fetchBloco3Suggestion({
+          faixa_etaria: age,
+          momento_do_dia: momento,
+          tipo_experiencia: kind,
+          contexto: 'continuidade',
+          tema,
+        })
+
+        if (!alive || seq !== bloco3ReqSeq.current) return
+
+        if (ai) {
+          setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
+          try {
+            track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
+          } catch {}
+          return
+        }
+
+        const fb = BLOCO3_FALLBACK[kind][age]
+        setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+        try {
+          track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
+        } catch {}
+        return
+      }
+
+      // kind === 'conexao'
+      const tema = conexaoTema
+      if (!tema) return
+
       setBloco3({ status: 'loading', kind })
 
       const ai = await fetchBloco3Suggestion({
@@ -887,6 +1064,7 @@ export default function MeuFilhoClient() {
         momento_do_dia: momento,
         tipo_experiencia: kind,
         contexto: 'continuidade',
+        tema,
       })
 
       if (!alive || seq !== bloco3ReqSeq.current) return
@@ -894,7 +1072,7 @@ export default function MeuFilhoClient() {
       if (ai) {
         setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
         try {
-          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento })
+          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
         } catch {}
         return
       }
@@ -902,7 +1080,7 @@ export default function MeuFilhoClient() {
       const fb = BLOCO3_FALLBACK[kind][age]
       setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
       try {
-        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento })
+        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
       } catch {}
     }
 
@@ -910,7 +1088,7 @@ export default function MeuFilhoClient() {
     return () => {
       alive = false
     }
-  }, [step, age])
+  }, [step, age, rotinaTema, conexaoTema])
 
   useEffect(() => {
     if (step !== 'desenvolvimento') return
@@ -965,6 +1143,11 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.time, next)
     safeSetLS('eu360_time_with_child', next)
 
+    // reset tema (evita “tema antigo” com novo contexto)
+    setRotinaTema(null)
+    setConexaoTema(null)
+    setBloco3({ status: 'idle' })
+
     try {
       track('meu_filho.time.select', { time: next })
     } catch {}
@@ -976,6 +1159,11 @@ export default function MeuFilhoClient() {
 
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
+
+    // reset tema (evita “tema antigo” com novo contexto)
+    setRotinaTema(null)
+    setConexaoTema(null)
+    setBloco3({ status: 'idle' })
 
     try {
       track('meu_filho.age.select', { age: next, reason: 'manual_override' })
@@ -1252,7 +1440,10 @@ export default function MeuFilhoClient() {
                         {bloco1.status === 'loading' ? (
                           <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
                         ) : (
-                          <div className="text-[14px] font-semibold text-[#2f3a56] leading-relaxed">{bloco1Text}</div>
+                          <RenderEditorialText
+                            text={bloco1Text}
+                            pClassName="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
+                          />
                         )}
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -1296,7 +1487,7 @@ export default function MeuFilhoClient() {
                             <AppIcon name="toy" size={22} className="text-[#fd2597]" />
                           </div>
                           <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
                               Brincadeiras do dia
                             </span>
                             <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
@@ -1324,7 +1515,9 @@ export default function MeuFilhoClient() {
                                 onClick={() => onChoose(k)}
                                 className={[
                                   'rounded-2xl border p-4 text-left transition',
-                                  active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                  active
+                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
                                 disabled={bloco2.status === 'loading'}
                                 aria-disabled={bloco2.status === 'loading'}
@@ -1332,17 +1525,31 @@ export default function MeuFilhoClient() {
                                 <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
                                   {it.tag} • {timeLabel(it.time)}
                                 </div>
-                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{it.title}</div>
-                                <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{it.how}</div>
+                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">
+                                  {it.title}
+                                </div>
+
+                                <RenderEditorialText
+                                  text={it.how}
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[12px] text-[#6a6a6a] leading-relaxed"
+                                />
                               </button>
                             )
                           })}
                         </div>
 
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">opção selecionada</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            opção selecionada
+                          </div>
                           <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
-                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{selected.how}</div>
+
+                          <RenderEditorialText
+                            text={selected.how}
+                            wrapClassName="mt-2"
+                            pClassName="text-[13px] text-[#6a6a6a] leading-relaxed"
+                          />
 
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
@@ -1450,13 +1657,57 @@ export default function MeuFilhoClient() {
                         <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
                         <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
 
+                        {/* ✅ Seleção de tema (obrigatória) */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {ROTINA_TEMAS.map((t) => {
+                              const active = rotinaTema === t.id
+                              return (
+                                <button
+                                  key={t.id}
+                                  onClick={() => {
+                                    setRotinaTema(t.id)
+                                    setBloco3({ status: 'idle' })
+                                    try {
+                                      track('meu_filho.bloco3.tema.select', { kind: 'rotina', tema: t.id })
+                                    } catch {}
+                                  }}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    active
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  {t.label}
+                                </button>
+                              )
+                            })}
+                          </div>
 
-                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
+                          {rotinaTema ? (
+                            <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
+
+                              {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
+                              ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
+                                <RenderEditorialText
+                                  text={bloco3Text}
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                />
+                              ) : (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                  Pronto — com o tema escolhido eu ajusto a sugestão.
+                                </div>
+                              )}
+                            </div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco3Text}</div>
+                            <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Selecione um tema acima para eu ajustar a sugestão.
+                            </div>
                           )}
                         </div>
 
@@ -1499,13 +1750,57 @@ export default function MeuFilhoClient() {
                         <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
                         <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
 
+                        {/* ✅ Seleção de tema (obrigatória) */}
                         <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {CONEXAO_TEMAS.map((t) => {
+                              const active = conexaoTema === t.id
+                              return (
+                                <button
+                                  key={t.id}
+                                  onClick={() => {
+                                    setConexaoTema(t.id)
+                                    setBloco3({ status: 'idle' })
+                                    try {
+                                      track('meu_filho.bloco3.tema.select', { kind: 'conexao', tema: t.id })
+                                    } catch {}
+                                  }}
+                                  className={[
+                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
+                                    active
+                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
+                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
+                                  ].join(' ')}
+                                >
+                                  {t.label}
+                                </button>
+                              )
+                            })}
+                          </div>
 
-                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
+                          {conexaoTema ? (
+                            <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
+
+                              {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
+                              ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
+                                <RenderEditorialText
+                                  text={bloco3Text}
+                                  wrapClassName="mt-2"
+                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                />
+                              ) : (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                  Pronto — com o tema escolhido eu ajusto a sugestão.
+                                </div>
+                              )}
+                            </div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco3Text}</div>
+                            <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
+                              Selecione um tema acima para eu ajustar a sugestão.
+                            </div>
                           )}
                         </div>
 
@@ -1515,7 +1810,9 @@ export default function MeuFilhoClient() {
                             disabled={familyDoneToday}
                             className={[
                               'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              familyDoneToday ? 'bg-[#ffd8e6] text-[#b8236b] cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+                              familyDoneToday
+                                ? 'bg-[#ffd8e6] text-[#b8236b] cursor-not-allowed'
+                                : 'bg-[#fd2597] text-white hover:opacity-95',
                             ].join(' ')}
                             title="Conta para a sua Jornada"
                           >

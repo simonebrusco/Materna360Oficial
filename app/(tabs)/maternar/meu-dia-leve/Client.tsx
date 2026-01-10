@@ -11,7 +11,12 @@ import LegalFooter from '@/components/common/LegalFooter'
 import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
-import { addTaskToMyDay, listMyDayTasks, MY_DAY_SOURCES, type MyDayTaskItem } from '@/app/lib/myDayTasks.client'
+import {
+  addTaskToMyDay,
+  listMyDayTasks,
+  MY_DAY_SOURCES,
+  type MyDayTaskItem,
+} from '@/app/lib/myDayTasks.client'
 import { getProfileSnapshot, getActiveChildOrNull } from '@/app/lib/profile.client'
 
 export const dynamic = 'force-dynamic'
@@ -74,10 +79,17 @@ function slotTitle(s: Slot) {
   return s === '3' ? 'micro-alívio' : s === '5' ? 'respiro rápido' : 'virada do dia'
 }
 
-function slotHint(s: Slot) {
-  if (s === '3') return 'Para quando você está sem tempo e precisa destravar o agora.'
-  if (s === '5') return 'Para quando dá para encaixar algo pequeno e útil entre tarefas.'
-  return 'Para quando você consegue reorganizar o resto do dia com um passo simples.'
+/**
+ * Ajuste (mobile): subtítulo sempre em frases curtas (2 linhas)
+ */
+function slotHintLines(s: Slot): { l1: string; l2: string } {
+  if (s === '3') {
+    return { l1: 'Para quando você está sem tempo.', l2: 'Só para destravar o agora.' }
+  }
+  if (s === '5') {
+    return { l1: 'Cabe entre tarefas.', l2: 'Um ajuste pequeno e útil.' }
+  }
+  return { l1: 'Para quando você consegue reorganizar.', l2: 'Com um passo simples.' }
 }
 
 function moodTitle(m: Mood) {
@@ -142,61 +154,155 @@ type QuickIdea = { tag: string; title: string; how: string; slot: Slot; focus: F
 type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
-const INSPIRATIONS: Record<Mood, { title: string; line: string; action: string }> = {
+const INSPIRATIONS: Record<
+  Mood,
+  { title: string; line1: string; line2: string; action: string }
+> = {
   'no-limite': {
     title: 'Para agora',
-    line: 'Escolha uma coisa só. O resto pode esperar.',
+    line1: 'Escolha uma coisa só.',
+    line2: 'O resto pode esperar.',
     action: 'Defina 1 prioridade mínima.',
   },
   corrida: {
     title: 'Para hoje',
-    line: 'O dia melhora quando você decide o próximo passo — não o dia inteiro.',
+    line1: 'O dia melhora quando você decide o próximo passo.',
+    line2: 'Não o dia inteiro.',
     action: 'Escolha o próximo passo.',
   },
   ok: {
     title: 'Para manter',
-    line: 'Quando você simplifica, você ganha tempo de verdade.',
+    line1: 'Quando você simplifica, você ganha tempo de verdade.',
+    line2: 'Só o que importa agora.',
     action: 'Corte uma exigência.',
   },
   leve: {
     title: 'Para aproveitar',
-    line: 'Dia leve não é dia perfeito. É dia bem conduzido.',
+    line1: 'Dia leve não é dia perfeito.',
+    line2: 'É dia bem conduzido.',
     action: 'Faça o básico bem feito.',
   },
 }
 
 const IDEIAS: QuickIdea[] = [
-  { tag: '3 min', title: 'Respirar + ombros para baixo', how: '3 respirações lentas + relaxar ombros 3 vezes. Só isso.', slot: '3', focus: 'voce' },
-  { tag: '3 min', title: 'Mensagem curta que resolve', how: 'Uma mensagem objetiva (sem texto longo) para destravar algo do dia.', slot: '3', focus: 'casa' },
-  { tag: '5 min', title: 'Conexão com o filho (sem inventar)', how: 'Pergunta simples: “o que foi legal hoje?” + ouvir 20 segundos.', slot: '5', focus: 'filho' },
-  { tag: '5 min', title: 'Organizar um ponto só', how: 'Uma bancada ou mesa. Não a casa toda.', slot: '5', focus: 'casa' },
-  { tag: '10 min', title: 'Música + tarefa que já existe', how: 'Uma música e você faz uma tarefa que já faria de qualquer jeito.', slot: '10', focus: 'voce' },
-  { tag: '10 min', title: 'Banho/escova em modo leve', how: 'Transforme a rotina em “missão” rápida e sem discussão.', slot: '10', focus: 'filho' },
-  { tag: '5 min', title: 'Água + lanche simples', how: 'Água + algo pronto. Resolve energia sem complicar.', slot: '5', focus: 'comida' },
+  {
+    tag: '3 min',
+    title: 'Respirar + ombros para baixo',
+    how: '3 respirações lentas. Ombros para baixo 3 vezes.',
+    slot: '3',
+    focus: 'voce',
+  },
+  {
+    tag: '3 min',
+    title: 'Mensagem curta que resolve',
+    how: 'Uma mensagem objetiva. Sem texto longo.',
+    slot: '3',
+    focus: 'casa',
+  },
+  {
+    tag: '5 min',
+    title: 'Conexão com o filho (sem inventar)',
+    how: 'Pergunta simples: “o que foi legal hoje?”. Ouvir 20 segundos.',
+    slot: '5',
+    focus: 'filho',
+  },
+  {
+    tag: '5 min',
+    title: 'Organizar um ponto só',
+    how: 'Uma bancada ou mesa. Não a casa toda.',
+    slot: '5',
+    focus: 'casa',
+  },
+  {
+    tag: '10 min',
+    title: 'Música + tarefa que já existe',
+    how: 'Uma música. Uma tarefa que você já faria.',
+    slot: '10',
+    focus: 'voce',
+  },
+  {
+    tag: '10 min',
+    title: 'Banho/escova em modo leve',
+    how: 'Transforme a rotina em “missão” rápida. Sem discussão.',
+    slot: '10',
+    focus: 'filho',
+  },
+  {
+    tag: '5 min',
+    title: 'Água + lanche simples',
+    how: 'Água. Algo pronto. Resolve energia sem complicar.',
+    slot: '5',
+    focus: 'comida',
+  },
 ]
 
 const RECEITAS: QuickRecipe[] = [
-  { tag: '3 min', title: 'Iogurte com fruta (montagem simples)', how: 'Montagem rápida com o que tiver. Sem medida.', slot: '3' },
-  { tag: '5 min', title: 'Ovo mexido macio', how: 'Fogo baixo e pronto. Sem se preocupar com ponto perfeito.', slot: '5' },
-  { tag: '5 min', title: 'Refeição simples com o que tem', how: 'Uma base + um complemento, como for mais fácil agora.', slot: '5' },
-  { tag: '10 min', title: 'Comida do dia sem complicar', how: 'Esquentar e servir. Só até ficar bom para servir.', slot: '10' },
+  {
+    tag: '3 min',
+    title: 'Iogurte com fruta (montagem simples)',
+    how: 'Monte com o que tiver. Sem medida.',
+    slot: '3',
+  },
+  { tag: '5 min', title: 'Ovo mexido macio', how: 'Fogo baixo. Pronto.', slot: '5' },
+  {
+    tag: '5 min',
+    title: 'Refeição simples com o que tem',
+    how: 'Uma base. Um complemento. Do jeito mais fácil agora.',
+    slot: '5',
+  },
+  {
+    tag: '10 min',
+    title: 'Comida do dia sem complicar',
+    how: 'Esquentar e servir. Só até ficar bom para comer.',
+    slot: '10',
+  },
 ]
 
 const PASSO_LEVE: DayLine[] = [
-  { title: 'Resolver 1 coisa que está travando', why: 'O resto fica mais fácil quando algo destrava', focus: 'casa', slot: '5' },
-  { title: 'Fazer 5 min de conexão com o filho', why: 'Curto e intencional funciona melhor do que “tentar muito”.', focus: 'filho', slot: '5' },
-  { title: 'Proteger 10 min só seus', why: 'Sem tela e sem tarefa. É recarregar para continuar.', focus: 'voce', slot: '10' },
-  { title: 'Simplificar a refeição', why: 'Comida simples também é cuidado — e libera energia mental.', focus: 'comida', slot: '5' },
+  {
+    title: 'Resolver 1 coisa que está travando',
+    why: 'Quando algo destrava, o resto fica mais fácil.',
+    focus: 'casa',
+    slot: '5',
+  },
+  {
+    title: 'Fazer 5 min de conexão com o filho',
+    why: 'Curto e intencional funciona melhor.',
+    focus: 'filho',
+    slot: '5',
+  },
+  {
+    title: 'Proteger 10 min só seus',
+    why: 'Sem tela. Sem tarefa. Só recarregar.',
+    focus: 'voce',
+    slot: '10',
+  },
+  {
+    title: 'Simplificar a refeição',
+    why: 'Comida simples também é cuidado. E libera energia.',
+    focus: 'comida',
+    slot: '5',
+  },
 ]
 
-function Pill({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) {
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean
+  onClick?: () => void
+  children: React.ReactNode
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
         'rounded-full px-3 py-1.5 text-[12px] border transition',
-        active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
+        active
+          ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+          : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
       ].join(' ')}
     >
       {children}
@@ -229,8 +335,12 @@ function CardChoice({
       <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
         {tag}
       </div>
-      <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{title}</div>
-      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{subtitle}</div>
+      <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">
+        {title}
+      </div>
+      <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
+        {subtitle}
+      </div>
     </button>
   )
 }
@@ -258,7 +368,12 @@ function toMyDayTitleFromInspiration(input: { mood: Mood; slot: Slot; focus: Foc
   const { slot, focus } = input
 
   if (focus === 'filho') return slot === '3' ? 'Conexão rápida (3 min)' : 'Conexão com o filho (5 min)'
-  if (focus === 'voce') return slot === '3' ? 'Pausa curta (3 min)' : slot === '5' ? 'Respiro rápido (5 min)' : '10 min só meus'
+  if (focus === 'voce')
+    return slot === '3'
+      ? 'Pausa curta (3 min)'
+      : slot === '5'
+        ? 'Respiro rápido (5 min)'
+        : '10 min só meus'
   if (focus === 'casa') return slot === '3' ? 'Destravar 1 ponto da casa' : 'Organizar 1 ponto só'
   return 'Simplificar a refeição'
 }
@@ -290,7 +405,7 @@ async function requestAIRecipe(input: {
     return {
       ok: false,
       error: `http_${res.status}`,
-      hint: 'Não deu certo agora. Se quiser, você pode usar uma opção pronta abaixo.',
+      hint: 'Não deu certo agora. Se quiser, use uma opção pronta abaixo.',
     }
   }
 
@@ -359,7 +474,11 @@ export default function MeuDiaLeveClient() {
 
   useEffect(() => {
     try {
-      track('nav.view', { tab: 'maternar', page: 'meu-dia-leve', timestamp: new Date().toISOString() })
+      track('nav.view', {
+        tab: 'maternar',
+        page: 'meu-dia-leve',
+        timestamp: new Date().toISOString(),
+      })
     } catch {}
   }, [])
 
@@ -490,7 +609,7 @@ export default function MeuDiaLeveClient() {
     const today = listMyDayTasks()
     const activeCount = countActiveFromMeuDiaLeveToday(today)
     if (activeCount >= 3) {
-      flash('Você já salvou 3 ações do Meu Dia Leve hoje. Conclua uma ou escolha só 1 para agora.', 3200)
+      flash('Você já salvou 3 ações do Meu Dia Leve hoje. Conclua uma. Ou escolha só 1 para agora.', 3200)
       try {
         track('my_day.task.add.blocked', {
           source: SOURCE,
@@ -573,7 +692,7 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'no_children' as const,
         title: 'Observação',
-        message: 'Para sugerir receitas com segurança, complete o cadastro do(s) filho(s) no Eu360.',
+        message: 'Para sugerir com segurança, complete o cadastro do(s) filho(s) no Eu360.',
       }
     }
 
@@ -581,7 +700,7 @@ export default function MeuDiaLeveClient() {
       return {
         blocked: true,
         reason: 'no_active' as const,
-        title: 'Para sugerir receitas com segurança',
+        title: 'Para sugerir com segurança',
         message: 'Selecione um filho com idade preenchida no Eu360.',
       }
     }
@@ -590,7 +709,7 @@ export default function MeuDiaLeveClient() {
       return {
         blocked: true,
         reason: 'age_missing' as const,
-        title: 'Para sugerir receitas com segurança',
+        title: 'Para sugerir com segurança',
         message: 'Complete a idade do(s) filho(s) no Eu360.',
       }
     }
@@ -600,7 +719,8 @@ export default function MeuDiaLeveClient() {
         blocked: true,
         reason: 'under_6' as const,
         title: 'Sem receitas por enquanto',
-        message: 'Para essa fase, aqui a gente não sugere receitas. Siga a orientação que você já usa com sua rede de saúde.',
+        message:
+          'Para essa fase, aqui a gente não sugere receitas. Siga a orientação que você já usa com sua rede de saúde.',
       }
     }
 
@@ -610,7 +730,7 @@ export default function MeuDiaLeveClient() {
         reason: 'intro_6_11' as const,
         title: 'Introdução alimentar',
         message:
-          'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas — siga a orientação que você já usa com sua rede de saúde.',
+          'Entre 6 e 11 meses, as orientações variam. Aqui, por enquanto, a gente não sugere receitas. Siga a orientação que você já usa com sua rede de saúde.',
       }
     }
 
@@ -649,7 +769,7 @@ export default function MeuDiaLeveClient() {
 
       if (!data?.ok || !data.text) {
         setAiRecipeError(data?.error || 'erro_receita')
-        setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item — ou use uma opção pronta abaixo.')
+        setAiRecipeHint(data?.hint || 'Se quiser, escreva mais 1 item. Ou use uma opção pronta abaixo.')
         return
       }
 
@@ -667,10 +787,10 @@ export default function MeuDiaLeveClient() {
     if (gate.blocked) return ''
     if (aiRecipeHint) return aiRecipeHint
 
-    if (ageTier === 'toddler_12_23') return 'Pode ser só 1 item. Se der, diga também se é para lanche ou refeição (rapidinho).'
-    if (ageTier === 'kid_24_plus') return 'Pode ser só 1 item. Se quiser, diga também o tipo de refeição (lanche/almoço/janta).'
+    if (ageTier === 'toddler_12_23') return 'Pode ser só 1 item. Se der, diga se é lanche ou refeição.'
+    if (ageTier === 'kid_24_plus') return 'Pode ser só 1 item. Se quiser, diga o tipo (lanche/almoço/janta).'
 
-    return 'Pode ser só 1 item. Se for pouco específico, eu te peço mais 1 (sem complicar).'
+    return 'Pode ser só 1 item. Se ficar vago, eu te peço mais 1. Sem complicar.'
   }, [gate.blocked, aiRecipeHint, ageTier])
 
   const stepTitle = useMemo(() => {
@@ -680,12 +800,22 @@ export default function MeuDiaLeveClient() {
     return 'Passo leve'
   }, [step])
 
-  const stepSubtitle = useMemo(() => {
-    if (step === 'inspiracao') return 'Uma frase curta para organizar o agora.'
-    if (step === 'ideias') return 'Escolha uma ideia pequena e possível.'
-    if (step === 'receitas') return 'Uma receita simples sem complicar.'
-    return 'Um passo único para fechar o seu agora.'
+  const stepSubtitleLines = useMemo((): { l1: string; l2: string } => {
+    if (step === 'inspiracao') return { l1: 'Uma frase curta.', l2: 'Só para organizar o agora.' }
+    if (step === 'ideias') return { l1: 'Escolha uma ideia pequena.', l2: 'E possível de fazer agora.' }
+    if (step === 'receitas') return { l1: 'Uma receita simples.', l2: 'Sem complicar.' }
+    return { l1: 'Um passo único.', l2: 'Para fechar o agora.' }
   }, [step])
+
+  const headerCopyLines = useMemo((): { l1: string; l2: string; l3?: string } => {
+    return {
+      l1: 'Você entra sem clareza.',
+      l2: 'Sai com um próximo passo simples para agora.',
+      l3: 'Sem ficar caçando.',
+    }
+  }, [])
+
+  const slotHint = useMemo(() => slotHintLines(slot), [slot])
 
   return (
     <main
@@ -700,9 +830,12 @@ export default function MeuDiaLeveClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+          <header className="pt-6 md:pt-10 mb-5 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+              <Link
+                href="/maternar"
+                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
+              >
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -711,8 +844,13 @@ export default function MeuDiaLeveClient() {
                 Meu Dia Leve
               </h1>
 
+              {/* Mobile: até 3 “respiros”. Desktop: bloco corrido. */}
               <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem clareza e sai com um próximo passo simples para agora — sem ficar caçando.
+                <span className="block md:inline">{headerCopyLines.l1}{' '}</span>
+                <span className="block md:inline">{headerCopyLines.l2}{' '}</span>
+                {headerCopyLines.l3 ? (
+                  <span className="block md:inline">{headerCopyLines.l3}</span>
+                ) : null}
               </p>
             </div>
           </header>
@@ -736,13 +874,26 @@ export default function MeuDiaLeveClient() {
                     </div>
 
                     <div>
+                      {/* Status em 2 linhas (mobile-friendly) */}
                       <div className="text-[12px] text-white/85">
-                        Passo {stepIndex(step)}/4 • {slotTitle(slot)} • {slotLabel(slot)} • foco {focusTitle(focus)}
+                        <div>
+                          Passo {stepIndex(step)}/4 • {slotLabel(slot)}
+                        </div>
+                        <div>
+                          {slotTitle(slot)} • foco {focusTitle(focus)}
+                        </div>
                       </div>
+
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Sugestão pronta para o seu agora
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{slotHint(slot)}</div>
+
+                      {/* Subtítulo em 2 frases curtas */}
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
+                        {slotHint.l1}
+                        <br />
+                        {slotHint.l2}
+                      </div>
                     </div>
                   </div>
 
@@ -805,7 +956,9 @@ export default function MeuDiaLeveClient() {
                         onClick={() => go(it.id)}
                         className={[
                           'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
+                          active
+                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
+                            : 'bg-white/20 border border-white/35 text-white/90 hover:bg-white/30',
                         ].join(' ')}
                       >
                         {it.label}
@@ -819,12 +972,17 @@ export default function MeuDiaLeveClient() {
                 <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                      <AppIcon name={step === 'receitas' ? 'heart' : 'sparkles'} size={22} className="text-[#fd2597]" />
+                      <AppIcon
+                        name={step === 'receitas' ? 'heart' : 'sparkles'}
+                        size={22}
+                        className="text-[#fd2597]"
+                      />
                     </div>
                     <div className="space-y-1">
                       <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                         {stepTitle}
                       </span>
+
                       <h2 className="text-lg font-semibold text-[#2f3a56]">
                         {step === 'inspiracao'
                           ? 'Uma frase simples para agora'
@@ -834,25 +992,45 @@ export default function MeuDiaLeveClient() {
                               ? 'Uma receita simples para agora'
                               : 'Um passo leve para fechar o agora'}
                       </h2>
-                      <p className="text-[13px] text-[#6a6a6a]">{stepSubtitle}</p>
+
+                      {/* Subtítulo em 2 linhas sempre */}
+                      <p className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                        {stepSubtitleLines.l1}
+                        <br />
+                        {stepSubtitleLines.l2}
+                      </p>
                     </div>
                   </div>
 
                   {/* INSPIRAÇÃO */}
                   {step === 'inspiracao' ? (
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{inspiration.title}</div>
-                      <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">{inspiration.line}</div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{moodTitle(mood)}</div>
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                        {inspiration.title}
+                      </div>
+
+                      {/* Frase em 2 linhas */}
+                      <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">
+                        {inspiration.line1}
+                        <br />
+                        {inspiration.line2}
+                      </div>
+
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        {moodTitle(mood)}
+                      </div>
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => saveCurrentToMyDay(toMyDayTitleFromInspiration({ mood, slot, focus }))}
+                          onClick={() =>
+                            saveCurrentToMyDay(toMyDayTitleFromInspiration({ mood, slot, focus }))
+                          }
                           className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                         >
                           Salvar no Meu Dia
                         </button>
+
                         <button
                           type="button"
                           onClick={() => go('ideias')}
@@ -860,7 +1038,10 @@ export default function MeuDiaLeveClient() {
                         >
                           Ir para Ideias rápidas
                         </button>
-                        {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+
+                        {saveFeedback ? (
+                          <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
@@ -869,8 +1050,14 @@ export default function MeuDiaLeveClient() {
                   {step === 'ideias' ? (
                     <div className="mt-4 space-y-3">
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">escolha 1 ideia</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Pequeno e possível. Só para destravar o agora.</div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          escolha 1 ideia
+                        </div>
+                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                          Pequeno e possível.
+                          <br />
+                          Só para destravar o agora.
+                        </div>
 
                         <div className="mt-4 space-y-2">
                           {ideasForNow.map((i, idx) => (
@@ -893,6 +1080,7 @@ export default function MeuDiaLeveClient() {
                           >
                             Salvar no Meu Dia
                           </button>
+
                           <button
                             type="button"
                             onClick={() => go('receitas')}
@@ -900,7 +1088,10 @@ export default function MeuDiaLeveClient() {
                           >
                             Ir para Receitas rápidas
                           </button>
-                          {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+
+                          {saveFeedback ? (
+                            <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -911,9 +1102,13 @@ export default function MeuDiaLeveClient() {
                     <div className="mt-4 space-y-4">
                       {children.length ? (
                         <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">para qual filho?</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            para qual filho?
+                          </div>
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Para sugerir com segurança, o Materna usa a idade do Eu360.
+                            Para sugerir com segurança,
+                            <br />
+                            o Materna usa a idade do Eu360.
                           </div>
 
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -957,8 +1152,12 @@ export default function MeuDiaLeveClient() {
 
                       {gate.blocked ? (
                         <div className="rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{gate.title}</div>
-                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{gate.message}</div>
+                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                            {gate.title}
+                          </div>
+                          <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                            {gate.message}
+                          </div>
                           <div className="mt-3">
                             <Link
                               href="/eu360"
@@ -971,7 +1170,9 @@ export default function MeuDiaLeveClient() {
                       ) : null}
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">o que você tem em casa</div>
+                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                          o que você tem em casa
+                        </div>
 
                         {!gate.blocked && helperCopy ? (
                           <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{helperCopy}</div>
@@ -999,19 +1200,27 @@ export default function MeuDiaLeveClient() {
                             disabled={aiRecipeLoading || gate.blocked}
                             className={[
                               'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              aiRecipeLoading || gate.blocked ? 'bg-[#fd2597]/50 text-white cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+                              aiRecipeLoading || gate.blocked
+                                ? 'bg-[#fd2597]/50 text-white cursor-not-allowed'
+                                : 'bg-[#fd2597] text-white hover:opacity-95',
                             ].join(' ')}
                           >
                             {aiRecipeLoading ? 'Gerando…' : 'Gerar receita'}
                           </button>
 
-                          {aiRecipeHint ? <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint}</span> : null}
+                          {aiRecipeHint ? (
+                            <span className="text-[12px] text-[#6a6a6a]">{aiRecipeHint}</span>
+                          ) : null}
                         </div>
 
                         {aiRecipeText ? (
                           <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] p-5">
-                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">receita pronta</div>
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">{aiRecipeText}</div>
+                            <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                              receita pronta
+                            </div>
+                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed whitespace-pre-wrap">
+                              {aiRecipeText}
+                            </div>
 
                             <div className="mt-4 flex flex-wrap items-center gap-2">
                               <button
@@ -1021,7 +1230,9 @@ export default function MeuDiaLeveClient() {
                               >
                                 Salvar no Meu Dia
                               </button>
-                              {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+                              {saveFeedback ? (
+                                <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                              ) : null}
                             </div>
                           </div>
                         ) : null}
@@ -1036,7 +1247,9 @@ export default function MeuDiaLeveClient() {
                               onClick={() => setPickedRecipe(idx)}
                               className={[
                                 'w-full text-left rounded-2xl border p-4 transition',
-                                active ? 'bg-[#ffd8e6] border-[#f5d7e5]' : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
+                                active
+                                  ? 'bg-[#ffd8e6] border-[#f5d7e5]'
+                                  : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                               ].join(' ')}
                             >
                               <div className="flex items-start justify-between gap-3">
@@ -1068,7 +1281,9 @@ export default function MeuDiaLeveClient() {
                         >
                           Ir para Passo leve
                         </button>
-                        {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+                        {saveFeedback ? (
+                          <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
@@ -1076,8 +1291,14 @@ export default function MeuDiaLeveClient() {
                   {/* PASSO LEVE */}
                   {step === 'passo' ? (
                     <div className="mt-4 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">escolha 1 passo</div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Um passo único que fecha o agora. O resto pode esperar.</div>
+                      <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
+                        escolha 1 passo
+                      </div>
+                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                        Um passo único que fecha o agora.
+                        <br />
+                        O resto pode esperar.
+                      </div>
 
                       <div className="mt-4 space-y-2">
                         {passosForNow.map((p, idx) => (
@@ -1100,7 +1321,9 @@ export default function MeuDiaLeveClient() {
                         >
                           Salvar no Meu Dia
                         </button>
-                        {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
+                        {saveFeedback ? (
+                          <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}

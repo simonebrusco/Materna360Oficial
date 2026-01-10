@@ -9,6 +9,74 @@ import { Button } from '@/components/ui/Button'
 import AppIcon from '@/components/ui/AppIcon'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial de texto
+   - mantém o conteúdo
+   - melhora ritmo no mobile
+   - no máximo 3 “respiros”
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+
+  const text = String(raw).trim()
+  if (!text) return []
+
+  // marcadores típicos para “respirar” sem mudar sentido
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas', 'Se']
+
+  let working = text
+
+  // quebra antes de marcadores (best effort)
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  // quebra por frases, com limite de 3 partes
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+  as = 'p',
+}: {
+  text: string | null | undefined
+  className: string
+  as?: 'p' | 'div'
+}) {
+  const parts = splitEditorialText(text)
+  const Comp: any = as
+
+  if (as === 'div') {
+    return (
+      <Comp className="space-y-2">
+        {parts.map((p, i) => (
+          <p key={i} className={className}>
+            {p}
+          </p>
+        ))}
+      </Comp>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 type PartnershipType =
   | 'profissional_saude'
   | 'criadora_conteudo'
@@ -48,7 +116,7 @@ export default function AjudaEParceriasPage() {
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       [name]: value,
     }))
@@ -135,7 +203,7 @@ export default function AjudaEParceriasPage() {
       "
     >
       <ClientOnly>
-       <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           {/* HEADER (padrão correto: igual Minhas Conquistas) */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
@@ -151,10 +219,10 @@ export default function AjudaEParceriasPage() {
                 Ajuda & Parcerias
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando
-                precisar.
-              </p>
+              <RenderEditorialText
+                text="Um espaço para se conectar com o Materna360 — com foco em parcerias e um canal de ajuda simples, quando precisar."
+                className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              />
             </div>
           </header>
 
@@ -173,10 +241,10 @@ export default function AjudaEParceriasPage() {
                       Parcerias em primeiro plano. Ajuda quando precisar.
                     </h2>
 
-                    <p className="text-sm md:text-[15px] text-white/90 leading-relaxed">
-                      Se você é profissional, criadora de conteúdo ou marca alinhada ao universo materno, este é o caminho.
-                      O suporte do app fica aqui também, mas de forma mais direta e enxuta.
-                    </p>
+                    <RenderEditorialText
+                      text="Se você é profissional, criadora de conteúdo ou marca alinhada ao universo materno, este é o caminho. O suporte do app fica aqui também, mas de forma mais direta e enxuta."
+                      className="text-sm md:text-[15px] text-white/90 leading-relaxed"
+                    />
                   </div>
 
                   {/* MINI MENU */}
@@ -186,7 +254,7 @@ export default function AjudaEParceriasPage() {
                     </p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {HUB_SECTIONS.map(s => (
+                      {HUB_SECTIONS.map((s) => (
                         <Pill key={s.id} id={s.id} label={s.label} />
                       ))}
                     </div>
@@ -248,9 +316,11 @@ export default function AjudaEParceriasPage() {
                     <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                       Vamos construir algo bonito e útil para mães reais.
                     </h2>
-                    <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
-                      Conte rapidamente quem você é e como imagina essa parceria. A gente responde com calma, no tempo certo.
-                    </p>
+
+                    <RenderEditorialText
+                      text="Conte rapidamente quem você é e como imagina essa parceria. A gente responde com calma, no tempo certo."
+                      className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed"
+                    />
                   </header>
 
                   <div className="grid gap-5 md:grid-cols-[1.2fr,0.8fr]">
@@ -362,9 +432,10 @@ export default function AjudaEParceriasPage() {
                         {isSubmitting ? 'Enviando...' : 'Enviar proposta de parceria'}
                       </button>
 
-                      <p className="text-[12px] leading-relaxed text-[#6A6A6A]">
-                        Ao enviar, você não assume compromisso. É o primeiro passo para uma conversa.
-                      </p>
+                      <RenderEditorialText
+                        text="Ao enviar, você não assume compromisso. É o primeiro passo para uma conversa."
+                        className="text-[12px] leading-relaxed text-[#6A6A6A]"
+                      />
                     </form>
 
                     {/* SIDE */}
@@ -400,11 +471,11 @@ export default function AjudaEParceriasPage() {
                         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
                           EXEMPLOS
                         </p>
-                        <div className="mt-2 space-y-1 text-[13px] text-[#545454]">
-                          <p>• Profissionais para rede Materna+</p>
-                          <p>• Conteúdos e guias para Biblioteca Materna</p>
-                          <p>• Benefícios para assinantes (Materna+)</p>
-                          <p>• Marcas alinhadas a “rotina real”</p>
+                        <div className="mt-2 space-y-2 text-[13px] text-[#545454]">
+                          <p>Profissionais para rede Materna+</p>
+                          <p>Conteúdos e guias para Biblioteca Materna</p>
+                          <p>Benefícios para assinantes (Materna+)</p>
+                          <p>Marcas alinhadas a “rotina real”</p>
                         </div>
                       </SoftCard>
                     </div>
@@ -427,9 +498,11 @@ export default function AjudaEParceriasPage() {
                     <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
                       Se algo não estiver funcionando
                     </h2>
-                    <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
-                      Um FAQ rápido para resolver o essencial — sem virar uma página enorme.
-                    </p>
+
+                    <RenderEditorialText
+                      text="Um FAQ rápido para resolver o essencial — sem virar uma página enorme."
+                      className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed"
+                    />
                   </header>
 
                   <div className="grid gap-3 md:grid-cols-2">
@@ -437,18 +510,22 @@ export default function AjudaEParceriasPage() {
                       <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
                         App não carrega / travou
                       </summary>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
-                        Verifique a internet e feche/abra o app. Se persistir, tente novamente mais tarde: estamos evoluindo com cuidado.
-                      </p>
+
+                      <RenderEditorialText
+                        text="Verifique a internet e feche/abra o app. Se persistir, tente novamente mais tarde: estamos evoluindo com cuidado."
+                        className="mt-2 text-[13px] leading-relaxed text-[#545454]"
+                      />
                     </details>
 
                     <details className="group rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/45 p-4">
                       <summary className="cursor-pointer list-none text-[14px] font-semibold text-[#2F3A56]">
                         Onde ficam meus registros?
                       </summary>
-                      <p className="mt-2 text-[13px] leading-relaxed text-[#545454]">
-                        O que você faz nos mini-hubs aparece no Planner (Meu Dia / Eu360), sempre com a origem do registro.
-                      </p>
+
+                      <RenderEditorialText
+                        text="O que você faz nos mini-hubs aparece no Planner (Meu Dia / Eu360), sempre com a origem do registro."
+                        className="mt-2 text-[13px] leading-relaxed text-[#545454]"
+                      />
                     </details>
                   </div>
 
@@ -456,10 +533,11 @@ export default function AjudaEParceriasPage() {
                     <p className="text-[12px] font-semibold tracking-[0.18em] text-[#6A6A6A] uppercase">
                       Dica rápida
                     </p>
-                    <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
-                      Se você quiser, anote em uma frase: “o que eu esperava” vs “o que aconteceu”.
-                      Isso ajuda muito quando o canal direto de suporte estiver ativo.
-                    </p>
+
+                    <RenderEditorialText
+                      text='Se você quiser, anote em uma frase: “o que eu esperava” vs “o que aconteceu”. Isso ajuda muito quando o canal direto de suporte estiver ativo.'
+                      className="mt-2 text-[13px] text-[#545454] leading-relaxed"
+                    />
                   </SoftCard>
 
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">

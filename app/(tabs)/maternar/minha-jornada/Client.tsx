@@ -89,6 +89,55 @@ function readTotalPoints() {
   return safeParseInt(safeGetLS(LS.pointsTotal), 0)
 }
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Helpers locais (sem refator)
+   - quebrar blocos longos
+   - manter texto original
+   - melhorar ritmo no mobile
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  const text = String(raw).trim()
+  if (!text) return []
+
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas']
+
+  let working = text
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const parts = splitEditorialText(text)
+  if (parts.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = clamp(Math.round((value / Math.max(1, max)) * 100), 0, 100)
   return (
@@ -215,8 +264,8 @@ export default function MinhaJornadaClient() {
   const weekKeys = useMemo(() => getRangeKeys(7, new Date()), [])
   const monthKeys = useMemo(() => getRangeKeys(28, new Date()), [])
 
-  const daysActive7 = useMemo(() => weekKeys.filter(k => readDayPoints(k) > 0).length, [weekKeys])
-  const daysActive28 = useMemo(() => monthKeys.filter(k => readDayPoints(k) > 0).length, [monthKeys])
+  const daysActive7 = useMemo(() => weekKeys.filter((k) => readDayPoints(k) > 0).length, [weekKeys])
+  const daysActive28 = useMemo(() => monthKeys.filter((k) => readDayPoints(k) > 0).length, [monthKeys])
 
   const weeklyTotal = useMemo(() => weekKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [weekKeys])
   const monthlyTotal = useMemo(() => monthKeys.reduce((acc, k) => acc + readDayPoints(k), 0), [monthKeys])
@@ -252,7 +301,7 @@ export default function MinhaJornadaClient() {
       data-tab="maternar"
       className="
         min-h-[100dvh]
-        pb-32
+        pb-24
         bg-[#ffe1f1]
         bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
       "
@@ -274,9 +323,10 @@ export default function MinhaJornadaClient() {
                 Minha Jornada
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Um registro silencioso do que aconteceu — sem cobrança, sem “tudo ou nada”.
-              </p>
+              <RenderEditorialText
+                text="Um registro silencioso do que aconteceu — sem cobrança, sem “tudo ou nada”."
+                className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              />
             </div>
           </header>
 
@@ -292,23 +342,28 @@ export default function MinhaJornadaClient() {
               "
             >
               {/* Top bar */}
-              <div className="p-4 md:p-6 border-b border-white/25">
+              <div className="p-3 sm:p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
                       <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
+                      {/* Linha informativa em 2 linhas (mobile-friendly) */}
                       <div className="text-[12px] text-white/85">
-                        hoje: {todayPoints} pts • total: {totalPoints} pts • {presenceLabel}
+                        <div>hoje: {todayPoints} pts • total: {totalPoints} pts</div>
+                        <div>{presenceLabel}</div>
                       </div>
+
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         O que coube hoje já conta
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece.
-                      </div>
+
+                      <RenderEditorialText
+                        text="A Jornada não mede desempenho. Ela apenas registra presença quando ela acontece."
+                        className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]"
+                      />
 
                       {/* Microtexto (IA) — 1–2 frases, sem CTA */}
                       <div className="text-[12px] text-white/80 mt-2 drop-shadow-[0_1px_6px_rgba(0,0,0,0.18)]">
@@ -380,9 +435,10 @@ export default function MinhaJornadaClient() {
 
                         <h2 className="text-lg font-semibold text-[#2f3a56]">Registro do dia</h2>
 
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem.
-                        </p>
+                        <RenderEditorialText
+                          text="Aqui fica só o que foi feito/salvo/concluído. Se hoje foi “zero”, está tudo bem."
+                          className="text-[13px] text-[#6a6a6a]"
+                        />
 
                         {/* Microtexto (IA) — 1 frase */}
                         <p className="text-[12px] text-[#6a6a6a]">{micro.section}</p>
@@ -400,9 +456,10 @@ export default function MinhaJornadaClient() {
                           <ProgressBar value={todayPoints} max={todaySoftMax} />
                         </div>
 
-                        <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">
-                          Referência visual gentil — não é meta. Se não coube, não vira dívida.
-                        </div>
+                        <RenderEditorialText
+                          text="Referência visual gentil — não é meta. Se não coube, não vira dívida."
+                          className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed"
+                        />
                       </div>
 
                       <div className="rounded-3xl border border-[#f5d7e5] bg-white p-5">
@@ -427,9 +484,11 @@ export default function MinhaJornadaClient() {
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
                         fechamento leve
                       </div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo.
-                      </div>
+
+                      <RenderEditorialText
+                        text="O que você fez hoje já está registrado. Se você parar por aqui, está tudo completo."
+                        className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
+                      />
 
                       {/* Microtexto (IA) — 1 frase */}
                       <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{micro.closing}</div>
@@ -474,9 +533,10 @@ export default function MinhaJornadaClient() {
 
                         <h2 className="text-lg font-semibold text-[#2f3a56]">Leitura de continuidade</h2>
 
-                        <p className="text-[13px] text-[#6a6a6a]">
-                          Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui.
-                        </p>
+                        <RenderEditorialText
+                          text="Sem “dias perdidos”. Sem punição. Só um retrato leve do que aconteceu quando você esteve aqui."
+                          className="text-[13px] text-[#6a6a6a]"
+                        />
 
                         {/* Microtexto (IA) — 1 frase */}
                         <p className="text-[12px] text-[#6a6a6a]">{micro.section}</p>
@@ -509,10 +569,11 @@ export default function MinhaJornadaClient() {
                       <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
                         nota de cuidado
                       </div>
-                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                        Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança. A Jornada
-                        respeita silêncio e pausa. Voltar já é suficiente.
-                      </div>
+
+                      <RenderEditorialText
+                        text="Se você está numa fase difícil, o app não deveria virar mais um lugar de cobrança. A Jornada respeita silêncio e pausa. Voltar já é suficiente."
+                        className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed"
+                      />
 
                       {/* Microtexto (IA) — 1 frase */}
                       <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{micro.closing}</div>
@@ -543,6 +604,9 @@ export default function MinhaJornadaClient() {
           <div className="mt-6">
             <LegalFooter />
           </div>
+
+          {/* Safe bottom padrão do app (evita “bater” na tab bar em mobile) */}
+          <div className="PageSafeBottom" />
         </div>
       </ClientOnly>
     </main>

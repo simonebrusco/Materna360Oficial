@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+
 import { SoftCard } from '@/components/ui/card'
 import { FilterPill } from '@/components/ui/FilterPill'
 import { Button } from '@/components/ui/Button'
@@ -10,6 +11,89 @@ import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial de texto
+   - mantém o conteúdo
+   - melhora ritmo no mobile
+   - evita “—” órfão
+   - sem regex avançada (safe)
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  const text = String(raw).trim()
+  if (!text) return []
+
+  // 1) Travessão: sempre vira um novo “respiro”
+  // evita: "momento —" ficar sozinho no fim da linha
+  const withDashBreak = text.replace(/\s+—\s+/g, '\n\n— ')
+
+  // 2) Quebras por “marcadores” comuns, sem mudar sentido
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'Mas', 'E']
+  let working = withDashBreak
+
+  for (const m of markers) {
+    // quebra só quando o marcador aparece como “começo de trecho”
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  }
+
+  // 3) Se ainda não houve quebra, tenta quebrar por frases SEM lookbehind
+  // (mais compatível; não derruba render)
+  let parts = working
+    .split('\n\n')
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  if (parts.length === 1) {
+    // quebra simples por pontuação + espaço
+    const sentenceParts = working
+      .split(/([.!?])\s+/) // mantém o separador em itens alternados
+      .map((p) => p.trim())
+      .filter(Boolean)
+
+    // recompõe frases (texto + pontuação)
+    const rebuilt: string[] = []
+    for (let i = 0; i < sentenceParts.length; i++) {
+      const cur = sentenceParts[i]
+      const next = sentenceParts[i + 1]
+      if (cur === '.' || cur === '!' || cur === '?') continue
+      if (next === '.' || next === '!' || next === '?') {
+        rebuilt.push(`${cur}${next}`)
+        i += 1
+      } else {
+        rebuilt.push(cur)
+      }
+    }
+
+    parts = rebuilt.length ? rebuilt : parts
+  }
+
+  // limite de 3 “respiros”
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const parts = splitEditorialText(text)
+  if (!parts.length) return null
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
 
 interface MaterialCard {
   id: string
@@ -115,20 +199,16 @@ function safeSetLS(key: string, value: string) {
 }
 
 function inferSuggestionFromEu360(): { preset: PresetFilter; theme: string | null } {
-  // Best effort (sem acoplamento): se não existir nada, cai no padrão “Rotinas + Guias”
   const euRitmo = safeGetLS('eu360_ritmo') // leve | cansada | animada | sobrecarregada
-  const euFocus = safeGetLS('eu360_focus') // opcional (se você quiser usar depois)
-  const euChildAge = safeGetLS('eu360_child_age_band') // opcional: "0-2" | "3-4" | "5-6" | "6+"
+  const euFocus = safeGetLS('eu360_focus')
+  const euChildAge = safeGetLS('eu360_child_age_band')
 
-  // Heurística operacional (não “terapia”): sugere o que resolve mais rápido
   if (euRitmo === 'sobrecarregada') return { preset: 'guias', theme: 'Rotinas' }
   if (euRitmo === 'cansada') return { preset: 'pdfs-ebooks', theme: 'Sono' }
   if (euRitmo === 'animada') return { preset: 'trilhas', theme: null }
 
-  // Se tiver idade, podemos sugerir tema leve (placeholder, ajusta depois)
   if (euChildAge) return { preset: 'tema-fase', theme: null }
 
-  // fallback
   void euFocus
   return { preset: 'guias', theme: 'Rotinas' }
 }
@@ -143,7 +223,6 @@ export default function BibliotecaMaternaPage() {
 
   const materialsRef = useRef<HTMLDivElement | null>(null)
 
-  // --- URL preset (?filtro=...)
   useEffect(() => {
     const filtro = searchParams.get('filtro')
     if (!filtro) return
@@ -156,28 +235,22 @@ export default function BibliotecaMaternaPage() {
     else if (filtro === 'trilhas') setPresetFilter('trilhas')
     else if (filtro === 'tema-fase' || filtro === 'idade-tema') setPresetFilter('tema-fase')
 
-    // quando vem do hub, já cai em “Materiais”
     setView('materiais')
   }, [searchParams])
 
-  // --- “Pensa por ela”: se não veio nada do hub, sugere um caminho pronto
   useEffect(() => {
     const cameFromHub = !!searchParams.get('filtro')
     if (cameFromHub) return
 
     const inferred = inferSuggestionFromEu360()
-
-    // não força tema se a pessoa não quer; mas dá um ponto de partida “pronto”
     setPresetFilter(inferred.preset)
     setSelectedTheme(inferred.theme)
     setSelectedFormat(null)
 
-    // guarda pra personalização futura (opcional)
     safeSetLS('biblioteca_last_preset', inferred.preset ?? '')
     if (inferred.theme) safeSetLS('biblioteca_last_theme', inferred.theme)
   }, [searchParams])
 
-  // scroll suave quando abre materiais
   useEffect(() => {
     if (view === 'materiais' && materialsRef.current) {
       materialsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -185,12 +258,10 @@ export default function BibliotecaMaternaPage() {
   }, [view])
 
   const handleThemeSelect = (theme: string) => {
-    // tema não “quebra” preset — ele refina a seleção
     setSelectedTheme((prev) => (prev === theme ? null : theme))
   }
 
   const handleFormatSelect = (format: string) => {
-    // ao escolher formato manual, sai do preset “atalho”
     setPresetFilter(null)
     setSelectedFormat((prev) => (prev === format ? null : format))
   }
@@ -213,8 +284,7 @@ export default function BibliotecaMaternaPage() {
         } else if (presetFilter === 'trilhas') {
           if (material.format !== 'Trilha educativa') return false
         } else if (presetFilter === 'tema-fase') {
-          // hoje: sem backend de fase — mantém “amostra geral”
-          // depois: aqui entra a lógica Eu360 (idade/fase) real.
+          // placeholder: mantém amostra geral
         }
       } else if (selectedFormat && material.format !== selectedFormat) {
         return false
@@ -283,7 +353,7 @@ export default function BibliotecaMaternaPage() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          {/* HERO (mesmo padrão das outras) */}
+          {/* HERO */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
               <Link
@@ -298,14 +368,16 @@ export default function BibliotecaMaternaPage() {
                 Biblioteca Materna
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando.
-              </p>
+              {/* P34.10: agora quebra corretamente e não deixa “—” órfão */}
+              <RenderEditorialText
+                text="Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando."
+                className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              />
             </div>
           </header>
 
           <div className="space-y-7 md:space-y-8 pb-10">
-            {/* PAINEL TRANSLÚCIDO (mesmo container) */}
+            {/* PAINEL */}
             <div
               className="
                 rounded-3xl
@@ -317,7 +389,7 @@ export default function BibliotecaMaternaPage() {
                 space-y-6
               "
             >
-              {/* Top “Sugestão pronta” (modo jornada) */}
+              {/* Top “Sugestão pronta” */}
               <Reveal>
                 <div
                   className="
@@ -328,7 +400,8 @@ export default function BibliotecaMaternaPage() {
                     p-4 md:p-5
                   "
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  {/* FIX mobile: vira coluna para não esmagar título */}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3">
                       <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
                         <AppIcon name="book-open" size={22} className="text-white" />
@@ -340,6 +413,7 @@ export default function BibliotecaMaternaPage() {
                           {selectedTheme ? ` • tema: ${selectedTheme}` : ''}
                         </div>
 
+                        {/* FIX: título agora é uma linha normal (não “coluna estreita”) */}
                         <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                           {suggestionTitle}
                         </div>
@@ -350,7 +424,8 @@ export default function BibliotecaMaternaPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* FIX: botões em linha com largura no mobile */}
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
                       <button
                         onClick={() => setChip('filtrar')}
                         className="
@@ -361,6 +436,7 @@ export default function BibliotecaMaternaPage() {
                           text-[12px]
                           shadow-[0_6px_18px_rgba(0,0,0,0.12)]
                           transition
+                          flex-1 sm:flex-none
                         "
                       >
                         Ajustar
@@ -377,6 +453,7 @@ export default function BibliotecaMaternaPage() {
                           shadow-[0_10px_26px_rgba(253,37,151,0.35)]
                           hover:opacity-95
                           transition
+                          flex-1 sm:flex-none
                         "
                       >
                         Ver materiais
@@ -384,7 +461,7 @@ export default function BibliotecaMaternaPage() {
                     </div>
                   </div>
 
-                  {/* Chips internos (igual à lógica das outras páginas) */}
+                  {/* Chips */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {(
                       [
@@ -414,7 +491,7 @@ export default function BibliotecaMaternaPage() {
                 </div>
               </Reveal>
 
-              {/* Card branco interno (mesmo padrão) */}
+              {/* Card branco interno */}
               <Reveal>
                 <SoftCard
                   className="
@@ -424,7 +501,7 @@ export default function BibliotecaMaternaPage() {
                     shadow-[0_10px_28px_rgba(184,35,107,0.12)]
                   "
                 >
-                  {/* VIEW: Sugestão (atalhos rápidos) */}
+                  {/* VIEW: Sugestão */}
                   {view === 'sugestao' ? (
                     <div className="space-y-4">
                       <div className="text-[14px] text-[#2f3a56] font-semibold">
@@ -440,8 +517,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Guias & checklists</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            atalho
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            Guias & checklists
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Passo a passo curto pra resolver mais rápido.
                           </div>
@@ -455,8 +536,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">PDFs & e-books</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            atalho
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            PDFs & e-books
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Leitura direta, sem excesso de tela.
                           </div>
@@ -470,8 +555,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Trilhas educativas</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            atalho
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            Trilhas educativas
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Uma sequência pronta pra seguir.
                           </div>
@@ -485,8 +574,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">em breve</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Por idade & fase</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            em breve
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            Por idade & fase
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Vai conectar com o Eu360 e sugerir sozinho.
                           </div>
@@ -509,7 +602,9 @@ export default function BibliotecaMaternaPage() {
                   {view === 'filtrar' ? (
                     <div className="space-y-5">
                       <div className="flex flex-col gap-1">
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido</div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">
+                          Ajuste rápido
+                        </div>
                         <div className="text-[12px] text-[#6a6a6a]">
                           Se quiser refinar, escolha tema e/ou formato. Se não quiser, só vá em “Materiais”.
                         </div>
@@ -558,7 +653,11 @@ export default function BibliotecaMaternaPage() {
 
                           <div className="flex flex-wrap gap-2">
                             {FORMATS.map((format) => (
-                              <FilterPill key={format} active={formatIsActive(format)} onClick={() => handleFormatSelect(format)}>
+                              <FilterPill
+                                key={format}
+                                active={formatIsActive(format)}
+                                onClick={() => handleFormatSelect(format)}
+                              >
                                 {format}
                               </FilterPill>
                             ))}
@@ -598,7 +697,9 @@ export default function BibliotecaMaternaPage() {
                   {view === 'materiais' ? (
                     <div ref={materialsRef} className="space-y-4">
                       <div className="flex flex-col gap-1">
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">Materiais disponíveis</div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">
+                          Materiais disponíveis
+                        </div>
                         <div className="text-[12px] text-[#6a6a6a]">
                           Clique em um card para abrir. (Downloads: em breve.)
                         </div>
@@ -625,12 +726,18 @@ export default function BibliotecaMaternaPage() {
                                 {material.format.toUpperCase()} · {material.theme.toUpperCase()}
                               </p>
 
-                              <h3 className="mb-1 text-sm font-semibold text-[#545454] md:text-base">{material.title}</h3>
+                              <h3 className="mb-1 text-sm font-semibold text-[#545454] md:text-base">
+                                {material.title}
+                              </h3>
 
-                              <p className="mb-3 text-xs text-[#6A6A6A] md:text-sm">{material.description}</p>
+                              <p className="mb-3 text-xs text-[#6A6A6A] md:text-sm">
+                                {material.description}
+                              </p>
 
                               <div className="mt-auto pt-1 text-[11px] font-semibold text-[#fd2597]">
-                                {material.href && material.href !== '#' ? 'Clique para acessar o material' : 'Em breve disponível para download'}
+                                {material.href && material.href !== '#'
+                                  ? 'Clique para acessar o material'
+                                  : 'Em breve disponível para download'}
                               </div>
                             </SoftCard>
                           ))}
@@ -644,6 +751,7 @@ export default function BibliotecaMaternaPage() {
                         >
                           Ajustar filtros
                         </button>
+
                         <Button
                           type="button"
                           variant="ghost"
@@ -660,7 +768,10 @@ export default function BibliotecaMaternaPage() {
                   {/* VIEW: Insight */}
                   {view === 'insight' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Insight personalizado</div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">
+                        Insight personalizado
+                      </div>
+
                       <div className="text-[12px] text-[#6a6a6a] max-w-2xl">
                         Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida para a fase do seu filho
                         e explicar por que aquele material é o “certo para agora”.
@@ -672,7 +783,9 @@ export default function BibliotecaMaternaPage() {
                             <AppIcon name="idea" className="h-5 w-5 text-[#fd2597]" />
                           </div>
                           <div className="space-y-1">
-                            <div className="text-[13px] font-semibold text-[#2f3a56]">Como vai funcionar</div>
+                            <div className="text-[13px] font-semibold text-[#2f3a56]">
+                              Como vai funcionar
+                            </div>
                             <div className="text-[12px] text-[#6a6a6a] leading-relaxed">
                               1) Eu360 entende seu dia e a fase do seu filho.
                               <br />
