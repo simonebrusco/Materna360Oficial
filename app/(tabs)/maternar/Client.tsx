@@ -21,6 +21,74 @@ type MiniTileProps = {
   tag?: string
 }
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial de texto
+   - mantém o conteúdo
+   - melhora ritmo no mobile
+   - no máximo 3 “respiros”
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+
+  const text = String(raw).trim()
+
+  // marcadores típicos para “respirar” sem mudar sentido
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas']
+
+  let working = text
+
+  // quebra antes de marcadores (best effort)
+  markers.forEach((m) => {
+    // só quebra quando o marcador vem após espaço/pontuação, para não quebrar palavras
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  // quebra por frases, mas com limite de 3 partes
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+  as = 'p',
+}: {
+  text: string | null | undefined
+  className: string
+  as?: 'p' | 'div'
+}) {
+  const parts = splitEditorialText(text)
+  const Comp: any = as
+
+  if (as === 'div') {
+    return (
+      <Comp className="space-y-2">
+        {parts.map((p, i) => (
+          <p key={i} className={className}>
+            {p}
+          </p>
+        ))}
+      </Comp>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 /**
  * Mini card estilo "soundboard" — usado dentro das seções do Maternar.
  */
@@ -96,9 +164,10 @@ export default function MaternarClient() {
                 Maternar
               </h1>
 
-              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-                O seu espaço de acolhimento, leveza e apoio — para cuidar de você, do seu filho e da sua jornada.
-              </p>
+              <RenderEditorialText
+                text="O seu espaço de acolhimento, leveza e apoio — para cuidar de você, do seu filho e da sua jornada."
+                className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
+              />
 
               <p className="text-sm md:text-[15px] text-white/95 drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)] mt-1">
                 Por onde você quer começar hoje?
@@ -136,9 +205,11 @@ export default function MaternarClient() {
                       <span className="inline-flex items-center rounded-full border border-white/35 bg-white/10 px-3 py-1 text-[10px] font-semibold tracking-[0.22em] text-white uppercase backdrop-blur-md">
                         Trilha do dia
                       </span>
-                      <p className="mt-2 text-[13px] text-white/85 leading-relaxed">
-                        Siga no seu ritmo. Tudo aqui foi pensado para caber no cotidiano, sem cobrança.
-                      </p>
+
+                      <RenderEditorialText
+                        text="Siga no seu ritmo. Tudo aqui foi pensado para caber no cotidiano, sem cobrança."
+                        className="mt-2 text-[13px] text-white/85 leading-relaxed"
+                      />
                     </div>
 
                     <div className="space-y-5 md:space-y-6">
@@ -172,9 +243,10 @@ export default function MaternarClient() {
                             </div>
                           </div>
 
-                          <p className="text-[15px] text-[#545454] leading-relaxed">
-                            Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia.
-                          </p>
+                          <RenderEditorialText
+                            text="Seu espaço de acolhimento, autocuidado e pausas que cabem no seu dia."
+                            className="text-[15px] text-[#545454] leading-relaxed"
+                          />
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                             <MiniTile label="Meu ritmo hoje" href="/maternar/cuidar-de-mim#ritmo" tag="check-in" />
@@ -219,9 +291,10 @@ export default function MaternarClient() {
                             </div>
                           </div>
 
-                          <p className="text-[15px] text-[#545454] leading-relaxed">
-                            Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno.
-                          </p>
+                          <RenderEditorialText
+                            text="Ideias, brincadeiras e apoio leve para o desenvolvimento do seu pequeno."
+                            className="text-[15px] text-[#545454] leading-relaxed"
+                          />
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                             <MiniTile label="Brincadeiras do dia" href="/maternar/meu-filho#brincadeiras" tag="ideias" />
@@ -266,9 +339,10 @@ export default function MaternarClient() {
                             </div>
                           </div>
 
-                          <p className="text-[15px] text-[#545454] leading-relaxed">
-                            Frases, ideias rápidas e sugestões para tornar o dia mais leve.
-                          </p>
+                          <RenderEditorialText
+                            text="Frases, ideias rápidas e sugestões para tornar o dia mais leve."
+                            className="text-[15px] text-[#545454] leading-relaxed"
+                          />
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                             <MiniTile label="Inspiração do dia" href="/maternar/meu-dia-leve#inspiracao" tag="frase" />
@@ -313,9 +387,10 @@ export default function MaternarClient() {
                             </div>
                           </div>
 
-                          <p className="text-[15px] text-[#545454] leading-relaxed">
-                            Acompanhe seu progresso com leveza, no seu tempo.
-                          </p>
+                          <RenderEditorialText
+                            text="Acompanhe seu progresso com leveza, no seu tempo."
+                            className="text-[15px] text-[#545454] leading-relaxed"
+                          />
 
                           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                             <MiniTile label="Painel da jornada" href="/maternar/minha-jornada#painel" tag="visão geral" />
@@ -355,9 +430,11 @@ export default function MaternarClient() {
                       Mais ferramentas
                     </span>
                     <h2 className="text-lg font-semibold text-[#2f3a56]">Outros espaços do Maternar</h2>
-                    <p className="text-[15px] text-[#545454] leading-relaxed">
-                      Acesse quando fizer sentido, sem pesar seu começo do dia.
-                    </p>
+
+                    <RenderEditorialText
+                      text="Acesse quando fizer sentido, sem pesar seu começo do dia."
+                      className="text-[15px] text-[#545454] leading-relaxed"
+                    />
                   </div>
                 </div>
 
