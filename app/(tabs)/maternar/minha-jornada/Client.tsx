@@ -301,7 +301,7 @@ export default function MinhaJornadaClient() {
       data-tab="maternar"
       className="
         min-h-[100dvh]
-        pb-32
+        pb-24
         bg-[#ffe1f1]
         bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
       "
@@ -342,7 +342,7 @@ export default function MinhaJornadaClient() {
               "
             >
               {/* Top bar */}
-              <div className="p-4 md:p-6 border-b border-white/25">
+              <div className="p-3 sm:p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
@@ -604,6 +604,9 @@ export default function MinhaJornadaClient() {
           <div className="mt-6">
             <LegalFooter />
           </div>
+
+          {/* Safe bottom padrão do app (evita “bater” na tab bar em mobile) */}
+          <div className="PageSafeBottom" />
         </div>
       </ClientOnly>
     </main>
