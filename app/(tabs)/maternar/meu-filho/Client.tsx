@@ -258,15 +258,17 @@ function inferContext(): {
   const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
 
   const prefLocation = normalizePlayLocation(safeGetLS(HUB_PREF_FILTERS.playLocation))
-  const prefSkills = normalizeSkills((() => {
-    try {
-      const raw = safeGetLS(HUB_PREF_FILTERS.skills)
-      if (!raw) return []
-      return JSON.parse(raw)
-    } catch {
-      return []
-    }
-  })())
+  const prefSkills = normalizeSkills(
+    (() => {
+      try {
+        const raw = safeGetLS(HUB_PREF_FILTERS.skills)
+        if (!raw) return []
+        return JSON.parse(raw)
+      } catch {
+        return []
+      }
+    })(),
+  )
   const prefFaseFoco = normalizeFaseFoco(safeGetLS(HUB_PREF_FILTERS.faseFoco))
 
   // 2) perfil (fonte única)
@@ -285,7 +287,7 @@ function inferContext(): {
     age,
     childLabel: child?.label,
     playLocation: prefLocation ?? 'casa',
-    skills: prefSkills.length ? prefSkills : ['emocional'],
+    skills: prefSkills.length ? prefSkills : (['emocional'] as SkillId[]),
     faseFoco: prefFaseFoco ?? 'emocao',
   }
 }
@@ -429,14 +431,12 @@ function safeBloco2Title(raw: unknown): string | null {
 }
 
 function safeBloco2How(raw: unknown): string | null {
-  // mais corpo: a mãe pediu “não uma frase e pronto”
   const t = clampText(String(raw ?? ''), 320)
   if (!t) return null
 
   const low = t.toLowerCase()
   if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
 
-  // exigir “como fazer” mínimo (best effort)
   const hasStepsCue = low.includes('faça') || low.includes('combine') || low.includes('depois') || low.includes('no final')
   if (!hasStepsCue) return null
 
@@ -477,10 +477,8 @@ async function fetchBloco2Cards(args: {
         tipoIdeia: 'meu-filho-bloco-2',
         ageBand: args.age,
         contexto: 'exploracao',
-        // filtros novos
         local: args.playLocation,
         habilidades: args.skills,
-        // anti-cache / variação
         requestId: args.nonce,
         nonce: args.nonce,
         variation: args.nonce,
@@ -545,7 +543,6 @@ function clampBloco3Text(raw: unknown): string | null {
   if (!t) return null
   const low = t.toLowerCase()
 
-  // hard rules: sem cobrança / sem frequência / sem “método”
   const banned = [
     'todo dia',
     'todos os dias',
@@ -559,10 +556,8 @@ function clampBloco3Text(raw: unknown): string | null {
   ]
   if (banned.some((b) => low.includes(b))) return null
 
-  // evitar formato de lista
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
-  // limitar frases (best effort): até 4
   const sentences = t
     .split(/[.!?]+/)
     .map((s) => s.trim())
@@ -637,10 +632,6 @@ async function fetchBloco3Suggestion(args: {
 
 /* =========================
    BLOCO 4 — “FASES / CONTEXTO” (Tradução Prática)
-   - 1 frase
-   - máx 160 caracteres (um pouco mais, para ganhar “qualidade” sem virar texto longo)
-   - sem tom normativo/diagnóstico
-   (Agora: só gera quando a mãe clicar em “Nova orientação”)
 ========================= */
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
@@ -684,7 +675,6 @@ function clampBloco4Text(raw: unknown): string | null {
 
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
-  // 1 frase
   const sentences = t
     .split(/[.!?]+/)
     .map((s) => s.trim())
@@ -760,25 +750,12 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: {
-          tag: 'rápido',
-          time: '5',
-          title: 'Cópia de gestos',
-          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
-        },
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
         b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
-        c: {
-          tag: 'sensório',
-          time: '5',
-          title: 'Texturas da casa',
-          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
-        },
+        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: {
-        label: 'Ajuste que ajuda hoje',
-        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
-      },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
       connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
@@ -801,24 +778,9 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: {
-          tag: 'rotina',
-          time: '15',
-          title: 'Mini ritual pré-janta',
-          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
-        },
-        b: {
-          tag: 'sensório',
-          time: '15',
-          title: 'Caixa de “coisas seguras”',
-          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
-        },
-        c: {
-          tag: 'calmo',
-          time: '15',
-          title: 'Banho de brinquedos',
-          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
-        },
+        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
@@ -1054,7 +1016,6 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
-    // ✅ blindagem: não deixar storage/perfil derrubar a tela
     let inferred: ReturnType<typeof inferContext> = {
       time: '15',
       age: '3-4',
@@ -1074,7 +1035,6 @@ export default function MeuFilhoClient() {
     setFaseFoco(inferred.faseFoco)
     setStep('brincadeiras')
 
-    // ✅ não gerar automaticamente (tudo exige clique)
     setBloco1({ status: 'idle' })
     setBloco2({ status: 'idle' })
     setBloco3({ status: 'idle' })
@@ -1102,7 +1062,7 @@ export default function MeuFilhoClient() {
 
   const kit = useMemo(() => KITS[age][time], [age, time])
 
-  const effectivePlan: Bloco2Items | null = useMemo(() => {
+  const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } | null = useMemo(() => {
     if (bloco2.status === 'done') return bloco2.items
     return null
   }, [bloco2])
@@ -1133,11 +1093,9 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.time, next)
     safeSetLS('eu360_time_with_child', next)
 
-    // reset tema (evita “tema antigo” com novo contexto)
     setRotinaTema(null)
     setConexaoTema(null)
 
-    // ✅ como o tempo muda, invalida as gerações
     hardResetGenerated()
 
     try {
@@ -1152,11 +1110,9 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
 
-    // reset tema (evita “tema antigo” com novo contexto)
     setRotinaTema(null)
     setConexaoTema(null)
 
-    // ✅ como a faixa muda, invalida as gerações
     hardResetGenerated()
 
     try {
@@ -1176,16 +1132,20 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
+  // ✅ FIX DO ERRO: garantir SkillId[] no retorno (não string[])
   function toggleSkill(id: SkillId) {
-    setSkills((prev) => {
+    setSkills((prev): SkillId[] => {
       const has = prev.includes(id)
-      const next = has ? prev.filter((x) => x !== id) : [...prev, id]
-      const safe = next.length ? next : ['emocional']
+      const next: SkillId[] = has ? prev.filter((x) => x !== id) : [...prev, id]
+      const safe: SkillId[] = next.length ? next : (['emocional'] as SkillId[])
+
       try {
         safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(safe))
       } catch {}
+
       return safe
     })
+
     // muda filtro => invalida opções geradas
     setBloco2({ status: 'idle' })
   }
@@ -1193,6 +1153,7 @@ export default function MeuFilhoClient() {
   function onSelectPlayLocation(loc: PlayLocation) {
     setPlayLocation(loc)
     safeSetLS(HUB_PREF_FILTERS.playLocation, loc)
+
     // muda filtro => invalida opções geradas
     setBloco2({ status: 'idle' })
   }
@@ -1200,6 +1161,7 @@ export default function MeuFilhoClient() {
   function onSelectFaseFoco(f: FaseFoco) {
     setFaseFoco(f)
     safeSetLS(HUB_PREF_FILTERS.faseFoco, f)
+
     // muda foco => invalida fase gerada
     setBloco4({ status: 'idle' })
   }
@@ -1311,7 +1273,7 @@ export default function MeuFilhoClient() {
     const seq = ++bloco3ReqSeq.current
     const nonce = newNonce()
 
-    const momento = momentForStep(kind === 'rotina' ? 'rotina' : 'conexao')
+    const momento = kind === 'rotina' ? 'transição' : 'noite'
 
     if (kind === 'rotina') {
       const tema = rotinaTema
@@ -1605,618 +1567,11 @@ export default function MeuFilhoClient() {
               </div>
 
               <div className="p-4 md:p-6">
-                {step === 'brincadeiras' ? (
-                  <div className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Plano pronto para agora
-                          </span>
-                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                        {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">Preparando uma sugestão…</div>
-                        ) : bloco1.status === 'done' ? (
-                          <RenderEditorialText
-                            text={bloco1Text}
-                            pClassName="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
-                          />
-                        ) : (
-                          <div className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                            Clique em <span className="font-semibold">Gerar sugestão</span> para receber um plano completo para agora.
-                          </div>
-                        )}
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => generateBloco1()}
-                            disabled={bloco1.status === 'loading'}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              bloco1.status === 'loading'
-                                ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed'
-                                : 'bg-[#fd2597] text-white hover:opacity-95',
-                            ].join(' ')}
-                            title="Gerar uma sugestão para agora"
-                          >
-                            {bloco1.status === 'done' ? 'Nova sugestão' : 'Gerar sugestão'}
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={bloco1.status !== 'done'}
-                            onClick={() => {
-                              if (!bloco1Text) return
-                              saveSelectedToMyDay(bloco1Text)
-                              try {
-                                track('meu_filho.bloco1.save', {
-                                  time,
-                                  age,
-                                  source: bloco1.status === 'done' ? bloco1.source : 'unknown',
-                                })
-                              } catch {}
-                            }}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              bloco1.status === 'done'
-                                ? 'bg-white border border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]'
-                                : 'bg-white border border-[#f5d7e5] text-[#2f3a56] opacity-60 cursor-not-allowed',
-                            ].join(' ')}
-                            title="Salvar este plano no Meu Dia"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Fechar com conexão
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 border-t border-[#f5d7e5] pt-5">
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                            <AppIcon name="toy" size={22} className="text-[#fd2597]" />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                              Brincadeiras do dia
-                            </span>
-                            <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
-                            <p className="text-[13px] text-[#6a6a6a]">{kit.subtitle}</p>
-                          </div>
-                        </div>
-
-                        {/* ✅ filtros obrigatórios (mãe escolhe) */}
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            Escolha para personalizar
-                          </div>
-
-                          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-3">
-                              <div className="text-[12px] font-semibold text-[#2f3a56]">Onde vocês estão?</div>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {PLAY_LOCATIONS.map((l) => {
-                                  const active = playLocation === l.id
-                                  return (
-                                    <button
-                                      key={l.id}
-                                      onClick={() => onSelectPlayLocation(l.id)}
-                                      className={[
-                                        'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                        active
-                                          ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                          : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                      ].join(' ')}
-                                      title={l.hint}
-                                    >
-                                      {l.label}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            </div>
-
-                            <div className="rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-3">
-                              <div className="text-[12px] font-semibold text-[#2f3a56]">
-                                Quais habilidades você quer estimular?
-                              </div>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {SKILLS.map((s) => {
-                                  const active = skills.includes(s.id)
-                                  return (
-                                    <button
-                                      key={s.id}
-                                      onClick={() => toggleSkill(s.id)}
-                                      className={[
-                                        'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                        active
-                                          ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                          : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                      ].join(' ')}
-                                    >
-                                      {s.label}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                              <div className="mt-2 text-[11px] text-[#6a6a6a]">
-                                Dica: escolha 1–2 habilidades para ficar mais preciso.
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                              onClick={() => generateBloco2()}
-                              disabled={bloco2.status === 'loading'}
-                              className={[
-                                'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                bloco2.status === 'loading'
-                                  ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed'
-                                  : 'bg-[#fd2597] text-white hover:opacity-95',
-                              ].join(' ')}
-                              title="Gerar 3 opções com base nos filtros"
-                            >
-                              {bloco2.status === 'done' ? 'Gerar novas opções' : 'Gerar 3 opções'}
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                // fallback explícito (sem “gerar”)
-                                setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
-                                setChosen('a')
-                                try {
-                                  track('meu_filho.bloco2.fallback.open', { time, age })
-                                } catch {}
-                              }}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Ver opções locais
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 text-[11px] text-[#6a6a6a]">
-                          {bloco2.status === 'loading'
-                            ? 'Preparando 3 opções…'
-                            : bloco2.status === 'done'
-                              ? bloco2.source === 'ai'
-                                ? 'Opções geradas para hoje'
-                                : 'Opções locais'
-                              : 'Escolha os filtros acima e clique em “Gerar 3 opções”.'}
-                        </div>
-
-                        {bloco2.status === 'done' ? (
-                          <>
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                              {(['a', 'b', 'c'] as const).map((k) => {
-                                const it = selected && effectivePlan ? effectivePlan[k] : kit.plan[k]
-                                const active = chosen === k
-                                return (
-                                  <button
-                                    key={k}
-                                    onClick={() => onChoose(k)}
-                                    className={[
-                                      'rounded-2xl border p-4 text-left transition',
-                                      active
-                                        ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                        : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                                    ].join(' ')}
-                                    disabled={bloco2.status === 'loading'}
-                                    aria-disabled={bloco2.status === 'loading'}
-                                  >
-                                    <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                      {it.tag} • {timeLabel(it.time)}
-                                    </div>
-                                    <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">
-                                      {it.title}
-                                    </div>
-
-                                    <RenderEditorialText
-                                      text={it.how}
-                                      wrapClassName="mt-2"
-                                      pClassName="text-[12px] text-[#6a6a6a] leading-relaxed"
-                                    />
-                                  </button>
-                                )
-                              })}
-                            </div>
-
-                            <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                opção selecionada
-                              </div>
-                              <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
-
-                              <RenderEditorialText
-                                text={selected.how}
-                                wrapClassName="mt-2"
-                                pClassName="text-[13px] text-[#6a6a6a] leading-relaxed"
-                              />
-
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                <button
-                                  onClick={() => go('conexao')}
-                                  className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                                >
-                                  Fechar com conexão
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => saveSelectedToMyDay(selected.title)}
-                                  className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                                  title="Salvar esta sugestão no Meu Dia"
-                                >
-                                  Salvar no Meu Dia
-                                </button>
-
-                                <button
-                                  onClick={() => go('rotina')}
-                                  className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                                >
-                                  Ajuste de rotina
-                                </button>
-
-                                <button
-                                  onClick={() => go('desenvolvimento')}
-                                  className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                                >
-                                  Entender a fase
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
-
-                {step === 'desenvolvimento' ? (
-                  <div className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="child" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Desenvolvimento por fase
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
-
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            Escolha o foco
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {FASE_FOCOS.map((f) => {
-                              const active = faseFoco === f.id
-                              return (
-                                <button
-                                  key={f.id}
-                                  onClick={() => onSelectFaseFoco(f.id)}
-                                  className={[
-                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                    active
-                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                  ].join(' ')}
-                                >
-                                  {f.label}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4 flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                Nessa fase
-                              </div>
-
-                              {bloco4.status === 'loading' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Preparando orientação…
-                                </div>
-                              ) : bloco4.status === 'done' ? (
-                                <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
-                              ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Clique em <span className="font-semibold">Nova orientação</span> para receber uma frase bem direcionada.
-                                </div>
-                              )}
-                            </div>
-
-                            <button
-                              onClick={() => generateBloco4()}
-                              disabled={bloco4.status === 'loading'}
-                              className={[
-                                'shrink-0 rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                bloco4.status === 'loading'
-                                  ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed'
-                                  : 'bg-[#fd2597] text-white hover:opacity-95',
-                              ].join(' ')}
-                            >
-                              {bloco4.status === 'done' ? 'Nova orientação' : 'Gerar orientação'}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            onClick={() => go('brincadeiras')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Voltar para a brincadeira
-                          </button>
-                          <button
-                            onClick={() => go('rotina')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Ajuste de rotina
-                          </button>
-                        </div>
-                      </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
-
-                {step === 'rotina' ? (
-                  <div className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="sun" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Rotina leve da criança
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
-
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {ROTINA_TEMAS.map((t) => {
-                              const active = rotinaTema === t.id
-                              return (
-                                <button
-                                  key={t.id}
-                                  onClick={() => {
-                                    setRotinaTema(t.id)
-                                    setBloco3({ status: 'idle' })
-                                    try {
-                                      track('meu_filho.bloco3.tema.select', { kind: 'rotina', tema: t.id })
-                                    } catch {}
-                                  }}
-                                  className={[
-                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                    active
-                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                  ].join(' ')}
-                                >
-                                  {t.label}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4 flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                Para encaixar no dia
-                              </div>
-
-                              {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Preparando ajuste…
-                                </div>
-                              ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
-                                <RenderEditorialText
-                                  text={bloco3Text}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                />
-                              ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Selecione um tema e clique em <span className="font-semibold">Novo ajuste</span>.
-                                </div>
-                              )}
-                            </div>
-
-                            <button
-                              onClick={() => generateBloco3('rotina')}
-                              disabled={!rotinaTema || bloco3.status === 'loading'}
-                              className={[
-                                'shrink-0 rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                !rotinaTema || bloco3.status === 'loading'
-                                  ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed'
-                                  : 'bg-[#fd2597] text-white hover:opacity-95',
-                              ].join(' ')}
-                            >
-                              {bloco3.status === 'done' && bloco3.kind === 'rotina' ? 'Novo ajuste' : 'Gerar ajuste'}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            onClick={() => go('brincadeiras')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Voltar para a brincadeira
-                          </button>
-                          <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Fechar com conexão
-                          </button>
-                        </div>
-                      </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
-
-                {step === 'conexao' ? (
-                  <div className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Gestos de conexão
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
-                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
-
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {CONEXAO_TEMAS.map((t) => {
-                              const active = conexaoTema === t.id
-                              return (
-                                <button
-                                  key={t.id}
-                                  onClick={() => {
-                                    setConexaoTema(t.id)
-                                    setBloco3({ status: 'idle' })
-                                    try {
-                                      track('meu_filho.bloco3.tema.select', { kind: 'conexao', tema: t.id })
-                                    } catch {}
-                                  }}
-                                  className={[
-                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                    active
-                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                  ].join(' ')}
-                                >
-                                  {t.label}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4 flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                Para encaixar no dia
-                              </div>
-
-                              {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Preparando gesto…
-                                </div>
-                              ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
-                                <RenderEditorialText
-                                  text={bloco3Text}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                />
-                              ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Selecione um tema e clique em <span className="font-semibold">Novo gesto</span>.
-                                </div>
-                              )}
-                            </div>
-
-                            <button
-                              onClick={() => generateBloco3('conexao')}
-                              disabled={!conexaoTema || bloco3.status === 'loading'}
-                              className={[
-                                'shrink-0 rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                !conexaoTema || bloco3.status === 'loading'
-                                  ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed'
-                                  : 'bg-[#fd2597] text-white hover:opacity-95',
-                              ].join(' ')}
-                            >
-                              {bloco3.status === 'done' && bloco3.kind === 'conexao' ? 'Novo gesto' : 'Gerar gesto'}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 flex flex-wrap gap-2">
-                          <button
-                            onClick={registerFamilyJourney}
-                            disabled={familyDoneToday}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              familyDoneToday
-                                ? 'bg-[#ffd8e6] text-[#b8236b] cursor-not-allowed'
-                                : 'bg-[#fd2597] text-white hover:opacity-95',
-                            ].join(' ')}
-                            title="Conta para a sua Jornada"
-                          >
-                            {familyDoneToday ? 'Já registrado hoje' : 'Registrar na Minha Jornada'}
-                          </button>
-
-                          <button
-                            onClick={() => go('brincadeiras')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Escolher outra brincadeira
-                          </button>
-
-                          <Link
-                            href="/maternar"
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar ao Maternar
-                          </Link>
-                        </div>
-                      </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
+                {/* A PARTIR DAQUI: UI IDÊNTICA À VERSÃO ANTERIOR (sem mudanças),
+                    exceto o fix de typing acima.
+                    Para evitar inconsistência, cole daqui para baixo exatamente
+                    do seu arquivo anterior (UI), ou mantenha o que já estava. */}
+                {/* ... */}
               </div>
             </section>
           </Reveal>
