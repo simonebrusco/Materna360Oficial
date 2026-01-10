@@ -61,6 +61,70 @@ const PLACEHOLDER_MATERIALS: MaterialCard[] = [
   },
 ]
 
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial (somente no mobile)
+   - mantém o conteúdo/copy
+   - melhora ritmo no mobile
+   - desktop preservado (texto em 1 bloco)
+   - no máximo 3 partes
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+
+  const text = String(raw).trim()
+  if (!text) return []
+
+  // marcadores típicos para “respirar” sem mudar sentido
+  // (sem "E" para evitar quebras artificiais)
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'Mas']
+
+  let working = text
+
+  // quebra antes de marcadores (best effort)
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  // quebra por frases, mas com limite de 3 partes
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const raw = (text ?? '').trim()
+  const parts = splitEditorialText(raw)
+
+  if (!raw) return null
+
+  // Desktop preservado: 1 bloco (sem quebra editorial)
+  // Mobile: parágrafos curtos (2–3 no máximo)
+  return (
+    <>
+      <p className={`hidden md:block ${className}`}>{raw}</p>
+
+      <div className="md:hidden space-y-2">
+        {parts.map((p, i) => (
+          <p key={i} className={className}>
+            {p}
+          </p>
+        ))}
+      </div>
+    </>
+  )
+}
+
 export default function BibliotecaMaternaPage() {
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [selectedFormat, setSelectedFormat] = useState<string | null>(null)
@@ -72,6 +136,13 @@ export default function BibliotecaMaternaPage() {
   const handleFormatSelect = (format: string) => {
     setSelectedFormat(selectedFormat === format ? null : format)
   }
+
+  const resultsLabel =
+    selectedTheme || selectedFormat
+      ? `Resultados filtrados por ${selectedTheme ? `tema: ${selectedTheme}` : ''} ${
+          selectedTheme && selectedFormat ? 'e' : ''
+        } ${selectedFormat ? `formato: ${selectedFormat}` : ''}`
+      : 'Todos os materiais'
 
   return (
     <PageTemplate
@@ -85,11 +156,10 @@ export default function BibliotecaMaternaPage() {
           {/* INTRO TEXT */}
           <Reveal delay={0}>
             <div className="max-w-2xl">
-              <p className="text-sm md:text-base text-neutral-600 leading-relaxed">
-                Encontre materiais selecionados — PDFs, eBooks, guias práticos e
-                conteúdos personalizados — filtrados por tema e formato para
-                facilitar sua jornada.
-              </p>
+              <RenderEditorialText
+                text="Encontre materiais selecionados — PDFs, eBooks, guias práticos e conteúdos personalizados — filtrados por tema e formato para facilitar sua jornada."
+                className="text-sm md:text-base text-neutral-600 leading-relaxed"
+              />
             </div>
           </Reveal>
 
@@ -100,10 +170,11 @@ export default function BibliotecaMaternaPage() {
                 <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                   Filtrar por
                 </h2>
-                <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                  Selecione um tema e formato para encontrar conteúdos
-                  relevantes.
-                </p>
+
+                <RenderEditorialText
+                  text="Selecione um tema e formato para encontrar conteúdos relevantes."
+                  className="text-xs md:text-sm text-[#545454] leading-relaxed"
+                />
               </div>
 
               <div className="space-y-8">
@@ -152,15 +223,12 @@ export default function BibliotecaMaternaPage() {
               <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Materiais Disponíveis
               </h2>
-              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                {selectedTheme || selectedFormat
-                  ? `Resultados filtrados por ${
-                      selectedTheme ? `tema: ${selectedTheme}` : ''
-                    } ${selectedTheme && selectedFormat ? 'e' : ''} ${
-                      selectedFormat ? `formato: ${selectedFormat}` : ''
-                    }`
-                  : 'Todos os materiais'}
-              </p>
+
+              {/* Aqui tende a ser curto, mas mantemos leitura suave no mobile */}
+              <RenderEditorialText
+                text={resultsLabel}
+                className="text-xs md:text-sm text-[#545454] leading-relaxed"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -216,10 +284,11 @@ export default function BibliotecaMaternaPage() {
               <h2 className="text-base md:text-lg font-semibold text-[#2f3a56]">
                 Insight Personalizado
               </h2>
-              <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                Aqui você verá recomendações inteligentes baseadas na idade e
-                fase do seu filho.
-              </p>
+
+              <RenderEditorialText
+                text="Aqui você verá recomendações inteligentes baseadas na idade e fase do seu filho."
+                className="text-xs md:text-sm text-[#545454] leading-relaxed"
+              />
             </div>
 
             <SoftCard className="rounded-3xl p-6 md:p-8 bg-white border border-[#ffd8e6] shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
@@ -233,11 +302,10 @@ export default function BibliotecaMaternaPage() {
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm md:text-base text-[#545454] leading-relaxed">
-                    Seu filho está passando por uma fase importante de
-                    desenvolvimento. Em breve, sugestões personalizadas
-                    aparecerão aqui.
-                  </p>
+                  <RenderEditorialText
+                    text="Seu filho está passando por uma fase importante de desenvolvimento. Em breve, sugestões personalizadas aparecerão aqui."
+                    className="text-sm md:text-base text-[#545454] leading-relaxed"
+                  />
                 </div>
               </div>
             </SoftCard>
@@ -255,9 +323,11 @@ export default function BibliotecaMaternaPage() {
                   <h3 className="text-lg md:text-xl font-semibold text-[#2f3a56] mb-2">
                     Desbloqueie conteúdos completos
                   </h3>
-                  <p className="text-sm text-[#545454]">
-                    PDFs avançados, eBooks exclusivos e guias profissionais.
-                  </p>
+
+                  <RenderEditorialText
+                    text="PDFs avançados, eBooks exclusivos e guias profissionais."
+                    className="text-sm text-[#545454] leading-relaxed"
+                  />
                 </div>
                 <Button
                   variant="primary"
