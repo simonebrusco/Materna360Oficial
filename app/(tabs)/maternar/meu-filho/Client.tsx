@@ -2,7 +2,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 
 import { safeMeuFilhoBloco1Text, clampMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
@@ -213,7 +213,6 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 
 /* =========================
    BLOCO 1 — CANÔNICO (fallback silencioso)
-   Regra P34.11: NUNCA gerar automaticamente (somente por ação explícita).
 ========================= */
 
 const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
@@ -262,7 +261,6 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number }): Promise<strin
     if (!res.ok) return null
 
     const data = (await res.json().catch(() => null)) as { suggestions?: { description?: string }[] } | null
-
     const desc = data?.suggestions?.[0]?.description
     const cleaned = safeMeuFilhoBloco1Text(desc)
     if (!cleaned) return null
@@ -274,8 +272,7 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number }): Promise<strin
 }
 
 /* =========================
-   BLOCO 2 — IA + FALLBACK (Exploração Guiada)
-   Regra P34.11: NUNCA gerar automaticamente (somente por ação explícita).
+   BLOCO 2 — Curadoria (IA + fallback)
 ========================= */
 
 type Bloco2Items = { a: PlanItem; b: PlanItem; c: PlanItem }
@@ -386,8 +383,7 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
 }
 
 /* =========================
-   BLOCO 3 — ROTINAS / CONEXÃO (continuidade sem cobrança)
-   Regra P34.11: NUNCA gerar automaticamente (somente por ação explícita).
+   BLOCO 3 — ROTINAS / CONEXÃO (sob solicitação)
 ========================= */
 
 type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
@@ -415,6 +411,7 @@ function clampBloco3Text(raw: unknown): string | null {
   if (!t) return null
   const low = t.toLowerCase()
 
+  // hard rules: sem cobrança / sem frequência / sem “método”
   const banned = [
     'todo dia',
     'todos os dias',
@@ -428,8 +425,10 @@ function clampBloco3Text(raw: unknown): string | null {
   ]
   if (banned.some((b) => low.includes(b))) return null
 
+  // evitar formato de lista
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
+  // limitar frases (best effort): até 3
   const sentences = t
     .split(/[.!?]+/)
     .map((s) => s.trim())
@@ -499,8 +498,8 @@ async function fetchBloco3Suggestion(args: {
 }
 
 /* =========================
-   BLOCO 4 — “FASES / CONTEXTO” (Tradução Prática)
-   Regra P34.11: NUNCA gerar automaticamente (somente por ação explícita).
+   BLOCO 4 — “FASES / CONTEXTO”
+   (sob solicitação)
 ========================= */
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
@@ -571,7 +570,8 @@ async function fetchBloco4Suggestion(args: {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
       body: JSON.stringify({
-        feature: 'fase-contexto',
+        // ✅ alinhado com route.ts (feature reconhecida)
+        feature: 'fase',
         origin: 'maternar/meu-filho',
         tipoIdeia: 'meu-filho-bloco-4',
         idade: args.faixa_etaria,
@@ -606,15 +606,210 @@ async function fetchBloco4Suggestion(args: {
 ========================= */
 
 const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
-  // (KITS mantido integralmente — sem alterações)
-  // Observação: aqui segue exatamente o mesmo conteúdo que você colou.
-  // Para manter a resposta utilizável, eu NÃO reescrevi a seção inteira (é longa),
-  // mas no seu projeto você deve manter a constante KITS exatamente como está.
-  // ---------------------------
-  // IMPORTANTE: COLE AQUI a sua constante KITS completa (sem mudanças).
-  // ---------------------------
-  // @ts-expect-error — placeholder para evitar quebra caso você cole em partes
-  __REPLACE_WITH_YOUR_EXISTING_KITS__: {} as any,
+  '0-2': {
+    '5': {
+      id: 'k-0-2-5',
+      title: 'Conexão em 5 min (0–2)',
+      subtitle: 'Sem preparar nada. Só presença simples.',
+      time: '5',
+      plan: {
+        a: {
+          tag: 'rápido',
+          time: '5',
+          title: 'Cópia de gestos',
+          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
+        },
+        b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
+        c: {
+          tag: 'sensório',
+          time: '5',
+          title: 'Texturas da casa',
+          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
+        },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
+      routine: {
+        label: 'Ajuste que ajuda hoje',
+        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
+      },
+      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
+    },
+    '10': {
+      id: 'k-0-2-10',
+      title: 'Presença prática em 10 min (0–2)',
+      subtitle: 'Brincadeira curta + conexão no final.',
+      time: '10',
+      plan: {
+        a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
+        b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
+        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
+      connection: { label: 'Gesto de conexão', note: 'Um abraço demorado com respiração junto (3 respirações).' },
+    },
+    '15': {
+      id: 'k-0-2-15',
+      title: 'Momento completo em 15 min (0–2)',
+      subtitle: 'Brincar + desacelerar sem estender demais.',
+      time: '15',
+      plan: {
+        a: {
+          tag: 'rotina',
+          time: '15',
+          title: 'Mini ritual pré-janta',
+          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
+        },
+        b: {
+          tag: 'sensório',
+          time: '15',
+          title: 'Caixa de “coisas seguras”',
+          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
+        },
+        c: {
+          tag: 'calmo',
+          time: '15',
+          title: 'Banho de brinquedos',
+          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
+        },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: “eu tô aqui com você” e sorrir.' },
+    },
+  },
+  '3-4': {
+    '5': {
+      id: 'k-3-4-5',
+      title: 'Conexão em 5 min (3–4)',
+      subtitle: 'Uma brincadeira que cabe antes da janta.',
+      time: '5',
+      plan: {
+        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
+        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
+        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).' },
+      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.' },
+    },
+    '10': {
+      id: 'k-3-4-10',
+      title: 'Presença prática em 10 min (3–4)',
+      subtitle: 'Brincar sem produção e fechar bem.',
+      time: '10',
+      plan: {
+        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma “pista” com fita/almofadas. Ele percorre 3 vezes.' },
+        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relâmpago', how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.' },
+        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: “eu gostei quando você…”.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um mini ritual pré-janta (2 min) organiza o resto do período.' },
+      connection: { label: 'Gesto de conexão', note: 'Toque no ombro + olhar nos olhos por 5 segundos.' },
+    },
+    '15': {
+      id: 'k-3-4-15',
+      title: 'Momento completo em 15 min (3–4)',
+      subtitle: 'O clássico: brincar + organizar + fechar com carinho.',
+      time: '15',
+      plan: {
+        a: { tag: 'casa', time: '15', title: 'Caça aos tesouros', how: 'Escolham 3 itens para achar. Depois guardam juntos.' },
+        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 “missões”: pular, buscar, entregar. Você narra.' },
+        c: { tag: 'calmo', time: '15', title: 'História + abraço', how: '10 min de história inventada + 5 min de abraço e guardar.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Imaginação + necessidade de rotina clara.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “obrigada por brincar comigo” e sorrir.' },
+    },
+  },
+  '5-6': {
+    '5': {
+      id: 'k-5-6-5',
+      title: 'Conexão em 5 min (5–6)',
+      subtitle: 'Rápido e direto: presença sem esticar.',
+      time: '5',
+      plan: {
+        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
+        b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
+        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “depois continua”.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: “eu vi você se esforçando em…”.' },
+    },
+    '10': {
+      id: 'k-5-6-10',
+      title: 'Presença prática em 10 min (5–6)',
+      subtitle: 'Brincar e fechar com organização mínima.',
+      time: '10',
+      plan: {
+        a: { tag: 'movimento', time: '10', title: 'Circuito rápido', how: '3 estações: pular, agachar, correr parado. 2 rodadas.' },
+        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.' },
+        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
+    },
+    '15': {
+      id: 'k-5-6-15',
+      title: 'Momento completo em 15 min (5–6)',
+      subtitle: 'Um ciclo simples: brincar → ajudar → fechar.',
+      time: '15',
+      plan: {
+        a: { tag: 'equilíbrio', time: '15', title: 'Brinca 10 + ajuda 5', how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.' },
+        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e você escreve 3 frases.' },
+        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (“qual animal…?”). Fecha com abraço.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Vontade de participar e de ser levado a sério.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um timer visível ajuda a encerrar sem briga.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).' },
+    },
+  },
+  '6+': {
+    '5': {
+      id: 'k-6p-5',
+      title: 'Conexão em 5 min (6+)',
+      subtitle: 'Curto e respeitoso — sem infantilizar.',
+      time: '5',
+      plan: {
+        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: '“De 0 a 10, como foi seu dia?” e uma frase de escuta.' },
+        b: { tag: 'corpo', time: '5', title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado do dia.' },
+        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Você agradece e reconhece.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Mais autonomia, mais opinião, mais sensibilidade a respeito.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar “o que vem agora” evita atrito nas transições.' },
+      connection: { label: 'Gesto de conexão', note: 'Escuta de 30 segundos sem corrigir.' },
+    },
+    '10': {
+      id: 'k-6p-10',
+      title: 'Presença prática em 10 min (6+)',
+      subtitle: 'Sem grandes jogos: presença e organização.',
+      time: '10',
+      plan: {
+        a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
+        b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
+        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
+      connection: { label: 'Gesto de conexão', note: 'Perguntar: “quer minha ajuda ou só que eu te ouça?”' },
+    },
+    '15': {
+      id: 'k-6p-15',
+      title: 'Momento completo em 15 min (6+)',
+      subtitle: 'Conexão + rotina leve do jeito que cabe.',
+      time: '15',
+      plan: {
+        a: { tag: 'equilíbrio', time: '15', title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.' },
+        b: { tag: 'casa', time: '15', title: 'Arrumar junto', how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.' },
+        c: { tag: 'fala', time: '15', title: 'Plano para depois', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
+      },
+      development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },
+      connection: { label: 'Gesto de conexão', note: 'Reconhecer: “eu vi que foi difícil e você tentou”.' },
+    },
+  },
 }
 
 /* =========================
@@ -667,6 +862,34 @@ function RenderEditorialText({
   )
 }
 
+/* =========================
+   Botões (sem “IA”)
+========================= */
+
+function PrimaryActionButton({
+  label,
+  onClick,
+  disabled,
+}: {
+  label: string
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!!disabled}
+      className={[
+        'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
+        disabled ? 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed' : 'bg-[#fd2597] text-white hover:opacity-95',
+      ].join(' ')}
+    >
+      {label}
+    </button>
+  )
+}
+
 export default function MeuFilhoClient() {
   const [step, setStep] = useState<Step>('brincadeiras')
   const [time, setTime] = useState<TimeMode>('15')
@@ -678,11 +901,11 @@ export default function MeuFilhoClient() {
 
   const [familyDoneToday, setFamilyDoneToday] = useState(false)
 
-  // Tema obrigatório do Bloco 3 (mas sugestão só aparece por clique)
+  // ✅ seleção mínima de tema
   const [rotinaTema, setRotinaTema] = useState<RotinaTema | null>(null)
   const [conexaoTema, setConexaoTema] = useState<ConexaoTema | null>(null)
 
-  // Blocos (somente por ação explícita)
+  // Blocos (agora: NUNCA geram sozinhos)
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
   const bloco1ReqSeq = useRef(0)
 
@@ -702,6 +925,7 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
+    // ✅ blindagem: não deixar storage/perfil derrubar a tela
     let inferred: { time: TimeMode; age: AgeBand; childLabel?: string } = { time: '15', age: '3-4' }
     try {
       inferred = inferContext()
@@ -711,6 +935,14 @@ export default function MeuFilhoClient() {
     setAge(inferred.age)
     setChildLabel(inferred.childLabel)
     setStep('brincadeiras')
+
+    // ✅ estados de geração começam sempre em “idle”
+    setBloco1({ status: 'idle' })
+    setBloco2({ status: 'idle' })
+    setBloco3({ status: 'idle' })
+    setBloco4({ status: 'idle' })
+    setRotinaTema(null)
+    setConexaoTema(null)
 
     try {
       const snap = getProfileSnapshot()
@@ -732,8 +964,32 @@ export default function MeuFilhoClient() {
     } catch {}
   }, [])
 
+  // ✅ kit sempre seguro (evita crash se algum estado vier fora do esperado)
   const kit = useMemo(() => {
-    return (KITS as any)[age][time] as Kit
+    const byAge = (KITS as any)?.[age]
+    const byTime = byAge?.[time]
+    if (byTime) return byTime as Kit
+
+    const fallbackSameAge = byAge?.['15']
+    if (fallbackSameAge) return fallbackSameAge as Kit
+
+    const canonical = (KITS as any)?.['3-4']?.['15']
+    if (canonical) return canonical as Kit
+
+    return {
+      id: 'fallback',
+      title: 'Hoje, bem simples',
+      subtitle: 'Se algo falhar, eu ainda te deixo com um plano possível.',
+      time: '15',
+      plan: {
+        a: { title: 'Começo curto', how: 'Sente perto, respire junto e faça um começo simples por 1 minuto.', time: '15', tag: 'leve' },
+        b: { title: 'Movimento rápido', how: 'Escolha 2 movimentos (pula/alongar) e faça junto por 2 minutos.', time: '15', tag: 'leve' },
+        c: { title: 'Fechamento calmo', how: 'Finalize com abraço curto e “obrigada por fazer comigo”.', time: '15', tag: 'leve' },
+      },
+      development: { label: 'Ajuste de fase', note: 'Nesta fase, repetir um começo simples costuma ajudar.' },
+      routine: { label: 'Ajuste de rotina', note: 'Feche com um encerramento curto e siga para o próximo passo.' },
+      connection: { label: 'Conexão', note: 'Olho no olho por alguns segundos já conta.' },
+    } as Kit
   }, [age, time])
 
   const effectivePlan: Bloco2Items = useMemo(() => {
@@ -743,66 +999,16 @@ export default function MeuFilhoClient() {
 
   const selected = useMemo(() => effectivePlan[chosen], [effectivePlan, chosen])
 
-  function go(next: Step) {
-    setStep(next)
-    try {
-      track('meu_filho.step', { step: next })
-    } catch {}
-  }
-
-  function onSelectTime(next: TimeMode) {
-    setTime(next)
-    setChosen('a')
-
-    safeSetLS(HUB_PREF.time, next)
-    safeSetLS('eu360_time_with_child', next)
-
-    // reset por mudança de contexto (nada gera sozinho)
-    setRotinaTema(null)
-    setConexaoTema(null)
+  function resetGeneratedOnContextChange() {
     setBloco1({ status: 'idle' })
     setBloco2({ status: 'idle' })
     setBloco3({ status: 'idle' })
     setBloco4({ status: 'idle' })
-
-    try {
-      track('meu_filho.time.select', { time: next })
-    } catch {}
-  }
-
-  function onSelectAge(next: AgeBand) {
-    setAge(next)
-    setChosen('a')
-
-    safeSetLS(HUB_PREF.ageBand, next)
-    safeSetLS('eu360_child_age_band', next)
-
-    // reset por mudança de contexto (nada gera sozinho)
     setRotinaTema(null)
     setConexaoTema(null)
-    setBloco1({ status: 'idle' })
-    setBloco2({ status: 'idle' })
-    setBloco3({ status: 'idle' })
-    setBloco4({ status: 'idle' })
-
-    try {
-      track('meu_filho.age.select', { age: next, reason: 'manual_override' })
-    } catch {}
   }
 
-  function onChoose(k: 'a' | 'b' | 'c') {
-    setChosen(k)
-    try {
-      track('meu_filho.plan.choose', {
-        which: k,
-        time,
-        age,
-        source: bloco2.status === 'done' ? bloco2.source : 'unknown',
-      })
-    } catch {}
-  }
-
-  async function requestBloco1() {
+  async function runBloco1() {
     const seq = ++bloco1ReqSeq.current
     setBloco1({ status: 'loading' })
 
@@ -826,7 +1032,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  async function requestBloco2() {
+  async function runBloco2() {
     const seq = ++bloco2ReqSeq.current
     setBloco2({ status: 'loading' })
 
@@ -849,7 +1055,41 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  async function requestBloco4() {
+  async function runBloco3(kind: Bloco3Type) {
+    const seq = ++bloco3ReqSeq.current
+    const momento = momentForStep(kind === 'rotina' ? 'rotina' : 'conexao')
+
+    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+    if (!tema) return
+
+    setBloco3({ status: 'loading', kind })
+
+    const ai = await fetchBloco3Suggestion({
+      faixa_etaria: age,
+      momento_do_dia: momento,
+      tipo_experiencia: kind,
+      contexto: 'continuidade',
+      tema,
+    })
+
+    if (seq !== bloco3ReqSeq.current) return
+
+    if (ai) {
+      setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
+      try {
+        track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
+      } catch {}
+      return
+    }
+
+    const fb = BLOCO3_FALLBACK[kind][age]
+    setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+    try {
+      track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
+    } catch {}
+  }
+
+  async function runBloco4() {
     const seq = ++bloco4ReqSeq.current
     setBloco4({ status: 'loading' })
 
@@ -877,37 +1117,50 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  async function requestBloco3(kind: Bloco3Type) {
-    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
-    if (!tema) return
-
-    const seq = ++bloco3ReqSeq.current
-    setBloco3({ status: 'loading', kind })
-
-    const momento = momentForStep(kind === 'rotina' ? 'rotina' : 'conexao')
-
-    const ai = await fetchBloco3Suggestion({
-      faixa_etaria: age,
-      momento_do_dia: momento,
-      tipo_experiencia: kind,
-      contexto: 'continuidade',
-      tema: tema as RotinaTema | ConexaoTema,
-    })
-
-    if (seq !== bloco3ReqSeq.current) return
-
-    if (ai) {
-      setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
-      try {
-        track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
-      } catch {}
-      return
-    }
-
-    const fb = BLOCO3_FALLBACK[kind][age]
-    setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
+  function go(next: Step) {
+    setStep(next)
     try {
-      track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
+      track('meu_filho.step', { step: next })
+    } catch {}
+  }
+
+  function onSelectTime(next: TimeMode) {
+    setTime(next)
+    setChosen('a')
+
+    safeSetLS(HUB_PREF.time, next)
+    safeSetLS('eu360_time_with_child', next)
+
+    resetGeneratedOnContextChange()
+
+    try {
+      track('meu_filho.time.select', { time: next })
+    } catch {}
+  }
+
+  function onSelectAge(next: AgeBand) {
+    setAge(next)
+    setChosen('a')
+
+    safeSetLS(HUB_PREF.ageBand, next)
+    safeSetLS('eu360_child_age_band', next)
+
+    resetGeneratedOnContextChange()
+
+    try {
+      track('meu_filho.age.select', { age: next, reason: 'manual_override' })
+    } catch {}
+  }
+
+  function onChoose(k: 'a' | 'b' | 'c') {
+    setChosen(k)
+    try {
+      track('meu_filho.plan.choose', {
+        which: k,
+        time,
+        age,
+        source: bloco2.status === 'done' ? bloco2.source : 'unknown',
+      })
     } catch {}
   }
 
@@ -1153,77 +1406,75 @@ export default function MeuFilhoClient() {
                           <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
                             Plano pronto para agora
                           </span>
-                          <p className="text-[13px] text-[#6a6a6a]">Quando você pedir, eu te mostro uma sugestão direta.</p>
+                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
                         </div>
                       </div>
 
                       <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
                         {bloco1.status === 'idle' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">
-                            Toque em <span className="font-semibold">Ver sugestão</span> para receber um plano para agora.
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="text-[13px] text-[#6a6a6a]">
+                              Quando você quiser, eu preparo uma sugestão ajustada para agora.
+                            </div>
+                            <PrimaryActionButton
+                              label="Preparar sugestão"
+                              onClick={() => {
+                                runBloco1()
+                                try {
+                                  track('meu_filho.bloco1.generate.click', { time, age })
+                                } catch {}
+                              }}
+                            />
                           </div>
                         ) : bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">Preparando sua sugestão…</div>
+                          <div className="text-[13px] text-[#6a6a6a]">Preparando uma sugestão…</div>
                         ) : (
-                          <RenderEditorialText
-                            text={bloco1Text}
-                            pClassName="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
-                          />
+                          <>
+                            <RenderEditorialText
+                              text={bloco1Text}
+                              pClassName="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
+                            />
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                disabled={bloco1.status !== 'done'}
+                                onClick={() => {
+                                  if (!bloco1Text) return
+                                  saveSelectedToMyDay(bloco1Text)
+                                  try {
+                                    track('meu_filho.bloco1.save', {
+                                      time,
+                                      age,
+                                      source: bloco1.status === 'done' ? bloco1.source : 'unknown',
+                                    })
+                                  } catch {}
+                                }}
+                                className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                                title="Salvar este plano no Meu Dia"
+                              >
+                                Salvar no Meu Dia
+                              </button>
+
+                              <PrimaryActionButton
+                                label="Nova sugestão"
+                                onClick={() => {
+                                  runBloco1()
+                                  try {
+                                    track('meu_filho.bloco1.regenerate.click', { time, age })
+                                  } catch {}
+                                }}
+                              />
+
+                              <button
+                                onClick={() => go('conexao')}
+                                className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                              >
+                                Fechar com conexão
+                              </button>
+                            </div>
+                          </>
                         )}
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              requestBloco1()
-                              try {
-                                track('meu_filho.bloco1.request', { time, age })
-                              } catch {}
-                            }}
-                            disabled={bloco1.status === 'loading'}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              bloco1.status === 'loading'
-                                ? 'bg-[#ffd8e6] text-[#b8236b] opacity-80 cursor-not-allowed'
-                                : 'bg-[#fd2597] text-white hover:opacity-95',
-                            ].join(' ')}
-                            title="Ver sugestão"
-                          >
-                            Ver sugestão
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={bloco1.status !== 'done'}
-                            onClick={() => {
-                              if (!bloco1Text) return
-                              saveSelectedToMyDay(bloco1Text)
-                              try {
-                                track('meu_filho.bloco1.save', {
-                                  time,
-                                  age,
-                                  source: bloco1.status === 'done' ? bloco1.source : 'unknown',
-                                })
-                              } catch {}
-                            }}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              bloco1.status === 'done'
-                                ? 'bg-white border border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]'
-                                : 'bg-white/60 border border-[#f5d7e5] text-[#2f3a56] opacity-60 cursor-not-allowed',
-                            ].join(' ')}
-                            title="Salvar este plano no Meu Dia"
-                          >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Fechar com conexão
-                          </button>
-                        </div>
                       </div>
 
                       <div className="mt-6 border-t border-[#f5d7e5] pt-5">
@@ -1242,41 +1493,29 @@ export default function MeuFilhoClient() {
 
                         <div className="mt-3 text-[11px] text-[#6a6a6a]">
                           {bloco2.status === 'idle'
-                            ? 'Toque em “Ver ideias” para receber 3 opções curadas.'
+                            ? 'Quando você quiser, eu trago 3 opções com mais variedade.'
                             : bloco2.status === 'loading'
-                              ? 'Curando 3 opções para hoje…'
-                              : bloco2.source === 'ai'
-                                ? 'Opções curadas para hoje'
-                                : 'Opções locais (fallback)'}
+                              ? 'Preparando 3 opções para hoje…'
+                              : bloco2.status === 'done'
+                                ? bloco2.source === 'ai'
+                                  ? 'Opções preparadas para hoje'
+                                  : 'Opções locais (fallback)'
+                                : null}
                         </div>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              requestBloco2()
-                              try {
-                                track('meu_filho.bloco2.request', { time, age })
-                              } catch {}
-                            }}
-                            disabled={bloco2.status === 'loading'}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              bloco2.status === 'loading'
-                                ? 'bg-[#ffd8e6] text-[#b8236b] opacity-80 cursor-not-allowed'
-                                : 'bg-[#fd2597] text-white hover:opacity-95',
-                            ].join(' ')}
-                          >
-                            Ver ideias
-                          </button>
-
-                          <button
-                            onClick={() => go('desenvolvimento')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Entender a fase
-                          </button>
-                        </div>
+                        {bloco2.status === 'idle' ? (
+                          <div className="mt-3">
+                            <PrimaryActionButton
+                              label="Preparar 3 opções"
+                              onClick={() => {
+                                runBloco2()
+                                try {
+                                  track('meu_filho.bloco2.generate.click', { time, age })
+                                } catch {}
+                              }}
+                            />
+                          </div>
+                        ) : null}
 
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                           {(['a', 'b', 'c'] as const).map((k) => {
@@ -1292,6 +1531,8 @@ export default function MeuFilhoClient() {
                                     ? 'bg-[#ffd8e6] border-[#f5d7e5]'
                                     : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
                                 ].join(' ')}
+                                disabled={bloco2.status === 'loading'}
+                                aria-disabled={bloco2.status === 'loading'}
                               >
                                 <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
                                   {it.tag} • {timeLabel(it.time)}
@@ -1345,6 +1586,13 @@ export default function MeuFilhoClient() {
                             >
                               Ajuste de rotina
                             </button>
+
+                            <button
+                              onClick={() => go('desenvolvimento')}
+                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            >
+                              Entender a fase
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1378,35 +1626,36 @@ export default function MeuFilhoClient() {
                           <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Nessa fase</div>
 
                           {bloco4.status === 'idle' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Toque em <span className="font-semibold">Ver como costuma funcionar</span> para receber uma pista curta.
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                              <div className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                                Quando você quiser, eu preparo uma frase bem direta para essa fase.
+                              </div>
+                              <PrimaryActionButton
+                                label="Preparar orientação"
+                                onClick={() => {
+                                  runBloco4()
+                                  try {
+                                    track('meu_filho.bloco4.generate.click', { age })
+                                  } catch {}
+                                }}
+                              />
                             </div>
                           ) : bloco4.status === 'loading' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase…</div>
+                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Preparando…</div>
                           ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
+                            <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                              <div className="text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
+                              <PrimaryActionButton
+                                label="Nova orientação"
+                                onClick={() => {
+                                  runBloco4()
+                                  try {
+                                    track('meu_filho.bloco4.regenerate.click', { age })
+                                  } catch {}
+                                }}
+                              />
+                            </div>
                           )}
-
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                requestBloco4()
-                                try {
-                                  track('meu_filho.bloco4.request', { age })
-                                } catch {}
-                              }}
-                              disabled={bloco4.status === 'loading'}
-                              className={[
-                                'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                bloco4.status === 'loading'
-                                  ? 'bg-[#ffd8e6] text-[#b8236b] opacity-80 cursor-not-allowed'
-                                  : 'bg-[#fd2597] text-white hover:opacity-95',
-                              ].join(' ')}
-                            >
-                              Ver como costuma funcionar
-                            </button>
-                          </div>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -1440,9 +1689,7 @@ export default function MeuFilhoClient() {
                             Rotina leve da criança
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
                         </div>
                       </div>
 
@@ -1480,52 +1727,36 @@ export default function MeuFilhoClient() {
 
                           {rotinaTema ? (
                             <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                Para encaixar no dia
-                              </div>
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
 
-                              {bloco3.status === 'idle' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Toque em <span className="font-semibold">Ver orientação</span> para receber um ajuste curto.
-                                </div>
-                              ) : bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Preparando sua orientação…</div>
+                              {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Preparando…</div>
                               ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
-                                <RenderEditorialText
-                                  text={bloco3Text}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                />
+                                <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-[220px]">
+                                    <RenderEditorialText
+                                      text={bloco3Text}
+                                      wrapClassName=""
+                                      pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                    />
+                                  </div>
+                                  <PrimaryActionButton
+                                    label="Novo ajuste"
+                                    onClick={() => runBloco3('rotina')}
+                                  />
+                                </div>
                               ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Selecione um tema e toque em “Ver orientação”.
+                                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                  <div className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                                    Com o tema escolhido, eu preparo um ajuste curto para hoje.
+                                  </div>
+                                  <PrimaryActionButton label="Preparar ajuste" onClick={() => runBloco3('rotina')} />
                                 </div>
                               )}
-
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    requestBloco3('rotina')
-                                    try {
-                                      track('meu_filho.bloco3.request', { kind: 'rotina', age, tema: rotinaTema })
-                                    } catch {}
-                                  }}
-                                  disabled={bloco3.status === 'loading' && bloco3.kind === 'rotina'}
-                                  className={[
-                                    'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                    bloco3.status === 'loading' && bloco3.kind === 'rotina'
-                                      ? 'bg-[#ffd8e6] text-[#b8236b] opacity-80 cursor-not-allowed'
-                                      : 'bg-[#fd2597] text-white hover:opacity-95',
-                                  ].join(' ')}
-                                >
-                                  Ver orientação
-                                </button>
-                              </div>
                             </div>
                           ) : (
                             <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Selecione um tema acima para eu ajustar a orientação.
+                              Selecione um tema acima para eu preparar a sugestão.
                             </div>
                           )}
                         </div>
@@ -1561,9 +1792,7 @@ export default function MeuFilhoClient() {
                             Gestos de conexão
                           </span>
                           <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">
-                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
-                          </p>
+                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
                         </div>
                       </div>
 
@@ -1601,52 +1830,36 @@ export default function MeuFilhoClient() {
 
                           {conexaoTema ? (
                             <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                Para encaixar no dia
-                              </div>
+                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
 
-                              {bloco3.status === 'idle' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Toque em <span className="font-semibold">Ver sugestão</span> para receber um fechamento curto.
-                                </div>
-                              ) : bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Preparando sua sugestão…</div>
+                              {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Preparando…</div>
                               ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
-                                <RenderEditorialText
-                                  text={bloco3Text}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                />
+                                <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-[220px]">
+                                    <RenderEditorialText
+                                      text={bloco3Text}
+                                      wrapClassName=""
+                                      pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                    />
+                                  </div>
+                                  <PrimaryActionButton
+                                    label="Novo gesto"
+                                    onClick={() => runBloco3('conexao')}
+                                  />
+                                </div>
                               ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Selecione um tema e toque em “Ver sugestão”.
+                                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                  <div className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                                    Com o tema escolhido, eu preparo um gesto curto para hoje.
+                                  </div>
+                                  <PrimaryActionButton label="Preparar gesto" onClick={() => runBloco3('conexao')} />
                                 </div>
                               )}
-
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    requestBloco3('conexao')
-                                    try {
-                                      track('meu_filho.bloco3.request', { kind: 'conexao', age, tema: conexaoTema })
-                                    } catch {}
-                                  }}
-                                  disabled={bloco3.status === 'loading' && bloco3.kind === 'conexao'}
-                                  className={[
-                                    'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                                    bloco3.status === 'loading' && bloco3.kind === 'conexao'
-                                      ? 'bg-[#ffd8e6] text-[#b8236b] opacity-80 cursor-not-allowed'
-                                      : 'bg-[#fd2597] text-white hover:opacity-95',
-                                  ].join(' ')}
-                                >
-                                  Ver sugestão
-                                </button>
-                              </div>
                             </div>
                           ) : (
                             <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Selecione um tema acima para eu ajustar a sugestão.
+                              Selecione um tema acima para eu preparar a sugestão.
                             </div>
                           )}
                         </div>
