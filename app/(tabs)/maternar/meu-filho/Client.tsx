@@ -283,8 +283,20 @@ type Bloco2State =
   | { status: 'loading' }
   | { status: 'done'; items: Bloco2Items; source: 'ai' | 'fallback' }
 
+/**
+ * Importante:
+ * - NÃO remover hífen do meio das frases (ex.: “pré-janta”, “check-in”, “0–2”).
+ * - Remover apenas bullets de lista quando aparecem no início de linha.
+ */
 function stripEmojiAndBullets(s: string) {
-  const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
+  const text = String(s ?? '')
+
+  const noBullets = text
+    .replace(/(^|\n)\s*[•●▪▫◦]\s+/g, '$1')
+    .replace(/(^|\n)\s*[-–—]\s+/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
+
   return noBullets
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
     .replace(/\s+/g, ' ')
@@ -418,7 +430,10 @@ function clampBloco3Text(raw: unknown): string | null {
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
   // limitar frases (best effort): até 3
-  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  const sentences = t
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (sentences.length > 3) return null
 
   return t
@@ -531,7 +546,10 @@ function clampBloco4Text(raw: unknown): string | null {
 
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
-  const sentences = t.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean)
+  const sentences = t
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (sentences.length !== 1) return null
 
   return t
@@ -777,6 +795,7 @@ function splitEditorialText(raw: string | null | undefined): string[] {
   if (!raw) return []
 
   const text = String(raw).trim()
+  if (!text) return []
 
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
 
@@ -790,6 +809,7 @@ function splitEditorialText(raw: string | null | undefined): string[] {
     .map((p) => p.trim())
     .filter(Boolean)
 
+  if (parts.length === 0) return [text]
   return parts.slice(0, 3)
 }
 
@@ -851,27 +871,34 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
-    const inferred = inferContext()
+    // ✅ blindagem: não deixar storage/perfil derrubar a tela
+    let inferred: { time: TimeMode; age: AgeBand; childLabel?: string } = { time: '15', age: '3-4' }
+    try {
+      inferred = inferContext()
+    } catch {}
+
     setTime(inferred.time)
     setAge(inferred.age)
     setChildLabel(inferred.childLabel)
     setStep('brincadeiras')
 
-    const snap = getProfileSnapshot()
-    setProfileSource(snap.source)
+    try {
+      const snap = getProfileSnapshot()
+      setProfileSource(snap.source)
+
+      try {
+        track('meu_filho.open', {
+          time: inferred.time,
+          age: inferred.age,
+          childLabel: inferred.childLabel ?? null,
+          profileSource: snap.source,
+        })
+      } catch {}
+    } catch {}
 
     try {
       const js = getJourneySnapshot()
       setFamilyDoneToday(js.family.doneToday)
-    } catch {}
-
-    try {
-      track('meu_filho.open', {
-        time: inferred.time,
-        age: inferred.age,
-        childLabel: inferred.childLabel ?? null,
-        profileSource: snap.source,
-      })
     } catch {}
   }, [])
 
@@ -1429,7 +1456,7 @@ export default function MeuFilhoClient() {
                             <AppIcon name="toy" size={22} className="text-[#fd2597]" />
                           </div>
                           <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
+                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
                               Brincadeiras do dia
                             </span>
                             <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
@@ -1640,11 +1667,15 @@ export default function MeuFilhoClient() {
                                 <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
                                   Ajustando para o seu dia…
                                 </div>
-                              ) : (
+                              ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
                                 <RenderEditorialText
                                   text={bloco3Text}
                                   className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
                                 />
+                              ) : (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                  Pronto — com o tema escolhido eu ajusto a sugestão.
+                                </div>
                               )}
                             </div>
                           ) : (
@@ -1736,11 +1767,15 @@ export default function MeuFilhoClient() {
                                 <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
                                   Ajustando para o seu dia…
                                 </div>
-                              ) : (
+                              ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
                                 <RenderEditorialText
                                   text={bloco3Text}
                                   className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed"
                                 />
+                              ) : (
+                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                  Pronto — com o tema escolhido eu ajusto a sugestão.
+                                </div>
                               )}
                             </div>
                           ) : (
