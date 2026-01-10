@@ -1,3 +1,4 @@
+// app/(tabs)/maternar/biblioteca-materna/page.tsx
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -10,6 +11,64 @@ import AppIcon from '@/components/ui/AppIcon'
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { MotivationalFooter } from '@/components/common/MotivationalFooter'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+/* =========================
+   P34.10 — Legibilidade Mobile
+   Quebra editorial de texto
+   - mantém o conteúdo
+   - melhora ritmo no mobile
+   - no máximo 3 “respiros”
+========================= */
+
+function splitEditorialText(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  let text = String(raw).trim()
+  if (!text) return []
+
+  // 1) travessão: evita ficar “órfão” no fim da linha
+  // antes: "momento —" / depois: "— sem ficar caçando."
+  text = text.replace(/\s+—\s+/g, '\n\n— ')
+
+  // 2) marcadores típicos para “respirar” sem mudar sentido
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'Mas', 'E']
+
+  let working = text
+  markers.forEach((m) => {
+    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
+  })
+
+  // 3) quebra por frases, com limite de 3 partes
+  const parts = working
+    .split(/\n\n|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  return parts.slice(0, 3)
+}
+
+function RenderEditorialText({
+  text,
+  className,
+}: {
+  text: string | null | undefined
+  className: string
+}) {
+  const parts = splitEditorialText(text)
+  if (!parts.length) return null
+
+  return (
+    <div className="space-y-2">
+      {parts.map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
 
 interface MaterialCard {
   id: string
@@ -131,76 +190,6 @@ function inferSuggestionFromEu360(): { preset: PresetFilter; theme: string | nul
   // fallback
   void euFocus
   return { preset: 'guias', theme: 'Rotinas' }
-}
-
-/* =========================
-   P34.10 — Legibilidade Mobile
-   Quebra editorial de texto
-   - mantém o conteúdo
-   - melhora ritmo no mobile
-   - no máximo 3 “respiros”
-========================= */
-
-function splitEditorialText(raw: string | null | undefined): string[] {
-  if (!raw) return []
-
-  let text = String(raw).trim()
-  if (!text) return []
-
-  // 0) quebra editorial por travessão (—), sem alterar sentido
-  // ex: "... momento — sem ficar caçando." => 2 blocos
-  text = text.replace(/\s+—\s+/g, ' —\n\n')
-
-  // marcadores típicos para “respirar” sem mudar sentido
-  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas']
-
-  let working = text
-
-  // quebra antes de marcadores (best effort)
-  markers.forEach((m) => {
-    working = working.replace(new RegExp(`\\s+${m}\\s+`, 'g'), `\n\n${m} `)
-  })
-
-  // quebra por frases, mas com limite de 3 partes
-  const parts = working
-    .split(/\n\n|(?<=[.!?])\s+/)
-    .map((p) => p.trim())
-    .filter(Boolean)
-
-  return parts.slice(0, 3)
-}
-
-function RenderEditorialText({
-  text,
-  className,
-  as = 'p',
-}: {
-  text: string | null | undefined
-  className: string
-  as?: 'p' | 'div'
-}) {
-  const raw = (text ?? '').trim()
-  if (!raw) return null
-
-  const parts = splitEditorialText(raw)
-
-  // Desktop: preserva original (1 bloco)
-  const DesktopComp: any = as
-
-  return (
-    <>
-      <DesktopComp className={`hidden md:block ${className}`}>{raw}</DesktopComp>
-
-      {/* Mobile: respira em até 3 blocos */}
-      <div className="md:hidden space-y-2">
-        {parts.map((p, i) => (
-          <p key={i} className={className}>
-            {p}
-          </p>
-        ))}
-      </div>
-    </>
-  )
 }
 
 export default function BibliotecaMaternaPage() {
@@ -368,7 +357,7 @@ export default function BibliotecaMaternaPage() {
                 Biblioteca Materna
               </h1>
 
-              {/* P34.10: respira no mobile, desktop intacto */}
+              {/* P34.10: quebra editorial + travessão sem “órfão” */}
               <RenderEditorialText
                 text="Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando."
                 className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
@@ -400,7 +389,8 @@ export default function BibliotecaMaternaPage() {
                     p-4 md:p-5
                   "
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  {/* FIX P34.10: no mobile vira coluna (para não “espremer” o título) */}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-start gap-3">
                       <div className="h-12 w-12 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
                         <AppIcon name="book-open" size={22} className="text-white" />
@@ -416,16 +406,14 @@ export default function BibliotecaMaternaPage() {
                           {suggestionTitle}
                         </div>
 
-                        {/* P34.10: respira no mobile (mantém texto) */}
-                        <RenderEditorialText
-                          text={suggestionSubtitle}
-                          className="text-[13px] text-white/85 leading-relaxed max-w-2xl"
-                          as="div"
-                        />
+                        <div className="text-[13px] text-white/85 leading-relaxed max-w-2xl">
+                          {suggestionSubtitle}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* FIX P34.10: botões ocupam largura no mobile (sem “coluna estreita”) */}
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
                       <button
                         onClick={() => setChip('filtrar')}
                         className="
@@ -436,6 +424,7 @@ export default function BibliotecaMaternaPage() {
                           text-[12px]
                           shadow-[0_6px_18px_rgba(0,0,0,0.12)]
                           transition
+                          flex-1 sm:flex-none
                         "
                       >
                         Ajustar
@@ -452,6 +441,7 @@ export default function BibliotecaMaternaPage() {
                           shadow-[0_10px_26px_rgba(253,37,151,0.35)]
                           hover:opacity-95
                           transition
+                          flex-1 sm:flex-none
                         "
                       >
                         Ver materiais
@@ -459,7 +449,7 @@ export default function BibliotecaMaternaPage() {
                     </div>
                   </div>
 
-                  {/* Chips internos (igual à lógica das outras páginas) */}
+                  {/* Chips internos */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {(
                       [
@@ -489,7 +479,7 @@ export default function BibliotecaMaternaPage() {
                 </div>
               </Reveal>
 
-              {/* Card branco interno (mesmo padrão) */}
+              {/* Card branco interno */}
               <Reveal>
                 <SoftCard
                   className="
@@ -515,8 +505,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Guias & checklists</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            atalho
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            Guias & checklists
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Passo a passo curto pra resolver mais rápido.
                           </div>
@@ -530,8 +524,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">PDFs & e-books</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            atalho
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            PDFs & e-books
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Leitura direta, sem excesso de tela.
                           </div>
@@ -545,8 +543,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">atalho</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Trilhas educativas</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            atalho
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            Trilhas educativas
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Uma sequência pronta pra seguir.
                           </div>
@@ -560,8 +562,12 @@ export default function BibliotecaMaternaPage() {
                           }}
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
-                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">em breve</div>
-                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">Por idade & fase</div>
+                          <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
+                            em breve
+                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
+                            Por idade & fase
+                          </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
                             Vai conectar com o Eu360 e sugerir sozinho.
                           </div>
@@ -584,7 +590,9 @@ export default function BibliotecaMaternaPage() {
                   {view === 'filtrar' ? (
                     <div className="space-y-5">
                       <div className="flex flex-col gap-1">
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido</div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">
+                          Ajuste rápido
+                        </div>
                         <div className="text-[12px] text-[#6a6a6a]">
                           Se quiser refinar, escolha tema e/ou formato. Se não quiser, só vá em “Materiais”.
                         </div>
@@ -677,11 +685,15 @@ export default function BibliotecaMaternaPage() {
                   {view === 'materiais' ? (
                     <div ref={materialsRef} className="space-y-4">
                       <div className="flex flex-col gap-1">
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">Materiais disponíveis</div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">
+                          Materiais disponíveis
+                        </div>
                         <div className="text-[12px] text-[#6a6a6a]">
                           Clique em um card para abrir. (Downloads: em breve.)
                         </div>
-                        <div className="text-[12px] text-[#6a6a6a]">{filteredMaterials.length} resultado(s) agora.</div>
+                        <div className="text-[12px] text-[#6a6a6a]">
+                          {filteredMaterials.length} resultado(s) agora.
+                        </div>
                       </div>
 
                       {filteredMaterials.length === 0 ? (
@@ -702,9 +714,13 @@ export default function BibliotecaMaternaPage() {
                                 {material.format.toUpperCase()} · {material.theme.toUpperCase()}
                               </p>
 
-                              <h3 className="mb-1 text-sm font-semibold text-[#545454] md:text-base">{material.title}</h3>
+                              <h3 className="mb-1 text-sm font-semibold text-[#545454] md:text-base">
+                                {material.title}
+                              </h3>
 
-                              <p className="mb-3 text-xs text-[#6A6A6A] md:text-sm">{material.description}</p>
+                              <p className="mb-3 text-xs text-[#6A6A6A] md:text-sm">
+                                {material.description}
+                              </p>
 
                               <div className="mt-auto pt-1 text-[11px] font-semibold text-[#fd2597]">
                                 {material.href && material.href !== '#'
@@ -723,6 +739,7 @@ export default function BibliotecaMaternaPage() {
                         >
                           Ajustar filtros
                         </button>
+
                         <Button
                           type="button"
                           variant="ghost"
@@ -739,10 +756,13 @@ export default function BibliotecaMaternaPage() {
                   {/* VIEW: Insight */}
                   {view === 'insight' ? (
                     <div className="space-y-4">
-                      <div className="text-[14px] text-[#2f3a56] font-semibold">Insight personalizado</div>
+                      <div className="text-[14px] text-[#2f3a56] font-semibold">
+                        Insight personalizado
+                      </div>
+
                       <div className="text-[12px] text-[#6a6a6a] max-w-2xl">
-                        Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida para a fase do
-                        seu filho e explicar por que aquele material é o “certo para agora”.
+                        Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida para a fase do seu filho
+                        e explicar por que aquele material é o “certo para agora”.
                       </div>
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
@@ -751,7 +771,11 @@ export default function BibliotecaMaternaPage() {
                             <AppIcon name="idea" className="h-5 w-5 text-[#fd2597]" />
                           </div>
                           <div className="space-y-1">
-                            <div className="text-[13px] font-semibold text-[#2f3a56]">Como vai funcionar</div>
+                            <div className="text-[13px] font-semibold text-[#2f3a56]">
+                              Como vai funcionar
+                            </div>
+
+                            {/* Mantido (sem virar lista “artificial”): é explicação sequencial do produto */}
                             <div className="text-[12px] text-[#6a6a6a] leading-relaxed">
                               1) Eu360 entende seu dia e a fase do seu filho.
                               <br />
