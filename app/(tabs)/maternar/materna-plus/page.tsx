@@ -202,10 +202,9 @@ export default function MaternaPlusPage() {
       subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção. Sem enrolação, no seu tempo."
     >
       <ClientOnly>
-        {/* Importante: sem pt aqui (estava criando “vão” no topo) */}
         <div className="pb-12 space-y-8 md:space-y-10">
-          {/* HERO HUB-LIKE (puxa para cima para “encostar” no header) */}
-          <div className="-mt-10 md:-mt-12">
+          {/* HERO HUB-LIKE (overlap mais forte) */}
+          <div className="-mt-14 md:-mt-16">
             <Reveal>
               <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
                 <div className="space-y-5 md:space-y-6">
@@ -224,7 +223,6 @@ export default function MaternaPlusPage() {
                     </p>
                   </div>
 
-                  {/* MINI MENU INTERNO (pills) */}
                   <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
                       MENU INTERNO
@@ -253,7 +251,6 @@ export default function MaternaPlusPage() {
                     </div>
                   </div>
 
-                  {/* Cards curtos (3) */}
                   <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">
@@ -287,7 +284,6 @@ export default function MaternaPlusPage() {
             </Reveal>
           </div>
 
-          {/* STATUS DO PLANO */}
           <Reveal delay={20}>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
@@ -680,7 +676,6 @@ export default function MaternaPlusPage() {
 
           <MotivationalFooter routeKey="materna-plus" />
 
-          {/* MODAL PROFISSIONAL */}
           {selectedProfessional && (
             <div
               className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
