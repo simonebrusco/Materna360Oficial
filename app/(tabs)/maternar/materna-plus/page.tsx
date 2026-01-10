@@ -127,11 +127,15 @@ export default function MaternaPlusPage() {
     window.scrollTo({ top: offsetTop, behavior: 'smooth' })
   }
 
-  // Observa seção ativa conforme scroll (suave e leve)
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const ids: HubSectionId[] = ['premium', 'profissionais', 'comunidade', 'servicos']
+    const ids: HubSectionId[] = [
+      'premium',
+      'profissionais',
+      'comunidade',
+      'servicos',
+    ]
     const elements = ids
       .map(id => document.getElementById(`materna-plus-${id}`))
       .filter(Boolean) as HTMLElement[]
@@ -142,11 +146,18 @@ export default function MaternaPlusPage() {
       entries => {
         const visible = entries
           .filter(e => e.isIntersecting)
-          .sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0))[0]
+          .sort(
+            (a, b) =>
+              (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0),
+          )[0]
 
         if (!visible?.target?.id) return
-        const sectionId = visible.target.id.replace('materna-plus-', '') as HubSectionId
-        if (sectionId && ids.includes(sectionId)) setActiveSection(sectionId)
+        const sectionId = visible.target.id.replace(
+          'materna-plus-',
+          '',
+        ) as HubSectionId
+        if (sectionId && ids.includes(sectionId))
+          setActiveSection(sectionId)
       },
       {
         root: null,
@@ -191,86 +202,90 @@ export default function MaternaPlusPage() {
       subtitle="Profissionais parceiros, serviços especiais e um caminho premium em construção. Sem enrolação, no seu tempo."
     >
       <ClientOnly>
-        <div className="pt-3 md:pt-4 pb-12 space-y-8 md:space-y-10">
-          {/* HERO HUB-LIKE */}
-          <Reveal>
-            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <div className="space-y-5 md:space-y-6">
-                <div className="max-w-3xl space-y-2.5">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    MATERNA+ · PORTAL PREMIUM
-                  </p>
+        {/* Importante: sem pt aqui (estava criando “vão” no topo) */}
+        <div className="pb-12 space-y-8 md:space-y-10">
+          {/* HERO HUB-LIKE (puxa para cima para “encostar” no header) */}
+          <div className="-mt-10 md:-mt-12">
+            <Reveal>
+              <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+                <div className="space-y-5 md:space-y-6">
+                  <div className="max-w-3xl space-y-2.5">
+                    <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+                      MATERNA+ · PORTAL PREMIUM
+                    </p>
 
-                  <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Escolha um bloco e vá direto ao ponto.
-                  </h2>
+                    <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                      Escolha um bloco e vá direto ao ponto.
+                    </h2>
 
-                  <p className="text-sm md:text-[15px] text-[#545454] leading-relaxed">
-                    Menu rápido para navegar entre Premium, Profissionais, Comunidade e Serviços.
-                  </p>
+                    <p className="text-sm md:text-[15px] text-[#545454] leading-relaxed">
+                      Menu rápido para navegar entre Premium, Profissionais,
+                      Comunidade e Serviços.
+                    </p>
+                  </div>
+
+                  {/* MINI MENU INTERNO (pills) */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                      MENU INTERNO
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {HUB_SECTIONS.map(s => (
+                        <Pill key={s.id} id={s.id} label={s.label} />
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-[12px] text-[#545454]">
+                        Se estiver sem tempo: comece por{' '}
+                        <span className="font-semibold">Profissionais</span>.
+                      </p>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="text-[13px] px-5 py-2"
+                        onClick={() => scrollTo('premium')}
+                      >
+                        Ver Premium agora
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Cards curtos (3) */}
+                  <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="font-semibold text-[13px] text-[#fd2597]">
+                        Profissionais
+                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Curadoria e contato direto no WhatsApp.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="font-semibold text-[13px] text-[#fd2597]">
+                        Premium
+                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Trilhas e biblioteca premium (em breve).
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="font-semibold text-[13px] text-[#fd2597]">
+                        Serviços
+                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        MaternaBox e concierge (em evolução).
+                      </p>
+                    </div>
+                  </div>
                 </div>
-
-                {/* MINI MENU INTERNO (pills) */}
-                <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
-                    MENU INTERNO
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {HUB_SECTIONS.map(s => (
-                      <Pill key={s.id} id={s.id} label={s.label} />
-                    ))}
-                  </div>
-
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[12px] text-[#545454]">
-                      Se estiver sem tempo: comece por{' '}
-                      <span className="font-semibold">Profissionais</span>.
-                    </p>
-
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="text-[13px] px-5 py-2"
-                      onClick={() => scrollTo('premium')}
-                    >
-                      Ver Premium agora
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Cards curtos (3) */}
-                <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Profissionais
-                    </p>
-                    <p className="text-[13px] text-[#545454] leading-snug">
-                      Curadoria e contato direto no WhatsApp.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Premium
-                    </p>
-                    <p className="text-[13px] text-[#545454] leading-snug">
-                      Trilhas e biblioteca premium (em breve).
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 text-center sm:text-left shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">
-                      Serviços
-                    </p>
-                    <p className="text-[13px] text-[#545454] leading-snug">
-                      MaternaBox e concierge (em evolução).
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </SoftCard>
-          </Reveal>
+              </SoftCard>
+            </Reveal>
+          </div>
 
           {/* STATUS DO PLANO */}
           <Reveal delay={20}>
@@ -477,15 +492,9 @@ export default function MaternaPlusPage() {
                         Como funciona
                       </p>
                       <div className="space-y-2">
-                        <BulletLine>
-                          Filtre a área e escolha um profissional.
-                        </BulletLine>
-                        <BulletLine>
-                          Veja detalhes e vá para o WhatsApp.
-                        </BulletLine>
-                        <BulletLine>
-                          Combine direto: horários, valores e pagamento.
-                        </BulletLine>
+                        <BulletLine>Filtre a área e escolha um profissional.</BulletLine>
+                        <BulletLine>Veja detalhes e vá para o WhatsApp.</BulletLine>
+                        <BulletLine>Combine direto: horários, valores e pagamento.</BulletLine>
                       </div>
                     </SoftCard>
                   </div>
@@ -641,7 +650,8 @@ export default function MaternaPlusPage() {
                       className="mt-2 text-[13px]"
                       onClick={() => {
                         if (typeof window !== 'undefined') {
-                          window.location.href = '/maternar/materna-plus/maternabox'
+                          window.location.href =
+                            '/maternar/materna-plus/maternabox'
                         }
                       }}
                     >
