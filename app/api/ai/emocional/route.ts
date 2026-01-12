@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses'
 const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
 
+type EnergyLevel = 'low' | 'medium' | 'high'
+type VariationAxis = 'frase' | 'cuidado' | 'ritual' | 'limite' | 'presenca'
+
 type WeeklyInsightContext = {
   firstName?: string
 
@@ -31,6 +34,19 @@ type WeeklyInsightContext = {
     intensity?: 'low' | 'medium' | null
     focus?: 'care' | 'organization' | 'pause' | null
   }
+
+  /**
+   * P34.11.1 — Inteligência de Variação (silenciosa)
+   * Eixos permitidos:
+   * - energy_level: low | medium | high
+   * - variation_axis: frase | cuidado | ritual | limite | presenca
+   *
+   * Importante:
+   * - Não expor para a usuária.
+   * - Apenas um variation_axis por geração.
+   */
+  energy_level?: EnergyLevel
+  variation_axis?: VariationAxis
 
   stats?: {
     daysWithPlanner?: number
@@ -68,6 +84,16 @@ function safeString(v: unknown): string | null {
   return s.length ? s : null
 }
 
+function safeEnergyLevel(v: unknown): EnergyLevel | undefined {
+  if (v === 'low' || v === 'medium' || v === 'high') return v
+  return undefined
+}
+
+function safeVariationAxis(v: unknown): VariationAxis | undefined {
+  if (v === 'frase' || v === 'cuidado' || v === 'ritual' || v === 'limite' || v === 'presenca') return v
+  return undefined
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY
@@ -81,7 +107,20 @@ export async function POST(request: Request) {
     if (!feature) return jsonError('Parâmetro "feature" é obrigatório.', 400)
 
     const origin = safeString(body?.origin) ?? 'como-estou-hoje'
-    const isMaternar = origin === 'maternar-hub'
+
+    /**
+     * Origem alvo da P34.11.1:
+     * - Maternar → Cuidar de Mim → ParaAgoraSupportCard
+     */
+    const isCuidarDeMim = origin === 'cuidar-de-mim'
+
+    /**
+     * Regras existentes:
+     * - isMaternar era apenas "maternar-hub"
+     * Ajuste mínimo (interno):
+     * - "cuidar-de-mim" também é Maternar (mesma aba), para herdar limites do tom.
+     */
+    const isMaternar = origin === 'maternar-hub' || isCuidarDeMim
     const isEu360 = origin === 'eu360'
 
     const context: WeeklyInsightContext = {
@@ -96,6 +135,10 @@ export async function POST(request: Request) {
 
       // compat
       prefs: body?.context?.prefs ?? undefined,
+
+      // P34.11.1 — variação silenciosa (somente se vier no payload)
+      energy_level: safeEnergyLevel((body as any)?.context?.energy_level),
+      variation_axis: safeVariationAxis((body as any)?.context?.variation_axis),
 
       stats: body?.context?.stats ?? undefined,
       mood: safeString(body?.context?.mood) ?? safeString(body?.mood) ?? null,
@@ -189,6 +232,10 @@ Se houver um campo chamado "suggestions" no schema:
 
       // compat
       prefs: context.prefs ?? null,
+
+      // P34.11.1 — variação silenciosa (somente relevante para cuidar-de-mim)
+      energy_level: context.energy_level ?? null,
+      variation_axis: context.variation_axis ?? null,
 
       humorAtual: context.mood ?? null,
       energiaAtual: context.energy ?? null,
@@ -308,7 +355,42 @@ ${userMessageCommon}
     } else if (feature === 'daily_inspiration') {
       schemaToUse = dailySchema
 
-      if (isMaternar) {
+      /**
+       * P34.11.1 — somente para cuidar-de-mim:
+       * Variação dirigida por energy_level + variation_axis.
+       * Regra fixa: um único eixo por geração; variação perceptível sem aleatoriedade.
+       */
+      if (isCuidarDeMim) {
+        inputText = `
+Gere 3 apoios emocionais para "Cuidar de Mim" (aba MATERNAR) no formato do schema.
+Você DEVE respeitar os eixos internos abaixo quando existirem no contexto:
+
+1) energy_level (low | medium | high)
+- low: acolhimento, pausa, permissões, redução de peso. Sem ação. Sem instrução.
+- medium: estrutura leve e organizadora, ainda sem imperativo. Linguagem de clareza e respiro.
+- high: presença mais ativa (sem imperativo), energia de "dar conta do agora" sem cobrar nada.
+
+2) variation_axis (frase | cuidado | ritual | limite | presenca)
+REGRAS:
+- Use APENAS UM variation_axis por geração (o valor já vem no contexto).
+- Não misture eixos no mesmo texto.
+- A variação precisa ser REAL: mudar foco/forma/tipo de apoio, não só parafrasear.
+
+COMO APLICAR O axis em cada campo (schema exige os 3 campos sempre):
+- frase: "phrase" é o centro (1 linha forte e adulta); "care" e "ritual" ficam discretos e complementares.
+- cuidado: "care" é o centro (3 a 6 linhas de acolhimento concreto); "phrase" e "ritual" mínimos.
+- ritual: "ritual" é o centro (1 linha de ancoragem/permissão emocional, sem parecer exercício); "phrase" e "care" complementam.
+- limite: o centro é permissão de limite sem culpa; mantenha isso como foco principal (sem instrução). Distribua com coerência (não misture com outros eixos).
+- presenca: o centro é presença possível; linguagem de "estar com você" e "agora" sem passo a passo.
+
+Formato obrigatório:
+- "phrase": 1 linha, adulta, acolhedora, sem imperativo.
+- "care": 3 a 6 linhas, acolhimento concreto, sem instruções, sem métodos.
+- "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
+
+${userMessageCommon}
+`.trim()
+      } else if (isMaternar) {
         inputText = `
 Gere um apoio emocional para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
@@ -351,9 +433,13 @@ ${userMessageCommon}
         origin,
         isMaternar,
         isEu360,
+        isCuidarDeMim,
         hasPreferences: Boolean(context.preferences),
         hasPrefsCompat: Boolean(context.prefs),
         hasPersonaLegacy: Boolean(context.persona || context.personaLabel),
+        hasVariation: Boolean(isCuidarDeMim && (context.energy_level || context.variation_axis)),
+        energy_level: isCuidarDeMim ? (context.energy_level ?? null) : null,
+        variation_axis: isCuidarDeMim ? (context.variation_axis ?? null) : null,
       })
     } catch {}
 
@@ -384,7 +470,11 @@ ${userMessageCommon}
     }).finally(() => clearTimeout(timeout))
 
     if (!openAiRes.ok) {
-      console.error('[IA Emocional] Erro HTTP da OpenAI:', openAiRes.status, await openAiRes.text().catch(() => '(sem corpo)'))
+      console.error(
+        '[IA Emocional] Erro HTTP da OpenAI:',
+        openAiRes.status,
+        await openAiRes.text().catch(() => '(sem corpo)')
+      )
       return jsonError('Não consegui gerar a análise emocional agora.', 502)
     }
 

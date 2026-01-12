@@ -33,6 +33,28 @@ export const revalidate = 0
 type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 
 /**
+ * P34.11.1 — IA sob escolha explícita (campos canônicos)
+ * Observação:
+ * - Este Client.tsx não chama rota de IA diretamente.
+ * - Ainda assim, registramos e propagamos os campos em TELEMETRIA + persist,
+ *   para manter consistência do eixo/energia no hub e suportar auditoria.
+ */
+type EnergyLevel = 'low' | 'mid' | 'high'
+type VariationAxis = 'regulation' | 'clarity' | 'momentum'
+
+function energyFromRitmo(r: Ritmo): EnergyLevel {
+  if (r === 'leve') return 'high'
+  if (r === 'ok') return 'mid'
+  return 'low' // cansada | confusa
+}
+
+function axisFromRitmo(r: Ritmo): VariationAxis {
+  if (r === 'confusa') return 'clarity'
+  if (r === 'ok' || r === 'leve') return 'momentum'
+  return 'regulation' // cansada
+}
+
+/**
  * Governança:
  * - Cuidar de Mim é a casa oficial do check-in.
  * - Mantém leitura compat do legado eu360_ritmo, mas grava no persist.
@@ -40,7 +62,7 @@ type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
 const PERSIST_KEYS = {
   cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
 
-  // ✅ novo: estado do “Plano para agora” (variação + limite diário)
+  // ✅ estado do “Plano para agora” (variação + limite diário)
   cdmPlanState: 'cuidar_de_mim.para_agora.plan.v1',
 } as const
 
@@ -247,6 +269,10 @@ type PlanPersist = {
   baseIndex: number
   swapsUsed: number
   pickedId?: string
+
+  // P34.11.1 — campos canônicos para auditoria/telemetria
+  energy_level: EnergyLevel
+  variation_axis: VariationAxis
 }
 
 const PLAN_SWAP_LIMIT_PER_DAY = 6
@@ -294,6 +320,9 @@ export default function Client() {
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planFeedback, setPlanFeedback] = useState<string>('')
   const [planHint, setPlanHint] = useState<string>('')
+
+  const energy_level = useMemo(() => energyFromRitmo(ritmo), [ritmo])
+  const variation_axis = useMemo(() => axisFromRitmo(ritmo), [ritmo])
 
   const euSignal = useMemo(() => {
     try {
@@ -363,8 +392,13 @@ export default function Client() {
         saved: s.savedCount,
         commitments: s.commitmentsCount,
         later: s.laterCount,
+
+        // P34.11.1 — auditoria
+        energy_level: energyFromRitmo(r),
+        variation_axis: axisFromRitmo(r),
       })
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function onPickRitmo(next: Ritmo) {
@@ -375,7 +409,11 @@ export default function Client() {
     setPlanOptions([])
     setPlanHint('Se quiser, gere um plano novo para agora.')
     try {
-      track('cuidar_de_mim.checkin.select', { ritmo: next })
+      track('cuidar_de_mim.checkin.select', {
+        ritmo: next,
+        energy_level: energyFromRitmo(next),
+        variation_axis: axisFromRitmo(next),
+      })
     } catch {}
   }
 
@@ -383,7 +421,13 @@ export default function Client() {
 
   const scrollToSection = (id: string, label?: string) => {
     try {
-      if (label) track('cuidar_de_mim.top.chip', { label, target: id })
+      if (label)
+        track('cuidar_de_mim.top.chip', {
+          label,
+          target: id,
+          energy_level,
+          variation_axis,
+        })
     } catch {}
 
     try {
@@ -419,13 +463,27 @@ export default function Client() {
     const base = hashToIndex(`${todayKey}:${ritmo}:cdm`, pool.length)
 
     const current = readPlanPersist()
-    if (current && current.dateKey === todayKey && current.ritmo === ritmo) return current
+    if (current && current.dateKey === todayKey && current.ritmo === ritmo) {
+      // garante campos canônicos mesmo se vier de versão anterior
+      if (!current.energy_level || !current.variation_axis) {
+        const patched: PlanPersist = {
+          ...current,
+          energy_level,
+          variation_axis,
+        }
+        writePlanPersist(patched)
+        return patched
+      }
+      return current
+    }
 
     const next: PlanPersist = {
       dateKey: todayKey,
       ritmo,
       baseIndex: base,
       swapsUsed: 0,
+      energy_level,
+      variation_axis,
     }
     writePlanPersist(next)
     return next
@@ -445,7 +503,12 @@ export default function Client() {
     if (!pool.length) {
       setPlanHint('Não consegui gerar agora. Tente novamente.')
       try {
-        track('cuidar_de_mim.plan.generate.fail', { reason: 'empty_pool', ritmo })
+        track('cuidar_de_mim.plan.generate.fail', {
+          reason: 'empty_pool',
+          ritmo,
+          energy_level,
+          variation_axis,
+        })
       } catch {}
       return
     }
@@ -456,10 +519,15 @@ export default function Client() {
     setPlanHint('')
     flash('Plano pronto. Se não servir, você pode trocar ou encerrar por aqui.', 2600)
 
-    writePlanPersist({ ...st, pickedId: picked?.id })
+    writePlanPersist({ ...st, pickedId: picked?.id, energy_level, variation_axis })
 
     try {
-      track('cuidar_de_mim.plan.generate', { ritmo, baseIndex: st.baseIndex })
+      track('cuidar_de_mim.plan.generate', {
+        ritmo,
+        baseIndex: st.baseIndex,
+        energy_level,
+        variation_axis,
+      })
     } catch {}
   }
 
@@ -476,6 +544,8 @@ export default function Client() {
           swapsUsed: st.swapsUsed,
           dateKey: todayKey,
           ritmo,
+          energy_level,
+          variation_axis,
         })
       } catch {}
       return
@@ -494,6 +564,8 @@ export default function Client() {
       baseIndex: nextIndex,
       swapsUsed: st.swapsUsed + 1,
       pickedId: picked?.id,
+      energy_level,
+      variation_axis,
     })
 
     try {
@@ -502,6 +574,8 @@ export default function Client() {
         nextIndex,
         swapsUsed: st.swapsUsed + 1,
         dateKey: todayKey,
+        energy_level,
+        variation_axis,
       })
     } catch {}
   }
@@ -527,7 +601,12 @@ export default function Client() {
     if (out.length) flash('Escolha uma opção para aplicar agora.', 2200)
 
     try {
-      track('cuidar_de_mim.plan.options.show', { ritmo, count: out.length })
+      track('cuidar_de_mim.plan.options.show', {
+        ritmo,
+        count: out.length,
+        energy_level,
+        variation_axis,
+      })
     } catch {}
   }
 
@@ -538,10 +617,15 @@ export default function Client() {
     flash('Plano aplicado.', 2000)
 
     const st = ensureTodayPlanBase()
-    writePlanPersist({ ...st, pickedId: it.id })
+    writePlanPersist({ ...st, pickedId: it.id, energy_level, variation_axis })
 
     try {
-      track('cuidar_de_mim.plan.option.pick', { ritmo, id: it.id })
+      track('cuidar_de_mim.plan.option.pick', {
+        ritmo,
+        id: it.id,
+        energy_level,
+        variation_axis,
+      })
     } catch {}
   }
 
@@ -562,6 +646,8 @@ export default function Client() {
           origin: ORIGIN,
           reason: 'limit_reached',
           limit: MY_DAY_LIMIT_FROM_CUIDAR_DE_MIM_PER_DAY,
+          energy_level,
+          variation_axis,
         })
       } catch {}
       return
@@ -577,6 +663,8 @@ export default function Client() {
           origin: ORIGIN,
           reason: 'open_tasks_limit_hit',
           dateKey: res.dateKey,
+          energy_level,
+          variation_axis,
         })
       } catch {}
       return
@@ -594,12 +682,16 @@ export default function Client() {
         origin: ORIGIN,
         source: SOURCE,
         dateKey: res.dateKey,
+        energy_level,
+        variation_axis,
       })
       track('cuidar_de_mim.plan.save_to_my_day', {
         created: res.created,
         dateKey: res.dateKey,
         source: SOURCE,
         ritmo,
+        energy_level,
+        variation_axis,
       })
     } catch {}
   }
@@ -678,7 +770,7 @@ export default function Client() {
                       type="button"
                       onClick={() => {
                         try {
-                          track('cuidar_de_mim.top.adjust', { ritmo })
+                          track('cuidar_de_mim.top.adjust', { ritmo, energy_level, variation_axis })
                         } catch {}
                         scrollToSection('cdm-ritmo', 'Ritmo')
                       }}
@@ -700,7 +792,7 @@ export default function Client() {
                       type="button"
                       onClick={() => {
                         try {
-                          track('cuidar_de_mim.top.start', { ritmo })
+                          track('cuidar_de_mim.top.start', { ritmo, energy_level, variation_axis })
                         } catch {}
                         scrollToSection('cdm-para-agora', 'Começar')
                       }}
@@ -843,7 +935,11 @@ export default function Client() {
                                           type="button"
                                           onClick={() => {
                                             try {
-                                              track('cuidar_de_mim.plan.close', { ritmo })
+                                              track('cuidar_de_mim.plan.close', {
+                                                ritmo,
+                                                energy_level,
+                                                variation_axis,
+                                              })
                                             } catch {}
                                             flash('Tudo bem. Encerrar por aqui também é cuidado.', 2600)
                                           }}
@@ -1085,7 +1181,7 @@ export default function Client() {
                             type="button"
                             onClick={() => {
                               try {
-                                track('cuidar_de_mim.micro_close', { ritmo })
+                                track('cuidar_de_mim.micro_close', { ritmo, energy_level, variation_axis })
                               } catch {}
                             }}
                             className="

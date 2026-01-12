@@ -16,6 +16,9 @@ export const dynamic = 'force-dynamic'
 type Slot = '3' | '5' | '10'
 type Mood = 'no-limite' | 'corrida' | 'ok' | 'leve'
 
+type EnergyLevel = 'low' | 'medium' | 'high' | 'steady'
+type VariationAxis = 'alivio' | 'clareza' | 'fechamento' | 'fluxo'
+
 type Body = {
   slot?: Slot
   mood?: Mood
@@ -24,6 +27,10 @@ type Body = {
   // extras opcionais vindos do Client (compat: ignorados se não existirem)
   childAgeYears?: number
   childAgeLabel?: string
+
+  // P34.11.1 — eixos opcionais (apenas telemetria / governança)
+  energy_level?: EnergyLevel
+  variation_axis?: VariationAxis
 }
 
 type ApiResponse =
@@ -293,7 +300,10 @@ function pickSingleItemRecipe(items: PantryItem[], slot: Slot, tier: AgeTier): R
       time,
       yield: '1 porção',
       ingredients: [beansRaw],
-      steps: ['Aqueça se precisar, só até ficar bom para servir.', 'Amasse com um garfo ou sirva como estiver, como for mais fácil agora.'],
+      steps: [
+        'Aqueça se precisar, só até ficar bom para servir.',
+        'Amasse com um garfo ou sirva como estiver, como for mais fácil agora.',
+      ],
     }
   }
 
@@ -334,7 +344,18 @@ function pickSpecificRecipe(items: PantryItem[], slot: Slot, tier: AgeTier): Rec
     const yogurtRaw = pickFirstRaw(items, ['iogurte', 'iogurt'])
     if (!yogurtRaw) return null
 
-    const fruitRaws = pickAllRaw(items, ['banana', 'maçã', 'maca', 'mamão', 'mamao', 'pera', 'morango', 'uva', 'laranja', 'tangerina'])
+    const fruitRaws = pickAllRaw(items, [
+      'banana',
+      'maçã',
+      'maca',
+      'mamão',
+      'mamao',
+      'pera',
+      'morango',
+      'uva',
+      'laranja',
+      'tangerina',
+    ])
     const fruitLabel = fruitRaws.length ? fruitRaws.join(', ') : 'Fruta'
 
     return {
@@ -482,6 +503,8 @@ export async function POST(req: Request) {
         itemsCount: items.length,
         childAgeMonths,
         mode: 'deterministic_contract_guarded',
+        energy_level: body?.energy_level ?? null,
+        variation_axis: body?.variation_axis ?? null,
       })
     } catch {}
 
@@ -510,7 +533,11 @@ export async function POST(req: Request) {
     }
 
     if (!pantry) {
-      const out: ApiResponse = { ok: false, error: 'empty_pantry', hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).' }
+      const out: ApiResponse = {
+        ok: false,
+        error: 'empty_pantry',
+        hint: 'Escreva 1 a 3 itens (ex.: “banana” ou “ovo, arroz”).',
+      }
       return NextResponse.json(out, { status: 200 })
     }
 
@@ -559,7 +586,11 @@ export async function POST(req: Request) {
       track('meu_dia_leve.recipe.response', { ok: false, latencyMs })
     } catch {}
 
-    const out: ApiResponse = { ok: false, error: 'route_error', hint: 'Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.' }
+    const out: ApiResponse = {
+      ok: false,
+      error: 'route_error',
+      hint: 'Não consegui gerar agora. Se quiser, use uma opção pronta abaixo.',
+    }
     return NextResponse.json(out, { status: 200 })
   }
 }

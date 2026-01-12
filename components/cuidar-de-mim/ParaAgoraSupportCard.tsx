@@ -19,6 +19,19 @@ type State =
 
 type Variant = 'default' | 'embedded'
 
+/**
+ * P34.11.1 — Inteligência de Variação (IA)
+ * - Eixos permitidos: energy_level, variation_axis
+ * - Aplicação: somente neste card (Cuidar de Mim → ParaAgoraSupportCard)
+ * - Silencioso (não expõe UI)
+ *
+ * Regra fixa:
+ * - Um único variation_axis por geração.
+ * - A UI deve refletir esse eixo (tags/itens coerentes).
+ */
+type EnergyLevel = 'low' | 'medium'
+type VariationAxis = 'frase' | 'cuidado' | 'ritual' | 'limite' | 'presenca'
+
 function signature(items: Suggestion[]) {
   return items.map((i) => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
 }
@@ -36,6 +49,38 @@ function shuffle<T>(arr: T[], seed: number) {
   return a
 }
 
+/**
+ * Split simples para quebrar texto em partes curtas (sem mudar UX).
+ * Usado para criar 3 itens coerentes com um único axis,
+ * mesmo quando o schema traz 3 campos (phrase/care/ritual).
+ */
+function splitIntoShortParts(raw: string, maxParts: number): string[] {
+  const text = String(raw ?? '').trim()
+  if (!text) return []
+
+  // Quebra por linhas e pontuação comum.
+  const parts = text
+    .replace(/\r/g, '')
+    .split(/\n+|(?<=[.!?])\s+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+
+  // Se ficou tudo num bloco, tenta “fatiar” por vírgulas longas.
+  if (parts.length <= 1) {
+    const byComma = text
+      .split(/,\s+/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+    if (byComma.length > 1) return byComma.slice(0, maxParts)
+  }
+
+  return parts.slice(0, maxParts)
+}
+
+/**
+ * Fallback base (sem IA).
+ * IMPORTANTE P34.11.1: tags sempre dentro do vocabulário oficial.
+ */
 function baseFallback(): Suggestion[] {
   return [
     {
@@ -48,63 +93,197 @@ function baseFallback(): Suggestion[] {
       id: 'fb-2',
       tag: 'cuidado',
       title: 'Você não precisa estar “bem” para merecer cuidado.',
-      description: 'Quando o dia pesa, o corpo e o coração só pedem um pouco de gentileza.',
+      description: 'Quando o dia pesa, um pouco de gentileza já muda o tom.',
     },
     {
       id: 'fb-3',
       tag: 'ritual',
-      title: 'Às vezes, o que falta não é força.',
-      description: 'É só um pouco de respiro, do jeito que der.',
+      title: 'Um respiro já conta.',
+      description: 'Do jeito que der, sem transformar isso em tarefa.',
     },
     {
       id: 'fb-4',
-      tag: 'limites',
-      title: 'Limites também podem ser amor.',
-      description: 'Dizer “não” pode ser um jeito de proteger o que importa — sem culpa.',
+      tag: 'limite',
+      title: 'Limite também é cuidado.',
+      description: 'Proteger o que importa pode ser silencioso — e sem culpa.',
     },
     {
       id: 'fb-5',
-      tag: 'cansaço',
-      title: 'Quando tudo parece demais, é comum se sentir assim.',
-      description: 'Nem sempre cabe tudo — e isso não é falha.',
+      tag: 'presenca',
+      title: 'Estar aqui por alguns segundos já é presença.',
+      description: 'Nem tudo precisa virar conversa, solução ou explicação.',
     },
   ]
 }
 
-function normalizeFromEmocional(payload: any): Suggestion[] | null {
-  if (!payload) return null
+type EmocionalPayload = {
+  inspiration?: {
+    phrase?: string
+    care?: string
+    ritual?: string
+  }
+} | null
 
-  if (payload?.inspiration) {
-    const phrase = typeof payload.inspiration.phrase === 'string' ? payload.inspiration.phrase.trim() : ''
-    const care = typeof payload.inspiration.care === 'string' ? payload.inspiration.care.trim() : ''
-    const ritual = typeof payload.inspiration.ritual === 'string' ? payload.inspiration.ritual.trim() : ''
+/**
+ * Normaliza a resposta do /api/ai/emocional (daily_inspiration) para 3 cards,
+ * respeitando a regra fixa:
+ * - UM único variation_axis por geração.
+ *
+ * Observação importante:
+ * O schema sempre retorna phrase/care/ritual.
+ * Aqui nós “damos forma” a 3 itens com o MESMO tag (axis),
+ * derivando 3 micro-blocos coerentes (sem misturar tags).
+ */
+function normalizeFromEmocional(payload: EmocionalPayload, axis: VariationAxis): Suggestion[] | null {
+  const insp = payload?.inspiration
+  if (!insp) return null
 
-    const items: Suggestion[] = []
+  const phrase = typeof insp.phrase === 'string' ? insp.phrase.trim() : ''
+  const care = typeof insp.care === 'string' ? insp.care.trim() : ''
+  const ritual = typeof insp.ritual === 'string' ? insp.ritual.trim() : ''
 
-    if (phrase) items.push({ id: 'inspo-phrase', tag: 'frase', title: phrase })
+  if (!phrase || !care || !ritual) return null
 
-    if (care) {
-      items.push({
-        id: 'inspo-care',
-        tag: 'cuidado',
-        title: 'Um cuidado que acolhe',
-        description: care,
-      })
-    }
+  // O axis governa a “forma” dos 3 itens.
+  if (axis === 'frase') {
+    // 3 frases curtas (1 do phrase + 2 derivadas do início de care/ritual)
+    const careParts = splitIntoShortParts(care, 2)
+    const ritualParts = splitIntoShortParts(ritual, 2)
 
-    if (ritual) {
-      items.push({
-        id: 'inspo-ritual',
-        tag: 'ritual',
-        title: 'Um gesto simples de presença',
-        description: ritual,
-      })
-    }
-
-    return items.length ? items.slice(0, 3) : null
+    const items: Suggestion[] = [
+      { id: 'inspo-frase-1', tag: axis, title: phrase },
+      {
+        id: 'inspo-frase-2',
+        tag: axis,
+        title: careParts[0] ?? 'Hoje pode ser um pouco mais leve do que parece.',
+      },
+      {
+        id: 'inspo-frase-3',
+        tag: axis,
+        title: ritualParts[0] ?? 'Um respiro possível já conta.',
+      },
+    ]
+    return items.slice(0, 3)
   }
 
-  return null
+  if (axis === 'cuidado') {
+    // 3 micro-blocos de cuidado (quebrando care em partes curtas)
+    const parts = splitIntoShortParts(care, 3)
+    const a = parts[0] ?? care
+    const b = parts[1] ?? ''
+    const c = parts[2] ?? ''
+
+    const items: Suggestion[] = [
+      { id: 'inspo-cuidado-1', tag: axis, title: 'Um cuidado que acolhe', description: a },
+      { id: 'inspo-cuidado-2', tag: axis, title: 'Sem cobrança', description: b || a },
+      { id: 'inspo-cuidado-3', tag: axis, title: 'Gentileza possível', description: c || a },
+    ]
+    return items.slice(0, 3)
+  }
+
+  if (axis === 'ritual') {
+    // 3 linhas/âncoras curtas (ritual como centro, mas tudo tag=ritual)
+    const ritualParts = splitIntoShortParts(ritual, 2)
+    const careParts = splitIntoShortParts(care, 2)
+
+    const items: Suggestion[] = [
+      { id: 'inspo-ritual-1', tag: axis, title: ritualParts[0] || ritual },
+      { id: 'inspo-ritual-2', tag: axis, title: careParts[0] || 'Um pouco de calma também é cuidado.' },
+      { id: 'inspo-ritual-3', tag: axis, title: phrase || 'Um gesto pequeno já muda o tom.' },
+    ]
+    return items.slice(0, 3)
+  }
+
+  if (axis === 'limite') {
+    // O backend foi instruído a manter o foco em limite sem culpa.
+    // Aqui garantimos 3 itens com tag=limite, priorizando frase + partes curtas de care/ritual.
+    const careParts = splitIntoShortParts(care, 2)
+    const ritualParts = splitIntoShortParts(ritual, 2)
+
+    const items: Suggestion[] = [
+      { id: 'inspo-limite-1', tag: axis, title: phrase },
+      {
+        id: 'inspo-limite-2',
+        tag: axis,
+        title: 'Limite sem culpa',
+        description: careParts.join('\n') || care,
+      },
+      {
+        id: 'inspo-limite-3',
+        tag: axis,
+        title: ritualParts[0] || ritual,
+      },
+    ]
+    return items.slice(0, 3)
+  }
+
+  // presenca
+  {
+    const careParts = splitIntoShortParts(care, 2)
+    const ritualParts = splitIntoShortParts(ritual, 2)
+
+    const items: Suggestion[] = [
+      { id: 'inspo-presenca-1', tag: axis, title: phrase },
+      {
+        id: 'inspo-presenca-2',
+        tag: axis,
+        title: 'Presença possível',
+        description: careParts.join('\n') || care,
+      },
+      {
+        id: 'inspo-presenca-3',
+        tag: axis,
+        title: ritualParts[0] || ritual,
+      },
+    ]
+    return items.slice(0, 3)
+  }
+}
+
+/**
+ * Seleção dirigida e silenciosa:
+ * - variation_axis: alterna entre eixos permitidos por seed (sem expor à usuária)
+ * - energy_level: coerente com Cuidar de Mim → restringe a low|medium
+ */
+function pickVariationAxis(seed: number): VariationAxis {
+  const axes: VariationAxis[] = ['frase', 'cuidado', 'ritual', 'limite', 'presenca']
+  return axes[seed % axes.length]
+}
+
+function pickEnergyLevel(): EnergyLevel {
+  // Coerência emocional para Cuidar de Mim:
+  // manhã/tarde → medium (estrutura leve), noite/madrugada → low (acolhimento/pausa)
+  const hour = new Date().getHours()
+  return hour >= 18 || hour < 6 ? 'low' : 'medium'
+}
+
+/**
+ * Gera fallback coerente com o axis:
+ * - Reusa baseFallback, mas filtra por tag do eixo.
+ * - Se não houver 3 itens suficientes, completa com base geral (sem quebrar UI).
+ * - Todos os itens saem com tag = axis (regra P34.11.1).
+ */
+function fallbackByAxis(axis: VariationAxis, seed: number): Suggestion[] {
+  const base = shuffle(baseFallback(), seed)
+  const primary = base.filter((i) => i.tag === axis)
+  const out: Suggestion[] = []
+
+  // Primeiro tenta preencher com itens do eixo.
+  for (const it of primary) {
+    if (out.length >= 3) break
+    out.push({ ...it, tag: axis })
+  }
+
+  // Completa com itens gerais, mas forçando tag=axis para não “misturar eixos” na UI.
+  if (out.length < 3) {
+    for (const it of base) {
+      if (out.length >= 3) break
+      if (out.some((x) => x.id === it.id)) continue
+      out.push({ ...it, tag: axis })
+    }
+  }
+
+  return out.slice(0, 3)
 }
 
 export default function ParaAgoraSupportCard({
@@ -133,6 +312,16 @@ export default function ParaAgoraSupportCard({
     setState({ status: 'loading' })
     const nonce = Date.now()
 
+    /**
+     * P34.11.1 — parâmetros internos (silenciosos)
+     * Regra: 1 axis por geração.
+     * Em caso de retry (attempt=1), muda o axis para reduzir chance de repetição,
+     * sem expor isso à usuária e sem criar "aleatoriedade solta".
+     */
+    const baseSeed = (seedRef.current = seedRef.current + 19)
+    const variation_axis: VariationAxis = pickVariationAxis(baseSeed + attempt)
+    const energy_level: EnergyLevel = pickEnergyLevel()
+
     try {
       const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
         method: 'POST',
@@ -141,15 +330,21 @@ export default function ParaAgoraSupportCard({
         body: JSON.stringify({
           feature: 'daily_inspiration',
           origin: 'cuidar-de-mim',
-          context: {},
+          context: {
+            energy_level,
+            variation_axis,
+          },
         }),
       })
 
       let data: any = null
       if (res.ok) data = await res.json().catch(() => null)
 
-      const normalized = normalizeFromEmocional(data)
-      const nextItems = (normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19))).slice(0, 3)
+      // ✅ Regra P34.11.1: normalização respeita 1 axis por geração
+      const normalized = normalizeFromEmocional(data, variation_axis)
+
+      // ✅ Fallback coerente com o axis (sem tags fora do vocabulário)
+      const nextItems = (normalized ?? fallbackByAxis(variation_axis, baseSeed)).slice(0, 3)
 
       const sig = signature(nextItems)
       if (sig && sig === lastSigRef.current && attempt < 1) return await fetchCards(attempt + 1)
@@ -158,7 +353,7 @@ export default function ParaAgoraSupportCard({
       setDismissed({})
       setState({ status: 'done', items: nextItems })
     } catch {
-      const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
+      const nextItems = fallbackByAxis(variation_axis, (seedRef.current = seedRef.current + 31)).slice(0, 3)
       const sig = signature(nextItems)
 
       if (sig && sig === lastSigRef.current && attempt < 1) return await fetchCards(attempt + 1)

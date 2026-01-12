@@ -10,12 +10,7 @@ import { safeMeuFilhoBloco1Text, clampMeuFilhoBloco1Text } from '@/app/lib/ai/va
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
 
-import {
-  addTaskToMyDay,
-  listMyDayTasks,
-  MY_DAY_SOURCES,
-  type MyDayTaskItem,
-} from '@/app/lib/myDayTasks.client'
+import { addTaskToMyDay, listMyDayTasks, MY_DAY_SOURCES, type MyDayTaskItem } from '@/app/lib/myDayTasks.client'
 
 import { markJourneyFamilyDone, getJourneySnapshot } from '@/app/lib/journey.client'
 import { getActiveChildOrNull, getProfileSnapshot, type ProfileSource } from '@/app/lib/profile.client'
@@ -188,14 +183,7 @@ function normalizeSkills(v: unknown): SkillId[] {
   const out: SkillId[] = []
   v.forEach((x) => {
     const s = String(x ?? '').trim()
-    if (
-      s === 'motor' ||
-      s === 'linguagem' ||
-      s === 'emocional' ||
-      s === 'cognitivo' ||
-      s === 'social' ||
-      s === 'autonomia'
-    ) {
+    if (s === 'motor' || s === 'linguagem' || s === 'emocional' || s === 'cognitivo' || s === 'social' || s === 'autonomia') {
       out.push(s)
     }
   })
@@ -300,31 +288,40 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 
 const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
   '0-2': {
-    '5': 'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
-    '10': 'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
-    '15': 'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
+    '5':
+      'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
+    '10':
+      'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
+    '15':
+      'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
   },
   '3-4': {
-    '5': 'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
-    '10': 'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
-    '15': 'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
+    '5':
+      'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
+    '10':
+      'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
+    '15':
+      'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
   },
   '5-6': {
-    '5': 'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
-    '10': 'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
-    '15': 'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
+    '5':
+      'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
+    '10':
+      'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
+    '15':
+      'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
   },
   '6+': {
-    '5': 'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
-    '10': 'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
-    '15': 'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
+    '5':
+      'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
+    '10':
+      'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
+    '15':
+      'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
   },
 }
 
-type Bloco1State =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'done'; text: string; source: 'ai' | 'fallback' }
+type Bloco1State = { status: 'idle' } | { status: 'loading' } | { status: 'done'; text: string; source: 'ai' | 'fallback' }
 
 async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string }): Promise<string | null> {
   try {
@@ -373,10 +370,7 @@ function stripEmojiAndBullets(s: string) {
     .replace(/\s+/g, ' ')
     .trim()
 
-  return noBullets
-    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return noBullets.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').replace(/\s+/g, ' ').trim()
 }
 
 function clampText(s: string, max: number) {
@@ -397,7 +391,18 @@ function safeBloco2How(raw: unknown): string | null {
   if (!t) return null
   const low = t.toLowerCase()
   if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
-  const hasStepsCue = low.includes('faça') || low.includes('combine') || low.includes('depois') || low.includes('no final')
+
+  // Reforço de aceitação para descrições boas que não usam exatamente "faça/depois/no final"
+  const hasStepsCue =
+    low.includes('faça') ||
+    low.includes('combine') ||
+    low.includes('depois') ||
+    low.includes('no final') ||
+    low.includes('em seguida') ||
+    low.includes('por fim') ||
+    low.includes('primeiro') ||
+    low.includes('então')
+
   if (!hasStepsCue) return null
   return t
 }
@@ -471,7 +476,8 @@ async function fetchBloco2Cards(args: {
    BLOCO 3 — ROTINAS / CONEXÃO
 ========================= */
 
-type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
+// Payload-safe (sem acentos) para evitar mismatch no backend/schema
+type MomentoDoDia = 'manha' | 'tarde' | 'noite' | 'transicao'
 type Bloco3Type = 'rotina' | 'conexao'
 
 type Bloco3State =
@@ -484,17 +490,7 @@ function clampBloco3Text(raw: unknown): string | null {
   if (!t) return null
   const low = t.toLowerCase()
 
-  const banned = [
-    'todo dia',
-    'todos os dias',
-    'sempre',
-    'nunca',
-    'crie o hábito',
-    'hábito',
-    'disciplina',
-    'rotina ideal',
-    'o mais importante é',
-  ]
+  const banned = ['todo dia', 'todos os dias', 'sempre', 'nunca', 'crie o hábito', 'hábito', 'disciplina', 'rotina ideal', 'o mais importante é']
   if (banned.some((b) => low.includes(b))) return null
 
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
@@ -577,10 +573,7 @@ async function fetchBloco3Suggestion(args: {
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
 
-type Bloco4State =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'done'; text: string; source: 'ai' | 'fallback'; momento?: MomentoDesenvolvimento }
+type Bloco4State = { status: 'idle' } | { status: 'loading' } | { status: 'done'; text: string; source: 'ai' | 'fallback'; momento?: MomentoDesenvolvimento }
 
 function inferMomentoDesenvolvimento(ageBand: AgeBand): MomentoDesenvolvimento | undefined {
   if (ageBand === '0-2') return 'exploracao'
@@ -908,24 +901,14 @@ function RenderEditorialText({
   )
 }
 
-function Chip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active?: boolean
-  onClick?: () => void
-}) {
+function Chip({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
         'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-[12px] transition select-none',
-        active
-          ? 'bg-white border-white text-[#2f3a56]'
-          : 'bg-white/20 border-white/35 text-white hover:bg-white/30',
+        active ? 'bg-white border-white text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white hover:bg-white/30',
       ].join(' ')}
     >
       <span className="leading-none">{label}</span>
@@ -933,24 +916,14 @@ function Chip({
   )
 }
 
-function SubChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active?: boolean
-  onClick?: () => void
-}) {
+function SubChip({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
         'rounded-full border px-3 py-1.5 text-[12px] transition',
-        active
-          ? 'bg-[#fd2597] border-[#fd2597] text-white'
-          : 'bg-white border-[#ffd1e6] text-[#2f3a56] hover:bg-[#fff3f8]',
+        active ? 'bg-[#fd2597] border-[#fd2597] text-white' : 'bg-white border-[#ffd1e6] text-[#2f3a56] hover:bg-[#fff3f8]',
       ].join(' ')}
     >
       {label}
@@ -1212,7 +1185,7 @@ export default function MeuFilhoClient() {
     const seq = ++bloco3ReqSeq.current
     const nonce = newNonce()
 
-    const momento: MomentoDoDia = kind === 'rotina' ? 'transição' : 'noite'
+    const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
     const tema = kind === 'rotina' ? rotinaTema : conexaoTema
     if (!tema) {
       toast.info('Escolha um tema antes de gerar.')
@@ -1284,6 +1257,7 @@ export default function MeuFilhoClient() {
       className="
         min-h-[100dvh]
         pb-32
+        overflow-x-hidden
         bg-[#ffe1f1]
         bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
       "
@@ -1292,10 +1266,7 @@ export default function MeuFilhoClient() {
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link
-                href="/maternar"
-                className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1"
-              >
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
                 <span className="mr-1.5 text-lg leading-none">←</span>
                 Voltar para o Maternar
               </Link>
@@ -1315,9 +1286,7 @@ export default function MeuFilhoClient() {
               ) : null}
 
               {/* (debug silencioso de fonte, opcional manter) */}
-              {profileSource !== 'none' ? (
-                <div className="text-[11px] text-white/60">Fonte de perfil: {profileSource}</div>
-              ) : null}
+              {profileSource !== 'none' ? <div className="text-[11px] text-white/60">Fonte de perfil: {profileSource}</div> : null}
             </div>
           </header>
 
@@ -1347,13 +1316,12 @@ export default function MeuFilhoClient() {
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Plano pronto para agora
                       </div>
-                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
-                        {timeHint(time)}
-                      </div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{timeHint(time)}</div>
                     </div>
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => go('brincadeiras')}
                     className="
                       rounded-full
@@ -1376,12 +1344,11 @@ export default function MeuFilhoClient() {
                         return (
                           <button
                             key={t}
+                            type="button"
                             onClick={() => onSelectTime(t)}
                             className={[
                               'rounded-xl border px-3 py-2 text-[12px] text-left transition',
-                              active
-                                ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-                                : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                             ].join(' ')}
                           >
                             <div className="font-semibold">{timeLabel(t)}</div>
@@ -1394,18 +1361,17 @@ export default function MeuFilhoClient() {
 
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
                     <div className="text-[12px] text-white/85 mb-2">Faixa (ajusta a ideia)</div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
                         const active = age === a
                         return (
                           <button
                             key={a}
+                            type="button"
                             onClick={() => onSelectAge(a)}
                             className={[
-                              'rounded-xl border px-3 py-2 text-[12px] transition',
-                              active
-                                ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-                                : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                              'rounded-xl border px-2.5 py-2 text-[12px] transition',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                             ].join(' ')}
                           >
                             {a}
@@ -1439,9 +1405,7 @@ export default function MeuFilhoClient() {
                           <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
                             Você só escolhe o cenário — eu te entrego 3 opções boas.
                           </div>
-                          <div className="text-[13px] text-[#545454] mt-1">
-                            Sem catálogo infinito. Só 3 opções que cabem no seu tempo.
-                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">Sem catálogo infinito. Só 3 opções que cabem no seu tempo.</div>
                         </div>
                       </div>
 
@@ -1458,9 +1422,7 @@ export default function MeuFilhoClient() {
                                   onClick={() => onSelectPlayLocation(l.id)}
                                   className={[
                                     'rounded-xl border p-3 text-left transition',
-                                    active
-                                      ? 'bg-[#fff3f8] border-[#fd2597]'
-                                      : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                    active ? 'bg-[#fff3f8] border-[#fd2597]' : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
                                   ].join(' ')}
                                 >
                                   <div className="text-[12px] font-semibold text-[#2f3a56]">{l.label}</div>
@@ -1472,9 +1434,7 @@ export default function MeuFilhoClient() {
                         </div>
 
                         <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
-                          <div className="text-[13px] font-semibold text-[#2f3a56]">
-                            Que habilidades você quer estimular?
-                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Que habilidades você quer estimular?</div>
                           <div className="text-[12px] text-[#545454] mt-1">
                             Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
                           </div>
@@ -1482,9 +1442,7 @@ export default function MeuFilhoClient() {
                           <div className="mt-3 flex flex-wrap gap-2">
                             {SKILLS.map((s) => {
                               const active = skills.includes(s.id)
-                              return (
-                                <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
-                              )
+                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
                             })}
                           </div>
                         </div>
@@ -1519,16 +1477,11 @@ export default function MeuFilhoClient() {
 
                         <div className="mt-2 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
                           {bloco1.status === 'idle' ? (
-                            <div className="text-[13px] text-[#545454]">
-                              Clique em “Gerar plano para agora” para receber uma sugestão curta e pronta.
-                            </div>
+                            <div className="text-[13px] text-[#545454]">Clique em “Gerar plano para agora” para receber uma sugestão curta e pronta.</div>
                           ) : bloco1.status === 'loading' ? (
                             <div className="text-[13px] text-[#545454]">Gerando…</div>
                           ) : (
-                            <RenderEditorialText
-                              text={bloco1Text}
-                              pClassName="text-[14px] text-[#2f3a56] leading-relaxed"
-                            />
+                            <RenderEditorialText text={bloco1Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
                           )}
 
                           <div className="mt-4 flex flex-wrap gap-2">
@@ -1571,9 +1524,7 @@ export default function MeuFilhoClient() {
                                       onClick={() => onChoose(k)}
                                       className={[
                                         'rounded-2xl border p-4 text-left transition',
-                                        active
-                                          ? 'bg-[#fff3f8] border-[#fd2597]'
-                                          : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                        active ? 'bg-[#fff3f8] border-[#fd2597]' : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
                                       ].join(' ')}
                                     >
                                       <div className="text-[11px] font-semibold text-[#fd2597] uppercase tracking-wide">
@@ -1590,10 +1541,7 @@ export default function MeuFilhoClient() {
                                 <div className="text-[12px] font-semibold text-[#fd2597]">Opção selecionada</div>
                                 <div className="mt-1 text-[15px] font-semibold text-[#2f3a56]">{selected.title}</div>
                                 <div className="mt-2">
-                                  <RenderEditorialText
-                                    text={selected.how}
-                                    pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                  />
+                                  <RenderEditorialText text={selected.how} pClassName="text-[13px] text-[#2f3a56] leading-relaxed" />
                                 </div>
 
                                 <div className="mt-4 flex flex-wrap gap-2">
@@ -1621,9 +1569,7 @@ export default function MeuFilhoClient() {
                                 </div>
                               </div>
 
-                              <div className="text-[11px] text-[#545454]">
-                                Fonte: {bloco2.source === 'ai' ? 'gerado' : 'opções locais (fallback)'}.
-                              </div>
+                              <div className="text-[11px] text-[#545454]">Fonte: {bloco2.source === 'ai' ? 'gerado' : 'opções locais (fallback)'}.</div>
                             </div>
                           )}
                         </div>
@@ -1642,12 +1588,8 @@ export default function MeuFilhoClient() {
                         </div>
                         <div>
                           <div className="text-[12px] font-semibold text-[#fd2597]">Desenvolvimento por fase</div>
-                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
-                            O que costuma aparecer
-                          </div>
-                          <div className="text-[13px] text-[#545454] mt-1">
-                            Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.
-                          </div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">O que costuma aparecer</div>
+                          <div className="text-[13px] text-[#545454] mt-1">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</div>
                         </div>
                       </div>
 
@@ -1655,12 +1597,7 @@ export default function MeuFilhoClient() {
                         <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o foco</div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {FASE_FOCOS.map((f) => (
-                            <SubChip
-                              key={f.id}
-                              label={f.label}
-                              active={faseFoco === f.id}
-                              onClick={() => onSelectFaseFoco(f.id)}
-                            />
+                            <SubChip key={f.id} label={f.label} active={faseFoco === f.id} onClick={() => onSelectFaseFoco(f.id)} />
                           ))}
                         </div>
 
@@ -1693,9 +1630,7 @@ export default function MeuFilhoClient() {
                         <div className="text-[12px] font-semibold text-[#fd2597]">Nesta fase</div>
                         <div className="mt-2">
                           {bloco4.status === 'idle' ? (
-                            <div className="text-[13px] text-[#545454]">
-                              Clique em “Nova orientação” para receber uma frase útil para hoje.
-                            </div>
+                            <div className="text-[13px] text-[#545454]">Clique em “Nova orientação” para receber uma frase útil para hoje.</div>
                           ) : bloco4.status === 'loading' ? (
                             <div className="text-[13px] text-[#545454]">Gerando…</div>
                           ) : (
@@ -1717,12 +1652,8 @@ export default function MeuFilhoClient() {
                         </div>
                         <div>
                           <div className="text-[12px] font-semibold text-[#fd2597]">Rotina leve da criança</div>
-                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
-                            Ajuste que ajuda hoje
-                          </div>
-                          <div className="text-[13px] text-[#545454] mt-1">
-                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
-                          </div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">Ajuste que ajuda hoje</div>
+                          <div className="text-[13px] text-[#545454] mt-1">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</div>
                         </div>
                       </div>
 
@@ -1730,12 +1661,7 @@ export default function MeuFilhoClient() {
                         <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {ROTINA_TEMAS.map((t) => (
-                            <SubChip
-                              key={t.id}
-                              label={t.label}
-                              active={rotinaTema === t.id}
-                              onClick={() => setRotinaTema(t.id)}
-                            />
+                            <SubChip key={t.id} label={t.label} active={rotinaTema === t.id} onClick={() => setRotinaTema(t.id)} />
                           ))}
                         </div>
 
@@ -1770,14 +1696,9 @@ export default function MeuFilhoClient() {
                           {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
                             <div className="text-[13px] text-[#545454]">Gerando…</div>
                           ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
-                            <RenderEditorialText
-                              text={bloco3Text}
-                              pClassName="text-[14px] text-[#2f3a56] leading-relaxed"
-                            />
+                            <RenderEditorialText text={bloco3Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
                           ) : (
-                            <div className="text-[13px] text-[#545454]">
-                              Selecione um tema e clique em “Novo ajuste”.
-                            </div>
+                            <div className="text-[13px] text-[#545454]">Selecione um tema e clique em “Novo ajuste”.</div>
                           )}
                         </div>
                       </div>
@@ -1795,12 +1716,8 @@ export default function MeuFilhoClient() {
                         </div>
                         <div>
                           <div className="text-[12px] font-semibold text-[#fd2597]">Gestos de conexão</div>
-                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
-                            Gesto de conexão
-                          </div>
-                          <div className="text-[13px] text-[#545454] mt-1">
-                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
-                          </div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">Gesto de conexão</div>
+                          <div className="text-[13px] text-[#545454] mt-1">O final simples que faz a criança sentir: “minha mãe tá aqui”.</div>
                         </div>
                       </div>
 
@@ -1808,12 +1725,7 @@ export default function MeuFilhoClient() {
                         <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {CONEXAO_TEMAS.map((t) => (
-                            <SubChip
-                              key={t.id}
-                              label={t.label}
-                              active={conexaoTema === t.id}
-                              onClick={() => setConexaoTema(t.id)}
-                            />
+                            <SubChip key={t.id} label={t.label} active={conexaoTema === t.id} onClick={() => setConexaoTema(t.id)} />
                           ))}
                         </div>
 
@@ -1850,14 +1762,9 @@ export default function MeuFilhoClient() {
                           {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
                             <div className="text-[13px] text-[#545454]">Gerando…</div>
                           ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
-                            <RenderEditorialText
-                              text={bloco3Text}
-                              pClassName="text-[14px] text-[#2f3a56] leading-relaxed"
-                            />
+                            <RenderEditorialText text={bloco3Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
                           ) : (
-                            <div className="text-[13px] text-[#545454]">
-                              Selecione um tema e clique em “Novo gesto”.
-                            </div>
+                            <div className="text-[13px] text-[#545454]">Selecione um tema e clique em “Novo gesto”.</div>
                           )}
                         </div>
                       </div>
