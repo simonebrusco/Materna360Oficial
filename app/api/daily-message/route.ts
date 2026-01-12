@@ -1,5 +1,12 @@
+// app/api/daily-message/route.ts
+
 import { createHash } from 'crypto'
 import { NextResponse } from 'next/server'
+
+import {
+  DAILY_LIMIT_ANON_COOKIE,
+  tryConsumeDailyAI,
+} from '@/app/lib/ai/dailyLimit.server'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -41,7 +48,9 @@ type DailyMessageResponse = {
   generatedAt: string
 }
 
-const shouldUseAI = () => process.env.USE_AI_DAILY_MESSAGE === '1' && Boolean(process.env.OPENAI_API_KEY)
+const shouldUseAI = () =>
+  process.env.USE_AI_DAILY_MESSAGE === '1' &&
+  Boolean(process.env.OPENAI_API_KEY)
 
 const hashDateKeyToIndex = (dateKey: string) => {
   const hash = createHash('sha256').update(dateKey).digest('hex')
@@ -59,31 +68,48 @@ const deterministicMessageFor = (dateKey: string) => {
 }
 
 const sanitizeName = (rawName: string | null): string | null => {
-  if (!rawName) {
-    return null
-  }
-
+  if (!rawName) return null
   const trimmed = rawName.trim()
-  if (!trimmed) {
-    return null
-  }
+  if (!trimmed) return null
+
+  // limite defensivo para evitar prompt injection via query
+  if (trimmed.length > 40) return trimmed.slice(0, 40).trim()
 
   return trimmed
 }
 
-async function generateMessageWithAI(dateKey: string, name: string | null): Promise<string | null> {
-  if (!shouldUseAI()) {
+type AIDailyMessageResult = {
+  message: string
+  anonToSet?: string | null
+}
+
+async function generateMessageWithAI(
+  dateKey: string,
+  name: string | null,
+): Promise<AIDailyMessageResult | null> {
+  if (!shouldUseAI()) return null
+
+  // P34.11.3 — limite diário (backend)
+  // Mantemos um limite ético global (5/dia) para mensagens diárias
+  const quota = await tryConsumeDailyAI(5)
+  if (!quota.allowed) {
     return null
   }
 
   const target = name ?? 'a mãe usuária do Materna360'
-  const systemPrompt = `Você é a voz acolhedora do app Materna360. Gere UMA frase curta, em português (Brasil), positiva e realista para uma mãe ocupada, incentivando leveza, presença e autocuidado. Até ~140 caracteres, sem hashtags. Fale diretamente com ${target}.`
+  const systemPrompt =
+    `Você é a voz acolhedora do app Materna360. ` +
+    `Gere UMA frase curta, em português (Brasil), positiva e realista para uma mãe ocupada, ` +
+    `incentivando leveza, presença e autocuidado. ` +
+    `Até ~140 caracteres, sem hashtags. ` +
+    `Fale diretamente com ${target}.`
+
   const userPrompt = name
     ? `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora falando diretamente com ${name}.`
     : `Data: ${dateKey}. Preciso de uma mensagem curta e acolhedora para uma mãe.`
 
   const controller = new AbortController()
-  const TIMEOUT_MS = 8000 // 8 second timeout for OpenAI
+  const TIMEOUT_MS = 8000
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
   try {
@@ -97,14 +123,8 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: userPrompt,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
         max_tokens: 80,
         temperature: 0.7,
@@ -116,13 +136,14 @@ async function generateMessageWithAI(dateKey: string, name: string | null): Prom
     }
 
     const data = (await response.json()) as any
-    const aiMessage: string | undefined = data?.choices?.[0]?.message?.content?.trim()
+    const aiMessage: string | undefined =
+      data?.choices?.[0]?.message?.content?.trim()
 
     if (!aiMessage) {
       throw new Error('AI response missing content')
     }
 
-    return aiMessage
+    return { message: aiMessage, anonToSet: quota.anonToSet ?? null }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       console.error('AI daily message generation timeout:', error)
@@ -142,20 +163,34 @@ export async function GET(request: Request) {
   const providedName = sanitizeName(url.searchParams.get('name'))
 
   try {
-    const candidate = await generateMessageWithAI(dateKey, providedName)
-    const message = candidate ?? deterministicMessageFor(dateKey)
+    const ai = await generateMessageWithAI(dateKey, providedName)
+    const message = ai?.message ?? deterministicMessageFor(dateKey)
 
-    return NextResponse.json<DailyMessageResponse>(
+    const res = NextResponse.json<DailyMessageResponse>(
       {
         message,
         generatedAt: now.toISOString(),
       },
       {
         headers: {
+          // cache diário (ok pois o resultado é estável por dia; IA pode variar,
+          // mas fica controlada pela cota e a UX é “mensagem do dia”)
           'Cache-Control': 'public, max-age=0, s-maxage=86400',
         },
-      }
+      },
     )
+
+    if (ai?.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, ai.anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+
+    return res
   } catch (error) {
     console.error('Failed to generate daily message:', error)
 
@@ -168,7 +203,7 @@ export async function GET(request: Request) {
         headers: {
           'Cache-Control': 'public, max-age=0, s-maxage=86400',
         },
-      }
+      },
     )
   }
 }
