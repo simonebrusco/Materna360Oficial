@@ -289,7 +289,7 @@ export default function Client() {
     laterCount: 0,
   }))
 
-  // ✅ novo estado do plano “para agora”
+  // ✅ estado do plano “para agora”
   const [planSelected, setPlanSelected] = useState<PlanItem | null>(null)
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planFeedback, setPlanFeedback] = useState<string>('')
@@ -334,9 +334,9 @@ export default function Client() {
     // ✅ recuperar (ou inicializar) o plano do dia, sem gerar automaticamente em load
     try {
       const todayKey = getBrazilDateKey(new Date())
-      const existing = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null)
+      const existing = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null) ?? null
 
-      if (existing && existing.dateKey === todayKey && (existing.ritmo === r)) {
+      if (existing && existing.dateKey === todayKey && existing.ritmo === r) {
         const pool = PLAN_POOL[r] ?? []
         const baseIndex = clampIndex(existing.baseIndex ?? 0, pool.length)
         const picked =
@@ -347,7 +347,6 @@ export default function Client() {
         setPlanSelected(picked)
         setPlanHint('')
       } else {
-        // não seleciona nada automaticamente: só prepara hint leve
         setPlanSelected(null)
         setPlanOptions([])
         setPlanHint('Quando você quiser, eu te dou um plano simples para agora. Sem obrigação.')
@@ -372,8 +371,7 @@ export default function Client() {
     setRitmo(next)
     setRitmoPersist(next)
 
-    // ao trocar ritmo, mantém o plano “manual” (sem auto-gerar),
-    // mas limpa opções para evitar mistura de contexto.
+    // mantém “manual”: não auto-gera ao trocar ritmo
     setPlanOptions([])
     setPlanHint('Se quiser, gere um plano novo para agora.')
     try {
@@ -401,13 +399,13 @@ export default function Client() {
   }
 
   function readPlanPersist(): PlanPersist | null {
-  try {
-    const v = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null)
-    return v ?? null
-  } catch {
-    return null
+    try {
+      const v = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null)
+      return v ?? null
+    } catch {
+      return null
+    }
   }
-}
 
   function writePlanPersist(next: PlanPersist) {
     try {
@@ -456,6 +454,7 @@ export default function Client() {
     setPlanSelected(picked)
     setPlanOptions([])
     setPlanHint('')
+    flash('Plano pronto. Se não servir, você pode trocar ou encerrar por aqui.', 2600)
 
     writePlanPersist({ ...st, pickedId: picked?.id })
 
@@ -488,6 +487,8 @@ export default function Client() {
     setPlanSelected(picked)
     setPlanOptions([])
     setPlanHint('')
+    flash('Plano trocado. Se não servir, você pode trocar de novo ou encerrar por aqui.', 2600)
+
     writePlanPersist({
       ...st,
       baseIndex: nextIndex,
@@ -512,7 +513,7 @@ export default function Client() {
 
     // 3 próximas opções a partir do baseIndex (sem repetir a selecionada, se der)
     const base = st.baseIndex
-    const out: PlanItem[] = [] 
+    const out: PlanItem[] = []
     for (let k = 1; k <= 5 && out.length < 3; k++) {
       const it = pickFromPool(base + k)
       if (!it) continue
@@ -522,6 +523,9 @@ export default function Client() {
     }
 
     setPlanOptions(out)
+
+    if (out.length) flash('Escolha uma opção para aplicar agora.', 2200)
+
     try {
       track('cuidar_de_mim.plan.options.show', { ritmo, count: out.length })
     } catch {}
@@ -531,6 +535,7 @@ export default function Client() {
     setPlanSelected(it)
     setPlanOptions([])
     setPlanHint('')
+    flash('Plano aplicado.', 2000)
 
     const st = ensureTodayPlanBase()
     writePlanPersist({ ...st, pickedId: it.id })
@@ -807,7 +812,7 @@ export default function Client() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 items-stretch">
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                            {/* ✅ NOVO: Estrutura inteligente (plano + 3 opções + salvar) */}
+                            {/* ✅ Estrutura inteligente (plano + 3 opções + salvar) */}
                             <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-4 sm:p-5 md:p-6">
                               <div className="flex items-start gap-3">
                                 <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
@@ -822,7 +827,7 @@ export default function Client() {
                                   {!planSelected ? (
                                     <div className="mt-2">
                                       <div className="text-[13px] text-[#6a6a6a] leading-relaxed">
-                                        {planHint || 'Quando você quiser, eu te dou um plano simples para agora.'}
+                                        {planHint || 'Quando você quiser, eu te dou um plano simples para agora. Sem obrigação.'}
                                       </div>
 
                                       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -840,17 +845,19 @@ export default function Client() {
                                             try {
                                               track('cuidar_de_mim.plan.close', { ritmo })
                                             } catch {}
-                                            flash('Tudo bem. Se não couber agora, fechar já é cuidado.')
+                                            flash('Tudo bem. Encerrar por aqui também é cuidado.', 2600)
                                           }}
                                           className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] font-semibold hover:bg-[#fff3f8] transition"
                                         >
                                           Encerrar por aqui
                                         </button>
-
-                                        {planFeedback ? (
-                                          <span className="text-[12px] text-[#6a6a6a]">{planFeedback}</span>
-                                        ) : null}
                                       </div>
+
+                                      {planFeedback ? (
+                                        <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                          {planFeedback}
+                                        </div>
+                                      ) : null}
                                     </div>
                                   ) : (
                                     <div className="mt-2">
@@ -875,7 +882,7 @@ export default function Client() {
                                           onClick={onSwapPlan}
                                           className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] font-semibold hover:bg-[#fff3f8] transition"
                                         >
-                                          Trocar
+                                          Trocar plano
                                         </button>
 
                                         <button
@@ -885,11 +892,13 @@ export default function Client() {
                                         >
                                           Ver 3 opções
                                         </button>
-
-                                        {planFeedback ? (
-                                          <span className="text-[12px] text-[#6a6a6a]">{planFeedback}</span>
-                                        ) : null}
                                       </div>
+
+                                      {planFeedback ? (
+                                        <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                          {planFeedback}
+                                        </div>
+                                      ) : null}
 
                                       {planOptions.length ? (
                                         <div className="mt-4 space-y-2">
@@ -920,7 +929,7 @@ export default function Client() {
                                       ) : null}
 
                                       <RenderEditorialText
-                                        text={`Se não servir, troque ou feche por aqui.\n\nSem obrigação.`}
+                                        text={`Se não servir, você pode trocar ou encerrar por aqui.\n\nSem obrigação.`}
                                         className="mt-4 text-[12px] text-[#6a6a6a] leading-relaxed"
                                       />
                                     </div>
