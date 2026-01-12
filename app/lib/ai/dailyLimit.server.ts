@@ -5,6 +5,10 @@ import { supabaseServer } from '@/app/lib/supabase'
 // cookie para ID anônimo (quando não logada)
 const ANON_COOKIE = 'm360_anon_id'
 
+// Exports utilitários para integração nos routes (evita repetir strings/números)
+export const DAILY_LIMIT_ANON_COOKIE = ANON_COOKIE
+export const DAILY_LIMIT = 5
+
 // Mensagem de bloqueio (sem números, sem técnico, sem CTA)
 export const DAILY_LIMIT_MESSAGE =
   'Por hoje, vamos pausar as sugestões. Cuidar também é saber parar. Amanhã você continua com mais leveza.'
@@ -50,7 +54,7 @@ export async function getActorId(): Promise<{ actorId: string; anonToSet?: strin
   return { actorId: `anon:${created}`, anonToSet: created }
 }
 
-export async function tryConsumeDailyAI(limit = 5): Promise<{
+export async function tryConsumeDailyAI(limit = DAILY_LIMIT): Promise<{
   allowed: boolean
   dateKey: string
   actorId: string
