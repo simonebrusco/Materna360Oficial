@@ -1,3 +1,5 @@
+// app/api/recipes/generate/route.ts
+
 import { NextResponse } from 'next/server'
 
 import {
@@ -16,6 +18,11 @@ import {
   validateRecipeResponseShape,
 } from '@/app/lib/healthyRecipes'
 import { track } from '@/app/lib/telemetry'
+import {
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT_MESSAGE,
+  tryConsumeDailyAI,
+} from '@/app/lib/ai/dailyLimit.server'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,21 +144,13 @@ const DIETARY_OPTIONS: RecipeDietaryOption[] = [
 ]
 
 const clampServings = (value: number) => {
-  if (!Number.isFinite(value)) {
-    return 2
-  }
+  if (!Number.isFinite(value)) return 2
   return Math.min(Math.max(Math.round(value), 1), 6)
 }
 
 const normalizeTimeFilter = (time?: string | null): RecipeTimeOption | undefined => {
-  if (!time) {
-    return undefined
-  }
-
-  if (time === '<=15' || time === '<=30' || time === '<=45' || time === '>45') {
-    return time
-  }
-
+  if (!time) return undefined
+  if (time === '<=15' || time === '<=30' || time === '<=45' || time === '>45') return time
   return undefined
 }
 
@@ -170,9 +169,11 @@ export async function POST(request: Request) {
     payload = {
       ingredients: sanitizeIngredients(body?.ingredients),
       filters: {
-        courses: courses.filter((course): course is RecipeCourseOption => COURSE_OPTIONS.includes(course as RecipeCourseOption)),
+        courses: courses.filter((course): course is RecipeCourseOption =>
+          COURSE_OPTIONS.includes(course as RecipeCourseOption),
+        ),
         dietary: dietary.filter((option): option is RecipeDietaryOption =>
-          DIETARY_OPTIONS.includes(option as RecipeDietaryOption)
+          DIETARY_OPTIONS.includes(option as RecipeDietaryOption),
         ),
         time: normalizeTimeFilter(body?.filters?.time),
       },
@@ -192,6 +193,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Informe pelo menos um ingrediente.' }, { status: 400 })
   }
 
+  // < 6 meses: não consome quota e não chama IA
   if (isUnderSixMonths(payload.child.months)) {
     track('audio.select', { result: 'under-six-months' })
     const response: RecipeGenerationResponse = {
@@ -200,6 +202,33 @@ export async function POST(request: Request) {
       recipes: [],
     }
     return NextResponse.json(response)
+  }
+
+  // ==========================
+  // P34.11.3 — Limite diário (backend)
+  // - Sem expor contadores
+  // - Bloqueio com copy canônica
+  // - Cookie httpOnly para ator anônimo quando necessário
+  // ==========================
+  const quota = await tryConsumeDailyAI(5)
+  if (!quota.allowed) {
+    const blocked: RecipeGenerationResponse = {
+      educationalMessage: null,
+      noResultMessage: DAILY_LIMIT_MESSAGE,
+      recipes: [],
+    }
+
+    const res = NextResponse.json(blocked, { status: 200 })
+    if (quota.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+    return res
   }
 
   const requestSummary = {
@@ -220,7 +249,7 @@ export async function POST(request: Request) {
 
   try {
     const controller = new AbortController()
-    const TIMEOUT_MS = 15000 // 15 second timeout for recipe generation (longer than daily message)
+    const TIMEOUT_MS = 15_000
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
     let response: Response
@@ -240,13 +269,14 @@ export async function POST(request: Request) {
             json_schema: RESPONSE_SCHEMA,
           },
           messages: [
-            {
-              role: 'system',
-              content: SYSTEM_PROMPT,
-            },
+            { role: 'system', content: SYSTEM_PROMPT },
             {
               role: 'user',
-              content: `Dados do pedido (JSON):\n${JSON.stringify(requestSummary, null, 2)}\nLembre-se: máximo de ${MAX_RECIPE_RESULTS} receitas.`,
+              content: `Dados do pedido (JSON):\n${JSON.stringify(
+                requestSummary,
+                null,
+                2,
+              )}\nLembre-se: máximo de ${MAX_RECIPE_RESULTS} receitas.`,
             },
           ],
         }),
@@ -294,7 +324,18 @@ export async function POST(request: Request) {
     }))
 
     track('audio.select', { result: 'success', recipes: sanitized.recipes.length })
-    return NextResponse.json(sanitized)
+
+    const res = NextResponse.json(sanitized)
+    if (quota.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+    return res
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       console.error('Recipes generation timeout:', error)
