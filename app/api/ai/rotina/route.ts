@@ -13,6 +13,13 @@ import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
 
 import { sanitizeMeuFilhoBloco2Suggestions } from '@/app/lib/ai/validators/bloco2'
+import {
+  tryConsumeDailyAI,
+  releaseDailyAI,
+  DAILY_LIMIT_MESSAGE,
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT,
+} from '@/app/lib/ai/dailyLimit.server'
 
 export const runtime = 'nodejs'
 
@@ -221,11 +228,46 @@ function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
 }
 
 export async function POST(req: Request) {
+  let gate: { actorId: string; dateKey: string } | null = null
+
   try {
     assertRateLimit(req, 'ai-rotina', {
       limit: 20,
       windowMs: 5 * 60_000,
     })
+
+    // Limite diário global (ética) — backend como fonte de verdade
+    const g = await tryConsumeDailyAI(DAILY_LIMIT)
+    gate = { actorId: g.actorId, dateKey: g.dateKey }
+
+    if (!g.allowed) {
+      const res = NextResponse.json(
+        {
+          blocked: true,
+          message: DAILY_LIMIT_MESSAGE,
+          // Mantém shapes compatíveis com os dois caminhos principais deste endpoint
+          suggestions: [],
+          recipes: [],
+        },
+        { status: 200, headers: NO_STORE_HEADERS },
+      )
+
+      if (g.anonToSet) {
+        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, g.anonToSet, {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
+      }
+
+      console.info('[AI_LIMIT] blocked', {
+        route: '/api/ai/rotina',
+        actorId: g.actorId,
+        dateKey: g.dateKey,
+      })
+
+      return res
+    }
 
     const body = (await req.json()) as RotinaRequestBody
 
@@ -314,8 +356,16 @@ export async function POST(req: Request) {
       },
     })
 
-    return NextResponse.json({ recipes: result.recipes ?? [] }, { status: 200, headers: NO_STORE_HEADERS })
+    return NextResponse.json(
+      { recipes: result.recipes ?? [] },
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
   } catch (error) {
+    // Se já consumimos cota e falhou antes de entregar resposta "final", liberamos o consumo
+    if (gate) {
+      await releaseDailyAI(gate.actorId, gate.dateKey)
+    }
+
     if (error instanceof RateLimitError) {
       console.warn('[API /api/ai/rotina] Rate limit atingido:', error.message)
       return NextResponse.json(
