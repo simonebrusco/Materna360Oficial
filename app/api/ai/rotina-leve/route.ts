@@ -6,18 +6,58 @@ import {
   type RotinaLeveRequest,
   isRotinaLeveAIEnabled,
 } from '@/app/lib/ai/rotinaLeve'
+import {
+  tryConsumeDailyAI,
+  releaseDailyAI,
+  DAILY_LIMIT_MESSAGE,
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT,
+} from '@/app/lib/ai/dailyLimit.server'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
+  let gate: { actorId: string; dateKey: string } | null = null
+
   try {
+    // Limite diário global (ética)
+    const g = await tryConsumeDailyAI(DAILY_LIMIT)
+    gate = { actorId: g.actorId, dateKey: g.dateKey }
+
+    if (!g.allowed) {
+      const res = NextResponse.json(
+        {
+          blocked: true,
+          message: DAILY_LIMIT_MESSAGE,
+          suggestions: [],
+        },
+        { status: 200 },
+      )
+
+      if (g.anonToSet) {
+        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, g.anonToSet, {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
+      }
+
+      console.info('[AI_LIMIT] blocked', {
+        route: '/api/ai/rotina-leve',
+        actorId: g.actorId,
+        dateKey: g.dateKey,
+      })
+
+      return res
+    }
+
     const body = (await req.json()) as RotinaLeveRequest
 
     if (!body || typeof body !== 'object' || !body.context) {
-      return NextResponse.json(
-        { suggestions: [] },
-        { status: 400 },
-      )
+      // erro de validação → não consome quota
+      if (gate) await releaseDailyAI(gate.actorId, gate.dateKey)
+
+      return NextResponse.json({ suggestions: [] }, { status: 400 })
     }
 
     const aiEnabled = isRotinaLeveAIEnabled()
@@ -47,12 +87,14 @@ export async function POST(req: Request) {
       })
     }
 
-    return NextResponse.json({ suggestions })
+    return NextResponse.json({ suggestions }, { status: 200 })
   } catch (err) {
+    // Se consumiu e falhou antes de resposta final, libera
+    if (gate) {
+      await releaseDailyAI(gate.actorId, gate.dateKey)
+    }
+
     console.error('[RotinaLeveAI] Error:', err)
-    return NextResponse.json(
-      { suggestions: [] },
-      { status: 500 },
-    )
+    return NextResponse.json({ suggestions: [] }, { status: 500 })
   }
 }
