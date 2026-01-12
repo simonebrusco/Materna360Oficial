@@ -5,7 +5,7 @@ import { supabaseServer } from '@/app/lib/supabase'
 // cookie para ID anônimo (quando não logada)
 const ANON_COOKIE = 'm360_anon_id'
 
-// Export público do cookie (evita duplicação e imports quebrando)
+// ✅ exportado pois algumas rotas importam esse identificador
 export const DAILY_LIMIT_ANON_COOKIE = ANON_COOKIE
 
 // Mensagem de bloqueio (sem números, sem técnico, sem CTA)
