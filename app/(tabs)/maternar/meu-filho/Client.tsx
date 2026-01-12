@@ -655,7 +655,14 @@ async function fetchBloco4Suggestion(args: {
     if (!res.ok) return null
     const data = (await res.json().catch(() => null)) as any
 
-    const candidate = data?.text ?? data?.suggestion ?? data?.output ?? data?.phrase ?? data?.suggestions?.[0]?.text ?? data?.suggestions?.[0]?.description ?? null
+    const candidate =
+      data?.text ??
+      data?.suggestion ??
+      data?.output ??
+      data?.phrase ??
+      data?.suggestions?.[0]?.text ??
+      data?.suggestions?.[0]?.description ??
+      null
 
     const cleaned = clampBloco4Text(candidate)
     if (!cleaned) return null
@@ -1250,6 +1257,7 @@ export default function MeuFilhoClient() {
       className="
         min-h-[100dvh]
         pb-32
+        overflow-x-hidden
         bg-[#ffe1f1]
         bg-[linear-gradient(to_bottom,#fd2597_0%,#fd2597_22%,#fdbed7_48%,#ffe1f1_78%,#fff7fa_100%)]
       "
@@ -1313,6 +1321,7 @@ export default function MeuFilhoClient() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => go('brincadeiras')}
                     className="
                       rounded-full
@@ -1335,6 +1344,7 @@ export default function MeuFilhoClient() {
                         return (
                           <button
                             key={t}
+                            type="button"
                             onClick={() => onSelectTime(t)}
                             className={[
                               'rounded-xl border px-3 py-2 text-[12px] text-left transition',
@@ -1351,15 +1361,16 @@ export default function MeuFilhoClient() {
 
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
                     <div className="text-[12px] text-white/85 mb-2">Faixa (ajusta a ideia)</div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
                         const active = age === a
                         return (
                           <button
                             key={a}
+                            type="button"
                             onClick={() => onSelectAge(a)}
                             className={[
-                              'rounded-xl border px-3 py-2 text-[12px] transition',
+                              'rounded-xl border px-2.5 py-2 text-[12px] transition',
                               active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
                             ].join(' ')}
                           >
