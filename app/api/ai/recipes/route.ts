@@ -1,8 +1,8 @@
 // app/api/ai/recipes/route.ts
 
 import { NextResponse } from 'next/server'
+
 import {
-  DAILY_LIMIT,
   DAILY_LIMIT_ANON_COOKIE,
   DAILY_LIMIT_MESSAGE,
   tryConsumeDailyAI,
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
   const plan = safePlan(body?.plan)
 
-  // Plano free: sempre bloqueado (paywall)
+  // Free: bloqueio por plano (paywall)
   if (plan === 'free') {
     return NextResponse.json(
       {
@@ -46,7 +46,43 @@ export async function POST(req: Request) {
     )
   }
 
-  // Demo (mock) — mantém contrato estável
+  // ==========================
+  // P34.11.3 — Limite diário (backend)
+  // - Essencial: 1 geração/dia
+  // - Premium: limite ético global (5/dia)
+  // ==========================
+  const limit = plan === 'essencial' ? 1 : 5
+  const quota = await tryConsumeDailyAI(limit)
+
+  if (!quota.allowed) {
+    const res = NextResponse.json(
+      {
+        access: {
+          denied: false,
+          limited_to_one: plan === 'essencial',
+          message: DAILY_LIMIT_MESSAGE,
+        },
+        query_echo: body,
+        suggestions: [],
+        aggregates: { consolidated_shopping_list: [] },
+      },
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
+
+    if (quota.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+
+    return res
+  }
+
+  // Demo payload (mantido)
   const demo = {
     access: { denied: false, limited_to_one: false, message: '' },
     query_echo: {
@@ -99,12 +135,7 @@ export async function POST(req: Request) {
             subs: ['omitido ou levedura nutricional'],
           },
           { item: 'azeite', qty: 1, unit: 'cs' },
-          {
-            item: 'pitada de sal',
-            qty: 1,
-            unit: 'pitada',
-            notes: 'mínimo; ajustar para adultos',
-          },
+          { item: 'pitada de sal', qty: 1, unit: 'pitada', notes: 'mínimo; ajustar para adultos' },
         ],
         steps: [
           'Misture abobrinha, ovo, aveia, queijo (opcional), azeite e uma pitada de sal até formar massa grossa.',
@@ -151,12 +182,7 @@ export async function POST(req: Request) {
           },
           { item: 'cebolinha picada', qty: 1, unit: 'cs', optional: true },
           { item: 'azeite', qty: 1, unit: 'cs' },
-          {
-            item: 'pitada de sal',
-            qty: 1,
-            unit: 'pitada',
-            notes: 'mínimo; ajustar para adultos',
-          },
+          { item: 'pitada de sal', qty: 1, unit: 'pitada', notes: 'mínimo; ajustar para adultos' },
         ],
         steps: [
           'Misture tudo até dar liga; modele bolinhos com colher.',
@@ -196,12 +222,7 @@ export async function POST(req: Request) {
             subs: ['farinha de arroz (sem_gluten)'],
           },
           { item: 'azeite', qty: 1, unit: 'cc' },
-          {
-            item: 'pitada de sal',
-            qty: 1,
-            unit: 'pitada',
-            notes: 'mínimo; ajustar para adultos',
-          },
+          { item: 'pitada de sal', qty: 1, unit: 'pitada', notes: 'mínimo; ajustar para adultos' },
         ],
         steps: [
           'Bata ovos rapidamente, some abobrinha, aveia, sal e azeite.',
@@ -230,39 +251,8 @@ export async function POST(req: Request) {
     },
   }
 
-  // Essencial: 1 receita/dia com limite diário (backend)
+  // Essencial: mantém 1 receita exibida
   if (plan === 'essencial') {
-    const { allowed, anonToSet } = await tryConsumeDailyAI(DAILY_LIMIT.recipes_essencial ?? 1)
-
-    if (!allowed) {
-      const res = NextResponse.json(
-        {
-          access: {
-            denied: true,
-            limited_to_one: true,
-            message: DAILY_LIMIT_MESSAGE,
-          },
-          query_echo: body,
-          suggestions: [],
-          aggregates: { consolidated_shopping_list: [] },
-        },
-        { status: 200, headers: NO_STORE_HEADERS },
-      )
-
-      // garante persistência do ator anônimo, se necessário
-      if (anonToSet) {
-        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, anonToSet, {
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: true,
-          path: '/',
-          maxAge: 60 * 60 * 24 * 365, // 1 ano
-        })
-      }
-
-      return res
-    }
-
     const res = NextResponse.json(
       {
         ...demo,
@@ -276,19 +266,31 @@ export async function POST(req: Request) {
       { status: 200, headers: NO_STORE_HEADERS },
     )
 
-    if (anonToSet) {
-      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, anonToSet, {
+    if (quota.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
         httpOnly: true,
         sameSite: 'lax',
         secure: true,
         path: '/',
-        maxAge: 60 * 60 * 24 * 365, // 1 ano
+        maxAge: 60 * 60 * 24 * 365,
       })
     }
 
     return res
   }
 
-  // Premium: sem limite diário aqui
-  return NextResponse.json(demo, { status: 200, headers: NO_STORE_HEADERS })
+  // Premium: tudo
+  const res = NextResponse.json(demo, { status: 200, headers: NO_STORE_HEADERS })
+
+  if (quota.anonToSet) {
+    res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: true,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+    })
+  }
+
+  return res
 }
