@@ -1,4 +1,12 @@
+// app/api/ai/eu360/report/route.ts
+
 import { NextResponse } from 'next/server'
+import {
+  tryConsumeDailyAI,
+  releaseDailyAI,
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT,
+} from '@/app/lib/ai/dailyLimit.server'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses'
 const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
@@ -59,7 +67,8 @@ function containsForbidden(text: string) {
   const questions = /[?¿]/.test(text)
 
   // bloqueio conservador
-  const clinical = /\b(diagn[oó]stic|transtorno|terapia|psic[oó]log|psiquiat|rem[eé]dio|medicaç|tratamento)\b/i
+  const clinical =
+    /\b(diagn[oó]stic|transtorno|terapia|psic[oó]log|psiquiat|rem[eé]dio|medicaç|tratamento)\b/i
 
   return {
     forbiddenVerbs: forbiddenVerbs.test(t),
@@ -97,6 +106,10 @@ function isValidReport(text: string) {
 
 const FALLBACK_CANONICO =
   'Este momento parece pedir mais contenção do que expansão.\n\nQuando muitas frentes coexistem, é comum que a energia se fragmente.\n\nSituações assim costumam responder melhor a menos pressão interna.'
+
+// Bloqueio diário (sem números, sem técnico, sem CTA) — 3 blocos como o contrato do Eu360
+const DAILY_LIMIT_REPORT =
+  'Por hoje, é melhor pausar.\n\nQuando a mente pede mais do que o corpo sustenta, insistir costuma virar peso.\n\nAmanhã, com mais espaço interno, isso volta a ficar mais leve.'
 
 function buildSystemMessage() {
   return `
@@ -222,7 +235,33 @@ async function callOpenAI(apiKey: string, input: Eu360ReportInput) {
 }
 
 export async function POST(request: Request) {
+  let gate: { actorId: string; dateKey: string } | null = null
+
   try {
+    // Limite diário global (ética) — backend como fonte de verdade
+    const g = await tryConsumeDailyAI(DAILY_LIMIT)
+    gate = { actorId: g.actorId, dateKey: g.dateKey }
+
+    if (!g.allowed) {
+      const res = NextResponse.json({ report: DAILY_LIMIT_REPORT }, { status: 200 })
+
+      if (g.anonToSet) {
+        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, g.anonToSet, {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
+      }
+
+      console.info('[AI_LIMIT] blocked', {
+        route: '/api/ai/eu360/report',
+        actorId: g.actorId,
+        dateKey: g.dateKey,
+      })
+
+      return res
+    }
+
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
       console.error('[Eu360 Report] OPENAI_API_KEY não configurada')
@@ -261,7 +300,7 @@ export async function POST(request: Request) {
       })
     } catch {}
 
-    // 1 geração + 1 regeneração
+    // 1 geração + 1 regeneração (tentativas internas NÃO consomem cota adicional)
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const generated = await callOpenAI(apiKey, input)
@@ -285,6 +324,11 @@ export async function POST(request: Request) {
     // Persistiu inválido → fallback canônico local
     return NextResponse.json({ report: FALLBACK_CANONICO }, { status: 200 })
   } catch (error) {
+    // Se já consumimos cota e falhou antes de entregar resposta final, liberamos o consumo
+    if (gate) {
+      await releaseDailyAI(gate.actorId, gate.dateKey)
+    }
+
     console.error('[Eu360 Report] Erro geral na rota /api/ai/eu360/report:', error)
     return NextResponse.json({ error: 'Não foi possível gerar o relatório agora.' }, { status: 500 })
   }
