@@ -564,6 +564,152 @@ function pickWithRotation<T>(arr: T[], offset: number): T[] {
   return [...arr.slice(start), ...arr.slice(0, start)]
 }
 
+/* =========================
+   P34.11.1 — Inteligência de Variação (Meu Dia Leve)
+   - energy_level (derivado de mood)
+   - variation_axis (determinístico por contexto)
+   - variação intencional, não cosmética
+========================= */
+
+type EnergyLevel = 'low' | 'medium' | 'high' | 'steady'
+type VariationAxis = 'alivio' | 'clareza' | 'fechamento' | 'fluxo'
+
+function energyLevelFromMood(mood: Mood): EnergyLevel {
+  if (mood === 'no-limite') return 'low'
+  if (mood === 'corrida') return 'medium'
+  if (mood === 'ok') return 'steady'
+  return 'high'
+}
+
+// hash simples e estável (sem dependências)
+function hashToInt(input: string): number {
+  let h = 5381
+  for (let i = 0; i < input.length; i++) {
+    h = (h * 33) ^ input.charCodeAt(i)
+  }
+  return h >>> 0
+}
+
+function pickAxis(input: {
+  dateKey: string
+  slot: Slot
+  mood: Mood
+  focus: Focus
+  count: number
+  kind: 'para_agora' | 'tres_opcoes'
+}): VariationAxis {
+  const seed = `${input.dateKey}|${input.kind}|${input.slot}|${input.mood}|${input.focus}|${input.count}`
+  const n = hashToInt(seed) % 4
+  return n === 0 ? 'alivio' : n === 1 ? 'clareza' : n === 2 ? 'fechamento' : 'fluxo'
+}
+
+function scoreItem(input: {
+  item: PlanItem
+  axis: VariationAxis
+  energy: EnergyLevel
+  slot: Slot
+  focus: Focus
+}): number {
+  const { item, axis, energy, slot, focus } = input
+
+  let score = 0
+
+  // 1) coerência de foco sempre pesa
+  if (item.focus === focus) score += 25
+
+  // 2) coerência de slot (para passos pode variar, mas ainda pesa)
+  if (item.slot === slot) score += 10
+
+  // 3) prioridade por eixo (intencional)
+  const axisPriority: Record<VariationAxis, PlanKind[]> = {
+    alivio: ['idea', 'inspiration', 'passo', 'recipe'],
+    clareza: ['inspiration', 'idea', 'passo', 'recipe'],
+    fechamento: ['passo', 'idea', 'inspiration', 'recipe'],
+    fluxo: ['idea', 'passo', 'inspiration', 'recipe'],
+  }
+
+  const p = axisPriority[axis]
+  const idx = p.indexOf(item.kind)
+  if (idx >= 0) score += Math.max(0, 18 - idx * 6)
+
+  // 4) ajuste por energia (sem “paráfrase”, só escolha melhor)
+  if (energy === 'low') {
+    // no limite: prioriza coisa curtíssima e direta
+    if (item.slot === '3') score += 12
+    if (axis === 'alivio' || axis === 'clareza') score += 6
+  } else if (energy === 'high') {
+    // dia leve: pode aceitar estrutura mais “de fechamento” sem pesar
+    if (axis === 'fluxo' || axis === 'fechamento') score += 6
+    if (item.slot === '10') score += 4
+  } else if (energy === 'medium') {
+    // corrida: clareza ajuda a decidir
+    if (axis === 'clareza') score += 6
+  } else {
+    // steady (ok): mantém fluidez
+    if (axis === 'fluxo') score += 6
+  }
+
+  // 5) micro-heurísticas por título (clareza/fechamento)
+  const t = item.title.toLowerCase()
+  if (axis === 'clareza') {
+    if (t.includes('mensagem') || t.includes('resolver') || t.includes('destravar')) score += 8
+    if (t.includes('organizar')) score += 5
+  }
+  if (axis === 'fechamento') {
+    if (t.includes('resolver') || t.includes('proteger') || t.includes('simplificar')) score += 7
+  }
+  if (axis === 'alivio') {
+    if (t.includes('respirar') || t.includes('água') || t.includes('respiro') || t.includes('pausa')) score += 7
+  }
+
+  return score
+}
+
+function rankPool(input: {
+  pool: PlanItem[]
+  axis: VariationAxis
+  energy: EnergyLevel
+  slot: Slot
+  focus: Focus
+}): PlanItem[] {
+  const { pool, axis, energy, slot, focus } = input
+  const scored = pool
+    .map((item) => ({
+      item,
+      s: scoreItem({ item, axis, energy, slot, focus }),
+    }))
+    .sort((a, b) => b.s - a.s)
+    .map((x) => x.item)
+
+  return scored
+}
+
+function pickThreeWithDiversity(ranked: PlanItem[]): PlanItem[] {
+  if (ranked.length <= 3) return ranked.slice(0, 3)
+
+  const out: PlanItem[] = []
+  const seenKinds = new Set<PlanKind>()
+
+  // 1ª passada: diversidade de kind
+  for (const it of ranked) {
+    if (out.length >= 3) break
+    if (seenKinds.has(it.kind)) continue
+    out.push(it)
+    seenKinds.add(it.kind)
+  }
+
+  // 2ª passada: completa, se necessário
+  if (out.length < 3) {
+    for (const it of ranked) {
+      if (out.length >= 3) break
+      if (out.some((x) => x.title === it.title && x.kind === it.kind)) continue
+      out.push(it)
+    }
+  }
+
+  return out.slice(0, 3)
+}
+
 export default function MeuDiaLeveClient() {
   const [step, setStep] = useState<Step>('inspiracao')
   const [slot, setSlot] = useState<Slot>('5')
@@ -977,6 +1123,7 @@ export default function MeuDiaLeveClient() {
 
   /**
    * P34.12 — handlers do Plano pronto
+   * P34.11.1 — variação semântica (axis + energy)
    */
   function onGeneratePlanParaAgora() {
     setPlanNote('')
@@ -994,6 +1141,16 @@ export default function MeuDiaLeveClient() {
     const count = bumpDailyCounter(counterKey)
     const pool = buildPlanPool({ slot, focus })
 
+    const energy_level = energyLevelFromMood(mood)
+    const variation_axis = pickAxis({
+      dateKey: todayKey,
+      slot,
+      mood,
+      focus,
+      count,
+      kind: 'para_agora',
+    })
+
     // fallback ultra seguro: se pool vier vazio, usa inspiração como tarefa
     if (!pool.length) {
       const title = toMyDayTitleFromInspiration({ mood, slot, focus })
@@ -1007,15 +1164,37 @@ export default function MeuDiaLeveClient() {
       }
       setPlanParaAgora(item)
       try {
-        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback', slot, mood, focus, count })
+        track('meu_dia_leve.plan.generate', {
+          kind: 'para_agora',
+          source: 'fallback',
+          slot,
+          mood,
+          focus,
+          count,
+          energy_level,
+          variation_axis,
+        })
       } catch {}
       return
     }
 
-    const rotated = pickWithRotation(pool, count)
-    setPlanParaAgora(rotated[0])
+    // P34.11.1: ranqueia com intenção (axis), e só então rotaciona
+    const ranked = rankPool({ pool, axis: variation_axis, energy: energy_level, slot, focus })
+    const rotated = pickWithRotation(ranked, count)
+
+    setPlanParaAgora(rotated[0] ?? ranked[0] ?? null)
+
     try {
-      track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'local', slot, mood, focus, count })
+      track('meu_dia_leve.plan.generate', {
+        kind: 'para_agora',
+        source: 'local_ranked',
+        slot,
+        mood,
+        focus,
+        count,
+        energy_level,
+        variation_axis,
+      })
     } catch {}
   }
 
@@ -1035,23 +1214,55 @@ export default function MeuDiaLeveClient() {
     const count = bumpDailyCounter(counterKey)
     const pool = buildPlanPool({ slot, focus })
 
+    const energy_level = energyLevelFromMood(mood)
+    const variation_axis = pickAxis({
+      dateKey: todayKey,
+      slot,
+      mood,
+      focus,
+      count,
+      kind: 'tres_opcoes',
+    })
+
     if (!pool.length) {
       setPlanOptions([])
       setPlanPicked(0)
       setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
       try {
-        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'empty_pool', slot, mood, focus, count })
+        track('meu_dia_leve.plan.generate', {
+          kind: 'tres_opcoes',
+          source: 'empty_pool',
+          slot,
+          mood,
+          focus,
+          count,
+          energy_level,
+          variation_axis,
+        })
       } catch {}
       return
     }
 
-    const rotated = pickWithRotation(pool, count)
-    const options = rotated.slice(0, 3)
+    // P34.11.1: ranqueia e seleciona 3 com diversidade de kind
+    const ranked = rankPool({ pool, axis: variation_axis, energy: energy_level, slot, focus })
+    const rotated = pickWithRotation(ranked, count)
+
+    const options = pickThreeWithDiversity(rotated.length ? rotated : ranked)
+
     setPlanOptions(options)
     setPlanPicked(0)
 
     try {
-      track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'local', slot, mood, focus, count })
+      track('meu_dia_leve.plan.generate', {
+        kind: 'tres_opcoes',
+        source: 'local_ranked',
+        slot,
+        mood,
+        focus,
+        count,
+        energy_level,
+        variation_axis,
+      })
     } catch {}
   }
 
