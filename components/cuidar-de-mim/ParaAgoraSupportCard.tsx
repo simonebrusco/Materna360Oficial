@@ -4,7 +4,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import { track } from '@/app/lib/telemetry'
 
 type Suggestion = {
   id: string
@@ -116,34 +115,13 @@ export default function ParaAgoraSupportCard({
   variant?: Variant
 }) {
   const [state, setState] = useState<State>({ status: 'idle' })
-
-  // ✅ “Agora não” não remove o card: guarda/colapsa e permite “Voltar”
   const [dismissed, setDismissed] = useState<Record<string, true>>({})
 
   const lastSigRef = useRef<string>('')
   const seedRef = useRef<number>(Date.now())
 
-  const items = useMemo(() => {
-    if (state.status !== 'done') return []
-    return state.items
-  }, [state])
-
   const dismissOne = useCallback((id: string) => {
     setDismissed((prev) => ({ ...prev, [id]: true }))
-    try {
-      track('cuidar_de_mim.para_agora.dismiss', { id })
-    } catch {}
-  }, [])
-
-  const undoDismiss = useCallback((id: string) => {
-    setDismissed((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    try {
-      track('cuidar_de_mim.para_agora.dismiss.undo', { id })
-    } catch {}
   }, [])
 
   const fetchCards = useCallback(async (attempt = 0) => {
@@ -174,10 +152,6 @@ export default function ParaAgoraSupportCard({
       lastSigRef.current = sig
       setDismissed({})
       setState({ status: 'done', items: nextItems })
-
-      try {
-        track('cuidar_de_mim.para_agora.load', { ok: true, source: normalized ? 'ai' : 'fallback' })
-      } catch {}
     } catch {
       const nextItems = shuffle(baseFallback(), (seedRef.current = seedRef.current + 31)).slice(0, 3)
       const sig = signature(nextItems)
@@ -187,10 +161,6 @@ export default function ParaAgoraSupportCard({
       lastSigRef.current = sig
       setDismissed({})
       setState({ status: 'done', items: nextItems })
-
-      try {
-        track('cuidar_de_mim.para_agora.load', { ok: false, source: 'fallback' })
-      } catch {}
     }
   }, [])
 
@@ -234,10 +204,6 @@ export default function ParaAgoraSupportCard({
     ? 'rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3'
     : 'rounded-2xl border border-black/5 bg-white px-4 py-3'
 
-  const itemShellDismissedClass = isEmbedded
-    ? 'rounded-2xl border border-[#f5d7e5]/60 bg-white/45 backdrop-blur px-4 py-3 opacity-75'
-    : 'rounded-2xl border border-black/5 bg-white px-4 py-3 opacity-75'
-
   const itemTagClass = isEmbedded
     ? 'inline-flex w-max items-center rounded-full bg-[#ffe1f1]/70 border border-[#f5d7e5]/70 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase'
     : 'inline-flex w-max items-center rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black/70 uppercase'
@@ -274,32 +240,6 @@ export default function ParaAgoraSupportCard({
       whitespace-nowrap
     `
 
-  const undoBtnClass = isEmbedded
-    ? `
-      rounded-full
-      bg-white/70 backdrop-blur
-      border border-[#f5d7e5]/70
-      text-[#2f3a56]
-      px-3 py-1.5
-      text-[12px]
-      font-semibold
-      transition
-      hover:bg-white/85
-      whitespace-nowrap
-    `
-    : `
-      rounded-full
-      bg-white
-      border border-black/10
-      text-black/80
-      px-3 py-1.5
-      text-[12px]
-      font-semibold
-      transition
-      hover:shadow-sm
-      whitespace-nowrap
-    `
-
   const loadingShellClass = isEmbedded
     ? 'mt-4 rounded-2xl border border-[#f5d7e5]/70 bg-white/70 backdrop-blur px-4 py-3'
     : 'mt-4 rounded-2xl border border-black/5 bg-white px-4 py-3'
@@ -309,9 +249,10 @@ export default function ParaAgoraSupportCard({
   const embeddedButtonClass =
     'h-9 px-4 text-[12px] bg-white/70 backdrop-blur border border-[#f5d7e5]/80 text-[#2f3a56] hover:bg-white/80 shadow-[0_10px_22px_rgba(184,35,107,0.10)] w-full sm:w-auto'
 
+  const headerBtnLabel = state.status === 'idle' ? 'Ver 3 apoios' : 'Ver mais 3 apoios'
+
   return (
     <SoftCard className={[shellClass, 'min-w-0 max-w-full overflow-hidden', className ?? ''].join(' ')}>
-      {/* Header: coluna no mobile */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           <div className={iconWrapClass}>
@@ -325,25 +266,24 @@ export default function ParaAgoraSupportCard({
           </div>
         </div>
 
-        {/* CTA: full width no mobile */}
         <div className="w-full sm:w-auto shrink-0">
           {state.status === 'idle' ? (
             isEmbedded ? (
               <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-                Quero um apoio agora
+                {headerBtnLabel}
               </Button>
             ) : (
               <Button className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
-                Quero um apoio agora
+                {headerBtnLabel}
               </Button>
             )
           ) : isEmbedded ? (
             <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-              Ver outro apoio
+              {headerBtnLabel}
             </Button>
           ) : (
             <Button variant="secondary" className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
-              Ver outro apoio
+              {headerBtnLabel}
             </Button>
           )}
         </div>
@@ -371,56 +311,55 @@ export default function ParaAgoraSupportCard({
 
       {state.status === 'done' ? (
         <div className="mt-4 space-y-3">
-          {items.length ? (
-            items.map((item) => {
-              const isDismissed = !!dismissed[item.id]
+          {state.items.length ? (
+            state.items.map((item) => {
+              const isClosed = !!dismissed[item.id]
 
               return (
-                <div key={item.id} className={isDismissed ? itemShellDismissedClass : itemShellClass}>
+                <div
+                  key={item.id}
+                  className={[
+                    itemShellClass,
+                    isClosed ? 'opacity-60' : '',
+                  ].join(' ')}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       {item.tag ? <span className={itemTagClass}>{item.tag}</span> : null}
 
-                      <p className={itemTitleClass}>{item.title}</p>
-
-                      {/* ✅ pós-clique: não some — só colapsa */}
-                      {!isDismissed && item.description ? <p className={itemDescClass}>{item.description}</p> : null}
-
-                      {isDismissed ? (
-                        <p
-                          className={
-                            isEmbedded
-                              ? 'mt-2 text-[12px] text-[#6a6a6a] leading-relaxed'
-                              : 'mt-2 text-[12px] text-black/60 leading-relaxed'
-                          }
-                        >
-                          Tudo bem. Guardado por agora.
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {!isDismissed ? (
-                        <button type="button" className={dismissBtnClass} onClick={() => dismissOne(item.id)}>
-                          Agora não
-                        </button>
+                      {isClosed ? (
+                        <>
+                          <p className={itemTitleClass}>Fechado por agora</p>
+                          <p className={itemDescClass}>Se fizer sentido, você pode pedir mais 3 apoios acima.</p>
+                        </>
                       ) : (
-                        <button type="button" className={undoBtnClass} onClick={() => undoDismiss(item.id)}>
-                          Voltar
-                        </button>
+                        <>
+                          <p className={itemTitleClass}>{item.title}</p>
+                          {item.description ? <p className={itemDescClass}>{item.description}</p> : null}
+                        </>
                       )}
                     </div>
+
+                    {!isClosed ? (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button type="button" className={dismissBtnClass} onClick={() => dismissOne(item.id)}>
+                          Fechar este
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               )
             })
-          ) : (
+          ) : null}
+
+          {state.items.length && state.items.every((i) => dismissed[i.id]) ? (
             <div className={itemShellClass}>
               <p className={isEmbedded ? 'text-[13px] text-[#6a6a6a]' : 'text-[13px] text-black/60'}>
-                Sem pressão. Se quiser, peça outra leva.
+                Tudo bem. Se quiser, peça mais 3 apoios.
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       ) : null}
     </SoftCard>
