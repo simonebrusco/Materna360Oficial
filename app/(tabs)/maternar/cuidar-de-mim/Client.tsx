@@ -512,7 +512,7 @@ export default function Client() {
 
     // 3 próximas opções a partir do baseIndex (sem repetir a selecionada, se der)
     const base = st.baseIndex
-    const out: PlanItem[] = [] a
+    const out: PlanItem[] = [] 
     for (let k = 1; k <= 5 && out.length < 3; k++) {
       const it = pickFromPool(base + k)
       if (!it) continue
