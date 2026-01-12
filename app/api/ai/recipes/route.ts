@@ -1,4 +1,12 @@
+// app/api/ai/recipes/route.ts
+
 import { NextResponse } from 'next/server'
+import {
+  DAILY_LIMIT,
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT_MESSAGE,
+  tryConsumeDailyAI,
+} from '@/app/lib/ai/dailyLimit.server'
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store',
@@ -20,6 +28,7 @@ export async function POST(req: Request) {
 
   const plan = safePlan(body?.plan)
 
+  // Plano free: sempre bloqueado (paywall)
   if (plan === 'free') {
     return NextResponse.json(
       {
@@ -37,6 +46,7 @@ export async function POST(req: Request) {
     )
   }
 
+  // Demo (mock) — mantém contrato estável
   const demo = {
     access: { denied: false, limited_to_one: false, message: '' },
     query_echo: {
@@ -66,7 +76,13 @@ export async function POST(req: Request) {
         servings: 2,
         ingredients: [
           { item: 'abobrinha ralada e espremida', qty: 1, unit: 'xícara' },
-          { item: 'ovo', qty: 1, unit: 'un', allergens: ['ovo'], subs: ['1 cs linhaça hidratada (vegano)'] },
+          {
+            item: 'ovo',
+            qty: 1,
+            unit: 'un',
+            allergens: ['ovo'],
+            subs: ['1 cs linhaça hidratada (vegano)'],
+          },
           {
             item: 'farelo/farinha de aveia',
             qty: 3,
@@ -83,7 +99,12 @@ export async function POST(req: Request) {
             subs: ['omitido ou levedura nutricional'],
           },
           { item: 'azeite', qty: 1, unit: 'cs' },
-          { item: 'pitada de sal', qty: 1, unit: 'pitada', notes: 'mínimo; ajustar para adultos' },
+          {
+            item: 'pitada de sal',
+            qty: 1,
+            unit: 'pitada',
+            notes: 'mínimo; ajustar para adultos',
+          },
         ],
         steps: [
           'Misture abobrinha, ovo, aveia, queijo (opcional), azeite e uma pitada de sal até formar massa grossa.',
@@ -114,7 +135,13 @@ export async function POST(req: Request) {
         servings: 2,
         ingredients: [
           { item: 'abobrinha ralada e espremida', qty: 1, unit: 'xícara' },
-          { item: 'ovo', qty: 1, unit: 'un', allergens: ['ovo'], subs: ['1 cs chia hidratada (vegano)'] },
+          {
+            item: 'ovo',
+            qty: 1,
+            unit: 'un',
+            allergens: ['ovo'],
+            subs: ['1 cs chia hidratada (vegano)'],
+          },
           {
             item: 'aveia em flocos finos',
             qty: 4,
@@ -124,7 +151,12 @@ export async function POST(req: Request) {
           },
           { item: 'cebolinha picada', qty: 1, unit: 'cs', optional: true },
           { item: 'azeite', qty: 1, unit: 'cs' },
-          { item: 'pitada de sal', qty: 1, unit: 'pitada', notes: 'mínimo; ajustar para adultos' },
+          {
+            item: 'pitada de sal',
+            qty: 1,
+            unit: 'pitada',
+            notes: 'mínimo; ajustar para adultos',
+          },
         ],
         steps: [
           'Misture tudo até dar liga; modele bolinhos com colher.',
@@ -164,7 +196,12 @@ export async function POST(req: Request) {
             subs: ['farinha de arroz (sem_gluten)'],
           },
           { item: 'azeite', qty: 1, unit: 'cc' },
-          { item: 'pitada de sal', qty: 1, unit: 'pitada', notes: 'mínimo; ajustar para adultos' },
+          {
+            item: 'pitada de sal',
+            qty: 1,
+            unit: 'pitada',
+            notes: 'mínimo; ajustar para adultos',
+          },
         ],
         steps: [
           'Bata ovos rapidamente, some abobrinha, aveia, sal e azeite.',
@@ -193,8 +230,40 @@ export async function POST(req: Request) {
     },
   }
 
+  // Essencial: 1 receita/dia com limite diário (backend)
   if (plan === 'essencial') {
-    return NextResponse.json(
+    const { allowed, anonToSet } = await tryConsumeDailyAI(DAILY_LIMIT.recipes_essencial ?? 1)
+
+    if (!allowed) {
+      const res = NextResponse.json(
+        {
+          access: {
+            denied: true,
+            limited_to_one: true,
+            message: DAILY_LIMIT_MESSAGE,
+          },
+          query_echo: body,
+          suggestions: [],
+          aggregates: { consolidated_shopping_list: [] },
+        },
+        { status: 200, headers: NO_STORE_HEADERS },
+      )
+
+      // garante persistência do ator anônimo, se necessário
+      if (anonToSet) {
+        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, anonToSet, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: true,
+          path: '/',
+          maxAge: 60 * 60 * 24 * 365, // 1 ano
+        })
+      }
+
+      return res
+    }
+
+    const res = NextResponse.json(
       {
         ...demo,
         access: {
@@ -206,7 +275,20 @@ export async function POST(req: Request) {
       },
       { status: 200, headers: NO_STORE_HEADERS },
     )
+
+    if (anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365, // 1 ano
+      })
+    }
+
+    return res
   }
 
+  // Premium: sem limite diário aqui
   return NextResponse.json(demo, { status: 200, headers: NO_STORE_HEADERS })
 }
