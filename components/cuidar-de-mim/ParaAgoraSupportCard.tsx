@@ -19,6 +19,15 @@ type State =
 
 type Variant = 'default' | 'embedded'
 
+/**
+ * P34.11.1 — Inteligência de Variação (IA)
+ * - Eixos permitidos: energy_level, variation_axis
+ * - Aplicação: somente neste card (Cuidar de Mim → ParaAgoraSupportCard)
+ * - Silencioso (não expõe UI)
+ */
+type EnergyLevel = 'low' | 'medium'
+type VariationAxis = 'frase' | 'cuidado' | 'ritual' | 'limite' | 'presenca'
+
 function signature(items: Suggestion[]) {
   return items.map((i) => `${i.tag ?? ''}::${i.title}::${i.description ?? ''}`).join('|')
 }
@@ -107,6 +116,23 @@ function normalizeFromEmocional(payload: any): Suggestion[] | null {
   return null
 }
 
+/**
+ * Seleção dirigida e silenciosa:
+ * - variation_axis: alterna entre eixos permitidos por seed (sem expor à usuária)
+ * - energy_level: coerente com Cuidar de Mim → restringe a low|medium
+ */
+function pickVariationAxis(seed: number): VariationAxis {
+  const axes: VariationAxis[] = ['frase', 'cuidado', 'ritual', 'limite', 'presenca']
+  return axes[seed % axes.length]
+}
+
+function pickEnergyLevel(): EnergyLevel {
+  // Coerência emocional para Cuidar de Mim:
+  // manhã/tarde → medium (estrutura leve), noite/madrugada → low (acolhimento/pausa)
+  const hour = new Date().getHours()
+  return hour >= 18 || hour < 6 ? 'low' : 'medium'
+}
+
 export default function ParaAgoraSupportCard({
   className,
   variant = 'default',
@@ -133,6 +159,13 @@ export default function ParaAgoraSupportCard({
     setState({ status: 'loading' })
     const nonce = Date.now()
 
+    // P34.11.1 — parâmetros internos (silenciosos)
+    // Regra: um axis por geração
+    // Em caso de retry (attempt=1), muda o axis para reduzir chance de repetição sem “aleatoriedade solta”.
+    const baseSeed = (seedRef.current = seedRef.current + 19)
+    const variation_axis: VariationAxis = pickVariationAxis(baseSeed + attempt)
+    const energy_level: EnergyLevel = pickEnergyLevel()
+
     try {
       const res = await fetch(`/api/ai/emocional?nonce=${nonce}`, {
         method: 'POST',
@@ -141,7 +174,11 @@ export default function ParaAgoraSupportCard({
         body: JSON.stringify({
           feature: 'daily_inspiration',
           origin: 'cuidar-de-mim',
-          context: {},
+          // Mantém a estrutura existente e adiciona os eixos de variação no contexto
+          context: {
+            energy_level,
+            variation_axis,
+          },
         }),
       })
 
@@ -149,7 +186,7 @@ export default function ParaAgoraSupportCard({
       if (res.ok) data = await res.json().catch(() => null)
 
       const normalized = normalizeFromEmocional(data)
-      const nextItems = (normalized ?? shuffle(baseFallback(), (seedRef.current = seedRef.current + 19))).slice(0, 3)
+      const nextItems = (normalized ?? shuffle(baseFallback(), baseSeed)).slice(0, 3)
 
       const sig = signature(nextItems)
       if (sig && sig === lastSigRef.current && attempt < 1) return await fetchCards(attempt + 1)
