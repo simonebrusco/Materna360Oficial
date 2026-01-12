@@ -1,6 +1,6 @@
 // app/lib/ai/client.ts
-
 import type { AIType } from './types'
+import { hasPerceptiveRepetition, recordAntiRepeat, makeTitleSignature, makeThemeSignature } from './antiRepetitionLocal'
 
 type AIEndpointMap = Record<AIType, string>
 
@@ -19,26 +19,48 @@ interface CallAIOptions<TPayload = unknown> {
 
 /**
  * Cliente genérico e seguro para chamar os endpoints de IA do Materna360.
- * Não faz nenhuma suposição de layout e não é acoplado a componentes.
+ * Anti-repetição local é aplicada silenciosamente quando houver title/body.
  */
-export async function callAI<TResponse = unknown, TPayload = unknown>({
+export async function callAI<TResponse = any, TPayload = unknown>({
   type,
   payload,
 }: CallAIOptions<TPayload>): Promise<TResponse> {
   const endpoint = AI_ENDPOINTS[type]
+  if (!endpoint) throw new Error(`Missing AI endpoint for type "${type}"`)
 
   const res = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: payload ? JSON.stringify(payload) : undefined,
+    cache: 'no-store',
   })
 
   if (!res.ok) {
-    // No futuro podemos plugar telemetria aqui
     throw new Error(`AI request failed for type "${type}" with status ${res.status}`)
   }
 
-  return (await res.json()) as TResponse
+  const data = (await res.json()) as TResponse
+
+  // Anti-repetição local (silenciosa) — só registra quando houver sinais
+  try {
+    const maybe = data as any
+    const titleSig = makeTitleSignature(maybe?.title ?? '')
+    const bodySig = makeThemeSignature(maybe?.body ?? '')
+    const hub = `ai/${type}`
+
+    if (titleSig || bodySig) {
+      // Se repetir, não bloqueia aqui (P34.11.2 não pode “sumir” conteúdo).
+      // O retry fica por conta do chamador quando necessário.
+      // Aqui apenas registra para compor histórico transversal.
+      const repeated = hasPerceptiveRepetition({ hub, title_signature: titleSig, theme_signature: bodySig })
+      // Registra sempre (inclusive repetidos) para manter histórico consistente
+      recordAntiRepeat({ hub, title_signature: titleSig, theme_signature: bodySig, variation_axis: String((payload as any)?.variation_axis ?? '') })
+      // Observação: não retorna erro nem altera resposta (sem UX).
+      void repeated
+    }
+  } catch {
+    // nunca falha por anti-repeat
+  }
+
+  return data
 }

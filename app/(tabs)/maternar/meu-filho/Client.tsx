@@ -6,6 +6,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { safeMeuFilhoBloco1Text, clampMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
+import {
+  hasPerceptiveRepetition,
+  recordAntiRepeat,
+  makeTitleSignature,
+  makeThemeSignature,
+  resetAntiRepeatIfDayChanged,
+} from '@/app/lib/ai/antiRepetitionLocal'
 
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -260,6 +267,104 @@ function newNonce() {
 }
 
 /* =========================
+   P34.11.2 — Anti-repetição local (silencioso)
+========================= */
+
+const HUB_AI = 'maternar/meu-filho' as const
+
+async function withAntiRepeatText(args: {
+  themeSignature: string
+  run: (nonce: string) => Promise<string | null>
+  fallback: () => string
+  maxTries?: number
+}) {
+  resetAntiRepeatIfDayChanged()
+
+  const tries = Math.max(1, Math.min(3, args.maxTries ?? 2))
+  for (let i = 0; i < tries; i++) {
+    const nonce = newNonce()
+    const text = await args.run(nonce)
+
+    if (text) {
+      const titleSig = makeTitleSignature(text.slice(0, 60))
+      const themeSig = makeThemeSignature(args.themeSignature)
+
+      const repeated = hasPerceptiveRepetition({
+        hub: HUB_AI,
+        title_signature: titleSig,
+        theme_signature: themeSig,
+      })
+
+      if (!repeated) {
+        recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+        return { text, source: 'ai' as const }
+      }
+
+      // repetiu: tenta de novo silenciosamente (novo nonce)
+      continue
+    }
+  }
+
+  const fb = args.fallback()
+  try {
+    const titleSig = makeTitleSignature(fb.slice(0, 60))
+    const themeSig = makeThemeSignature(args.themeSignature)
+    recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: 'fallback' })
+  } catch {}
+
+  return { text: fb, source: 'fallback' as const }
+}
+
+type Bloco2Items = { a: PlanItem; b: PlanItem; c: PlanItem }
+
+async function withAntiRepeatPack(args: {
+  themeSignature: string
+  run: (nonce: string) => Promise<Bloco2Items | null>
+  fallback: () => Bloco2Items
+  maxTries?: number
+}) {
+  resetAntiRepeatIfDayChanged()
+
+  const tries = Math.max(1, Math.min(3, args.maxTries ?? 2))
+  for (let i = 0; i < tries; i++) {
+    const nonce = newNonce()
+    const items = await args.run(nonce)
+
+    if (items) {
+      const titleComposite = `${items.a.title} | ${items.b.title} | ${items.c.title}`
+      const titleSig = makeTitleSignature(titleComposite)
+      const themeSig = makeThemeSignature(args.themeSignature)
+
+      const repeated = hasPerceptiveRepetition({
+        hub: HUB_AI,
+        title_signature: titleSig,
+        theme_signature: themeSig,
+      })
+
+      if (!repeated) {
+        recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+        return { items, source: 'ai' as const }
+      }
+
+      continue
+    }
+  }
+
+  const fb = args.fallback()
+  try {
+    const titleComposite = `${fb.a.title} | ${fb.b.title} | ${fb.c.title}`
+    recordAntiRepeat({
+      hub: HUB_AI,
+      title_signature: makeTitleSignature(titleComposite),
+      theme_signature: makeThemeSignature(args.themeSignature),
+      variation_axis: 'fallback',
+    })
+  } catch {}
+
+  return { items: fb, source: 'fallback' as const }
+}
+
+/* =========================
    P26 — Guardrails + Jornada
 ========================= */
 
@@ -355,8 +460,6 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string })
    BLOCO 2 — IA + FALLBACK (Exploração Guiada)
 ========================= */
 
-type Bloco2Items = { a: PlanItem; b: PlanItem; c: PlanItem }
-
 type Bloco2State =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -392,7 +495,6 @@ function safeBloco2How(raw: unknown): string | null {
   const low = t.toLowerCase()
   if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
 
-  // Reforço de aceitação para descrições boas que não usam exatamente "faça/depois/no final"
   const hasStepsCue =
     low.includes('faça') ||
     low.includes('combine') ||
@@ -1118,72 +1220,68 @@ export default function MeuFilhoClient() {
 
   async function generateBloco1() {
     const seq = ++bloco1ReqSeq.current
-    const nonce = newNonce()
-
     setBloco1({ status: 'loading' })
 
     const tempoDisponivel = Number(time)
-    const ai = await fetchBloco1Plan({ tempoDisponivel, nonce })
+    const themeSignature = `bloco1|age:${age}|time:${time}|tempo:${tempoDisponivel}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) => await fetchBloco1Plan({ tempoDisponivel, nonce }),
+      fallback: () => clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time]),
+      maxTries: 2,
+    })
+
     if (seq !== bloco1ReqSeq.current) return
-
-    if (ai) {
-      setBloco1({ status: 'done', text: ai, source: 'ai' })
-      return
-    }
-
-    const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
-    setBloco1({ status: 'done', text: fb, source: 'fallback' })
+    setBloco1({ status: 'done', text: out.text, source: out.source })
   }
 
   async function generateBloco2() {
     const seq = ++bloco2ReqSeq.current
-    const nonce = newNonce()
-
     setBloco2({ status: 'loading' })
 
     const tempoDisponivel = Number(time)
-    const ai = await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce })
+    const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}`
+
+    const out = await withAntiRepeatPack({
+      themeSignature,
+      run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
+      fallback: () => kit.plan,
+      maxTries: 2,
+    })
+
     if (seq !== bloco2ReqSeq.current) return
-
-    if (ai) {
-      setBloco2({ status: 'done', items: ai, source: 'ai' })
-      setChosen('a')
-      return
-    }
-
-    // fallback local sempre (sem toast de erro)
-    setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
+    setBloco2({ status: 'done', items: out.items, source: out.source })
     setChosen('a')
   }
 
   async function generateBloco4() {
     const seq = ++bloco4ReqSeq.current
-    const nonce = newNonce()
-
     setBloco4({ status: 'loading' })
 
     const momento = inferMomentoDesenvolvimento(age)
-    const ai = await fetchBloco4Suggestion({
-      faixa_etaria: age,
-      momento_desenvolvimento: momento,
-      contexto: 'fase',
-      foco: faseFoco,
-      nonce,
+    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) =>
+        await fetchBloco4Suggestion({
+          faixa_etaria: age,
+          momento_desenvolvimento: momento,
+          contexto: 'fase',
+          foco: faseFoco,
+          nonce,
+        }),
+      fallback: () => BLOCO4_FALLBACK[age],
+      maxTries: 2,
     })
 
     if (seq !== bloco4ReqSeq.current) return
-
-    if (ai) {
-      setBloco4({ status: 'done', text: ai, source: 'ai', momento })
-      return
-    }
-
-    setBloco4({ status: 'done', text: BLOCO4_FALLBACK[age], source: 'fallback', momento })
+    setBloco4({ status: 'done', text: out.text, source: out.source, momento })
   }
 
   async function generateBloco3(kind: Bloco3Type) {
     const seq = ++bloco3ReqSeq.current
-    const nonce = newNonce()
 
     const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
     const tema = kind === 'rotina' ? rotinaTema : conexaoTema
@@ -1194,23 +1292,25 @@ export default function MeuFilhoClient() {
 
     setBloco3({ status: 'loading', kind })
 
-    const ai = await fetchBloco3Suggestion({
-      faixa_etaria: age,
-      momento_do_dia: momento,
-      tipo_experiencia: kind,
-      contexto: 'continuidade',
-      tema,
-      nonce,
+    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) =>
+        await fetchBloco3Suggestion({
+          faixa_etaria: age,
+          momento_do_dia: momento,
+          tipo_experiencia: kind,
+          contexto: 'continuidade',
+          tema,
+          nonce,
+        }),
+      fallback: () => BLOCO3_FALLBACK[kind][age],
+      maxTries: 2,
     })
 
     if (seq !== bloco3ReqSeq.current) return
-
-    if (ai) {
-      setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
-      return
-    }
-
-    setBloco3({ status: 'done', kind, text: BLOCO3_FALLBACK[kind][age], source: 'fallback', momento })
+    setBloco3({ status: 'done', kind, text: out.text, source: out.source, momento })
   }
 
   function saveSelectedToMyDay(title: string) {
