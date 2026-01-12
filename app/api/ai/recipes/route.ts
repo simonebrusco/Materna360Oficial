@@ -1,21 +1,40 @@
 import { NextResponse } from 'next/server'
 
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store',
+}
+
+type Plan = 'free' | 'essencial' | 'premium'
+
+function safePlan(v: unknown): Plan {
+  return v === 'free' || v === 'essencial' || v === 'premium' ? v : 'premium'
+}
+
 export async function POST(req: Request) {
-  const body = await req.json()
-  const { plan } = body ?? {}
+  let body: any = null
+  try {
+    body = await req.json()
+  } catch {
+    body = null
+  }
+
+  const plan = safePlan(body?.plan)
 
   if (plan === 'free') {
-    return NextResponse.json({
-      access: {
-        denied: true,
-        limited_to_one: false,
-        message:
-          'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).',
+    return NextResponse.json(
+      {
+        access: {
+          denied: true,
+          limited_to_one: false,
+          message:
+            'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).',
+        },
+        query_echo: body,
+        suggestions: [],
+        aggregates: { consolidated_shopping_list: [] },
       },
-      query_echo: body,
-      suggestions: [],
-      aggregates: { consolidated_shopping_list: [] },
-    })
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
   }
 
   const demo = {
@@ -80,7 +99,7 @@ export async function POST(req: Request) {
           'Evite excesso de sal; para <2 anos, sirva sem molhos salgados.',
         ],
         shopping_list: ['abobrinha', 'ovo', 'aveia/farinha', 'azeite', 'queijo (opcional)'],
-        microcopy: 'Você merece praticidade hoje 💛',
+        microcopy: 'Você merece praticidade hoje.',
         racional: 'Selecionada por rapidez, 1 tigela, airfryer e orçamento $.',
       },
       {
@@ -175,16 +194,19 @@ export async function POST(req: Request) {
   }
 
   if (plan === 'essencial') {
-    return NextResponse.json({
-      ...demo,
-      access: {
-        denied: false,
-        limited_to_one: true,
-        message: 'No Essencial você vê 1 receita por dia.',
+    return NextResponse.json(
+      {
+        ...demo,
+        access: {
+          denied: false,
+          limited_to_one: true,
+          message: 'No Essencial você vê 1 receita por dia.',
+        },
+        suggestions: [demo.suggestions[0]],
       },
-      suggestions: [demo.suggestions[0]],
-    })
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
   }
 
-  return NextResponse.json(demo)
+  return NextResponse.json(demo, { status: 200, headers: NO_STORE_HEADERS })
 }
