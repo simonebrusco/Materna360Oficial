@@ -401,12 +401,13 @@ export default function Client() {
   }
 
   function readPlanPersist(): PlanPersist | null {
-    try {
-      return load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null)
-    } catch {
-      return null
-    }
+  try {
+    const v = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null)
+    return v ?? null
+  } catch {
+    return null
   }
+}
 
   function writePlanPersist(next: PlanPersist) {
     try {
@@ -511,7 +512,7 @@ export default function Client() {
 
     // 3 próximas opções a partir do baseIndex (sem repetir a selecionada, se der)
     const base = st.baseIndex
-    const out: PlanItem[] = []
+    const out: PlanItem[] = [] a
     for (let k = 1; k <= 5 && out.length < 3; k++) {
       const it = pickFromPool(base + k)
       if (!it) continue
