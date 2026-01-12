@@ -172,6 +172,17 @@ export default function ParaAgoraSupportCard({
   const isEmbedded = variant === 'embedded'
   const headerTitle = isEmbedded ? 'Um respiro para agora' : 'Um apoio para este momento'
 
+  /* =========================================================
+     ✅ P34.11 — 3 ALTERAÇÕES (COPY FINAL)
+     1) Subtítulo
+     2) Label do botão (idle/done)
+     3) “Não agora” -> “Fechar este”
+  ========================================================= */
+
+  const primaryButtonLabel = state.status === 'idle' ? 'Ver 3 apoios' : 'Ver outros 3'
+  const subtitleText = 'Leia com calma. Se algo tocar, fique. Se não, siga o dia.'
+  const dismissLabel = 'Fechar este'
+
   const shellClass = isEmbedded
     ? `
       h-full
@@ -256,7 +267,6 @@ export default function ParaAgoraSupportCard({
 
   return (
     <SoftCard className={[shellClass, 'min-w-0 max-w-full overflow-hidden', className ?? ''].join(' ')}>
-      {/* FIX MOBILE: header vira coluna no mobile e botão não estoura */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           <div className={iconWrapClass}>
@@ -266,29 +276,27 @@ export default function ParaAgoraSupportCard({
           <div className="space-y-1 min-w-0">
             <span className={pillClass}>Para agora</span>
             <h3 className={titleClass}>{headerTitle}</h3>
-            <p className={subtitleClass}>Se fizer sentido, fica. Se não fizer, tudo bem também.</p>
+
+            {/* ✅ ALTERAÇÃO 1: subtítulo */}
+            <p className={subtitleClass}>{subtitleText}</p>
           </div>
         </div>
 
-        {/* FIX MOBILE: botão full width */}
         <div className="w-full sm:w-auto shrink-0">
-          {state.status === 'idle' ? (
-            isEmbedded ? (
-              <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-                Ver sugestões
-              </Button>
-            ) : (
-              <Button className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
-                Ver sugestões
-              </Button>
-            )
-          ) : isEmbedded ? (
+          {isEmbedded ? (
             <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-              Ver outro apoio
+              {/* ✅ ALTERAÇÃO 2: labels */}
+              {primaryButtonLabel}
+            </Button>
+          ) : state.status === 'idle' ? (
+            // ✅ idle: sem variant (evita "default" inválido)
+            <Button className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
+              {primaryButtonLabel}
             </Button>
           ) : (
+            // ✅ done: secondary (aceito pelo seu ButtonVariant)
             <Button variant="secondary" className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
-              Ver outro apoio
+              {primaryButtonLabel}
             </Button>
           )}
         </div>
@@ -319,7 +327,6 @@ export default function ParaAgoraSupportCard({
           {visibleItems.length ? (
             visibleItems.map((item) => (
               <div key={item.id} className={itemShellClass}>
-                {/* FIX MOBILE: min-w-0 e quebra correta */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     {item.tag ? <span className={itemTagClass}>{item.tag}</span> : null}
@@ -329,7 +336,8 @@ export default function ParaAgoraSupportCard({
 
                   <div className="flex items-center gap-2 shrink-0">
                     <button type="button" className={dismissBtnClass} onClick={() => dismissOne(item.id)}>
-                      Não agora
+                      {/* ✅ ALTERAÇÃO 3: label */}
+                      {dismissLabel}
                     </button>
                   </div>
                 </div>

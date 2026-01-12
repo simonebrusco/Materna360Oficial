@@ -23,7 +23,6 @@ import { getActiveChildOrNull, getProfileSnapshot, type ProfileSource } from '@/
 import { Reveal } from '@/components/ui/Reveal'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import LegalFooter from '@/components/common/LegalFooter'
-import { SoftCard } from '@/components/ui/card'
 import AppIcon from '@/components/ui/AppIcon'
 
 export const dynamic = 'force-dynamic'
@@ -48,13 +47,11 @@ type Kit = {
   plan: { a: PlanItem; b: PlanItem; c: PlanItem }
   development: { label: string; note: string }
   routine: { label: string; note: string }
-  connection: { label: string; note: string } // ✅ note é obrigatório
+  connection: { label: string; note: string }
 }
 
 /**
  * P34.10 — Tema (decisão mínima) para Bloco 3
- * - Rotina: temas de transição/fluxo
- * - Conexão: temas de fechamento/gesto
  */
 type RotinaTema = 'transicao' | 'banho' | 'jantar' | 'sono' | 'manha'
 type ConexaoTema = 'checkin' | 'carinho' | 'conversa' | 'calmaria'
@@ -74,6 +71,39 @@ const CONEXAO_TEMAS: { id: ConexaoTema; label: string }[] = [
   { id: 'calmaria', label: 'Calmaria' },
 ]
 
+/**
+ * Filtros — Brincadeiras (Bloco 2)
+ */
+type PlayLocation = 'casa' | 'ar_livre' | 'deslocamento'
+type SkillId = 'motor' | 'linguagem' | 'emocional' | 'cognitivo' | 'social' | 'autonomia'
+
+const PLAY_LOCATIONS: { id: PlayLocation; label: string; hint: string }[] = [
+  { id: 'casa', label: 'Em casa', hint: 'Sem bagunça grande' },
+  { id: 'ar_livre', label: 'Ao ar livre', hint: 'Parque, quintal, rua' },
+  { id: 'deslocamento', label: 'Em deslocamento', hint: 'Fila, carro, espera' },
+]
+
+const SKILLS: { id: SkillId; label: string }[] = [
+  { id: 'motor', label: 'Motor' },
+  { id: 'linguagem', label: 'Linguagem' },
+  { id: 'emocional', label: 'Emoções' },
+  { id: 'cognitivo', label: 'Cognitivo' },
+  { id: 'social', label: 'Social' },
+  { id: 'autonomia', label: 'Autonomia' },
+]
+
+/**
+ * Filtros — Fase (Bloco 4)
+ */
+type FaseFoco = 'atencao' | 'emocao' | 'autonomia' | 'social' | 'linguagem'
+const FASE_FOCOS: { id: FaseFoco; label: string }[] = [
+  { id: 'atencao', label: 'Atenção' },
+  { id: 'emocao', label: 'Emoções' },
+  { id: 'autonomia', label: 'Autonomia' },
+  { id: 'social', label: 'Social' },
+  { id: 'linguagem', label: 'Linguagem' },
+]
+
 const LS_PREFIX = 'm360:'
 
 function safeGetLS(key: string): string | null {
@@ -87,16 +117,11 @@ function safeGetLS(key: string): string | null {
   }
 }
 
-/**
- * P26: gravar com prefixo (padrão do projeto) e manter compat opcional sem prefixo.
- * Isso evita “sumir” preferências quando o app lê por ambos formatos.
- */
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
-    // compat legado (silencioso)
-    window.localStorage.setItem(key, value)
+    window.localStorage.setItem(key, value) // compat legado
   } catch {}
 }
 
@@ -124,9 +149,6 @@ function timeHint(t: TimeMode) {
 
 /**
  * Preferências “silenciosas” do hub Meu Filho.
- * - time: quanto tempo ela tem
- * - ageBand override: se ela trocar manualmente (sem exigir)
- * - preferredChildId: opcional
  */
 const HUB_PREF = {
   time: 'maternar/meu-filho/pref/time',
@@ -134,17 +156,9 @@ const HUB_PREF = {
   preferredChildId: 'maternar/meu-filho/pref/childId',
 }
 
-/**
- * Deriva AgeBand do ageMonths.
- * 0–2: 0..35
- * 3–4: 36..59
- * 5–6: 60..83
- * 6+: 84+
- */
 function ageBandFromMonths(ageMonths: number | null | undefined): AgeBand | null {
   if (typeof ageMonths !== 'number' || !Number.isFinite(ageMonths)) return null
   const m = Math.max(0, Math.floor(ageMonths))
-
   if (m <= 35) return '0-2'
   if (m <= 59) return '3-4'
   if (m <= 83) return '5-6'
@@ -163,49 +177,118 @@ function normalizeTimeMode(v: unknown): TimeMode | null {
   return null
 }
 
-/**
- * Inferência “best effort”:
- * Prioridade:
- * 1) Pref do hub (time) + override (ageBand) se existir
- * 2) Perfil Eu360 (child ativo -> ageMonths -> ageBand)
- * 3) Fallback antigo (eu360_time_with_child / eu360_child_age_band)
- * 4) Defaults seguros
- */
-function inferContext(): { time: TimeMode; age: AgeBand; childLabel?: string } {
-  // 1) preferências do hub
+function normalizePlayLocation(v: unknown): PlayLocation | null {
+  const s = String(v ?? '').trim()
+  if (s === 'casa' || s === 'ar_livre' || s === 'deslocamento') return s
+  return null
+}
+
+function normalizeSkills(v: unknown): SkillId[] {
+  if (!Array.isArray(v)) return []
+  const out: SkillId[] = []
+  v.forEach((x) => {
+    const s = String(x ?? '').trim()
+    if (
+      s === 'motor' ||
+      s === 'linguagem' ||
+      s === 'emocional' ||
+      s === 'cognitivo' ||
+      s === 'social' ||
+      s === 'autonomia'
+    ) {
+      out.push(s)
+    }
+  })
+  return out
+}
+
+function normalizeFaseFoco(v: unknown): FaseFoco | null {
+  const s = String(v ?? '').trim()
+  if (s === 'atencao' || s === 'emocao' || s === 'autonomia' || s === 'social' || s === 'linguagem') return s
+  return null
+}
+
+const HUB_PREF_FILTERS = {
+  playLocation: 'maternar/meu-filho/pref/playLocation',
+  skills: 'maternar/meu-filho/pref/skills',
+  faseFoco: 'maternar/meu-filho/pref/faseFoco',
+}
+
+function inferContext(): {
+  time: TimeMode
+  age: AgeBand
+  childLabel?: string
+  playLocation: PlayLocation
+  skills: SkillId[]
+  faseFoco: FaseFoco
+} {
   const prefTime = normalizeTimeMode(safeGetLS(HUB_PREF.time))
   const prefAgeBand = normalizeAgeBand(safeGetLS(HUB_PREF.ageBand))
   const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
 
-  // 2) perfil (fonte única)
+  const prefLocation = normalizePlayLocation(safeGetLS(HUB_PREF_FILTERS.playLocation))
+  const prefSkills = normalizeSkills(
+    (() => {
+      try {
+        const raw = safeGetLS(HUB_PREF_FILTERS.skills)
+        if (!raw) return []
+        return JSON.parse(raw)
+      } catch {
+        return []
+      }
+    })(),
+  )
+  const prefFaseFoco = normalizeFaseFoco(safeGetLS(HUB_PREF_FILTERS.faseFoco))
+
   const child = getActiveChildOrNull(prefChildId)
   const derivedAgeBand = ageBandFromMonths(child?.ageMonths ?? null)
 
-  // 3) fallback antigo (compat)
   const legacyTime = normalizeTimeMode(safeGetLS('eu360_time_with_child'))
   const legacyAgeBand = normalizeAgeBand(safeGetLS('eu360_child_age_band'))
 
   const time: TimeMode = prefTime ?? legacyTime ?? '15'
   const age: AgeBand = prefAgeBand ?? derivedAgeBand ?? legacyAgeBand ?? '3-4'
 
-  return { time, age, childLabel: child?.label }
+  return {
+    time,
+    age,
+    childLabel: child?.label,
+    playLocation: prefLocation ?? 'casa',
+    skills: prefSkills.length ? prefSkills : (['emocional'] as SkillId[]),
+    faseFoco: prefFaseFoco ?? 'emocao',
+  }
+}
+
+/* =========================
+   Helpers — variação / anti-cache
+========================= */
+
+function newNonce() {
+  try {
+    const c = globalThis.crypto
+    if (c && typeof c.randomUUID === 'function') return c.randomUUID()
+  } catch {}
+  return `n_${Math.random().toString(16).slice(2)}_${Date.now()}`
 }
 
 /* =========================
    P26 — Guardrails + Jornada
 ========================= */
 
+type TaskWithStatus = MyDayTaskItem & { status?: 'active' | 'snoozed' | 'done'; done?: boolean; source?: string }
+
 function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
-  const s = (t as any).status
-  if (s === 'active' || s === 'snoozed' || s === 'done') return s
-  if ((t as any).done === true) return 'done'
+  const tt = t as TaskWithStatus
+  if (tt.status === 'active' || tt.status === 'snoozed' || tt.status === 'done') return tt.status
+  if (tt.done === true) return 'done'
   return 'active'
 }
 
 function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
   return tasks.filter((t) => {
+    const tt = t as TaskWithStatus
     const isFamily = t.origin === 'family'
-    const isFromMeuFilho = (t as any).source === MY_DAY_SOURCES.MATERNAR_MEU_FILHO
+    const isFromMeuFilho = tt.source === MY_DAY_SOURCES.MATERNAR_MEU_FILHO
     const isActive = statusOf(t) === 'active'
     return isFamily && isFromMeuFilho && isActive
   }).length
@@ -243,7 +326,7 @@ type Bloco1State =
   | { status: 'loading' }
   | { status: 'done'; text: string; source: 'ai' | 'fallback' }
 
-async function fetchBloco1Plan(args: { tempoDisponivel: number }): Promise<string | null> {
+async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -255,17 +338,16 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number }): Promise<strin
         tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-1',
+        requestId: args.nonce,
+        nonce: args.nonce,
       }),
     })
 
     if (!res.ok) return null
-
     const data = (await res.json().catch(() => null)) as { suggestions?: { description?: string }[] } | null
-
     const desc = data?.suggestions?.[0]?.description
     const cleaned = safeMeuFilhoBloco1Text(desc)
     if (!cleaned) return null
-
     return cleaned
   } catch {
     return null
@@ -283,14 +365,8 @@ type Bloco2State =
   | { status: 'loading' }
   | { status: 'done'; items: Bloco2Items; source: 'ai' | 'fallback' }
 
-/**
- * Importante:
- * - NÃO remover hífen do meio das frases (ex.: “pré-janta”, “check-in”, “0–2”).
- * - Remover apenas bullets de lista quando aparecem no início de linha.
- */
 function stripEmojiAndBullets(s: string) {
   const text = String(s ?? '')
-
   const noBullets = text
     .replace(/(^|\n)\s*[•●▪▫◦]\s+/g, '$1')
     .replace(/(^|\n)\s*[-–—]\s+/g, '$1')
@@ -310,27 +386,29 @@ function clampText(s: string, max: number) {
 }
 
 function safeBloco2Title(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 52)
+  const t = clampText(String(raw ?? ''), 60)
   if (!t) return null
   if (t.toLowerCase() === 'brincadeira' || t.toLowerCase() === 'atividade') return null
   return t
 }
 
 function safeBloco2How(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 120)
+  const t = clampText(String(raw ?? ''), 320)
   if (!t) return null
   const low = t.toLowerCase()
   if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
+  const hasStepsCue = low.includes('faça') || low.includes('combine') || low.includes('depois') || low.includes('no final')
+  if (!hasStepsCue) return null
   return t
 }
 
-function pick3Suggestions(data: any): { title: string; description: string }[] | null {
-  const arr = Array.isArray(data?.suggestions) ? data.suggestions : null
+type SuggestionPack = { title: string; description: string }
+function pick3Suggestions(data: unknown): SuggestionPack[] | null {
+  const d = data as { suggestions?: unknown }
+  const arr = Array.isArray(d?.suggestions) ? (d?.suggestions as any[]) : null
   if (!arr || arr.length < 3) return null
-  const s0 = arr[0]
-  const s1 = arr[1]
-  const s2 = arr[2]
-  const pack = [s0, s1, s2].map((s) => ({
+
+  const pack = [arr[0], arr[1], arr[2]].map((s) => ({
     title: String(s?.title ?? '').trim(),
     description: String(s?.description ?? '').trim(),
   }))
@@ -338,7 +416,13 @@ function pick3Suggestions(data: any): { title: string; description: string }[] |
   return pack
 }
 
-async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand }): Promise<Bloco2Items | null> {
+async function fetchBloco2Cards(args: {
+  tempoDisponivel: number
+  age: AgeBand
+  playLocation: PlayLocation
+  skills: SkillId[]
+  nonce: string
+}): Promise<Bloco2Items | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -352,6 +436,11 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
         tipoIdeia: 'meu-filho-bloco-2',
         ageBand: args.age,
         contexto: 'exploracao',
+        local: args.playLocation,
+        habilidades: args.skills,
+        requestId: args.nonce,
+        nonce: args.nonce,
+        variation: args.nonce,
       }),
     })
 
@@ -364,12 +453,7 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
       const title = safeBloco2Title(i.title)
       const how = safeBloco2How(i.description)
       if (!title || !how) return null
-      return {
-        title,
-        how,
-        time: String(args.tempoDisponivel) as TimeMode,
-        tag: 'curado',
-      }
+      return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
     }
 
     const a = mk(picked[0])
@@ -384,7 +468,7 @@ async function fetchBloco2Cards(args: { tempoDisponivel: number; age: AgeBand })
 }
 
 /* =========================
-   BLOCO 3 — ROTINAS / CONEXÃO (continuidade sem cobrança)
+   BLOCO 3 — ROTINAS / CONEXÃO
 ========================= */
 
 type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
@@ -393,26 +477,13 @@ type Bloco3Type = 'rotina' | 'conexao'
 type Bloco3State =
   | { status: 'idle' }
   | { status: 'loading'; kind: Bloco3Type }
-  | {
-      status: 'done'
-      kind: Bloco3Type
-      text: string
-      source: 'ai' | 'fallback'
-      momento: MomentoDoDia
-    }
-
-function momentForStep(step: Step): MomentoDoDia {
-  if (step === 'rotina') return 'transição'
-  if (step === 'conexao') return 'noite'
-  return 'tarde'
-}
+  | { status: 'done'; kind: Bloco3Type; text: string; source: 'ai' | 'fallback'; momento: MomentoDoDia }
 
 function clampBloco3Text(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 240)
+  const t = clampText(String(raw ?? ''), 260)
   if (!t) return null
   const low = t.toLowerCase()
 
-  // hard rules: sem cobrança / sem frequência / sem “método”
   const banned = [
     'todo dia',
     'todos os dias',
@@ -426,15 +497,13 @@ function clampBloco3Text(raw: unknown): string | null {
   ]
   if (banned.some((b) => low.includes(b))) return null
 
-  // evitar formato de lista
   if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
-  // limitar frases (best effort): até 3
   const sentences = t
     .split(/[.!?]+/)
     .map((s) => s.trim())
     .filter(Boolean)
-  if (sentences.length > 3) return null
+  if (sentences.length > 4) return null
 
   return t
 }
@@ -460,6 +529,7 @@ async function fetchBloco3Suggestion(args: {
   tipo_experiencia: Bloco3Type
   contexto: 'continuidade'
   tema: RotinaTema | ConexaoTema
+  nonce: string
 }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
@@ -476,6 +546,9 @@ async function fetchBloco3Suggestion(args: {
         tipo_experiencia: args.tipo_experiencia,
         contexto: args.contexto,
         tema: args.tema,
+        requestId: args.nonce,
+        nonce: args.nonce,
+        variation: args.nonce,
       }),
     })
 
@@ -499,10 +572,7 @@ async function fetchBloco3Suggestion(args: {
 }
 
 /* =========================
-   BLOCO 4 — “FASES / CONTEXTO” (Tradução Prática)
-   - 1 frase
-   - máx 140 caracteres
-   - sem tom normativo/diagnóstico
+   BLOCO 4 — “FASES / CONTEXTO”
 ========================= */
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
@@ -521,7 +591,7 @@ function inferMomentoDesenvolvimento(ageBand: AgeBand): MomentoDesenvolvimento |
 }
 
 function clampBloco4Text(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 140)
+  const t = clampText(String(raw ?? ''), 160)
   if (!t) return null
   const low = t.toLowerCase()
 
@@ -566,6 +636,8 @@ async function fetchBloco4Suggestion(args: {
   faixa_etaria: AgeBand
   momento_desenvolvimento?: MomentoDesenvolvimento
   contexto: 'fase'
+  foco: FaseFoco
+  nonce: string
 }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
@@ -580,6 +652,10 @@ async function fetchBloco4Suggestion(args: {
         faixa_etaria: args.faixa_etaria,
         momento_desenvolvimento: args.momento_desenvolvimento,
         contexto: args.contexto,
+        foco: args.foco,
+        requestId: args.nonce,
+        nonce: args.nonce,
+        variation: args.nonce,
       }),
     })
 
@@ -604,7 +680,7 @@ async function fetchBloco4Suggestion(args: {
 }
 
 /* =========================
-   KITS (catálogo local / fallback geral)
+   KITS (fallback local)
 ========================= */
 
 const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
@@ -615,25 +691,12 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: {
-          tag: 'rápido',
-          time: '5',
-          title: 'Cópia de gestos',
-          how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.',
-        },
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
         b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
-        c: {
-          tag: 'sensório',
-          time: '5',
-          title: 'Texturas da casa',
-          how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.',
-        },
+        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: {
-        label: 'Ajuste que ajuda hoje',
-        note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.',
-      },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
       connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
@@ -656,24 +719,9 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: {
-          tag: 'rotina',
-          time: '15',
-          title: 'Mini ritual pré-janta',
-          how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.',
-        },
-        b: {
-          tag: 'sensório',
-          time: '15',
-          title: 'Caixa de “coisas seguras”',
-          how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.',
-        },
-        c: {
-          tag: 'calmo',
-          time: '15',
-          title: 'Banho de brinquedos',
-          how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.',
-        },
+        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
@@ -815,18 +863,15 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
 }
 
 /* =========================
-   P34.10 — Legibilidade Mobile
-   Quebra editorial de texto
+   P34.10 — Legibilidade Mobile (quebra editorial)
 ========================= */
 
 function splitEditorialText(raw: string | null | undefined): string[] {
   if (!raw) return []
-
   const text = String(raw).trim()
   if (!text) return []
 
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
-
   let working = text
   markers.forEach((m) => {
     working = working.replace(new RegExp(`\\s*${m}`, 'g'), `\n\n${m}`)
@@ -838,7 +883,7 @@ function splitEditorialText(raw: string | null | undefined): string[] {
     .filter(Boolean)
 
   if (parts.length === 0) return [text]
-  return parts.slice(0, 3)
+  return parts.slice(0, 4)
 }
 
 function RenderEditorialText({
@@ -852,7 +897,6 @@ function RenderEditorialText({
 }) {
   const parts = splitEditorialText(text)
   if (parts.length === 0) return null
-
   return (
     <div className={['space-y-2', wrapClassName ?? ''].join(' ').trim()}>
       {parts.map((p, i) => (
@@ -861,6 +905,56 @@ function RenderEditorialText({
         </p>
       ))}
     </div>
+  )
+}
+
+function Chip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-[12px] transition select-none',
+        active
+          ? 'bg-white border-white text-[#2f3a56]'
+          : 'bg-white/20 border-white/35 text-white hover:bg-white/30',
+      ].join(' ')}
+    >
+      <span className="leading-none">{label}</span>
+    </button>
+  )
+}
+
+function SubChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'rounded-full border px-3 py-1.5 text-[12px] transition',
+        active
+          ? 'bg-[#fd2597] border-[#fd2597] text-white'
+          : 'bg-white border-[#ffd1e6] text-[#2f3a56] hover:bg-[#fff3f8]',
+      ].join(' ')}
+    >
+      {label}
+    </button>
   )
 }
 
@@ -875,23 +969,30 @@ export default function MeuFilhoClient() {
 
   const [familyDoneToday, setFamilyDoneToday] = useState(false)
 
-  // ✅ P34.10: seleção mínima de tema antes de gerar Bloco 3
+  // filtros: brincadeiras
+  const [playLocation, setPlayLocation] = useState<PlayLocation>('casa')
+  const [skills, setSkills] = useState<SkillId[]>(['emocional'])
+
+  // foco: fase
+  const [faseFoco, setFaseFoco] = useState<FaseFoco>('emocao')
+
+  // seleção mínima de tema antes de gerar Bloco 3
   const [rotinaTema, setRotinaTema] = useState<RotinaTema | null>(null)
   const [conexaoTema, setConexaoTema] = useState<ConexaoTema | null>(null)
 
-  // Bloco 1 (canônico)
+  // Bloco 1
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
   const bloco1ReqSeq = useRef(0)
 
-  // Bloco 2 (IA + fallback)
+  // Bloco 2
   const [bloco2, setBloco2] = useState<Bloco2State>({ status: 'idle' })
   const bloco2ReqSeq = useRef(0)
 
-  // Bloco 3 (Rotina/Conexão — continuidade)
+  // Bloco 3
   const [bloco3, setBloco3] = useState<Bloco3State>({ status: 'idle' })
   const bloco3ReqSeq = useRef(0)
 
-  // Bloco 4 (Fase/Contexto — 1 frase)
+  // Bloco 4
   const [bloco4, setBloco4] = useState<Bloco4State>({ status: 'idle' })
   const bloco4ReqSeq = useRef(0)
 
@@ -902,8 +1003,14 @@ export default function MeuFilhoClient() {
   }, [])
 
   useEffect(() => {
-    // ✅ blindagem: não deixar storage/perfil derrubar a tela
-    let inferred: { time: TimeMode; age: AgeBand; childLabel?: string } = { time: '15', age: '3-4' }
+    let inferred: ReturnType<typeof inferContext> = {
+      time: '15',
+      age: '3-4',
+      playLocation: 'casa',
+      skills: ['emocional'],
+      faseFoco: 'emocao',
+    }
+
     try {
       inferred = inferContext()
     } catch {}
@@ -911,12 +1018,19 @@ export default function MeuFilhoClient() {
     setTime(inferred.time)
     setAge(inferred.age)
     setChildLabel(inferred.childLabel)
+    setPlayLocation(inferred.playLocation)
+    setSkills(inferred.skills)
+    setFaseFoco(inferred.faseFoco)
     setStep('brincadeiras')
+
+    setBloco1({ status: 'idle' })
+    setBloco2({ status: 'idle' })
+    setBloco3({ status: 'idle' })
+    setBloco4({ status: 'idle' })
 
     try {
       const snap = getProfileSnapshot()
       setProfileSource(snap.source)
-
       try {
         track('meu_filho.open', {
           time: inferred.time,
@@ -935,205 +1049,28 @@ export default function MeuFilhoClient() {
 
   const kit = useMemo(() => KITS[age][time], [age, time])
 
-  const effectivePlan: Bloco2Items = useMemo(() => {
+  const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } | null = useMemo(() => {
     if (bloco2.status === 'done') return bloco2.items
-    return kit.plan
-  }, [bloco2, kit.plan])
+    return null
+  }, [bloco2])
 
-  const selected = useMemo(() => effectivePlan[chosen], [effectivePlan, chosen])
-
-  useEffect(() => {
-    let alive = true
-    const seq = ++bloco1ReqSeq.current
-
-    async function run() {
-      setBloco1({ status: 'loading' })
-
-      const tempoDisponivel = Number(time)
-      const ai = await fetchBloco1Plan({ tempoDisponivel })
-
-      if (!alive || seq !== bloco1ReqSeq.current) return
-
-      if (ai) {
-        setBloco1({ status: 'done', text: ai, source: 'ai' })
-        try {
-          track('meu_filho.bloco1.done', { source: 'ai', time, age })
-        } catch {}
-        return
-      }
-
-      const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
-      setBloco1({ status: 'done', text: fb, source: 'fallback' })
-      try {
-        track('meu_filho.bloco1.done', { source: 'fallback', time, age })
-      } catch {}
-    }
-
-    run()
-    return () => {
-      alive = false
-    }
-  }, [time, age])
-
-  useEffect(() => {
-    let alive = true
-    const seq = ++bloco2ReqSeq.current
-
-    async function run() {
-      setBloco2({ status: 'loading' })
-
-      const tempoDisponivel = Number(time)
-      const ai = await fetchBloco2Cards({ tempoDisponivel, age })
-
-      if (!alive || seq !== bloco2ReqSeq.current) return
-
-      if (ai) {
-        setBloco2({ status: 'done', items: ai, source: 'ai' })
-        try {
-          track('meu_filho.bloco2.done', { source: 'ai', time, age })
-        } catch {}
-        return
-      }
-
-      setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
-      try {
-        track('meu_filho.bloco2.done', { source: 'fallback', time, age })
-      } catch {}
-    }
-
-    run()
-    return () => {
-      alive = false
-    }
-  }, [time, age, kit.plan])
-
-  /**
-   * ✅ BLOCO 3 — versão typesafe
-   * Só gera quando existe tema escolhido (rotinaTema/conexaoTema).
-   */
-  useEffect(() => {
-    if (step !== 'rotina' && step !== 'conexao') return
-
-    let alive = true
-    const seq = ++bloco3ReqSeq.current
-
-    async function run() {
-      const kind: Bloco3Type = step === 'rotina' ? 'rotina' : 'conexao'
-      const momento = momentForStep(step)
-
-      if (kind === 'rotina') {
-        const tema = rotinaTema
-        if (!tema) return
-
-        setBloco3({ status: 'loading', kind })
-
-        const ai = await fetchBloco3Suggestion({
-          faixa_etaria: age,
-          momento_do_dia: momento,
-          tipo_experiencia: kind,
-          contexto: 'continuidade',
-          tema,
-        })
-
-        if (!alive || seq !== bloco3ReqSeq.current) return
-
-        if (ai) {
-          setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
-          try {
-            track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
-          } catch {}
-          return
-        }
-
-        const fb = BLOCO3_FALLBACK[kind][age]
-        setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
-        try {
-          track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
-        } catch {}
-        return
-      }
-
-      // kind === 'conexao'
-      const tema = conexaoTema
-      if (!tema) return
-
-      setBloco3({ status: 'loading', kind })
-
-      const ai = await fetchBloco3Suggestion({
-        faixa_etaria: age,
-        momento_do_dia: momento,
-        tipo_experiencia: kind,
-        contexto: 'continuidade',
-        tema,
-      })
-
-      if (!alive || seq !== bloco3ReqSeq.current) return
-
-      if (ai) {
-        setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
-        try {
-          track('meu_filho.bloco3.done', { source: 'ai', kind, age, momento, tema })
-        } catch {}
-        return
-      }
-
-      const fb = BLOCO3_FALLBACK[kind][age]
-      setBloco3({ status: 'done', kind, text: fb, source: 'fallback', momento })
-      try {
-        track('meu_filho.bloco3.done', { source: 'fallback', kind, age, momento, tema })
-      } catch {}
-    }
-
-    run()
-    return () => {
-      alive = false
-    }
-  }, [step, age, rotinaTema, conexaoTema])
-
-  useEffect(() => {
-    if (step !== 'desenvolvimento') return
-
-    let alive = true
-    const seq = ++bloco4ReqSeq.current
-
-    async function run() {
-      setBloco4({ status: 'loading' })
-
-      const momento = inferMomentoDesenvolvimento(age)
-      const ai = await fetchBloco4Suggestion({
-        faixa_etaria: age,
-        momento_desenvolvimento: momento,
-        contexto: 'fase',
-      })
-
-      if (!alive || seq !== bloco4ReqSeq.current) return
-
-      if (ai) {
-        setBloco4({ status: 'done', text: ai, source: 'ai', momento })
-        try {
-          track('meu_filho.bloco4.done', { source: 'ai', age, momento })
-        } catch {}
-        return
-      }
-
-      const fb = BLOCO4_FALLBACK[age]
-      setBloco4({ status: 'done', text: fb, source: 'fallback', momento })
-      try {
-        track('meu_filho.bloco4.done', { source: 'fallback', age, momento })
-      } catch {}
-    }
-
-    run()
-    return () => {
-      alive = false
-    }
-  }, [step, age])
+  const selected = useMemo(() => {
+    if (effectivePlan) return effectivePlan[chosen]
+    return kit.plan[chosen]
+  }, [effectivePlan, chosen, kit.plan])
 
   function go(next: Step) {
     setStep(next)
     try {
       track('meu_filho.step', { step: next })
     } catch {}
+  }
+
+  function hardResetGenerated() {
+    setBloco1({ status: 'idle' })
+    setBloco2({ status: 'idle' })
+    setBloco3({ status: 'idle' })
+    setBloco4({ status: 'idle' })
   }
 
   function onSelectTime(next: TimeMode) {
@@ -1143,10 +1080,9 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.time, next)
     safeSetLS('eu360_time_with_child', next)
 
-    // reset tema (evita “tema antigo” com novo contexto)
     setRotinaTema(null)
     setConexaoTema(null)
-    setBloco3({ status: 'idle' })
+    hardResetGenerated()
 
     try {
       track('meu_filho.time.select', { time: next })
@@ -1160,10 +1096,9 @@ export default function MeuFilhoClient() {
     safeSetLS(HUB_PREF.ageBand, next)
     safeSetLS('eu360_child_age_band', next)
 
-    // reset tema (evita “tema antigo” com novo contexto)
     setRotinaTema(null)
     setConexaoTema(null)
-    setBloco3({ status: 'idle' })
+    hardResetGenerated()
 
     try {
       track('meu_filho.age.select', { age: next, reason: 'manual_override' })
@@ -1177,9 +1112,132 @@ export default function MeuFilhoClient() {
         which: k,
         time,
         age,
-        source: bloco2.status === 'done' ? bloco2.source : 'unknown',
+        source: bloco2.status === 'done' ? bloco2.source : 'none',
       })
     } catch {}
+  }
+
+  // ✅ FIX typing (SkillId[] garantido)
+  function toggleSkill(id: SkillId) {
+    setSkills((prev): SkillId[] => {
+      const has = prev.includes(id)
+      const next: SkillId[] = has ? prev.filter((x) => x !== id) : [...prev, id]
+      const safe: SkillId[] = next.length ? next : (['emocional'] as SkillId[])
+
+      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(safe))
+      return safe
+    })
+
+    setBloco2({ status: 'idle' })
+  }
+
+  function onSelectPlayLocation(loc: PlayLocation) {
+    setPlayLocation(loc)
+    safeSetLS(HUB_PREF_FILTERS.playLocation, loc)
+    setBloco2({ status: 'idle' })
+  }
+
+  function onSelectFaseFoco(f: FaseFoco) {
+    setFaseFoco(f)
+    safeSetLS(HUB_PREF_FILTERS.faseFoco, f)
+    setBloco4({ status: 'idle' })
+  }
+
+  async function generateBloco1() {
+    const seq = ++bloco1ReqSeq.current
+    const nonce = newNonce()
+
+    setBloco1({ status: 'loading' })
+
+    const tempoDisponivel = Number(time)
+    const ai = await fetchBloco1Plan({ tempoDisponivel, nonce })
+    if (seq !== bloco1ReqSeq.current) return
+
+    if (ai) {
+      setBloco1({ status: 'done', text: ai, source: 'ai' })
+      return
+    }
+
+    const fb = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
+    setBloco1({ status: 'done', text: fb, source: 'fallback' })
+  }
+
+  async function generateBloco2() {
+    const seq = ++bloco2ReqSeq.current
+    const nonce = newNonce()
+
+    setBloco2({ status: 'loading' })
+
+    const tempoDisponivel = Number(time)
+    const ai = await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce })
+    if (seq !== bloco2ReqSeq.current) return
+
+    if (ai) {
+      setBloco2({ status: 'done', items: ai, source: 'ai' })
+      setChosen('a')
+      return
+    }
+
+    // fallback local sempre (sem toast de erro)
+    setBloco2({ status: 'done', items: kit.plan, source: 'fallback' })
+    setChosen('a')
+  }
+
+  async function generateBloco4() {
+    const seq = ++bloco4ReqSeq.current
+    const nonce = newNonce()
+
+    setBloco4({ status: 'loading' })
+
+    const momento = inferMomentoDesenvolvimento(age)
+    const ai = await fetchBloco4Suggestion({
+      faixa_etaria: age,
+      momento_desenvolvimento: momento,
+      contexto: 'fase',
+      foco: faseFoco,
+      nonce,
+    })
+
+    if (seq !== bloco4ReqSeq.current) return
+
+    if (ai) {
+      setBloco4({ status: 'done', text: ai, source: 'ai', momento })
+      return
+    }
+
+    setBloco4({ status: 'done', text: BLOCO4_FALLBACK[age], source: 'fallback', momento })
+  }
+
+  async function generateBloco3(kind: Bloco3Type) {
+    const seq = ++bloco3ReqSeq.current
+    const nonce = newNonce()
+
+    const momento: MomentoDoDia = kind === 'rotina' ? 'transição' : 'noite'
+    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+    if (!tema) {
+      toast.info('Escolha um tema antes de gerar.')
+      return
+    }
+
+    setBloco3({ status: 'loading', kind })
+
+    const ai = await fetchBloco3Suggestion({
+      faixa_etaria: age,
+      momento_do_dia: momento,
+      tipo_experiencia: kind,
+      contexto: 'continuidade',
+      tema,
+      nonce,
+    })
+
+    if (seq !== bloco3ReqSeq.current) return
+
+    if (ai) {
+      setBloco3({ status: 'done', kind, text: ai, source: 'ai', momento })
+      return
+    }
+
+    setBloco3({ status: 'done', kind, text: BLOCO3_FALLBACK[kind][age], source: 'fallback', momento })
   }
 
   function saveSelectedToMyDay(title: string) {
@@ -1190,43 +1248,18 @@ export default function MeuFilhoClient() {
     const activeCount = countActiveFamilyFromMeuFilhoToday(today)
     if (activeCount >= 3) {
       toast.info('Você já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
-      try {
-        track('my_day.task.add.blocked', { source: SOURCE, origin: ORIGIN, reason: 'limit_reached', limit: 3 })
-      } catch {}
       return
     }
 
-    const res = addTaskToMyDay({
-      title,
-      origin: ORIGIN,
-      source: SOURCE,
-    })
+    const res = addTaskToMyDay({ title, origin: ORIGIN, source: SOURCE })
 
     if (res.limitHit) {
       toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
-      try {
-        track('my_day.task.add.blocked', {
-          source: SOURCE,
-          origin: ORIGIN,
-          reason: 'open_tasks_limit_hit',
-          dateKey: res.dateKey,
-        })
-      } catch {}
       return
     }
 
     if (res.created) toast.success('Salvo no Meu Dia')
     else toast.info('Já estava no Meu Dia')
-
-    try {
-      track('my_day.task.add', {
-        ok: !!res.ok,
-        created: !!res.created,
-        origin: ORIGIN,
-        source: SOURCE,
-        dateKey: res.dateKey,
-      })
-    } catch {}
   }
 
   function registerFamilyJourney() {
@@ -1234,22 +1267,14 @@ export default function MeuFilhoClient() {
       toast.info('Isso já contou para a sua Jornada hoje')
       return
     }
-
     markJourneyFamilyDone(MY_DAY_SOURCES.MATERNAR_MEU_FILHO)
     setFamilyDoneToday(true)
     toast.success('Registrado na sua Jornada')
   }
 
   const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
+  const bloco2Items = bloco2.status === 'done' ? bloco2.items : null
   const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
-
-  const bloco3Label =
-    bloco3.status === 'loading'
-      ? 'Ajustando para o seu dia…'
-      : bloco3.status === 'done'
-        ? 'Para encaixar no dia'
-        : 'Para encaixar no dia'
-
   const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   return (
@@ -1288,6 +1313,11 @@ export default function MeuFilhoClient() {
                   Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
                 </div>
               ) : null}
+
+              {/* (debug silencioso de fonte, opcional manter) */}
+              {profileSource !== 'none' ? (
+                <div className="text-[11px] text-white/60">Fonte de perfil: {profileSource}</div>
+              ) : null}
             </div>
           </header>
 
@@ -1302,6 +1332,7 @@ export default function MeuFilhoClient() {
                 overflow-hidden
               "
             >
+              {/* TOP CONTROLS */}
               <div className="p-4 md:p-6 border-b border-white/25">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -1314,7 +1345,7 @@ export default function MeuFilhoClient() {
                         Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
-                        Sugestão pronta para agora
+                        Plano pronto para agora
                       </div>
                       <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">
                         {timeHint(time)}
@@ -1386,455 +1417,451 @@ export default function MeuFilhoClient() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {(
-                    [
-                      { id: 'brincadeiras' as const, label: 'Brincadeiras' },
-                      { id: 'desenvolvimento' as const, label: 'Fase' },
-                      { id: 'rotina' as const, label: 'Rotina' },
-                      { id: 'conexao' as const, label: 'Conexão' },
-                    ] as const
-                  ).map((it) => {
-                    const active = step === it.id
-                    return (
-                      <button
-                        key={it.id}
-                        onClick={() => go(it.id)}
-                        className={[
-                          'rounded-full px-3 py-1.5 text-[12px] border transition',
-                          active
-                            ? 'bg-white/90 border-white/60 text-[#2f3a56]'
-                            : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
-                        ].join(' ')}
-                      >
-                        {it.label}
-                      </button>
-                    )
-                  })}
+                  <Chip label="Brincadeiras" active={step === 'brincadeiras'} onClick={() => go('brincadeiras')} />
+                  <Chip label="Fase" active={step === 'desenvolvimento'} onClick={() => go('desenvolvimento')} />
+                  <Chip label="Rotina" active={step === 'rotina'} onClick={() => go('rotina')} />
+                  <Chip label="Conexão" active={step === 'conexao'} onClick={() => go('conexao')} />
                 </div>
               </div>
 
+              {/* BODY */}
               <div className="p-4 md:p-6">
+                {/* STEP 1 — BRINCADEIRAS */}
                 {step === 'brincadeiras' ? (
-                  <div className="space-y-4">
-                    <SoftCard
-                      className="
-                        p-5 md:p-6 rounded-2xl
-                        bg-white/95
-                        border border-[#f5d7e5]
-                        shadow-[0_6px_18px_rgba(184,35,107,0.09)]
-                      "
-                    >
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
                       <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
                           <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
                         </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Plano pronto para agora
-                          </span>
-                          <p className="text-[13px] text-[#6a6a6a]">Você só executa. Sem decidir nada.</p>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Plano pronto para agora</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
+                            Você só escolhe o cenário — eu te entrego 3 opções boas.
+                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">
+                            Sem catálogo infinito. Só 3 opções que cabem no seu tempo.
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                        {bloco1.status === 'loading' ? (
-                          <div className="text-[13px] text-[#6a6a6a]">Gerando um plano pronto para agora…</div>
-                        ) : (
-                          <RenderEditorialText
-                            text={bloco1Text}
-                            pClassName="text-[14px] font-semibold text-[#2f3a56] leading-relaxed"
-                          />
-                        )}
+                      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Onde vocês estão?</div>
+                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {PLAY_LOCATIONS.map((l) => {
+                              const active = playLocation === l.id
+                              return (
+                                <button
+                                  key={l.id}
+                                  type="button"
+                                  onClick={() => onSelectPlayLocation(l.id)}
+                                  className={[
+                                    'rounded-xl border p-3 text-left transition',
+                                    active
+                                      ? 'bg-[#fff3f8] border-[#fd2597]'
+                                      : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                  ].join(' ')}
+                                >
+                                  <div className="text-[12px] font-semibold text-[#2f3a56]">{l.label}</div>
+                                  <div className="text-[11px] text-[#545454] mt-1">{l.hint}</div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">
+                            Que habilidades você quer estimular?
+                          </div>
+                          <div className="text-[12px] text-[#545454] mt-1">
+                            Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {SKILLS.map((s) => {
+                              const active = skills.includes(s.id)
+                              return (
+                                <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={generateBloco1}
+                          className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-lg transition"
+                        >
+                          Gerar plano para agora
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generateBloco2}
+                          className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] shadow-sm transition"
+                        >
+                          Gerar 3 opções
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => go('desenvolvimento')}
+                          className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] shadow-sm transition"
+                        >
+                          Ir para Fase
+                        </button>
+                      </div>
+
+                      <div className="mt-5 border-t border-[#ffd1e6] pt-5">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para agora</div>
+
+                        <div className="mt-2 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                          {bloco1.status === 'idle' ? (
+                            <div className="text-[13px] text-[#545454]">
+                              Clique em “Gerar plano para agora” para receber uma sugestão curta e pronta.
+                            </div>
+                          ) : bloco1.status === 'loading' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <RenderEditorialText
+                              text={bloco1Text}
+                              pClassName="text-[14px] text-[#2f3a56] leading-relaxed"
+                            />
+                          )}
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveSelectedToMyDay(`Meu Filho: ${timeLabel(time)} — plano para agora`)}
+                              className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                            >
+                              Salvar no Meu Dia
+                            </button>
+                            <button
+                              type="button"
+                              onClick={generateBloco1}
+                              className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                            >
+                              Nova sugestão
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-5">
+                          <div className="text-[12px] font-semibold text-[#fd2597]">3 opções (com base nos filtros)</div>
+
+                          {bloco2.status === 'idle' ? (
+                            <div className="mt-2 text-[13px] text-[#545454]">
+                              Clique em “Gerar 3 opções” para receber brincadeiras completas (com começo, meio e fim).
+                            </div>
+                          ) : bloco2.status === 'loading' ? (
+                            <div className="mt-2 text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <div className="mt-3 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {(['a', 'b', 'c'] as const).map((k) => {
+                                  const it = (bloco2Items ?? kit.plan)[k]
+                                  const active = chosen === k
+                                  return (
+                                    <button
+                                      key={k}
+                                      type="button"
+                                      onClick={() => onChoose(k)}
+                                      className={[
+                                        'rounded-2xl border p-4 text-left transition',
+                                        active
+                                          ? 'bg-[#fff3f8] border-[#fd2597]'
+                                          : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                      ].join(' ')}
+                                    >
+                                      <div className="text-[11px] font-semibold text-[#fd2597] uppercase tracking-wide">
+                                        {it.tag} • {timeLabel(it.time)}
+                                      </div>
+                                      <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{it.title}</div>
+                                      <div className="mt-2 text-[12px] text-[#545454] line-clamp-3">{it.how}</div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+
+                              <div className="rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                                <div className="text-[12px] font-semibold text-[#fd2597]">Opção selecionada</div>
+                                <div className="mt-1 text-[15px] font-semibold text-[#2f3a56]">{selected.title}</div>
+                                <div className="mt-2">
+                                  <RenderEditorialText
+                                    text={selected.how}
+                                    pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
+                                  />
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveSelectedToMyDay(`Meu Filho: ${selected.title}`)}
+                                    className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                                  >
+                                    Salvar no Meu Dia
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={generateBloco2}
+                                    className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                                  >
+                                    Gerar novas 3 opções
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => go('conexao')}
+                                    className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                                  >
+                                    Fechar com conexão
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="text-[11px] text-[#545454]">
+                                Fonte: {bloco2.source === 'ai' ? 'gerado' : 'opções locais (fallback)'}.
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 2 — FASE */}
+                {step === 'desenvolvimento' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="info" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Desenvolvimento por fase</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
+                            O que costuma aparecer
+                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">
+                            Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o foco</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {FASE_FOCOS.map((f) => (
+                            <SubChip
+                              key={f.id}
+                              label={f.label}
+                              active={faseFoco === f.id}
+                              onClick={() => onSelectFaseFoco(f.id)}
+                            />
+                          ))}
+                        </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
                             type="button"
-                            disabled={bloco1.status !== 'done'}
-                            onClick={() => {
-                              if (!bloco1Text) return
-                              saveSelectedToMyDay(bloco1Text)
-                              try {
-                                track('meu_filho.bloco1.save', {
-                                  time,
-                                  age,
-                                  source: bloco1.status === 'done' ? bloco1.source : 'unknown',
-                                })
-                              } catch {}
-                            }}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              bloco1.status === 'done'
-                                ? 'bg-[#fd2597] text-white hover:opacity-95'
-                                : 'bg-[#ffd8e6] text-[#b8236b] opacity-70 cursor-not-allowed',
-                            ].join(' ')}
-                            title="Salvar este plano no Meu Dia"
+                            onClick={generateBloco4}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
                           >
-                            Salvar no Meu Dia
-                          </button>
-
-                          <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Fechar com conexão
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 border-t border-[#f5d7e5] pt-5">
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                            <AppIcon name="toy" size={22} className="text-[#fd2597]" />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                              Brincadeiras do dia
-                            </span>
-                            <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.title}</h2>
-                            <p className="text-[13px] text-[#6a6a6a]">{kit.subtitle}</p>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 text-[11px] text-[#6a6a6a]">
-                          {bloco2.status === 'loading'
-                            ? 'Curando 3 opções para hoje…'
-                            : bloco2.status === 'done'
-                              ? bloco2.source === 'ai'
-                                ? 'Opções curadas para hoje'
-                                : 'Opções locais (fallback)'
-                              : null}
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {(['a', 'b', 'c'] as const).map((k) => {
-                            const it = effectivePlan[k]
-                            const active = chosen === k
-                            return (
-                              <button
-                                key={k}
-                                onClick={() => onChoose(k)}
-                                className={[
-                                  'rounded-2xl border p-4 text-left transition',
-                                  active
-                                    ? 'bg-[#ffd8e6] border-[#f5d7e5]'
-                                    : 'bg-white border-[#f5d7e5] hover:bg-[#ffe1f1]',
-                                ].join(' ')}
-                                disabled={bloco2.status === 'loading'}
-                                aria-disabled={bloco2.status === 'loading'}
-                              >
-                                <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                                  {it.tag} • {timeLabel(it.time)}
-                                </div>
-                                <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">
-                                  {it.title}
-                                </div>
-
-                                <RenderEditorialText
-                                  text={it.how}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[12px] text-[#6a6a6a] leading-relaxed"
-                                />
-                              </button>
-                            )
-                          })}
-                        </div>
-
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">
-                            opção selecionada
-                          </div>
-                          <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{selected.title}</div>
-
-                          <RenderEditorialText
-                            text={selected.how}
-                            wrapClassName="mt-2"
-                            pClassName="text-[13px] text-[#6a6a6a] leading-relaxed"
-                          />
-
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                              onClick={() => go('conexao')}
-                              className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                            >
-                              Fechar com conexão
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => saveSelectedToMyDay(selected.title)}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                              title="Salvar esta sugestão no Meu Dia"
-                            >
-                              Salvar no Meu Dia
-                            </button>
-
-                            <button
-                              onClick={() => go('rotina')}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Ajuste de rotina
-                            </button>
-
-                            <button
-                              onClick={() => go('desenvolvimento')}
-                              className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                            >
-                              Entender a fase
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
-
-                {step === 'desenvolvimento' ? (
-                  <div className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="child" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Desenvolvimento por fase
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.development.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[14px] font-semibold text-[#2f3a56]">Para a faixa {age}:</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.development.note}</div>
-
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Nessa fase</div>
-
-                          {bloco4.status === 'loading' ? (
-                            <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para a fase…</div>
-                          ) : (
-                            <div className="mt-2 text-[13px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
-                          )}
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <button
-                            onClick={() => go('brincadeiras')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
-                          >
-                            Voltar para a brincadeira
+                            Nova orientação
                           </button>
                           <button
+                            type="button"
                             onClick={() => go('rotina')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
                           >
                             Ajuste de rotina
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Voltar para brincadeiras
+                          </button>
                         </div>
                       </div>
-                    </SoftCard>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Nesta fase</div>
+                        <div className="mt-2">
+                          {bloco4.status === 'idle' ? (
+                            <div className="text-[13px] text-[#545454]">
+                              Clique em “Nova orientação” para receber uma frase útil para hoje.
+                            </div>
+                          ) : bloco4.status === 'loading' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <div className="text-[14px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : null}
 
+                {/* STEP 3 — ROTINA */}
                 {step === 'rotina' ? (
-                  <div className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
                       <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="sun" size={22} className="text-[#fd2597]" />
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="sun" size={20} className="text-[#fd2597]" />
                         </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Rotina leve da criança
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.routine.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</p>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Rotina leve da criança</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
+                            Ajuste que ajuda hoje
+                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">
+                            Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[14px] font-semibold text-[#2f3a56]">Para hoje:</div>
-                        <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">{kit.routine.note}</div>
-
-                        {/* ✅ Seleção de tema (obrigatória) */}
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {ROTINA_TEMAS.map((t) => {
-                              const active = rotinaTema === t.id
-                              return (
-                                <button
-                                  key={t.id}
-                                  onClick={() => {
-                                    setRotinaTema(t.id)
-                                    setBloco3({ status: 'idle' })
-                                    try {
-                                      track('meu_filho.bloco3.tema.select', { kind: 'rotina', tema: t.id })
-                                    } catch {}
-                                  }}
-                                  className={[
-                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                    active
-                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                  ].join(' ')}
-                                >
-                                  {t.label}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          {rotinaTema ? (
-                            <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">{bloco3Label}</div>
-
-                              {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
-                              ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
-                                <RenderEditorialText
-                                  text={bloco3Text}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                />
-                              ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Pronto — com o tema escolhido eu ajusto a sugestão.
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Selecione um tema acima para eu ajustar a sugestão.
-                            </div>
-                          )}
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {ROTINA_TEMAS.map((t) => (
+                            <SubChip
+                              key={t.id}
+                              label={t.label}
+                              active={rotinaTema === t.id}
+                              onClick={() => setRotinaTema(t.id)}
+                            />
+                          ))}
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button
-                            onClick={() => go('brincadeiras')}
-                            className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
+                            type="button"
+                            onClick={() => generateBloco3('rotina')}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
                           >
-                            Voltar para a brincadeira
+                            Novo ajuste
                           </button>
                           <button
-                            onClick={() => go('conexao')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
                           >
-                            Fechar com conexão
+                            Voltar para brincadeiras
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('conexao')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Ir para conexão
                           </button>
                         </div>
                       </div>
-                    </SoftCard>
-                  </div>
-                ) : null}
 
-                {step === 'conexao' ? (
-                  <div className="space-y-4">
-                    <SoftCard className="p-5 md:p-6 rounded-2xl bg-white/95 border border-[#f5d7e5] shadow-[0_6px_18px_rgba(184,35,107,0.09)]">
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-[#ffe1f1] flex items-center justify-center shrink-0">
-                          <AppIcon name="heart" size={22} className="text-[#fd2597]" />
-                        </div>
-                        <div className="space-y-1">
-                          <span className="inline-flex items-center rounded-full bg-[#ffe1f1] px-3 py-1 text-[11px] font-semibold tracking-wide text-[#b8236b]">
-                            Gestos de conexão
-                          </span>
-                          <h2 className="text-lg font-semibold text-[#2f3a56]">{kit.connection.label}</h2>
-                          <p className="text-[13px] text-[#6a6a6a]">O final simples que faz a criança sentir: “minha mãe tá aqui”.</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl bg-[#fff7fb] border border-[#f5d7e5] p-5">
-                        <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">agora</div>
-                        <div className="mt-2 text-[14px] font-semibold text-[#2f3a56]">{kit.connection.note}</div>
-
-                        {/* ✅ Seleção de tema (obrigatória) */}
-                        <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-white p-4">
-                          <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Escolha o tema</div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {CONEXAO_TEMAS.map((t) => {
-                              const active = conexaoTema === t.id
-                              return (
-                                <button
-                                  key={t.id}
-                                  onClick={() => {
-                                    setConexaoTema(t.id)
-                                    setBloco3({ status: 'idle' })
-                                    try {
-                                      track('meu_filho.bloco3.tema.select', { kind: 'conexao', tema: t.id })
-                                    } catch {}
-                                  }}
-                                  className={[
-                                    'rounded-full px-3 py-1.5 text-[12px] border transition',
-                                    active
-                                      ? 'bg-[#ffd8e6] border-[#f5d7e5] text-[#2f3a56]'
-                                      : 'bg-white border-[#f5d7e5] text-[#2f3a56] hover:bg-[#ffe1f1]',
-                                  ].join(' ')}
-                                >
-                                  {t.label}
-                                </button>
-                              )
-                            })}
-                          </div>
-
-                          {conexaoTema ? (
-                            <div className="mt-4 rounded-2xl border border-[#f5d7e5] bg-[#fff7fb] p-4">
-                              <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para encaixar no dia</div>
-
-                              {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">Ajustando para o seu dia…</div>
-                              ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
-                                <RenderEditorialText
-                                  text={bloco3Text}
-                                  wrapClassName="mt-2"
-                                  pClassName="text-[13px] text-[#2f3a56] leading-relaxed"
-                                />
-                              ) : (
-                                <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
-                                  Pronto — com o tema escolhido eu ajusto a sugestão.
-                                </div>
-                              )}
-                            </div>
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para encaixar no dia</div>
+                        <div className="mt-2">
+                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
+                            <RenderEditorialText
+                              text={bloco3Text}
+                              pClassName="text-[14px] text-[#2f3a56] leading-relaxed"
+                            />
                           ) : (
-                            <div className="mt-3 text-[13px] text-[#6a6a6a] leading-relaxed">
-                              Selecione um tema acima para eu ajustar a sugestão.
+                            <div className="text-[13px] text-[#545454]">
+                              Selecione um tema e clique em “Novo ajuste”.
                             </div>
                           )}
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
-                        <div className="mt-5 flex flex-wrap gap-2">
+                {/* STEP 4 — CONEXÃO */}
+                {step === 'conexao' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Gestos de conexão</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
+                            Gesto de conexão
+                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">
+                            O final simples que faz a criança sentir: “minha mãe tá aqui”.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {CONEXAO_TEMAS.map((t) => (
+                            <SubChip
+                              key={t.id}
+                              label={t.label}
+                              active={conexaoTema === t.id}
+                              onClick={() => setConexaoTema(t.id)}
+                            />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
                           <button
-                            onClick={registerFamilyJourney}
-                            disabled={familyDoneToday}
-                            className={[
-                              'rounded-full px-4 py-2 text-[12px] shadow-lg transition',
-                              familyDoneToday
-                                ? 'bg-[#ffd8e6] text-[#b8236b] cursor-not-allowed'
-                                : 'bg-[#fd2597] text-white hover:opacity-95',
-                            ].join(' ')}
-                            title="Conta para a sua Jornada"
+                            type="button"
+                            onClick={() => generateBloco3('conexao')}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
                           >
-                            {familyDoneToday ? 'Já registrado hoje' : 'Registrar na Minha Jornada'}
+                            Novo gesto
                           </button>
 
                           <button
+                            type="button"
+                            onClick={registerFamilyJourney}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Registrar na Minha Jornada
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => go('brincadeiras')}
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
                           >
                             Escolher outra brincadeira
                           </button>
-
-                          <Link
-                            href="/maternar"
-                            className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
-                          >
-                            Voltar ao Maternar
-                          </Link>
                         </div>
                       </div>
-                    </SoftCard>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para encerrar</div>
+                        <div className="mt-2">
+                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
+                            <RenderEditorialText
+                              text={bloco3Text}
+                              pClassName="text-[14px] text-[#2f3a56] leading-relaxed"
+                            />
+                          ) : (
+                            <div className="text-[13px] text-[#545454]">
+                              Selecione um tema e clique em “Novo gesto”.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : null}
               </div>

@@ -17,7 +17,14 @@ import { getEu360Signal } from '@/app/lib/eu360Signals.client'
 import { readMyDayCountsToday } from '@/app/lib/myDayCounts.client'
 import { getCareGuidance } from '@/app/lib/cuidarDeMimGuidance'
 
-import QuickIdeaAI from '@/components/my-day/QuickIdeaAI'
+import {
+  addTaskToMyDay,
+  listMyDayTasks,
+  MY_DAY_SOURCES,
+  type MyDayTaskItem,
+} from '@/app/lib/myDayTasks.client'
+import { markRecentMyDaySave } from '@/app/lib/myDayContinuity.client'
+
 import ParaAgoraSupportCard from '@/components/cuidar-de-mim/ParaAgoraSupportCard'
 
 export const dynamic = 'force-dynamic'
@@ -32,6 +39,9 @@ type Ritmo = 'leve' | 'cansada' | 'confusa' | 'ok'
  */
 const PERSIST_KEYS = {
   cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
+
+  // ✅ novo: estado do “Plano para agora” (variação + limite diário)
+  cdmPlanState: 'cuidar_de_mim.para_agora.plan.v1',
 } as const
 
 const LEGACY_LS_KEYS = {
@@ -126,10 +136,6 @@ function readDaySignals(): DaySignals {
 
 /* =========================
    P34.10 — Legibilidade Mobile
-   Helpers locais (sem refator)
-   - quebrar blocos longos
-   - manter texto original
-   - melhorar ritmo no mobile
 ========================= */
 
 function splitEditorialText(raw: string | null | undefined): string[] {
@@ -137,8 +143,6 @@ function splitEditorialText(raw: string | null | undefined): string[] {
   const text = String(raw).trim()
   if (!text) return []
 
-  // 🔒 Ajuste: remover conectores muito genéricos para não quebrar frases demais no mobile.
-  // Mantemos só marcadores de sequência (ritmo editorial).
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
 
   let working = text
@@ -162,8 +166,6 @@ function RenderEditorialText({
   className: string
 }) {
   const parts = splitEditorialText(text)
-
-  // fallback ultra seguro
   if (parts.length === 0) return null
 
   return (
@@ -177,6 +179,108 @@ function RenderEditorialText({
   )
 }
 
+/* =========================
+   “Plano para agora” (estrutura inteligente)
+   - 1 plano selecionado
+   - botão Trocar (variação)
+   - botão Ver 3 opções
+   - limitador diário de trocas
+   - salvar no Meu Dia (limitador 3/dia do hub)
+========================= */
+
+type PlanItem = { id: string; title: string; how: string; ritmo: Ritmo }
+
+const PLAN_POOL: Record<Ritmo, PlanItem[]> = {
+  cansada: [
+    { id: 'c1', title: 'Água + 3 respirações', how: 'Beba um gole. Faça 3 respirações lentas. Só isso.', ritmo: 'cansada' },
+    { id: 'c2', title: 'Fechar uma aba mental', how: 'Escolha 1 coisa que pode esperar. Diga “isso fica para depois”.', ritmo: 'cansada' },
+    { id: 'c3', title: 'Micro ordem (1 ponto)', how: 'Arrume só um ponto visível (bancada / sofá). Pare quando terminar.', ritmo: 'cansada' },
+    { id: 'c4', title: 'Mensagem objetiva que resolve', how: 'Uma mensagem curta para destravar algo. Sem explicar demais.', ritmo: 'cansada' },
+    { id: 'c5', title: 'Pausa de corpo (30s)', how: 'Ombros para baixo 3 vezes. Solte a mandíbula. Volte.', ritmo: 'cansada' },
+    { id: 'c6', title: 'Uma decisão mínima', how: 'Escolha o próximo passo. Não o dia inteiro.', ritmo: 'cansada' },
+    { id: 'c7', title: 'Simplificar a refeição', how: 'Escolha o caminho mais fácil. “Bom o suficiente” já alimenta.', ritmo: 'cansada' },
+    { id: 'c8', title: 'Desligar um ruído', how: 'Reduza um estímulo (volume, notificações, uma luz).', ritmo: 'cansada' },
+    { id: 'c9', title: 'Conexão curta (20s)', how: 'Olhe e diga: “Estou aqui.” Só presença curta, sem conversa longa.', ritmo: 'cansada' },
+    { id: 'c10', title: 'Encerrar por aqui (vale)', how: 'Se hoje não couber, fechar agora já é cuidado.', ritmo: 'cansada' },
+  ],
+  confusa: [
+    { id: 'f1', title: 'Nomear o que está acontecendo', how: 'Em 1 frase: “Estou confusa porque…”. Só para organizar a cabeça.', ritmo: 'confusa' },
+    { id: 'f2', title: 'Escolher 1 prioridade mínima', how: 'Defina 1 coisa que, feita, melhora o resto. Só uma.', ritmo: 'confusa' },
+    { id: 'f3', title: 'Escrever 3 bullets', how: 'Anote 3 pontos do que te preocupa. Sem resolver agora.', ritmo: 'confusa' },
+    { id: 'f4', title: 'Reduzir opções', how: 'Corte uma escolha. Se tiver 3 caminhos, fique com 1.', ritmo: 'confusa' },
+    { id: 'f5', title: 'Voltar para o corpo', how: 'Respiração 4-4-4: inspira 4, segura 4, solta 4. 3 vezes.', ritmo: 'confusa' },
+    { id: 'f6', title: 'Próximo passo visível', how: 'O que dá para fazer em 5 minutos? Só isso.', ritmo: 'confusa' },
+    { id: 'f7', title: 'Mensagem de alinhamento', how: 'Se precisar, diga: “Hoje preciso de X. Pode ser assim?”.', ritmo: 'confusa' },
+    { id: 'f8', title: 'Uma coisa fora da cabeça', how: 'Tire 1 coisa do caminho (lixo, roupa, mesa). Só uma.', ritmo: 'confusa' },
+    { id: 'f9', title: 'Pausa sem tela', how: '1 minuto sem tela. Olhar longe. Voltar.', ritmo: 'confusa' },
+    { id: 'f10', title: 'Encerrar por aqui (vale)', how: 'Se não servir agora, fechar é uma escolha válida.', ritmo: 'confusa' },
+  ],
+  ok: [
+    { id: 'o1', title: 'Manter o dia fluindo', how: 'Escolha 1 tarefa rápida que já existia e faça sem perfeição.', ritmo: 'ok' },
+    { id: 'o2', title: 'Organizar 1 transição', how: 'Antecipe com 1 frase: “Daqui a pouco vamos…”.', ritmo: 'ok' },
+    { id: 'o3', title: 'Proteger 5 min seus', how: '5 minutos só seus. Sem tela. Sem tarefa. Só recarregar.', ritmo: 'ok' },
+    { id: 'o4', title: 'Conexão curta com o filho', how: 'Pergunta simples: “o que foi legal hoje?”. Ouça 20 segundos.', ritmo: 'ok' },
+    { id: 'o5', title: 'Simplificar uma exigência', how: 'O que você pode fazer “bom o suficiente” hoje?', ritmo: 'ok' },
+    { id: 'o6', title: 'Fechar um pendente', how: 'Resolva 1 pendência pequena. Só uma.', ritmo: 'ok' },
+    { id: 'o7', title: 'Energia básica', how: 'Água + um lanche simples. Evita queda de energia.', ritmo: 'ok' },
+    { id: 'o8', title: 'Um gesto de autocuidado', how: 'Passar creme / alongar / respirar. Um gesto pequeno.', ritmo: 'ok' },
+    { id: 'o9', title: 'Revisar o “para depois”', how: 'Escolha 1 coisa que pode esperar e libere espaço mental.', ritmo: 'ok' },
+    { id: 'o10', title: 'Encerrar por aqui (vale)', how: 'Se hoje estiver bom, parar antes do limite preserva o clima.', ritmo: 'ok' },
+  ],
+  leve: [
+    { id: 'l1', title: 'Aproveitar sem exagerar', how: 'Escolha 1 coisa que deixa tudo mais leve e faça só isso.', ritmo: 'leve' },
+    { id: 'l2', title: 'Conexão intencional', how: '5 min de presença real com seu filho. Sem multitarefa.', ritmo: 'leve' },
+    { id: 'l3', title: 'Preparar o amanhã (1 ponto)', how: 'Deixe 1 coisa pronta (roupa, bolsa, mesa). Pare aí.', ritmo: 'leve' },
+    { id: 'l4', title: 'Um gesto de cuidado seu', how: 'Algo pequeno para você: banho demorado, música, respiração.', ritmo: 'leve' },
+    { id: 'l5', title: 'Casa em modo mínimo', how: 'Organize só o que impacta o dia (um ponto visível).', ritmo: 'leve' },
+    { id: 'l6', title: 'Registrar uma vitória', how: 'Em 1 frase: “Hoje eu consegui…”. Guardar isso ajuda.', ritmo: 'leve' },
+    { id: 'l7', title: 'Reduzir estímulos', how: 'Menos telas/sons por 10 min. Mantém o dia leve.', ritmo: 'leve' },
+    { id: 'l8', title: 'Planejar 1 prazer simples', how: 'Algo gostoso e possível: café, caminhada curta, música.', ritmo: 'leve' },
+    { id: 'l9', title: 'Rotina mais previsível', how: 'Avise a próxima etapa com antecedência curta.', ritmo: 'leve' },
+    { id: 'l10', title: 'Encerrar por aqui (vale)', how: 'Parar enquanto está bom também é cuidado.', ritmo: 'leve' },
+  ],
+}
+
+type PlanPersist = {
+  dateKey: string
+  ritmo: Ritmo
+  baseIndex: number
+  swapsUsed: number
+  pickedId?: string
+}
+
+const PLAN_SWAP_LIMIT_PER_DAY = 6
+const MY_DAY_LIMIT_FROM_CUIDAR_DE_MIM_PER_DAY = 3
+
+function hashToIndex(input: string, len: number): number {
+  if (len <= 0) return 0
+  let h = 0
+  for (let i = 0; i < input.length; i++) h = (h * 31 + input.charCodeAt(i)) >>> 0
+  return h % len
+}
+
+function statusOf(t: MyDayTaskItem): 'active' | 'snoozed' | 'done' {
+  const s = (t as any).status
+  if (s === 'active' || s === 'snoozed' || s === 'done') return s
+  if ((t as any).done === true) return 'done'
+  return 'active'
+}
+
+function countActiveFromSourceToday(tasks: MyDayTaskItem[], source: string) {
+  return tasks.filter((t) => {
+    const isFrom = (t as any).source === source
+    const isActive = statusOf(t) === 'active'
+    return isFrom && isActive
+  }).length
+}
+
+function clampIndex(i: number, len: number) {
+  if (len <= 0) return 0
+  if (i < 0) return 0
+  if (i >= len) return len - 1
+  return i
+}
+
 export default function Client() {
   const [ritmo, setRitmo] = useState<Ritmo>('cansada')
   const [daySignals, setDaySignals] = useState<DaySignals>(() => ({
@@ -184,6 +288,12 @@ export default function Client() {
     commitmentsCount: 0,
     laterCount: 0,
   }))
+
+  // ✅ estado do plano “para agora”
+  const [planSelected, setPlanSelected] = useState<PlanItem | null>(null)
+  const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
+  const [planFeedback, setPlanFeedback] = useState<string>('')
+  const [planHint, setPlanHint] = useState<string>('')
 
   const euSignal = useMemo(() => {
     try {
@@ -221,6 +331,32 @@ export default function Client() {
     const s = readDaySignals()
     setDaySignals(s)
 
+    // ✅ recuperar (ou inicializar) o plano do dia, sem gerar automaticamente em load
+    try {
+      const todayKey = getBrazilDateKey(new Date())
+      const existing = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null) ?? null
+
+      if (existing && existing.dateKey === todayKey && existing.ritmo === r) {
+        const pool = PLAN_POOL[r] ?? []
+        const baseIndex = clampIndex(existing.baseIndex ?? 0, pool.length)
+        const picked =
+          (existing.pickedId ? pool.find((p) => p.id === existing.pickedId) : null) ??
+          pool[baseIndex] ??
+          null
+
+        setPlanSelected(picked)
+        setPlanHint('')
+      } else {
+        setPlanSelected(null)
+        setPlanOptions([])
+        setPlanHint('Quando você quiser, eu te dou um plano simples para agora. Sem obrigação.')
+      }
+    } catch {
+      setPlanSelected(null)
+      setPlanOptions([])
+      setPlanHint('Quando você quiser, eu te dou um plano simples para agora. Sem obrigação.')
+    }
+
     try {
       track('cuidar_de_mim.open', {
         ritmo: r,
@@ -235,6 +371,9 @@ export default function Client() {
     setRitmo(next)
     setRitmoPersist(next)
 
+    // mantém “manual”: não auto-gera ao trocar ritmo
+    setPlanOptions([])
+    setPlanHint('Se quiser, gere um plano novo para agora.')
     try {
       track('cuidar_de_mim.checkin.select', { ritmo: next })
     } catch {}
@@ -254,17 +393,225 @@ export default function Client() {
     } catch {}
   }
 
+  function flash(msg: string, ms = 2400) {
+    setPlanFeedback(msg)
+    window.setTimeout(() => setPlanFeedback(''), ms)
+  }
+
+  function readPlanPersist(): PlanPersist | null {
+    try {
+      const v = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null)
+      return v ?? null
+    } catch {
+      return null
+    }
+  }
+
+  function writePlanPersist(next: PlanPersist) {
+    try {
+      save(PERSIST_KEYS.cdmPlanState, next)
+    } catch {}
+  }
+
+  function ensureTodayPlanBase(): PlanPersist {
+    const todayKey = getBrazilDateKey(new Date())
+    const pool = PLAN_POOL[ritmo] ?? []
+    const base = hashToIndex(`${todayKey}:${ritmo}:cdm`, pool.length)
+
+    const current = readPlanPersist()
+    if (current && current.dateKey === todayKey && current.ritmo === ritmo) return current
+
+    const next: PlanPersist = {
+      dateKey: todayKey,
+      ritmo,
+      baseIndex: base,
+      swapsUsed: 0,
+    }
+    writePlanPersist(next)
+    return next
+  }
+
+  function pickFromPool(index: number): PlanItem | null {
+    const pool = PLAN_POOL[ritmo] ?? []
+    if (!pool.length) return null
+    const safe = ((index % pool.length) + pool.length) % pool.length
+    return pool[safe] ?? null
+  }
+
+  function onGeneratePlan() {
+    const st = ensureTodayPlanBase()
+    const pool = PLAN_POOL[ritmo] ?? []
+
+    if (!pool.length) {
+      setPlanHint('Não consegui gerar agora. Tente novamente.')
+      try {
+        track('cuidar_de_mim.plan.generate.fail', { reason: 'empty_pool', ritmo })
+      } catch {}
+      return
+    }
+
+    const picked = pickFromPool(st.baseIndex)
+    setPlanSelected(picked)
+    setPlanOptions([])
+    setPlanHint('')
+    flash('Plano pronto. Se não servir, você pode trocar ou encerrar por aqui.', 2600)
+
+    writePlanPersist({ ...st, pickedId: picked?.id })
+
+    try {
+      track('cuidar_de_mim.plan.generate', { ritmo, baseIndex: st.baseIndex })
+    } catch {}
+  }
+
+  function onSwapPlan() {
+    const st = ensureTodayPlanBase()
+    const todayKey = st.dateKey
+
+    if (st.swapsUsed >= PLAN_SWAP_LIMIT_PER_DAY) {
+      flash('Hoje você já trocou bastante. Amanhã tem novas opções.', 3200)
+      try {
+        track('cuidar_de_mim.plan.swap.blocked', {
+          reason: 'daily_swap_limit',
+          limit: PLAN_SWAP_LIMIT_PER_DAY,
+          swapsUsed: st.swapsUsed,
+          dateKey: todayKey,
+          ritmo,
+        })
+      } catch {}
+      return
+    }
+
+    const nextIndex = (st.baseIndex + 1) % Math.max(1, (PLAN_POOL[ritmo] ?? []).length)
+    const picked = pickFromPool(nextIndex)
+
+    setPlanSelected(picked)
+    setPlanOptions([])
+    setPlanHint('')
+    flash('Plano trocado. Se não servir, você pode trocar de novo ou encerrar por aqui.', 2600)
+
+    writePlanPersist({
+      ...st,
+      baseIndex: nextIndex,
+      swapsUsed: st.swapsUsed + 1,
+      pickedId: picked?.id,
+    })
+
+    try {
+      track('cuidar_de_mim.plan.swap', {
+        ritmo,
+        nextIndex,
+        swapsUsed: st.swapsUsed + 1,
+        dateKey: todayKey,
+      })
+    } catch {}
+  }
+
+  function onShow3Options() {
+    const st = ensureTodayPlanBase()
+    const pool = PLAN_POOL[ritmo] ?? []
+    if (!pool.length) return
+
+    // 3 próximas opções a partir do baseIndex (sem repetir a selecionada, se der)
+    const base = st.baseIndex
+    const out: PlanItem[] = []
+    for (let k = 1; k <= 5 && out.length < 3; k++) {
+      const it = pickFromPool(base + k)
+      if (!it) continue
+      if (planSelected?.id && it.id === planSelected.id) continue
+      if (out.some((x) => x.id === it.id)) continue
+      out.push(it)
+    }
+
+    setPlanOptions(out)
+
+    if (out.length) flash('Escolha uma opção para aplicar agora.', 2200)
+
+    try {
+      track('cuidar_de_mim.plan.options.show', { ritmo, count: out.length })
+    } catch {}
+  }
+
+  function onPickOption(it: PlanItem) {
+    setPlanSelected(it)
+    setPlanOptions([])
+    setPlanHint('')
+    flash('Plano aplicado.', 2000)
+
+    const st = ensureTodayPlanBase()
+    writePlanPersist({ ...st, pickedId: it.id })
+
+    try {
+      track('cuidar_de_mim.plan.option.pick', { ritmo, id: it.id })
+    } catch {}
+  }
+
+  function savePlanToMyDay() {
+    if (!planSelected?.title) return
+
+    const SOURCE = MY_DAY_SOURCES.MATERNAR_CUIDAR_DE_MIM
+    const ORIGIN = 'selfcare' as const
+
+    const today = listMyDayTasks()
+    const activeCount = countActiveFromSourceToday(today, SOURCE)
+
+    if (activeCount >= MY_DAY_LIMIT_FROM_CUIDAR_DE_MIM_PER_DAY) {
+      flash('Você já salvou 3 ações do Cuidar de Mim hoje. Conclua uma. Ou escolha só 1 para agora.', 3600)
+      try {
+        track('my_day.task.add.blocked', {
+          source: SOURCE,
+          origin: ORIGIN,
+          reason: 'limit_reached',
+          limit: MY_DAY_LIMIT_FROM_CUIDAR_DE_MIM_PER_DAY,
+        })
+      } catch {}
+      return
+    }
+
+    const res = addTaskToMyDay({ title: planSelected.title, origin: ORIGIN, source: SOURCE })
+
+    if (res.limitHit) {
+      flash('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.', 3600)
+      try {
+        track('my_day.task.add.blocked', {
+          source: SOURCE,
+          origin: ORIGIN,
+          reason: 'open_tasks_limit_hit',
+          dateKey: res.dateKey,
+        })
+      } catch {}
+      return
+    }
+
+    markRecentMyDaySave({ origin: ORIGIN, source: SOURCE })
+
+    if (res.created) flash('Salvo no Meu Dia.')
+    else flash('Essa tarefa já estava no Meu Dia.')
+
+    try {
+      track('my_day.task.add', {
+        ok: !!res.ok,
+        created: !!res.created,
+        origin: ORIGIN,
+        source: SOURCE,
+        dateKey: res.dateKey,
+      })
+      track('cuidar_de_mim.plan.save_to_my_day', {
+        created: res.created,
+        dateKey: res.dateKey,
+        source: SOURCE,
+        ritmo,
+      })
+    } catch {}
+  }
+
   return (
     <main
       data-layout="page-template-v1"
       data-tab="maternar"
-      // ✅ ajuste principal do print: respiro inferior para não “bater” na tab bar
       className="relative min-h-[100dvh] pb-32 overflow-hidden eu360-hub-bg"
     >
       <ClientOnly>
-        {/* RAIL MASTER — eixo único (desktop/tablet/mobile) */}
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* HEADER */}
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <Link
               href="/maternar"
@@ -284,7 +631,6 @@ export default function Client() {
             />
           </header>
 
-          {/* ENVELOPE TRANSLÚCIDO — volta o “card do topo” + contém o card branco */}
           <section className="w-full">
             <div
               className="
@@ -296,7 +642,6 @@ export default function Client() {
                 p-3 sm:p-4 md:p-5
               "
             >
-              {/* TOPO TRANSLÚCIDO — “Sugestão pronta para agora (sem obrigação)” */}
               <div
                 className="
                   rounded-[22px]
@@ -375,7 +720,6 @@ export default function Client() {
                   </div>
                 </div>
 
-                {/* CHIPS CLICÁVEIS (scroll interno) */}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <button
                     type="button"
@@ -451,7 +795,6 @@ export default function Client() {
                 </div>
               </div>
 
-              {/* CARD BRANCO INTERNO — editorial */}
               <div className="mt-3 sm:mt-4 rounded-[24px] bg-white/95 backdrop-blur border border-[#f5d7e5] shadow-[0_18px_45px_rgba(184,35,107,0.14)]">
                 <div className="p-4 sm:p-5 md:p-7">
                   {/* BLOCO 0 — PARA AGORA */}
@@ -469,25 +812,128 @@ export default function Client() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 items-stretch">
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                            {/* CARD: QuickIdeaAI (alinhado ao print: botão mais central e com respiro) */}
+                            {/* ✅ Estrutura inteligente (plano + 3 opções + salvar) */}
                             <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-4 sm:p-5 md:p-6">
-                              <div className="flex flex-col gap-3">
-                                <div className="flex items-start gap-3">
-                                  <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
-                                    <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                              <div className="flex items-start gap-3">
+                                <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">
+                                  <AppIcon name="sparkles" size={20} className="text-[#b8236b]" />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-[11px] uppercase tracking-[0.16em] text-[#b8236b] font-semibold">
+                                    Plano para agora
                                   </div>
 
-                                  <div className="min-w-0 flex-1">
-                                    {/* ✅ garante largura e centralização no mobile (evita “encolher” estranho) */}
-                                    <div className="w-full max-w-[520px] mx-auto">
-                                      <QuickIdeaAI mode="cuidar_de_mim" className="mt-0 w-full" />
+                                  {!planSelected ? (
+                                    <div className="mt-2">
+                                      <div className="text-[13px] text-[#6a6a6a] leading-relaxed">
+                                        {planHint || 'Quando você quiser, eu te dou um plano simples para agora. Sem obrigação.'}
+                                      </div>
+
+                                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={onGeneratePlan}
+                                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.22)] hover:opacity-95 transition"
+                                        >
+                                          Gerar plano para agora
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            try {
+                                              track('cuidar_de_mim.plan.close', { ritmo })
+                                            } catch {}
+                                            flash('Tudo bem. Encerrar por aqui também é cuidado.', 2600)
+                                          }}
+                                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] font-semibold hover:bg-[#fff3f8] transition"
+                                        >
+                                          Encerrar por aqui
+                                        </button>
+                                      </div>
+
+                                      {planFeedback ? (
+                                        <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                          {planFeedback}
+                                        </div>
+                                      ) : null}
                                     </div>
+                                  ) : (
+                                    <div className="mt-2">
+                                      <div className="text-[15px] font-semibold text-[#2f3a56] leading-snug">
+                                        {planSelected.title}
+                                      </div>
+                                      <div className="mt-2 text-[13px] text-[#6a6a6a] leading-relaxed">
+                                        {planSelected.how}
+                                      </div>
 
-                                    <RenderEditorialText
-                                      text={`Se não servir, troque ou feche por aqui.\n\nSem obrigação.`}
-                                      className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed text-center sm:text-left"
-                                    />
-                                  </div>
+                                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={savePlanToMyDay}
+                                          className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] font-semibold shadow-[0_10px_26px_rgba(253,37,151,0.22)] hover:opacity-95 transition"
+                                        >
+                                          Salvar no Meu Dia
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={onSwapPlan}
+                                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] font-semibold hover:bg-[#fff3f8] transition"
+                                        >
+                                          Trocar plano
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={onShow3Options}
+                                          className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] font-semibold hover:bg-[#fff3f8] transition"
+                                        >
+                                          Ver 3 opções
+                                        </button>
+                                      </div>
+
+                                      {planFeedback ? (
+                                        <div className="mt-3 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                          {planFeedback}
+                                        </div>
+                                      ) : null}
+
+                                      {planOptions.length ? (
+                                        <div className="mt-4 space-y-2">
+                                          {planOptions.map((it) => (
+                                            <button
+                                              key={it.id}
+                                              type="button"
+                                              onClick={() => onPickOption(it)}
+                                              className="
+                                                w-full text-left
+                                                rounded-2xl
+                                                border border-[#f5d7e5]
+                                                bg-white
+                                                px-4 py-3
+                                                hover:bg-[#fff3f8]
+                                                transition
+                                              "
+                                            >
+                                              <div className="text-[13px] font-semibold text-[#2f3a56]">
+                                                {it.title}
+                                              </div>
+                                              <div className="mt-1 text-[12px] text-[#6a6a6a] leading-relaxed">
+                                                {it.how}
+                                              </div>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      ) : null}
+
+                                      <RenderEditorialText
+                                        text={`Se não servir, você pode trocar ou encerrar por aqui.\n\nSem obrigação.`}
+                                        className="mt-4 text-[12px] text-[#6a6a6a] leading-relaxed"
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
