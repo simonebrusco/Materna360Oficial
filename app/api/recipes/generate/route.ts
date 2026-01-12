@@ -22,6 +22,7 @@ import {
   DAILY_LIMIT_ANON_COOKIE,
   DAILY_LIMIT_MESSAGE,
   tryConsumeDailyAI,
+  releaseDailyAI,
 } from '@/app/lib/ai/dailyLimit.server'
 
 export const dynamic = 'force-dynamic'
@@ -209,8 +210,10 @@ export async function POST(request: Request) {
   // - Sem expor contadores
   // - Bloqueio com copy canônica
   // - Cookie httpOnly para ator anônimo quando necessário
+  // - Importante: liberar consumo em falhas (não “queimar” quota sem retorno)
   // ==========================
   const quota = await tryConsumeDailyAI(5)
+
   if (!quota.allowed) {
     const blocked: RecipeGenerationResponse = {
       educationalMessage: null,
@@ -229,6 +232,16 @@ export async function POST(request: Request) {
       })
     }
     return res
+  }
+
+  // Helper local: tenta liberar a quota em caso de erro (compatível com assinaturas diferentes)
+  const releaseIfPossible = async () => {
+    try {
+      // @ts-expect-error - compat com diferentes assinaturas de releaseDailyAI
+      await releaseDailyAI(quota)
+    } catch {
+      // não falhar a rota por erro de release
+    }
   }
 
   const requestSummary = {
@@ -289,6 +302,7 @@ export async function POST(request: Request) {
       const text = await response.text()
       console.error('OpenAI recipes response not ok:', response.status, text)
       track('audio.end', { status: response.status })
+      await releaseIfPossible()
       return NextResponse.json({ error: 'Não foi possível gerar receitas no momento.' }, { status: 502 })
     }
 
@@ -296,6 +310,7 @@ export async function POST(request: Request) {
     const content = completion?.choices?.[0]?.message?.content
     if (typeof content !== 'string') {
       track('audio.end', { reason: 'empty-content' })
+      await releaseIfPossible()
       return NextResponse.json({ error: 'Resposta inválida do modelo de receitas.' }, { status: 502 })
     }
 
@@ -305,6 +320,7 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('Failed to parse recipes JSON:', error, content)
       track('audio.end', { reason: 'json-parse' })
+      await releaseIfPossible()
       return NextResponse.json({ error: 'Formato inválido retornado pelo modelo.' }, { status: 502 })
     }
 
@@ -340,10 +356,12 @@ export async function POST(request: Request) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       console.error('Recipes generation timeout:', error)
       track('audio.end', { reason: 'timeout' })
+      await releaseIfPossible()
       return NextResponse.json({ error: 'Tempo limite de geração de receitas excedido.' }, { status: 504 })
     }
     console.error('Recipes generation failure:', error)
     track('audio.end', { reason: 'exception' })
+    await releaseIfPossible()
     return NextResponse.json({ error: 'Erro inesperado ao gerar receitas.' }, { status: 500 })
   }
 }
