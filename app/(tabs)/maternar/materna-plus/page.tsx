@@ -15,18 +15,36 @@ import {
 } from '@/app/lib/profissionais'
 
 type SpecialtyFilterId = 'todos' | SpecialtyId
-type Professional = ProfessionalApi
+
+/**
+ * Preparação para o admin:
+ * - Esses campos podem vir depois pela API/DB.
+ * - Nada aqui é obrigatório. Se não vier, não renderiza.
+ */
+type Professional = ProfessionalApi & {
+  fullName?: string
+  registrationType?: string // ex: "CRP", "CRM", "CREFITO", "Registro"
+  registrationNumber?: string
+  miniCurriculum?: string // mini currículo (texto curto)
+  approach?: string // abordagem / especialidade prática
+  experienceYears?: number
+  languages?: string[] // opcional
+  appointmentFormat?: ('online' | 'presencial' | 'hibrido')[]
+  clinicName?: string
+  clinicAddress?: string
+  cityState?: string // se quiser separar do city atual
+}
 
 function getInitials(name: string): string {
   const parts = name
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
-  return parts.map(p => p[0]?.toUpperCase()).join('')
+  return parts.map((p) => p[0]?.toUpperCase()).join('')
 }
 
 function trackProfessionalEvent(
-  type: 'view' | 'whatsapp_click',
+  type: 'view' | 'request_whatsapp',
   professional: Professional,
 ) {
   if (typeof window === 'undefined') return
@@ -41,7 +59,7 @@ const SPECIALTIES: { id: SpecialtyFilterId; label: string }[] = [
   { id: 'todos', label: 'Todos os profissionais' },
   { id: 'psicologia-infantil', label: 'Psicologia infantil' },
   { id: 'psicopedagogia', label: 'Psicopedagogia' },
-  { id: 'nutricao-materno-infantil', label: 'Nutrição materno-infantil' },
+  { id: 'nutricao-materno-infantil', label: 'Nutrição materno-infantantil' },
   { id: 'sono-infantil', label: 'Sono infantil' },
   { id: 'parentalidade-familia', label: 'Parentalidade & família' },
 ]
@@ -66,6 +84,46 @@ function BulletLine({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * WhatsApp do Materna (concierge).
+ * Defina em env: NEXT_PUBLIC_MATERNA_WHATSAPP_URL
+ * Ex.: https://wa.me/55XXXXXXXXXXX
+ */
+const MATERNAR_WHATSAPP_URL =
+  process.env.NEXT_PUBLIC_MATERNA_WHATSAPP_URL ?? ''
+
+function buildMaternaWhatsAppLink(professional: Professional) {
+  if (!MATERNAR_WHATSAPP_URL) return null
+
+  const reg =
+    professional.registrationType && professional.registrationNumber
+      ? `${professional.registrationType} ${professional.registrationNumber}`
+      : professional.registrationType
+        ? professional.registrationType
+        : professional.registrationNumber
+          ? professional.registrationNumber
+          : ''
+
+  const loc = professional.cityState || professional.city || ''
+  const specialty = professional.specialtyLabel || ''
+
+  const msgLines = [
+    'Olá! Quero solicitar um profissional pelo Materna+.',
+    '',
+    `Profissional: ${professional.fullName || professional.name}`,
+    specialty ? `Área: ${specialty}` : '',
+    reg ? `Registro: ${reg}` : '',
+    loc ? `Local: ${loc}` : '',
+    '',
+    'Pode me orientar com os próximos passos e agenda?',
+  ].filter(Boolean)
+
+  const text = encodeURIComponent(msgLines.join('\n'))
+  // suporta links do tipo wa.me e api.whatsapp.com
+  const joinChar = MATERNAR_WHATSAPP_URL.includes('?') ? '&' : '?'
+  return `${MATERNAR_WHATSAPP_URL}${joinChar}text=${text}`
+}
+
 export default function MaternaPlusPage() {
   const [selectedSpecialty, setSelectedSpecialty] =
     useState<SpecialtyFilterId>('todos')
@@ -86,7 +144,7 @@ export default function MaternaPlusPage() {
         setError(null)
         const data = await getProfessionals()
         if (!isMounted) return
-        setProfessionals(data)
+        setProfessionals(data as Professional[])
       } catch {
         if (!isMounted) return
         setError('Não conseguimos carregar a lista de profissionais agora.')
@@ -105,13 +163,23 @@ export default function MaternaPlusPage() {
   const filteredProfessionals =
     selectedSpecialty === 'todos'
       ? professionals
-      : professionals.filter(p => p.specialtyId === selectedSpecialty)
+      : professionals.filter((p) => p.specialtyId === selectedSpecialty)
 
-  const handleContactProfessional = () => {
-    if (!selectedProfessional) return
-    trackProfessionalEvent('whatsapp_click', selectedProfessional)
+  const handleRequestViaMaternaWhatsApp = (professional: Professional) => {
+    trackProfessionalEvent('request_whatsapp', professional)
+
+    const link = buildMaternaWhatsAppLink(professional)
+    if (!link) {
+      if (typeof window !== 'undefined') {
+        window.alert(
+          'WhatsApp do Materna ainda não foi configurado. Defina NEXT_PUBLIC_MATERNA_WHATSAPP_URL para ativar esse botão.',
+        )
+      }
+      return
+    }
+
     if (typeof window !== 'undefined') {
-      window.open(selectedProfessional.whatsappUrl, '_blank')
+      window.open(link, '_blank')
     }
   }
 
@@ -137,15 +205,15 @@ export default function MaternaPlusPage() {
       'servicos',
     ]
     const elements = ids
-      .map(id => document.getElementById(`materna-plus-${id}`))
+      .map((id) => document.getElementById(`materna-plus-${id}`))
       .filter(Boolean) as HTMLElement[]
 
     if (!elements.length) return
 
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         const visible = entries
-          .filter(e => e.isIntersecting)
+          .filter((e) => e.isIntersecting)
           .sort(
             (a, b) =>
               (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0),
@@ -156,8 +224,7 @@ export default function MaternaPlusPage() {
           'materna-plus-',
           '',
         ) as HubSectionId
-        if (sectionId && ids.includes(sectionId))
-          setActiveSection(sectionId)
+        if (sectionId && ids.includes(sectionId)) setActiveSection(sectionId)
       },
       {
         root: null,
@@ -166,7 +233,7 @@ export default function MaternaPlusPage() {
       },
     )
 
-    elements.forEach(el => observer.observe(el))
+    elements.forEach((el) => observer.observe(el))
 
     return () => observer.disconnect()
   }, [])
@@ -189,6 +256,24 @@ export default function MaternaPlusPage() {
       >
         {label}
       </button>
+    )
+  }
+
+  const ProfessionalMetaRow = ({
+    label,
+    value,
+  }: {
+    label: string
+    value?: string | null
+  }) => {
+    if (!value) return null
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6A6A6A]">
+          {label}
+        </p>
+        <p className="text-[13px] text-[#545454]">{value}</p>
+      </div>
     )
   }
 
@@ -229,7 +314,7 @@ export default function MaternaPlusPage() {
                     </p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {HUB_SECTIONS.map(s => (
+                      {HUB_SECTIONS.map((s) => (
                         <Pill key={s.id} id={s.id} label={s.label} />
                       ))}
                     </div>
@@ -257,7 +342,7 @@ export default function MaternaPlusPage() {
                         Profissionais
                       </p>
                       <p className="text-[13px] text-[#545454] leading-snug">
-                        Curadoria e contato direto no WhatsApp.
+                        Curadoria + solicitação pelo WhatsApp do Materna.
                       </p>
                     </div>
 
@@ -313,7 +398,7 @@ export default function MaternaPlusPage() {
             </SoftCard>
           </Reveal>
 
-          {/* PREMIUM */}
+          {/* PREMIUM (mantido) */}
           <Reveal delay={40}>
             <SoftCard
               id="materna-plus-premium"
@@ -325,117 +410,137 @@ export default function MaternaPlusPage() {
                     PREMIUM
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Trilhas e conteúdos, no seu tempo.
+                    Um caminho premium, com curadoria e calma.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
-                    Um caminho claro para quando você quer sair do modo “caça”.
+                    Para quando você quer sair do modo “caça” e aplicar algo certo — sem virar mais uma tarefa.
                   </p>
-
-                  <div className="mt-3 space-y-2">
-                    <BulletLine>Trilhas por fase (0–12m, 1–3, 3–5, 5–7)</BulletLine>
-                    <BulletLine>Biblioteca premium com guias e checklists</BulletLine>
-                    <BulletLine>Integração Eu360 e IA Premium (planejado)</BulletLine>
-                  </div>
                 </header>
 
-                <div className="grid gap-4 md:grid-cols-2 items-stretch">
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
-                          TRILHA GUIADA
-                        </p>
-                        <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
-                          Primeiro ano leve
-                        </h3>
+                <div className="grid gap-4 md:grid-cols-[1.15fr,0.85fr] items-start">
+                  <div className="space-y-4">
+                    <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+                        O QUE DESTRAVA
+                      </p>
+
+                      <div className="mt-3 space-y-2">
+                        <BulletLine>Trilhas guiadas por fase (rotina real, sem excesso).</BulletLine>
+                        <BulletLine>Biblioteca premium com guias e checklists mais completos.</BulletLine>
+                        <BulletLine>Roteiros rápidos para situações específicas do dia a dia.</BulletLine>
+                        <BulletLine>Menos tentativa e erro: você pega o “próximo passo” pronto.</BulletLine>
                       </div>
-                      <span className="rounded-full border border-[#F5D7E5] bg-white px-2 py-0.5 text-[11px] font-medium text-[#6A6A6A]">
-                        Em breve
-                      </span>
-                    </div>
-                    <p className="text-[13px] text-[#545454] leading-relaxed">
-                      Rotina, sono, vínculo e rituais simples. Com desbloqueios diários.
-                    </p>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled
-                      className="mt-3 text-[12px] cursor-not-allowed opacity-70 self-start"
-                    >
-                      Ver trilha (em breve)
-                    </Button>
+                    </SoftCard>
+
+                    <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1]/60 p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                        COMO VOCÊ USA
+                      </p>
+
+                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                            1 · ESCOLHA
+                          </p>
+                          <p className="mt-1 text-[13px] text-[#545454]">
+                            Um tema ou fase.
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                            2 · APLIQUE
+                          </p>
+                          <p className="mt-1 text-[13px] text-[#545454]">
+                            Em 10–15 min, sem improviso.
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
+                            3 · REPITA
+                          </p>
+                          <p className="mt-1 text-[13px] text-[#545454]">
+                            Quando fizer sentido — no seu ritmo.
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 text-[12px] text-[#6A6A6A] leading-relaxed">
+                        Você não precisa “fazer tudo”. O Premium existe para reduzir fricção e aumentar consistência.
+                      </p>
+                    </SoftCard>
                   </div>
 
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
-                          TRILHA GUIADA
-                        </p>
-                        <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
-                          Desenvolvimento por idade
-                        </h3>
-                      </div>
-                      <span className="rounded-full border border-[#F5D7E5] bg-[#ffe1f1] px-2 py-0.5 text-[11px] font-medium text-[#545454]">
-                        Em breve
-                      </span>
-                    </div>
-                    <p className="text-[13px] text-[#545454] leading-relaxed">
-                      Ideias por faixa etária, com passos curtos e aplicáveis.
+                  <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-5 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                      COMEÇE POR AQUI
                     </p>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled
-                      className="mt-3 text-[12px] cursor-not-allowed opacity-70 self-start"
-                    >
-                      Ver trilha (em breve)
-                    </Button>
-                  </div>
 
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-white p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
-                      BIBLIOTECA PREMIUM
-                    </p>
-                    <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
-                      Conteúdos exclusivos Materna+
+                    <h3 className="mt-2 text-[16px] md:text-[18px] font-semibold text-[#545454] leading-snug">
+                      Uma experiência premium para decidir com clareza.
                     </h3>
 
-                    <div className="space-y-2">
-                      <BulletLine>Guias avançados por idade e tema</BulletLine>
-                      <BulletLine>Checklists extensos para momentos críticos</BulletLine>
-                      <BulletLine>Roteiros rápidos para situações difíceis</BulletLine>
+                    <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
+                      Quando o programa abrir, você vai encontrar trilhas e materiais organizados por fase, com instruções curtas e aplicáveis.
+                    </p>
+
+                    <div className="mt-4 space-y-2">
+                      <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                        <p className="text-[12px] text-[#545454]">
+                          O objetivo é simples: <span className="font-semibold">menos busca</span>, mais prática.
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                        <p className="text-[12px] text-[#545454]">
+                          Sem fórmulas. Sem promessas mágicas. Com cuidado e consistência.
+                        </p>
+                      </div>
                     </div>
 
-                    <p className="text-[12px] text-[#6A6A6A] pt-1">
-                      Acesso completo para assinantes Materna+ e Materna+360.
-                    </p>
-                  </div>
+                    <div className="mt-5 flex flex-col gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-full text-[13px]"
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.alert('Planos e checkout serão conectados quando o Materna+ abrir.')
+                          }
+                        }}
+                      >
+                        Conhecer Materna+
+                      </Button>
 
-                  <div className="flex flex-col rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 shadow-[0_4px_18px_rgba(0,0,0,0.05)] h-full">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]">
-                      EU360 & IA PREMIUM · PLANEJADO
-                    </p>
-                    <h3 className="text-[15px] md:text-[16px] font-semibold text-[#545454]">
-                      Personalização com cuidado, sem fórmulas.
-                    </h3>
-                    <p className="text-[13px] text-[#545454] leading-relaxed">
-                      Sua jornada alimenta sugestões melhores. Com limites e controle.
-                    </p>
-                    <span className="inline-flex rounded-full border border-[#F5D7E5] bg-white px-3 py-1 text-[11px] font-medium text-[#545454]">
-                      Fase de IA Premium
-                    </span>
-                  </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full text-[13px]"
+                        onClick={() => scrollTo('profissionais')}
+                      >
+                        Ver profissionais parceiros
+                      </Button>
+                    </div>
+                  </SoftCard>
                 </div>
 
-                <p className="text-[11px] md:text-[12px] text-[#6A6A6A]">
-                  Planos completos serão apresentados no checkout quando o programa abrir.
-                </p>
+                <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+                    EM EVOLUÇÃO COM CUIDADO
+                  </p>
+                  <p className="mt-2 text-[12px] md:text-[13px] text-[#545454] leading-relaxed">
+                    A integração com o Eu360 vai ajudar a sugerir materiais mais certeiros ao longo do tempo — com limites e controle.
+                  </p>
+                  <p className="mt-2 text-[11px] md:text-[12px] text-[#6A6A6A]">
+                    Planos completos serão apresentados no checkout quando o programa abrir.
+                  </p>
+                </SoftCard>
               </div>
             </SoftCard>
           </Reveal>
 
-          {/* PROFISSIONAIS */}
+          {/* PROFISSIONAIS (ATUALIZADO PARA WHATSAPP DO MATERNA) */}
           <Reveal delay={60}>
             <SoftCard
               id="materna-plus-profissionais"
@@ -447,13 +552,14 @@ export default function MaternaPlusPage() {
                     PROFISSIONAIS PARCEIROS
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Rede Materna+. Contato direto no WhatsApp.
+                    Rede Materna+. Solicite pelo WhatsApp do Materna.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
-                    Filtre por área. Escolha um profissional. Fale direto no WhatsApp.
+                    Filtre por área. Escolha um profissional. Solicite pelo WhatsApp do Materna — a gente organiza o agendamento com você.
                   </p>
+
                   <p className="text-[12px] text-[#6A6A6A]">
-                    <span className="font-semibold">Importante:</span> o Materna360 não intermedia pagamentos.
+                    <span className="font-semibold">Como funciona:</span> o Materna faz a ponte e confirma o agendamento. Depois, o atendimento segue diretamente com o profissional.
                   </p>
                 </header>
 
@@ -464,7 +570,7 @@ export default function MaternaPlusPage() {
                     </p>
 
                     <div className="flex flex-wrap gap-2">
-                      {SPECIALTIES.map(spec => {
+                      {SPECIALTIES.map((spec) => {
                         const isActive = selectedSpecialty === spec.id
                         return (
                           <button
@@ -489,8 +595,8 @@ export default function MaternaPlusPage() {
                       </p>
                       <div className="space-y-2">
                         <BulletLine>Filtre a área e escolha um profissional.</BulletLine>
-                        <BulletLine>Veja detalhes e vá para o WhatsApp.</BulletLine>
-                        <BulletLine>Combine direto: horários, valores e pagamento.</BulletLine>
+                        <BulletLine>Abra o perfil e clique em “Solicitar no WhatsApp do Materna”.</BulletLine>
+                        <BulletLine>O Materna organiza o agendamento. Depois, segue com o profissional.</BulletLine>
                       </div>
                     </SoftCard>
                   </div>
@@ -522,7 +628,7 @@ export default function MaternaPlusPage() {
 
                     {!isLoading &&
                       !error &&
-                      filteredProfessionals.map(prof => (
+                      filteredProfessionals.map((prof) => (
                         <div
                           key={prof.id}
                           className="rounded-2xl border border-[#F5D7E5] bg-white px-4 py-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)] flex flex-col gap-2"
@@ -545,7 +651,7 @@ export default function MaternaPlusPage() {
                               }}
                               className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
                             >
-                              Ver detalhes
+                              Ver perfil
                             </button>
                           </div>
 
@@ -553,7 +659,7 @@ export default function MaternaPlusPage() {
                           <p className="text-[12px] text-[#6A6A6A]">{prof.city}</p>
 
                           <div className="flex flex-wrap gap-1.5 pt-1">
-                            {prof.tags.map(tag => (
+                            {prof.tags.map((tag) => (
                               <span
                                 key={tag}
                                 className="rounded-full bg-[#fdbed7]/70 px-2 py-0.5 text-[11px] font-medium text-[#545454]"
@@ -561,6 +667,17 @@ export default function MaternaPlusPage() {
                                 {tag}
                               </span>
                             ))}
+                          </div>
+
+                          <div className="pt-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="text-[13px]"
+                              onClick={() => handleRequestViaMaternaWhatsApp(prof)}
+                            >
+                              Solicitar no WhatsApp do Materna
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -676,12 +793,13 @@ export default function MaternaPlusPage() {
 
           <MotivationalFooter routeKey="materna-plus" />
 
+          {/* MODAL PERFIL PROFISSIONAL (pronto para admin) */}
           {selectedProfessional && (
             <div
               className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
               onClick={() => setSelectedProfessional(null)}
             >
-              <div className="max-w-lg w-full" onClick={e => e.stopPropagation()}>
+              <div className="max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
                 <SoftCard className="rounded-3xl bg-white p-6 shadow-[0_6px_22px_rgba(0,0,0,0.22)] border border-[#F5D7E5] max-h-[90vh] overflow-y-auto">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
@@ -692,7 +810,7 @@ export default function MaternaPlusPage() {
                       </div>
                       <div className="space-y-1">
                         <h3 className="text-[20px] font-semibold text-[#545454]">
-                          {selectedProfessional.name}
+                          {selectedProfessional.fullName || selectedProfessional.name}
                         </h3>
                         <p className="text-[13px] text-[#6A6A6A]">
                           {selectedProfessional.specialtyLabel}
@@ -709,16 +827,68 @@ export default function MaternaPlusPage() {
                     </button>
                   </div>
 
+                  <div className="mt-4 space-y-3">
+                    <ProfessionalMetaRow
+                      label="Registro"
+                      value={
+                        selectedProfessional.registrationType && selectedProfessional.registrationNumber
+                          ? `${selectedProfessional.registrationType} ${selectedProfessional.registrationNumber}`
+                          : selectedProfessional.registrationType || selectedProfessional.registrationNumber || ''
+                      }
+                    />
+
+                    <ProfessionalMetaRow
+                      label="Local"
+                      value={selectedProfessional.cityState || selectedProfessional.city || ''}
+                    />
+
+                    <ProfessionalMetaRow
+                      label="Clínica"
+                      value={selectedProfessional.clinicName || ''}
+                    />
+
+                    <ProfessionalMetaRow
+                      label="Endereço"
+                      value={selectedProfessional.clinicAddress || ''}
+                    />
+
+                    {typeof selectedProfessional.experienceYears === 'number' &&
+                      selectedProfessional.experienceYears > 0 && (
+                        <ProfessionalMetaRow
+                          label="Experiência"
+                          value={`${selectedProfessional.experienceYears} ano(s)`}
+                        />
+                      )}
+                  </div>
+
                   <p className="mt-4 text-[14px] text-[#545454] leading-relaxed">
                     {selectedProfessional.shortBio}
                   </p>
 
-                  <p className="mt-2 text-[13px] text-[#6A6A6A]">
-                    {selectedProfessional.city}
-                  </p>
+                  {selectedProfessional.miniCurriculum && (
+                    <div className="mt-4 rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]/85">
+                        Mini currículo
+                      </p>
+                      <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
+                        {selectedProfessional.miniCurriculum}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProfessional.approach && (
+                    <div className="mt-3 rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                        Abordagem
+                      </p>
+                      <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
+                        {selectedProfessional.approach}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {selectedProfessional.tags.map(tag => (
+                    {selectedProfessional.tags.map((tag) => (
                       <span
                         key={tag}
                         className="rounded-full bg-[#fdbed7]/80 px-2 py-0.5 text-[11px] font-medium text-[#545454]"
@@ -729,7 +899,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   <p className="mt-4 text-[12px] text-[#6A6A6A] leading-relaxed">
-                    Agendamento, valores e pagamento são combinados diretamente com o profissional.
+                    Para solicitar esse profissional, fale com o Materna pelo WhatsApp. A gente organiza o agendamento com você.
                   </p>
 
                   <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -737,9 +907,9 @@ export default function MaternaPlusPage() {
                       variant="primary"
                       size="sm"
                       className="sm:w-auto w-full"
-                      onClick={handleContactProfessional}
+                      onClick={() => handleRequestViaMaternaWhatsApp(selectedProfessional)}
                     >
-                      Falar no WhatsApp
+                      Solicitar no WhatsApp do Materna
                     </Button>
                   </div>
                 </SoftCard>

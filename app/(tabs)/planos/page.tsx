@@ -138,14 +138,17 @@ export default function PlanosPage() {
       data-layout="page-template-v1"
       className="min-h-[100dvh] pb-16 bg-transparent"
     >
-      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl px-4 md:px-6 pt-10">
+      {/* AJUSTE (micro): reduz respiro no topo em mobile */}
+      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl px-4 md:px-6 pt-8 md:pt-10">
         {/* VOLTAR PARA MATERNAR (Topo) */}
-        <div className="flex justify-start mb-6">
+        {/* AJUSTE (micro): reduz margem inferior em mobile */}
+        <div className="flex justify-start mb-4 md:mb-6">
           <BackToMaternar />
         </div>
 
-        {/* HERO da página de planos */}
-        <header className="mb-8 sm:mb-10 text-center">
+        {/* HERO */}
+        {/* AJUSTE (micro): reduz margin-bottom do hero em mobile */}
+        <header className="mb-6 sm:mb-10 text-center">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
             PLANOS MATERNA360
           </span>
@@ -189,10 +192,10 @@ export default function PlanosPage() {
                     bg-white shadow-[0_6px_22px_rgba(0,0,0,0.08)]
                     ${
                       isCurrentPlan
-                        ? 'border-[var(--color-brand)]/40'
+                        ? 'border-[var(--color-brand)]/45'
                         : isHighlighted
-                          ? 'border-[var(--color-brand-plum)]/30'
-                          : 'border-[var(--color-pink-snow)]/80'
+                          ? 'border-[var(--color-brand-plum)]/40'
+                          : 'border-[var(--color-pink-snow)]/85'
                     }
                     ${
                       isHighlighted
@@ -220,7 +223,7 @@ export default function PlanosPage() {
                     </div>
                   </div>
 
-                  {/* Nome do plano */}
+                  {/* Nome + subtítulo */}
                   <div className="mb-1">
                     <h2
                       className={`text-xl sm:text-2xl font-bold mb-1 ${
@@ -231,13 +234,15 @@ export default function PlanosPage() {
                     >
                       {planConfig.name}
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)]">
+
+                    {/* CONTRASTE: subtítulo mais legível */}
+                    <p className="text-sm text-[var(--color-text-main)]/80">
                       {planConfig.subtitle}
                     </p>
                   </div>
 
                   {/* Preço */}
-                  <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/60">
+                  <div className="mb-6 pb-6 border-b border-[var(--color-pink-snow)]/70">
                     <div className="flex items-baseline gap-1">
                       <span
                         className={`text-4xl sm:text-5xl font-bold ${
@@ -248,17 +253,22 @@ export default function PlanosPage() {
                       >
                         {planConfig.price}
                       </span>
-                      <span className="text-sm text-[var(--color-text-muted)]">
+
+                      {/* CONTRASTE: period menos apagado */}
+                      <span className="text-sm text-[var(--color-text-main)]/70">
                         {planConfig.pricePeriod}
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
+
+                    {/* CONTRASTE: note menos apagado */}
+                    <p className="text-xs text-[var(--color-text-main)]/70 mt-2">
                       {planConfig.priceNote}
                     </p>
                   </div>
 
-                  {/* Lista de benefícios */}
-                  <div className="flex-1 space-y-2.5 mb-6 max-h-[320px] sm:max-h-none overflow-auto pr-1">
+                  {/* Benefícios */}
+                  {/* AJUSTE A: remove scroll interno no mobile; mantém no desktop */}
+                  <div className="flex-1 space-y-2.5 mb-6 overflow-visible md:max-h-[320px] md:overflow-auto md:pr-1">
                     {planConfig.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <AppIcon
@@ -267,7 +277,8 @@ export default function PlanosPage() {
                           decorative
                           className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
                         />
-                        <span className="text-xs leading-snug text-[var(--color-text-main)]">
+                        {/* CONTRASTE: texto do item mais legível */}
+                        <span className="text-xs leading-snug text-[var(--color-text-main)]/90">
                           {feature.label}
                         </span>
                       </div>
@@ -311,19 +322,37 @@ export default function PlanosPage() {
             })}
           </div>
 
-          {/* Tabela comparativa dentro de um card branco, com textos escuros */}
-          <SoftCard className="mb-10 rounded-3xl border border-[var(--color-pink-snow)]/90 bg-white/96 px-4 py-5 sm:px-6 sm:py-6 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-1">
-              Comparando os planos
-            </h3>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">
-              Um resumo dos principais recursos em cada plano, para te ajudar a
-              escolher com calma o que faz mais sentido para a sua rotina.
-            </p>
+          {/* COMPARANDO OS PLANOS — mais presença + legibilidade real */}
+          <SoftCard className="mb-10 rounded-3xl border border-[var(--color-pink-snow)]/90 bg-white/96 px-4 py-5 sm:px-6 sm:py-6 shadow-[0_10px_30px_rgba(0,0,0,0.10)] overflow-hidden">
+            {/* Header com faixa (mais visível) */}
+            <div className="-mx-4 -mt-5 mb-4 sm:-mx-6 sm:-mt-6 px-4 sm:px-6 py-3 bg-[#ffeaf3]/85 border-b border-[var(--color-pink-snow)]/70">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-pink-snow)]/80 bg-white">
+                  <AppIcon
+                    name="sparkles"
+                    size={14}
+                    decorative
+                    className="text-[var(--color-brand)]"
+                  />
+                </span>
+
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] leading-snug">
+                    Comparando os planos
+                  </h3>
+
+                  {/* CONTRASTE: descrição mais presente */}
+                  <p className="text-sm text-[var(--color-text-main)]/75 leading-relaxed">
+                    Um resumo simples para você escolher com calma — sem pressão.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[640px] rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/98">
-                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/98 rounded-t-2xl">
+              <div className="min-w-[720px] rounded-2xl border border-[var(--color-pink-snow)]/85 bg-white">
+                {/* Head da tabela com mais contraste */}
+                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-[#fff7fb] rounded-t-2xl">
                   <div className="px-3 py-3">Recurso</div>
                   <div className="px-3 py-3 text-center">Essencial</div>
                   <div className="px-3 py-3 text-center">Materna+</div>
@@ -394,35 +423,49 @@ export default function PlanosPage() {
                 ].map((row) => (
                   <div
                     key={row.feature}
-                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white even:bg-[#fff5fb]/80"
+                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/55 text-[12px] sm:text-xs odd:bg-white even:bg-[#fff7fb]/55"
                   >
-                    <div className="px-3 py-2 font-medium text-[var(--color-text-main)]">
+                    {/* CONTRASTE: coluna “recurso” mais forte */}
+                    <div className="px-3 py-2 font-semibold text-[var(--color-text-main)]">
                       {row.feature}
                     </div>
-                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
+
+                    {/* CONTRASTE: valores menos apagados */}
+                    <div className="px-3 py-2 text-center text-[var(--color-text-main)]/75">
                       {row.essencial}
                     </div>
-                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
+                    <div className="px-3 py-2 text-center text-[var(--color-text-main)]/75">
                       {row.plus}
                     </div>
-                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
+                    <div className="px-3 py-2 text-center text-[var(--color-text-main)]/75">
                       {row.full}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Nota final (mais visível) */}
+            <div className="mt-4 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-[#fff1f8]/70 px-4 py-3">
+              <p className="text-[12px] sm:text-sm text-[var(--color-text-main)]/80 leading-relaxed">
+                Se estiver em dúvida: comece pelo Essencial e evolua quando fizer sentido.
+                O Materna360 acompanha a sua fase — não exige “perfeição”.
+              </p>
+            </div>
           </SoftCard>
 
-          {/* Valores especiais para quem já vive o Materna360 */}
+          {/* Valores especiais */}
           <div className="mb-10 rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/92 px-4 py-4 sm:px-5 sm:py-5 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
             <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)] mb-2">
               Valores especiais para quem já vive o Materna360
             </h3>
-            <p className="text-sm text-[var(--color-text-main)] mb-2">
+
+            {/* CONTRASTE */}
+            <p className="text-sm text-[var(--color-text-main)]/85 mb-2">
               Se você já faz parte da nossa jornada:
             </p>
-            <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-muted)] mb-2">
+
+            <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-main)]/75 mb-2">
               <li>
                 Assinantes Materna+ recebem 5% de desconto no investimento da
                 MaternaBox.
@@ -432,100 +475,104 @@ export default function PlanosPage() {
                 da MaternaBox.
               </li>
             </ul>
-            <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
+
+            <p className="text-xs sm:text-sm text-[var(--color-text-main)]/70">
               O ajuste é aplicado automaticamente no checkout. É a nossa forma
               de agradecer por caminhar com você, mês após mês.
             </p>
           </div>
 
-          {/* CALL TO ACTION textual antes do FAQ */}
-          <div className="mb-8 text-center">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-2">
-              Escolha o plano que acolhe a sua rotina
-            </h3>
-            <p className="text-sm sm:text-base text-[var(--color-text-muted)]">
-              Aqui, tudo acontece no seu tempo — com carinho, calma e presença.
-              Você pode começar pelo Essencial, seguir para o Materna+ ou
-              aprofundar sua jornada no Materna+ 360, sempre que sentir que é o
-              momento.
-            </p>
+          {/* CTA + FAQ — mantém layout, melhora legibilidade com base clara */}
+          <SoftCard className="mb-10 rounded-3xl border border-[var(--color-pink-snow)]/85 bg-white/94 px-5 sm:px-6 py-6 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
+            <div className="text-center">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-2">
+                Escolha o plano que acolhe a sua rotina
+              </h3>
 
-            <div className="mt-4 flex justify-center">
-              <Button
-                variant="primary"
-                size="sm"
-                className="px-5"
-                onClick={() => handleUpgradeClick('materna-plus')}
-              >
-                Ver upgrade recomendado
-              </Button>
+              <p className="text-sm sm:text-base text-[var(--color-text-main)]/75">
+                Aqui, tudo acontece no seu tempo — com carinho, calma e presença.
+                Você pode começar pelo Essencial, seguir para o Materna+ ou
+                aprofundar sua jornada no Materna+ 360, sempre que sentir que é o
+                momento.
+              </p>
+
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="px-5"
+                  onClick={() => handleUpgradeClick('materna-plus')}
+                >
+                  Ver upgrade recomendado
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* FAQ */}
-          <div className="max-w-2xl mx-auto">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
-              Perguntas frequentes
-            </h3>
-            <div className="space-y-3">
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  Posso mudar de plano depois?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim. Você pode mudar de plano ou cancelar quando quiser. O
-                  Materna360 foi pensado para acompanhar as fases da sua
-                  maternidade, não para te prender em um contrato.
-                </div>
-              </details>
+            <div className="mt-8 max-w-2xl mx-auto">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
+                Perguntas frequentes
+              </h3>
 
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  Preciso de cartão de crédito para usar o plano Essencial?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Não. O plano Essencial é gratuito, não exige cartão de
-                  crédito e foi criado para que você possa sentir o Materna360
-                  com calma, sem compromisso financeiro.
-                </div>
-              </details>
+              <div className="space-y-3">
+                <details className="group">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/70 bg-white p-4 font-medium text-[var(--color-text-main)] hover:bg-white/95 transition-colors">
+                    Posso mudar de plano depois?
+                    <span className="transition-transform group-open:rotate-180">
+                      <AppIcon name="chevron-down" size={20} decorative />
+                    </span>
+                  </summary>
+                  <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/90">
+                    Sim. Você pode mudar de plano ou cancelar quando quiser. O
+                    Materna360 foi pensado para acompanhar as fases da sua
+                    maternidade, não para te prender em um contrato.
+                  </div>
+                </details>
 
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  O que acontece com meus dados se eu cancelar?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Seus registros permanecem guardados com segurança. Você pode
-                  voltar para o plano Essencial e seguir usando o app de forma
-                  gratuita, ou reativar um plano pago quando fizer sentido para
-                  você.
-                </div>
-              </details>
+                <details className="group">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/70 bg-white p-4 font-medium text-[var(--color-text-main)] hover:bg-white/95 transition-colors">
+                    Preciso de cartão de crédito para usar o plano Essencial?
+                    <span className="transition-transform group-open:rotate-180">
+                      <AppIcon name="chevron-down" size={20} decorative />
+                    </span>
+                  </summary>
+                  <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/90">
+                    Não. O plano Essencial é gratuito, não exige cartão de
+                    crédito e foi criado para que você possa sentir o Materna360
+                    com calma, sem compromisso financeiro.
+                  </div>
+                </details>
 
-              <details className="group">
-                <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
-                  Meus dados e registros são privados?
-                  <span className="transition-transform group-open:rotate-180">
-                    <AppIcon name="chevron-down" size={20} decorative />
-                  </span>
-                </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim. Seus dados são armazenados com segurança e não são
-                  compartilhados com terceiros. O que você registra aqui é
-                  tratado com respeito e sigilo.
-                </div>
-              </details>
+                <details className="group">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/70 bg-white p-4 font-medium text-[var(--color-text-main)] hover:bg-white/95 transition-colors">
+                    O que acontece com meus dados se eu cancelar?
+                    <span className="transition-transform group-open:rotate-180">
+                      <AppIcon name="chevron-down" size={20} decorative />
+                    </span>
+                  </summary>
+                  <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/90">
+                    Seus registros permanecem guardados com segurança. Você pode
+                    voltar para o plano Essencial e seguir usando o app de forma
+                    gratuita, ou reativar um plano pago quando fizer sentido para
+                    você.
+                  </div>
+                </details>
+
+                <details className="group">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/70 bg-white p-4 font-medium text-[var(--color-text-main)] hover:bg-white/95 transition-colors">
+                    Meus dados e registros são privados?
+                    <span className="transition-transform group-open:rotate-180">
+                      <AppIcon name="chevron-down" size={20} decorative />
+                    </span>
+                  </summary>
+                  <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/90">
+                    Sim. Seus dados são armazenados com segurança e não são
+                    compartilhados com terceiros. O que você registra aqui é
+                    tratado com respeito e sigilo.
+                  </div>
+                </details>
+              </div>
             </div>
-          </div>
+          </SoftCard>
         </div>
 
         {/* Sheet de upgrade

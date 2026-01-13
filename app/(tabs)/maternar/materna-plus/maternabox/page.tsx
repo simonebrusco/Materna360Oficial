@@ -1,8 +1,15 @@
 // app/(tabs)/maternar/materna-plus/maternabox/page.tsx
 'use client'
 
-import React, { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
 import Image from 'next/image'
+
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
@@ -19,7 +26,7 @@ const HUB_SECTIONS: { id: HubSectionId; label: string }[] = [
   { id: 'como-funciona', label: 'Como funciona' },
   { id: 'para-quem', label: 'Para quem é' },
   { id: 'faixa', label: 'Faixa etária' },
-  { id: 'planos', label: 'Planos' },
+  { id: 'planos', label: 'Ritmos' },
 ]
 
 type AgeBand = '0-1' | '1-3' | '3-5' | '5-8'
@@ -43,7 +50,7 @@ type Plan = {
 /**
  * IMPORTANTE (Governança / Pré-monetização)
  * - Não fixar preços/regras operacionais aqui.
- * - “Planos” nesta fase = estrutura de escolha (ritmo), sem checkout real.
+ * - “Ritmos” nesta fase = estrutura de escolha (cadência), sem checkout real.
  */
 const PLANS: Plan[] = [
   {
@@ -58,7 +65,11 @@ const PLANS: Plan[] = [
     kicker: 'RITMO CONSTANTE',
     title: 'Trimestral',
     subtitle: 'Para manter consistência sem pensar todo mês.',
-    bullets: ['Ritmo por trimestre', 'Curadoria contínua', 'Ajuste de faixa quando precisar'],
+    bullets: [
+      'Ritmo por trimestre',
+      'Curadoria contínua',
+      'Ajuste de faixa quando precisar',
+    ],
   },
   {
     id: 'semestral',
@@ -72,7 +83,11 @@ const PLANS: Plan[] = [
     kicker: 'CAMADA A MAIS',
     title: 'Anual',
     subtitle: 'Para quem quer previsibilidade e menos decisões.',
-    bullets: ['Ritmo anual', 'Curadoria ao longo do ano', 'Revisão de fase quando fizer sentido'],
+    bullets: [
+      'Ritmo anual',
+      'Curadoria ao longo do ano',
+      'Revisão de fase quando fizer sentido',
+    ],
     highlight: true,
   },
 ]
@@ -88,7 +103,7 @@ function splitEditorialText(raw: string | null | undefined): string[] {
   const text = String(raw).trim()
   if (!text) return []
 
-  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas']
+  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas', 'Se']
   let working = text
 
   markers.forEach((m) => {
@@ -148,19 +163,19 @@ function RenderEditorialText({
 }
 
 /* =========================
-   Pré-lançamento — Lista de espera
+   LISTA DE ESPERA (Pré-lançamento)
 ========================= */
 
 type WaitlistState = {
   name: string
   email: string
-  message: string
+  whatsapp: string
 }
 
 const initialWaitlist: WaitlistState = {
   name: '',
   email: '',
-  message: '',
+  whatsapp: '',
 }
 
 export default function MaternaBoxPage() {
@@ -194,7 +209,6 @@ export default function MaternaBoxPage() {
 
   const goToPlansPage = () => {
     if (typeof window === 'undefined') return
-    // caminho provável dentro de /maternar/materna-plus (consistência com esta rota)
     window.location.href = '/maternar/materna-plus/planos'
   }
 
@@ -204,7 +218,7 @@ export default function MaternaBoxPage() {
     setWaitlistOpen(true)
   }
 
-  const handleWaitlistChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleWaitlistChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setWaitlist((prev) => ({ ...prev, [name]: value }))
   }
@@ -222,9 +236,12 @@ export default function MaternaBoxPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...waitlist,
+          name: waitlist.name.trim() || undefined,
+          email: waitlist.email.trim(),
+          whatsapp: waitlist.whatsapp.trim() || undefined,
           selectedAge,
           selectedPlan,
+          source: 'materna-box-page',
         }),
       })
 
@@ -314,38 +331,41 @@ export default function MaternaBoxPage() {
       headerTop={<BackToMaternar />}
     >
       <ClientOnly>
-        {/* pb maior para não encostar na tab bar no mobile */}
-        <div className="pt-3 md:pt-4 pb-24 space-y-6 md:space-y-10">
-          {/* BANNER PRÉ-LANÇAMENTO (demanda) */}
+        {/* AJUSTE: reduz o “vazio” logo após o header (mobile mais agressivo) */}
+        <div className="pt-0 -mt-14 sm:-mt-16 md:-mt-4 pb-24 space-y-4 sm:space-y-5 md:space-y-10">
+          {/* PRE-LAUNCH BANNER */}
           <Reveal>
-            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-5 md:p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-5 sm:p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                     PRÉ-LANÇAMENTO
                   </p>
+
                   <p className="text-[14px] md:text-[15px] font-semibold text-[#545454]">
                     Estamos organizando a primeira edição da MaternaBox.
                   </p>
+
                   <p className="text-[12px] md:text-[13px] text-[#6A6A6A] leading-relaxed max-w-2xl">
                     Neste momento, abrimos apenas a lista de espera para medir interesse e avisar primeiro quando a
                     abertura acontecer.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
                   <Button
                     variant="primary"
                     size="sm"
-                    className="text-[13px] w-full sm:w-auto"
+                    className="text-[13px] px-5 py-2 w-full sm:w-auto"
                     onClick={openWaitlist}
                   >
                     Entrar na lista de espera
                   </Button>
+
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="text-[13px] w-full sm:w-auto"
+                    className="text-[13px] px-5 py-2 w-full sm:w-auto"
                     onClick={() => scrollTo('visao')}
                   >
                     Ver a MaternaBox
@@ -355,13 +375,15 @@ export default function MaternaBoxPage() {
             </SoftCard>
           </Reveal>
 
+          {/* VISÃO */}
           <Reveal>
             <SoftCard
               id="maternabox-visao"
               className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-5 sm:p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
             >
-              <div className="space-y-4 md:space-y-6">
-                <div className="grid gap-5 md:grid-cols-[1.05fr,0.95fr] md:items-start">
+              <div className="grid gap-5 md:gap-7 md:grid-cols-[1.05fr,0.95fr] md:items-start">
+                {/* Texto */}
+                <div className="space-y-4 md:space-y-6">
                   <div className="max-w-3xl space-y-2.5">
                     <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
                       MATERNABOX
@@ -380,7 +402,7 @@ export default function MaternaBoxPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
                         PRÉ-LANÇAMENTO
                       </p>
-                      <p className="mt-2 text-[12px] text-[#545454] leading-relaxed">
+                      <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
                         A MaternaBox está em preparação. Entre na lista de espera para ser avisada primeiro quando a
                         primeira edição abrir.
                       </p>
@@ -394,7 +416,6 @@ export default function MaternaBoxPage() {
                         >
                           Entrar na lista de espera
                         </Button>
-
                         <Button
                           variant="secondary"
                           size="sm"
@@ -407,107 +428,109 @@ export default function MaternaBoxPage() {
                     </SoftCard>
                   </div>
 
-                  {/* IMAGEM (humaniza) */}
-                  <div className="space-y-2">
-                    <div className="rounded-3xl border border-[#F5D7E5] bg-white p-3 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
-                      <div className="relative w-full overflow-hidden rounded-2xl">
-                        <Image
-                          src="/images/maternabox2.png"
-                          alt="MaternaBox"
-                          width={1200}
-                          height={900}
-                          className="h-auto w-full object-cover"
-                          priority={false}
-                        />
+                  {/* Menu + CTAs */}
+                  <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                      MENU
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {HUB_SECTIONS.map((s) => (
+                        <Pill key={s.id} id={s.id} label={s.label} />
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-[12px] text-[#545454]">
+                        Se fizer sentido para o seu momento: veja os detalhes e depois escolha o ritmo.
+                      </p>
+
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-[13px] px-5 py-2 w-full sm:w-auto"
+                          onClick={() => scrollTo('como-funciona')}
+                        >
+                          Ver detalhes
+                        </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="text-[13px] px-5 py-2 w-full sm:w-auto"
+                          onClick={() => scrollTo('planos')}
+                        >
+                          Ver ritmos
+                        </Button>
                       </div>
-                      <p className="mt-3 text-[12px] text-[#6A6A6A] leading-relaxed">
-                        Um produto pensado para a vida real: guia curto, curadoria por fase e um “próximo passo” mais
-                        claro.
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:gap-4 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Sem pesquisar atividades. Só abrir, escolher e fazer.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="font-semibold text-[13px] text-[#fd2597]">Pouco tempo</p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Ideias que cabem na rotina real (10–20 min).
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="font-semibold text-[13px] text-[#fd2597]">Por fase</p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Você escolhe a faixa etária e ajusta depois.
                       </p>
                     </div>
                   </div>
-                </div>
 
-                <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">MENU</p>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {HUB_SECTIONS.map((s) => (
-                      <Pill key={s.id} id={s.id} label={s.label} />
-                    ))}
-                  </div>
-
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[12px] text-[#545454]">
-                      Se fizer sentido para o seu momento: veja os detalhes e depois escolha o ritmo.
-                    </p>
-
-                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-[13px] px-5 py-2 w-full sm:w-auto"
-                        onClick={() => scrollTo('como-funciona')}
-                      >
-                        Ver detalhes
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="text-[13px] px-5 py-2 w-full sm:w-auto"
-                        onClick={() => scrollTo('planos')}
-                      >
-                        Ver ritmos
-                      </Button>
-                    </div>
+                  <div className="mt-4 pt-1 flex flex-col sm:flex-row gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="text-[13px] w-full sm:w-auto"
+                      onClick={() => scrollTo('como-funciona')}
+                    >
+                      Conhecer a MaternaBox
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="text-[13px] w-full sm:w-auto"
+                      onClick={openWaitlist}
+                    >
+                      Entrar na lista de espera
+                    </Button>
                   </div>
                 </div>
 
-                <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
-                    <p className="text-[13px] text-[#545454] leading-snug">
-                      Sem pesquisar atividades. Só abrir, escolher e fazer.
-                    </p>
+                {/* Imagem */}
+                <div className="space-y-2">
+                  <div className="relative overflow-hidden rounded-3xl border border-[#F5D7E5] bg-white shadow-[0_10px_26px_rgba(0,0,0,0.08)]">
+                    <Image
+                      src="/images/maternabox2.png"
+                      alt="Mãe e crianças em um momento de brincadeira e conexão"
+                      width={1200}
+                      height={900}
+                      className="h-auto w-full object-cover"
+                      priority
+                    />
                   </div>
 
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">Pouco tempo</p>
-                    <p className="text-[13px] text-[#545454] leading-snug">
-                      Ideias que cabem na rotina real (10–20 min).
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                    <p className="font-semibold text-[13px] text-[#fd2597]">Por fase</p>
-                    <p className="text-[13px] text-[#545454] leading-snug">
-                      Você escolhe a faixa etária e ajusta depois.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-1 flex flex-col sm:flex-row gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="text-[13px] w-full sm:w-auto"
-                    onClick={() => scrollTo('como-funciona')}
-                  >
-                    Conhecer a MaternaBox
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="text-[13px] w-full sm:w-auto"
-                    onClick={openWaitlist}
-                  >
-                    Entrar na lista de espera
-                  </Button>
+                  <p className="text-[11px] text-[#6A6A6A] leading-relaxed">
+                    Um produto pensado para a vida real: guia curto, curadoria por fase e um “próximo passo” mais claro.
+                  </p>
                 </div>
               </div>
             </SoftCard>
           </Reveal>
 
+          {/* COMO FUNCIONA */}
           <Reveal delay={20}>
             <SoftCard
               id="maternabox-como-funciona"
@@ -567,6 +590,7 @@ export default function MaternaBoxPage() {
             </SoftCard>
           </Reveal>
 
+          {/* PARA QUEM É */}
           <Reveal delay={40}>
             <SoftCard
               id="maternabox-para-quem"
@@ -584,28 +608,29 @@ export default function MaternaBoxPage() {
                   <ul className="space-y-2 text-[13px] text-[#545454]">
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon name="sparkles" className="h-3.5 w-3.5 text-[#fd2597]" />
+                        <AppIcon name="sparkles" size={14} decorative className="text-[#fd2597]" />
                       </span>
                       <span>Quando você quer ideias prontas e aplicáveis.</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon name="heart" className="h-3.5 w-3.5 text-[#fd2597]" />
+                        <AppIcon name="heart" size={14} decorative className="text-[#fd2597]" />
                       </span>
                       <span>Quando você quer conexão (mesmo em dias corridos).</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="mt-0.5 h-6 w-6 rounded-full bg-[#ffe1f1] flex items-center justify-center border border-[#F5D7E5]">
-                        <AppIcon name="calendar" className="h-3.5 w-3.5 text-[#fd2597]" />
+                        <AppIcon name="calendar" size={14} decorative className="text-[#fd2597]" />
                       </span>
                       <span>Quando você quer rotina com leveza, sem “inventar moda”.</span>
                     </li>
                   </ul>
 
-                  <RenderEditorialText
-                    text="A proposta é te poupar decisão e fricção. Você não compra “mais uma tarefa”. Você compra um caminho mais claro para o próximo momento de presença."
-                    className="text-[12px] text-[#6A6A6A] leading-relaxed"
-                  />
+                  <div className="pt-2 space-y-1 text-[12px] text-[#6A6A6A] leading-relaxed">
+                    <p>A proposta é poupar decisão e fricção.</p>
+                    <p>Você não compra “mais uma tarefa”.</p>
+                    <p>Você compra um caminho mais claro para o próximo momento de presença.</p>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
@@ -615,7 +640,12 @@ export default function MaternaBoxPage() {
                   <p>• Você prefere escolher tudo sozinha, sem curadoria.</p>
 
                   <div className="pt-2">
-                    <Button variant="secondary" size="sm" className="text-[13px] w-full" onClick={openWaitlist}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="text-[13px] w-full"
+                      onClick={openWaitlist}
+                    >
                       Entrar na lista de espera
                     </Button>
                   </div>
@@ -624,6 +654,7 @@ export default function MaternaBoxPage() {
             </SoftCard>
           </Reveal>
 
+          {/* FAIXA ETÁRIA */}
           <Reveal delay={60}>
             <SoftCard
               id="maternabox-faixa"
@@ -664,8 +695,11 @@ export default function MaternaBoxPage() {
                 <SoftCard className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="text-[13px] font-semibold text-[#545454]">Selecionado:</p>
                   <p className="text-[13px] text-[#545454]">
-                    Faixa <span className="font-semibold">{AGE_BANDS.find((a) => a.id === selectedAge)?.label}</span> —
-                    a curadoria é ajustada para essa fase.
+                    Faixa{' '}
+                    <span className="font-semibold">
+                      {AGE_BANDS.find((a) => a.id === selectedAge)?.label}
+                    </span>{' '}
+                    — a curadoria é ajustada para essa fase.
                   </p>
                 </SoftCard>
 
@@ -691,6 +725,7 @@ export default function MaternaBoxPage() {
             </SoftCard>
           </Reveal>
 
+          {/* RITMOS */}
           <Reveal delay={80}>
             <SoftCard
               id="maternabox-planos"
@@ -699,13 +734,13 @@ export default function MaternaBoxPage() {
               <div className="space-y-5">
                 <header className="space-y-2">
                   <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    PLANOS
+                    RITMOS
                   </p>
                   <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
                     Escolha o ritmo que faz sentido.
                   </h2>
                   <RenderEditorialText
-                    text="Nesta fase, você escolhe o ritmo e a faixa para registrar interesse. Quando a primeira edição abrir, valores e disponibilidade serão apresentados com clareza."
+                    text="Aqui você define a estrutura da sua escolha. Nesta fase, a MaternaBox está em pré-lançamento — entre na lista para ser avisada primeiro quando abrirmos."
                     className="text-[12px] text-[#6A6A6A] leading-relaxed"
                   />
                 </header>
@@ -759,17 +794,18 @@ export default function MaternaBoxPage() {
                 <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="space-y-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">SEU RESUMO</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                        SEU RESUMO
+                      </p>
 
                       <RenderEditorialText
                         text={`${selectedPlanData.title} · Faixa ${AGE_BANDS.find((a) => a.id === selectedAge)?.label}`}
                         className="text-[13px] text-[#545454] leading-relaxed"
                       />
 
-                      <RenderEditorialText
-                        text="Se isso faz sentido para o seu momento, entre na lista de espera com essa escolha. Assim, a primeira edição nasce a partir de demanda real."
-                        className="text-[12px] text-[#6A6A6A] leading-relaxed"
-                      />
+                      <p className="text-[12px] text-[#6A6A6A] leading-relaxed">
+                        Quer ser avisada quando a primeira edição abrir? Entre na lista de espera.
+                      </p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -795,7 +831,9 @@ export default function MaternaBoxPage() {
 
                 {/* Link “Planos” futuro, mantido mas sem pressão */}
                 <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">PRÓXIMO PASSO</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+                    PRÓXIMO PASSO
+                  </p>
                   <p className="mt-2 text-[12px] text-[#6A6A6A] leading-relaxed">
                     Quando a MaternaBox abrir oficialmente, a página de Planos do Materna+ concentrará valores,
                     disponibilidade e regras operacionais, com clareza.
@@ -825,11 +863,11 @@ export default function MaternaBoxPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
-                      LISTA DE ESPERA · MATERNABOX
+                      LISTA DE ESPERA
                     </p>
-                    <h3 className="text-[18px] font-semibold text-[#545454]">Entrar na lista de espera</h3>
+                    <h3 className="text-[18px] font-semibold text-[#545454]">Entre para ser avisada primeiro</h3>
                     <p className="text-[12px] text-[#6A6A6A]">
-                      Conte o mínimo. A gente usa isso para organizar a primeira edição e avisar você primeiro.
+                      Sem compromisso. A ideia é medir interesse e te avisar quando abrirmos.
                     </p>
                   </div>
 
@@ -856,7 +894,7 @@ export default function MaternaBoxPage() {
                         htmlFor="wlName"
                         className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
                       >
-                        Nome
+                        Nome (opcional)
                       </label>
                       <input
                         id="wlName"
@@ -875,7 +913,7 @@ export default function MaternaBoxPage() {
                         htmlFor="wlEmail"
                         className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
                       >
-                        E-mail
+                        E-mail (obrigatório)
                       </label>
                       <input
                         id="wlEmail"
@@ -893,21 +931,24 @@ export default function MaternaBoxPage() {
 
                   <div className="space-y-2">
                     <label
-                      htmlFor="wlMessage"
+                      htmlFor="wlWhatsapp"
                       className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
                     >
-                      Observação (opcional)
+                      WhatsApp (opcional)
                     </label>
-                    <textarea
-                      id="wlMessage"
-                      name="message"
-                      rows={4}
-                      value={waitlist.message}
+                    <input
+                      id="wlWhatsapp"
+                      name="whatsapp"
+                      type="tel"
+                      value={waitlist.whatsapp}
                       onChange={handleWaitlistChange}
-                      placeholder="Se quiser, diga o que você mais quer destravar com a MaternaBox (ex.: rotina, conexão, ideias prontas)."
-                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                      placeholder="(DDD) 9xxxx-xxxx"
+                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                       disabled={waitlistSubmitting}
                     />
+                    <p className="text-[11px] text-[#6A6A6A] leading-relaxed">
+                      Se você preferir, deixe só o e-mail. O WhatsApp ajuda em avisos rápidos.
+                    </p>
                   </div>
 
                   {waitlistSuccess && (
@@ -938,13 +979,12 @@ export default function MaternaBoxPage() {
                       disabled={waitlistSubmitting}
                       className="inline-flex w-full sm:w-auto items-center justify-center rounded-2xl bg-[#fd2597] px-5 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#e0218c] disabled:cursor-not-allowed disabled:bg-[#fd2597]/60"
                     >
-                      {waitlistSubmitting ? 'Enviando...' : 'Entrar na lista'}
+                      {waitlistSubmitting ? 'Enviando...' : 'Entrar na lista de espera'}
                     </button>
                   </div>
 
                   <p className="text-[11px] text-[#6A6A6A] leading-relaxed">
-                    Ao enviar, você não cria obrigação de compra. É apenas um registro de interesse para a primeira
-                    edição.
+                    Ao enviar, você não cria obrigação. É apenas um cadastro de interesse para o pré-lançamento.
                   </p>
                 </form>
               </SoftCard>
