@@ -138,14 +138,17 @@ export default function PlanosPage() {
       data-layout="page-template-v1"
       className="min-h-[100dvh] pb-16 bg-transparent"
     >
-      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl px-4 md:px-6 pt-10">
+      {/* AJUSTE (micro): reduz respiro no topo em mobile */}
+      <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl px-4 md:px-6 pt-8 md:pt-10">
         {/* VOLTAR PARA MATERNAR (Topo) */}
-        <div className="flex justify-start mb-6">
+        {/* AJUSTE (micro): reduz margem inferior em mobile */}
+        <div className="flex justify-start mb-4 md:mb-6">
           <BackToMaternar />
         </div>
 
         {/* HERO da página de planos */}
-        <header className="mb-8 sm:mb-10 text-center">
+        {/* AJUSTE (micro): reduz margin-bottom do hero em mobile */}
+        <header className="mb-6 sm:mb-10 text-center">
           <span className="inline-flex items-center rounded-full border border-white/40 bg-white/20 px-3 py-1 text-[10px] font-semibold tracking-[0.24em] text-white uppercase backdrop-blur-md">
             PLANOS MATERNA360
           </span>
@@ -258,7 +261,8 @@ export default function PlanosPage() {
                   </div>
 
                   {/* Lista de benefícios */}
-                  <div className="flex-1 space-y-2.5 mb-6 max-h-[320px] sm:max-h-none overflow-auto pr-1">
+                  {/* AJUSTE A: remove scroll interno no mobile; mantém no desktop */}
+                  <div className="flex-1 space-y-2.5 mb-6 overflow-visible md:max-h-[320px] md:overflow-auto md:pr-1">
                     {planConfig.features.map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <AppIcon
