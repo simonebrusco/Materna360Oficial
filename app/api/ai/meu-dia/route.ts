@@ -9,6 +9,13 @@ import {
 } from '@/app/lib/ai/maternaCore'
 import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
 import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
+import {
+  tryConsumeDailyAI,
+  releaseDailyAI,
+  DAILY_LIMIT_MESSAGE,
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT,
+} from '@/app/lib/ai/dailyLimit.server'
 
 export const runtime = 'nodejs'
 
@@ -55,12 +62,51 @@ function normalizeFocus(value: string | null | undefined): MaternaFocusOfDay | n
 }
 
 export async function POST(req: Request) {
+  let gate: { actorId: string; dateKey: string } | null = null
+
   try {
     // Proteção de uso da IA para o eixo "Meu Dia"
     assertRateLimit(req, 'ai-meu-dia', {
       limit: 30,
       windowMs: 5 * 60_000, // 30 chamadas a cada 5 minutos
     })
+
+    // Limite diário global (ética) — backend como fonte de verdade
+    const g = await tryConsumeDailyAI(DAILY_LIMIT)
+    gate = { actorId: g.actorId, dateKey: g.dateKey }
+
+    if (!g.allowed) {
+      const res = NextResponse.json(
+        {
+          blocked: true,
+          message: DAILY_LIMIT_MESSAGE,
+          // Mantém shape compatível com os diferentes "feature" consumirem sem quebrar:
+          suggestions: [],
+          summary: null,
+          focus: null,
+        },
+        {
+          status: 200,
+          headers: NO_STORE_HEADERS,
+        },
+      )
+
+      if (g.anonToSet) {
+        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, g.anonToSet, {
+          httpOnly: true,
+          sameSite: 'lax',
+          path: '/',
+        })
+      }
+
+      console.info('[AI_LIMIT] blocked', {
+        route: '/api/ai/meu-dia',
+        actorId: g.actorId,
+        dateKey: g.dateKey,
+      })
+
+      return res
+    }
 
     let body: MeuDiaRequestBody | null = null
 
@@ -153,6 +199,11 @@ export async function POST(req: Request) {
       },
     )
   } catch (error) {
+    // Se já consumimos cota e falhou antes de entregar resposta "final", liberamos o consumo
+    if (gate) {
+      await releaseDailyAI(gate.actorId, gate.dateKey)
+    }
+
     if (error instanceof RateLimitError) {
       console.warn('[API /api/ai/meu-dia] Rate limit atingido:', error.message)
       return NextResponse.json(
@@ -170,8 +221,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error:
-          'Não consegui ajudar com o seu dia agora. Tente novamente em instantes.',
+        error: 'Não consegui ajudar com o seu dia agora. Tente novamente em instantes.',
       },
       {
         status: 500,

@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server'
 
+import { tryConsumeDailyAI, releaseDailyAI, DAILY_LIMIT_MESSAGE } from '@/app/lib/ai/dailyLimit.server'
+
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses'
 const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store',
+}
+
+// cookie para ID anônimo (quando não logada)
+const ANON_COOKIE = 'm360_anon_id'
 
 type EnergyLevel = 'low' | 'medium' | 'high'
 type VariationAxis = 'frase' | 'cuidado' | 'ritual' | 'limite' | 'presenca'
@@ -37,13 +46,6 @@ type WeeklyInsightContext = {
 
   /**
    * P34.11.1 — Inteligência de Variação (silenciosa)
-   * Eixos permitidos:
-   * - energy_level: low | medium | high
-   * - variation_axis: frase | cuidado | ritual | limite | presenca
-   *
-   * Importante:
-   * - Não expor para a usuária.
-   * - Apenas um variation_axis por geração.
    */
   energy_level?: EnergyLevel
   variation_axis?: VariationAxis
@@ -75,7 +77,7 @@ type EmotionalRequestBody = {
 }
 
 function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
+  return NextResponse.json({ error: message }, { status, headers: NO_STORE_HEADERS })
 }
 
 function safeString(v: unknown): string | null {
@@ -94,60 +96,121 @@ function safeVariationAxis(v: unknown): VariationAxis | undefined {
   return undefined
 }
 
+function withAnonCookieIfNeeded(res: NextResponse, anonToSet?: string) {
+  if (!anonToSet) return res
+  res.cookies.set(ANON_COOKIE, anonToSet, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365, // 1 ano
+    secure: process.env.NODE_ENV === 'production',
+  })
+  return res
+}
+
+/**
+ * Payload suave para bloqueio diário, sem quebrar o front:
+ * - mantém o shape esperado por feature.
+ * - sem números, sem técnico, sem CTA.
+ */
+function buildDailyLimitPayload(feature: EmotionalRequestBody['feature']) {
+  if (feature === 'weekly_overview') {
+    return {
+      weeklyInsight: {
+        title: 'Pausa por hoje',
+        summary: DAILY_LIMIT_MESSAGE,
+        suggestions: [
+          'Quando a energia fica curta, pausar também é cuidado.',
+          'Amanhã pode ser um lugar mais leve para retomar.',
+        ],
+        highlights: {
+          bestDay: 'Hoje, o melhor cenário é reduzir peso interno.',
+          toughDays: 'Quando tudo aperta, menos cobrança costuma ajudar.',
+        },
+      },
+    }
+  }
+
+  // daily_inspiration
+  return {
+    inspiration: {
+      phrase: 'Por hoje, vamos pausar as sugestões.',
+      care: 'Cuidar também é saber parar. Amanhã você continua com mais leveza.',
+      ritual: 'Se fizer sentido amanhã, isso pode reabrir com mais calma.',
+    },
+  }
+}
+
 export async function POST(request: Request) {
+  // 1) parse do body (robusto)
+  let body: EmotionalRequestBody | null = null
   try {
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      console.error('[IA Emocional] OPENAI_API_KEY não configurada')
-      return jsonError('Configuração de IA indisponível no momento.', 500)
-    }
+    body = (await request.json()) as EmotionalRequestBody
+  } catch {
+    body = null
+  }
 
-    const body = (await request.json()) as EmotionalRequestBody
-    const feature = body?.feature
-    if (!feature) return jsonError('Parâmetro "feature" é obrigatório.', 400)
+  const feature = body?.feature
+  if (!feature) return jsonError('Parâmetro "feature" é obrigatório.', 400)
 
-    const origin = safeString(body?.origin) ?? 'como-estou-hoje'
+  // 2) gate de API key (não consome quota se nem existe IA)
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    console.error('[IA Emocional] OPENAI_API_KEY não configurada')
+    return jsonError('Configuração de IA indisponível no momento.', 500)
+  }
 
-    /**
-     * Origem alvo da P34.11.1:
-     * - Maternar → Cuidar de Mim → ParaAgoraSupportCard
-     */
-    const isCuidarDeMim = origin === 'cuidar-de-mim'
+  // 3) Limite diário (P34.11.3) — 1 consumo por request
+  // Observação: a implementação de dailyLimit é fail-open se RPC falhar.
+  const quota = await tryConsumeDailyAI(5)
+  if (!quota.allowed) {
+    const limited = NextResponse.json(buildDailyLimitPayload(feature), {
+      status: 200,
+      headers: NO_STORE_HEADERS,
+    })
+    return withAnonCookieIfNeeded(limited, quota.anonToSet)
+  }
 
-    /**
-     * Regras existentes:
-     * - isMaternar era apenas "maternar-hub"
-     * Ajuste mínimo (interno):
-     * - "cuidar-de-mim" também é Maternar (mesma aba), para herdar limites do tom.
-     */
-    const isMaternar = origin === 'maternar-hub' || isCuidarDeMim
-    const isEu360 = origin === 'eu360'
+  const origin = safeString(body?.origin) ?? 'como-estou-hoje'
 
-    const context: WeeklyInsightContext = {
-      firstName: safeString(body?.context?.firstName) ?? undefined,
+  /**
+   * Origem alvo da P34.11.1:
+   * - Maternar → Cuidar de Mim → ParaAgoraSupportCard
+   */
+  const isCuidarDeMim = origin === 'cuidar-de-mim'
 
-      // legado
-      persona: safeString(body?.context?.persona) ?? null,
-      personaLabel: safeString(body?.context?.personaLabel) ?? null,
+  /**
+   * Ajuste mínimo:
+   * - "cuidar-de-mim" também é Maternar
+   */
+  const isMaternar = origin === 'maternar-hub' || isCuidarDeMim
+  const isEu360 = origin === 'eu360'
 
-      // novo eu360
-      preferences: body?.context?.preferences ?? undefined,
+  const context: WeeklyInsightContext = {
+    firstName: safeString(body?.context?.firstName) ?? undefined,
 
-      // compat
-      prefs: body?.context?.prefs ?? undefined,
+    // legado
+    persona: safeString(body?.context?.persona) ?? null,
+    personaLabel: safeString(body?.context?.personaLabel) ?? null,
 
-      // P34.11.1 — variação silenciosa (somente se vier no payload)
-      energy_level: safeEnergyLevel((body as any)?.context?.energy_level),
-      variation_axis: safeVariationAxis((body as any)?.context?.variation_axis),
+    // novo eu360
+    preferences: body?.context?.preferences ?? undefined,
 
-      stats: body?.context?.stats ?? undefined,
-      mood: safeString(body?.context?.mood) ?? safeString(body?.mood) ?? null,
-      energy: safeString(body?.context?.energy) ?? safeString(body?.energy) ?? null,
-      focusToday: safeString(body?.context?.focusToday) ?? null,
-      slot: safeString(body?.context?.slot) ?? null,
-    }
+    // compat
+    prefs: body?.context?.prefs ?? undefined,
 
-    const systemBase = `
+    // P34.11.1 — variação silenciosa
+    energy_level: safeEnergyLevel((body as any)?.context?.energy_level),
+    variation_axis: safeVariationAxis((body as any)?.context?.variation_axis),
+
+    stats: body?.context?.stats ?? undefined,
+    mood: safeString(body?.context?.mood) ?? safeString(body?.mood) ?? null,
+    energy: safeString(body?.context?.energy) ?? safeString(body?.energy) ?? null,
+    focusToday: safeString(body?.context?.focusToday) ?? null,
+    slot: safeString(body?.context?.slot) ?? null,
+  }
+
+  const systemBase = `
 Você é a IA emocional do Materna360, um app para mães que combina organização leve com apoio emocional.
 Sua missão é oferecer textos curtos, acolhedores e sem julgamentos, sempre no TOM DE VOZ Materna360:
 - gentil, humano, realista, sem frases motivacionais vazias
@@ -162,7 +225,7 @@ Regras:
 - Respeite SEMPRE o formato JSON pedido (sem texto fora do JSON).
 `.trim()
 
-    const systemMaternarAddendum = `
+  const systemMaternarAddendum = `
 Você está respondendo DENTRO DA ABA "MATERNAR".
 Aqui a IA atua como presença acolhedora e estável: escuta organizada e tradução de sentimentos.
 PROIBIDO em Maternar:
@@ -190,7 +253,7 @@ Importante:
 - Se precisar “oferecer algo”, ofereça PERMISSÃO e linguagem de cuidado (não instrução).
 `.trim()
 
-    const systemEu360Addendum = `
+  const systemEu360Addendum = `
 Você está respondendo DENTRO DO HUB "EU360".
 Aqui a IA entrega LEITURA NARRATIVA e RECONHECIMENTO — nunca direção.
 
@@ -212,111 +275,111 @@ Se houver um campo chamado "suggestions" no schema:
 - devem ser frases que aliviam, não orientam
 `.trim()
 
-    const systemMessage = (isMaternar
-      ? `${systemBase}\n\n${systemMaternarAddendum}`
-      : isEu360
-        ? `${systemBase}\n\n${systemEu360Addendum}`
-        : systemBase
-    ).trim()
+  const systemMessage = (isMaternar
+    ? `${systemBase}\n\n${systemMaternarAddendum}`
+    : isEu360
+      ? `${systemBase}\n\n${systemEu360Addendum}`
+      : systemBase
+  ).trim()
 
-    const userContext = {
-      origem: origin,
-      firstName: context.firstName ?? null,
+  const userContext = {
+    origem: origin,
+    firstName: context.firstName ?? null,
 
-      // legado
-      persona: context.persona ?? null,
-      personaLabel: context.personaLabel ?? null,
+    // legado
+    persona: context.persona ?? null,
+    personaLabel: context.personaLabel ?? null,
 
-      // novo eu360
-      preferences: context.preferences ?? null,
+    // novo eu360
+    preferences: context.preferences ?? null,
 
-      // compat
-      prefs: context.prefs ?? null,
+    // compat
+    prefs: context.prefs ?? null,
 
-      // P34.11.1 — variação silenciosa (somente relevante para cuidar-de-mim)
-      energy_level: context.energy_level ?? null,
-      variation_axis: context.variation_axis ?? null,
+    // P34.11.1 — variação silenciosa
+    energy_level: context.energy_level ?? null,
+    variation_axis: context.variation_axis ?? null,
 
-      humorAtual: context.mood ?? null,
-      energiaAtual: context.energy ?? null,
-      focoHoje: context.focusToday ?? null,
-      tempoSlot: context.slot ?? null,
-      stats: context.stats ?? null,
+    humorAtual: context.mood ?? null,
+    energiaAtual: context.energy ?? null,
+    focoHoje: context.focusToday ?? null,
+    tempoSlot: context.slot ?? null,
+    stats: context.stats ?? null,
 
-      resumoNotas: safeString(body?.notesPreview) ?? null,
-    }
+    resumoNotas: safeString(body?.notesPreview) ?? null,
+  }
 
-    const userMessageCommon = `
+  const userMessageCommon = `
 Dados de contexto (podem estar vazios):
 ${JSON.stringify(userContext, null, 2)}
 `.trim()
 
-    const weeklySchema = {
-      name: 'weekly_insight',
-      strict: true,
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          weeklyInsight: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              title: { type: 'string', minLength: 1 },
-              summary: { type: 'string', minLength: 1 },
-              suggestions: {
-                type: 'array',
-                minItems: 2,
-                maxItems: 5,
-                items: { type: 'string', minLength: 1 },
-              },
-              highlights: {
-                type: 'object',
-                additionalProperties: false,
-                properties: {
-                  bestDay: { type: 'string', minLength: 1 },
-                  toughDays: { type: 'string', minLength: 1 },
-                },
-                required: ['bestDay', 'toughDays'],
-              },
+  const weeklySchema = {
+    name: 'weekly_insight',
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        weeklyInsight: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            title: { type: 'string', minLength: 1 },
+            summary: { type: 'string', minLength: 1 },
+            suggestions: {
+              type: 'array',
+              minItems: 2,
+              maxItems: 5,
+              items: { type: 'string', minLength: 1 },
             },
-            required: ['title', 'summary', 'suggestions', 'highlights'],
-          },
-        },
-        required: ['weeklyInsight'],
-      },
-    } as const
-
-    const dailySchema = {
-      name: 'daily_inspiration',
-      strict: true,
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          inspiration: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              phrase: { type: 'string', minLength: 1 },
-              care: { type: 'string', minLength: 1 },
-              ritual: { type: 'string', minLength: 1 },
+            highlights: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                bestDay: { type: 'string', minLength: 1 },
+                toughDays: { type: 'string', minLength: 1 },
+              },
+              required: ['bestDay', 'toughDays'],
             },
-            required: ['phrase', 'care', 'ritual'],
           },
+          required: ['title', 'summary', 'suggestions', 'highlights'],
         },
-        required: ['inspiration'],
       },
-    } as const
+      required: ['weeklyInsight'],
+    },
+  } as const
 
-    let inputText = ''
-    let schemaToUse: typeof weeklySchema | typeof dailySchema
+  const dailySchema = {
+    name: 'daily_inspiration',
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        inspiration: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            phrase: { type: 'string', minLength: 1 },
+            care: { type: 'string', minLength: 1 },
+            ritual: { type: 'string', minLength: 1 },
+          },
+          required: ['phrase', 'care', 'ritual'],
+        },
+      },
+      required: ['inspiration'],
+    },
+  } as const
 
-    if (feature === 'weekly_overview') {
-      schemaToUse = weeklySchema
+  let inputText = ''
+  let schemaToUse: typeof weeklySchema | typeof dailySchema
 
-      if (isMaternar) {
-        inputText = `
+  if (feature === 'weekly_overview') {
+    schemaToUse = weeklySchema
+
+    if (isMaternar) {
+      inputText = `
 Gere um insight emocional da semana para a mãe, a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
@@ -326,8 +389,8 @@ Requisitos:
 - "highlights.toughDays": quando pesa mais + lembrete de gentileza.
 ${userMessageCommon}
 `.trim()
-      } else if (isEu360) {
-        inputText = `
+    } else if (isEu360) {
+      inputText = `
 Gere um relatório emocional em formato de leitura narrativa da semana, a partir do contexto fornecido.
 Requisitos:
 - "title": curto, adulto, respeitoso.
@@ -340,8 +403,8 @@ Use as "preferences" (se existirem) apenas para calibrar tom e foco,
 SEM mencionar preferências, questionário, perfil, persona ou “resultado”.
 ${userMessageCommon}
 `.trim()
-      } else {
-        inputText = `
+    } else {
+      inputText = `
 Gere um insight emocional da semana da mãe a partir do contexto fornecido.
 Requisitos:
 - "title": curto e acolhedor.
@@ -351,17 +414,12 @@ Requisitos:
 Ajuste o tom se existir "preferences" ou "prefs" (sem mencionar que existem preferências).
 ${userMessageCommon}
 `.trim()
-      }
-    } else if (feature === 'daily_inspiration') {
-      schemaToUse = dailySchema
+    }
+  } else if (feature === 'daily_inspiration') {
+    schemaToUse = dailySchema
 
-      /**
-       * P34.11.1 — somente para cuidar-de-mim:
-       * Variação dirigida por energy_level + variation_axis.
-       * Regra fixa: um único eixo por geração; variação perceptível sem aleatoriedade.
-       */
-      if (isCuidarDeMim) {
-        inputText = `
+    if (isCuidarDeMim) {
+      inputText = `
 Gere 3 apoios emocionais para "Cuidar de Mim" (aba MATERNAR) no formato do schema.
 Você DEVE respeitar os eixos internos abaixo quando existirem no contexto:
 
@@ -390,8 +448,8 @@ Formato obrigatório:
 
 ${userMessageCommon}
 `.trim()
-      } else if (isMaternar) {
-        inputText = `
+    } else if (isMaternar) {
+      inputText = `
 Gere um apoio emocional para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
 - "phrase": 1 linha acolhedora, sem imperativo.
@@ -399,8 +457,8 @@ Requisitos:
 - "ritual": 1 linha de permissão/ancoragem emocional (não é exercício; evite verbos no imperativo).
 ${userMessageCommon}
 `.trim()
-      } else if (isEu360) {
-        inputText = `
+    } else if (isEu360) {
+      inputText = `
 Gere uma leitura breve para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
 - "phrase": 1 linha adulta e acolhedora, sem imperativo.
@@ -411,8 +469,8 @@ Use as "preferences" (se existirem) apenas para calibrar tom e foco,
 SEM mencionar preferências, questionário, perfil, persona ou “resultado”.
 ${userMessageCommon}
 `.trim()
-      } else {
-        inputText = `
+    } else {
+      inputText = `
 Gere uma inspiração emocional para o dia da mãe, considerando humor, energia e foco.
 Requisitos:
 - "phrase": 1 linha.
@@ -422,11 +480,14 @@ Requisitos:
 Ajuste o tom se existir "preferences" ou "prefs" (sem mencionar que existem preferências).
 ${userMessageCommon}
 `.trim()
-      }
-    } else {
-      return jsonError('Feature inválida para IA emocional.', 400)
     }
+  } else {
+    // segurança (não deveria acontecer)
+    await releaseDailyAI(quota.actorId, quota.dateKey)
+    return jsonError('Feature inválida para IA emocional.', 400)
+  }
 
+  try {
     try {
       console.log('[IA Emocional] request', {
         feature,
@@ -470,11 +531,12 @@ ${userMessageCommon}
     }).finally(() => clearTimeout(timeout))
 
     if (!openAiRes.ok) {
-      console.error(
-        '[IA Emocional] Erro HTTP da OpenAI:',
-        openAiRes.status,
-        await openAiRes.text().catch(() => '(sem corpo)')
-      )
+      const bodyText = await openAiRes.text().catch(() => '(sem corpo)')
+      console.error('[IA Emocional] Erro HTTP da OpenAI:', openAiRes.status, bodyText)
+
+      // não “gastar” quota em falha infra
+      await releaseDailyAI(quota.actorId, quota.dateKey)
+
       return jsonError('Não consegui gerar a análise emocional agora.', 502)
     }
 
@@ -502,12 +564,27 @@ ${userMessageCommon}
       const first = rawText.indexOf('{')
       const last = rawText.lastIndexOf('}')
       if (first >= 0 && last > first) parsed = JSON.parse(rawText.slice(first, last + 1))
-      else throw new Error('Resposta da IA sem JSON válido')
+      else {
+        // não “gastar” quota em falha de parsing/format
+        await releaseDailyAI(quota.actorId, quota.dateKey)
+        throw new Error('Resposta da IA sem JSON válido')
+      }
     }
 
-    return NextResponse.json(parsed, { status: 200 })
+    const okRes = NextResponse.json(parsed, { status: 200, headers: NO_STORE_HEADERS })
+    return withAnonCookieIfNeeded(okRes, quota.anonToSet)
   } catch (error) {
     console.error('[IA Emocional] Erro geral na rota /api/ai/emocional:', error)
-    return NextResponse.json({ error: 'Não foi possível gerar a análise emocional agora.' }, { status: 500 })
+
+    // não “gastar” quota em falha geral (melhor esforço)
+    try {
+      await releaseDailyAI(quota.actorId, quota.dateKey)
+    } catch {}
+
+    const errRes = NextResponse.json(
+      { error: 'Não foi possível gerar a análise emocional agora.' },
+      { status: 500, headers: NO_STORE_HEADERS },
+    )
+    return withAnonCookieIfNeeded(errRes, quota.anonToSet)
   }
 }

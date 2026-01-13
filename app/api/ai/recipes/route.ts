@@ -1,23 +1,88 @@
+// app/api/ai/recipes/route.ts
+
 import { NextResponse } from 'next/server'
 
-export async function POST(req: Request) {
-  const body = await req.json()
-  const { plan } = body ?? {}
+import {
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT_MESSAGE,
+  tryConsumeDailyAI,
+} from '@/app/lib/ai/dailyLimit.server'
 
-  if (plan === 'free') {
-    return NextResponse.json({
-      access: {
-        denied: true,
-        limited_to_one: false,
-        message:
-          'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).',
-      },
-      query_echo: body,
-      suggestions: [],
-      aggregates: { consolidated_shopping_list: [] },
-    })
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store',
+}
+
+type Plan = 'free' | 'essencial' | 'premium'
+
+function safePlan(v: unknown): Plan {
+  return v === 'free' || v === 'essencial' || v === 'premium' ? v : 'premium'
+}
+
+export async function POST(req: Request) {
+  let body: any = null
+  try {
+    body = await req.json()
+  } catch {
+    body = null
   }
 
+  const plan = safePlan(body?.plan)
+
+  // Free: bloqueio por plano (paywall)
+  if (plan === 'free') {
+    return NextResponse.json(
+      {
+        access: {
+          denied: true,
+          limited_to_one: false,
+          message:
+            'Receitinhas faz parte dos planos pagos. Experimente o Essencial (1 receita/dia) ou o Premium (ilimitadas).',
+        },
+        query_echo: body,
+        suggestions: [],
+        aggregates: { consolidated_shopping_list: [] },
+      },
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
+  }
+
+  // ==========================
+  // P34.11.3 — Limite diário (backend)
+  // - Essencial: 1 geração/dia
+  // - Premium: limite ético global (5/dia)
+  // ==========================
+  const limit = plan === 'essencial' ? 1 : 5
+  const quota = await tryConsumeDailyAI(limit)
+
+  if (!quota.allowed) {
+    const res = NextResponse.json(
+      {
+        access: {
+          denied: false,
+          limited_to_one: plan === 'essencial',
+          message: DAILY_LIMIT_MESSAGE,
+        },
+        query_echo: body,
+        suggestions: [],
+        aggregates: { consolidated_shopping_list: [] },
+      },
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
+
+    if (quota.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+
+    return res
+  }
+
+  // Demo payload (mantido)
   const demo = {
     access: { denied: false, limited_to_one: false, message: '' },
     query_echo: {
@@ -47,7 +112,13 @@ export async function POST(req: Request) {
         servings: 2,
         ingredients: [
           { item: 'abobrinha ralada e espremida', qty: 1, unit: 'xícara' },
-          { item: 'ovo', qty: 1, unit: 'un', allergens: ['ovo'], subs: ['1 cs linhaça hidratada (vegano)'] },
+          {
+            item: 'ovo',
+            qty: 1,
+            unit: 'un',
+            allergens: ['ovo'],
+            subs: ['1 cs linhaça hidratada (vegano)'],
+          },
           {
             item: 'farelo/farinha de aveia',
             qty: 3,
@@ -80,7 +151,7 @@ export async function POST(req: Request) {
           'Evite excesso de sal; para <2 anos, sirva sem molhos salgados.',
         ],
         shopping_list: ['abobrinha', 'ovo', 'aveia/farinha', 'azeite', 'queijo (opcional)'],
-        microcopy: 'Você merece praticidade hoje 💛',
+        microcopy: 'Você merece praticidade hoje.',
         racional: 'Selecionada por rapidez, 1 tigela, airfryer e orçamento $.',
       },
       {
@@ -95,7 +166,13 @@ export async function POST(req: Request) {
         servings: 2,
         ingredients: [
           { item: 'abobrinha ralada e espremida', qty: 1, unit: 'xícara' },
-          { item: 'ovo', qty: 1, unit: 'un', allergens: ['ovo'], subs: ['1 cs chia hidratada (vegano)'] },
+          {
+            item: 'ovo',
+            qty: 1,
+            unit: 'un',
+            allergens: ['ovo'],
+            subs: ['1 cs chia hidratada (vegano)'],
+          },
           {
             item: 'aveia em flocos finos',
             qty: 4,
@@ -174,17 +251,46 @@ export async function POST(req: Request) {
     },
   }
 
+  // Essencial: mantém 1 receita exibida
   if (plan === 'essencial') {
-    return NextResponse.json({
-      ...demo,
-      access: {
-        denied: false,
-        limited_to_one: true,
-        message: 'No Essencial você vê 1 receita por dia.',
+    const res = NextResponse.json(
+      {
+        ...demo,
+        access: {
+          denied: false,
+          limited_to_one: true,
+          message: 'No Essencial você vê 1 receita por dia.',
+        },
+        suggestions: [demo.suggestions[0]],
       },
-      suggestions: [demo.suggestions[0]],
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
+
+    if (quota.anonToSet) {
+      res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+      })
+    }
+
+    return res
+  }
+
+  // Premium: tudo
+  const res = NextResponse.json(demo, { status: 200, headers: NO_STORE_HEADERS })
+
+  if (quota.anonToSet) {
+    res.cookies.set(DAILY_LIMIT_ANON_COOKIE, quota.anonToSet, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: true,
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
     })
   }
 
-  return NextResponse.json(demo)
+  return res
 }
