@@ -86,12 +86,10 @@ const PLANS = [
       { label: 'Conquistas premium (níveis 3 a 5), missões semanais e medalhas' },
       { label: 'Painel por mês e por ano (visão da jornada, sem nota)' },
       {
-        label:
-          'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais',
+        label: 'Prioridade nas agendas de profissionais parceiros e acesso a eventos especiais',
       },
       {
-        label:
-          'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros',
+        label: 'Descontos entre 10% e 15% em mentorias e encontros com especialistas parceiros',
       },
     ],
     buttonText: 'Quero o Materna+ 360',
@@ -111,8 +109,7 @@ export default function PlanosPage() {
   const [currentPlanId, setCurrentPlanId] = React.useState<PlanId>('essencial')
 
   // Qual plano foi clicado (para o sheet abrir “contextualizado” por re-mount)
-  const [selectedPlanId, setSelectedPlanId] =
-    React.useState<PlanId>('materna-plus')
+  const [selectedPlanId, setSelectedPlanId] = React.useState<PlanId>('materna-plus')
 
   React.useEffect(() => {
     const plan = getPlan()
@@ -130,14 +127,10 @@ export default function PlanosPage() {
     setOpen(true)
   }
 
-  const sheetPlanId: SheetPlanId =
-    selectedPlanId === 'materna-360' ? 'materna-360' : 'materna-plus'
+  const sheetPlanId: SheetPlanId = selectedPlanId === 'materna-360' ? 'materna-360' : 'materna-plus'
 
   return (
-    <main
-      data-layout="page-template-v1"
-      className="min-h-[100dvh] pb-16 bg-transparent"
-    >
+    <main data-layout="page-template-v1" className="min-h-[100dvh] pb-16 bg-transparent">
       {/* AJUSTE (micro): reduz respiro no topo em mobile */}
       <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl 2xl:max-w-screen-2xl px-4 md:px-6 pt-8 md:pt-10">
         {/* VOLTAR PARA MATERNAR (Topo) */}
@@ -158,20 +151,16 @@ export default function PlanosPage() {
           </h1>
 
           <p className="mt-2 text-sm sm:text-base text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-            Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
-            que faz sentido para o seu momento — sem pressão, sem cobrança.
+            Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano que faz sentido para o seu momento — sem pressão, sem cobrança.
             Aqui, você é quem guia o caminho.
           </p>
 
           <div className="mt-4 space-y-1">
             <p className="text-xs sm:text-sm font-semibold text-[#FFE4F0]">
-              Você já está no plano{' '}
-              {PLANS.find((p) => p.id === currentPlanId)?.name}
+              Você já está no plano {PLANS.find((p) => p.id === currentPlanId)?.name}
             </p>
             <p className="text-xs sm:text-sm text-white/90">
-              Se fizer sentido para você, pode mudar de plano com calma, sem
-              pressa e sem multas. O plano acompanha a sua fase, não o
-              contrário.
+              Se fizer sentido para você, pode mudar de plano com calma, sem pressa e sem multas. O plano acompanha a sua fase, não o contrário.
             </p>
           </div>
         </header>
@@ -214,11 +203,7 @@ export default function PlanosPage() {
                           : 'bg-[var(--color-soft-strong)] text-[var(--color-text-main)]'
                       }`}
                     >
-                      <AppIcon
-                        name={planConfig.badgeIcon}
-                        size={12}
-                        decorative
-                      />
+                      <AppIcon name={planConfig.badgeIcon} size={12} decorative />
                       {planConfig.badge}
                     </div>
                   </div>
@@ -227,16 +212,14 @@ export default function PlanosPage() {
                   <div className="mb-1">
                     <h2
                       className={`text-xl sm:text-2xl font-bold mb-1 ${
-                        isHighlighted
-                          ? 'text-[var(--color-brand)]'
-                          : 'text-[var(--color-text-main)]'
+                        isHighlighted ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-main)]'
                       }`}
                     >
                       {planConfig.name}
                     </h2>
-                    <p className="text-sm text-[var(--color-text-muted)]">
-                      {planConfig.subtitle}
-                    </p>
+
+                    {/* AJUSTE legibilidade: subtitle um pouco mais “presente” */}
+                    <p className="text-sm text-[var(--color-text-main)]/80">{planConfig.subtitle}</p>
                   </div>
 
                   {/* Preço */}
@@ -244,20 +227,16 @@ export default function PlanosPage() {
                     <div className="flex items-baseline gap-1">
                       <span
                         className={`text-4xl sm:text-5xl font-bold ${
-                          isHighlighted
-                            ? 'text-[var(--color-brand)]'
-                            : 'text-[var(--color-text-main)]'
+                          isHighlighted ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-main)]'
                         }`}
                       >
                         {planConfig.price}
                       </span>
-                      <span className="text-sm text-[var(--color-text-muted)]">
-                        {planConfig.pricePeriod}
-                      </span>
+                      <span className="text-sm text-[var(--color-text-main)]/75">{planConfig.pricePeriod}</span>
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                      {planConfig.priceNote}
-                    </p>
+
+                    {/* AJUSTE legibilidade: note menos apagado */}
+                    <p className="text-xs text-[var(--color-text-main)]/70 mt-2">{planConfig.priceNote}</p>
                   </div>
 
                   {/* Lista de benefícios */}
@@ -271,9 +250,7 @@ export default function PlanosPage() {
                           decorative
                           className="flex-shrink-0 mt-0.5 text-[var(--color-brand)]"
                         />
-                        <span className="text-xs leading-snug text-[var(--color-text-main)]">
-                          {feature.label}
-                        </span>
+                        <span className="text-xs leading-snug text-[var(--color-text-main)]/90">{feature.label}</span>
                       </div>
                     ))}
                   </div>
@@ -295,39 +272,42 @@ export default function PlanosPage() {
                     }}
                     disabled={isCurrentPlan && planConfig.id === 'essencial'}
                     aria-label={
-                      isCurrentPlan && planConfig.id === 'essencial'
-                        ? 'Seu plano atual'
-                        : `Selecionar ${planConfig.name}`
+                      isCurrentPlan && planConfig.id === 'essencial' ? 'Seu plano atual' : `Selecionar ${planConfig.name}`
                     }
                   >
-                    {isCurrentPlan && planConfig.id === 'essencial'
-                      ? 'Seu plano atual'
-                      : planConfig.buttonText}
+                    {isCurrentPlan && planConfig.id === 'essencial' ? 'Seu plano atual' : planConfig.buttonText}
                   </Button>
 
                   {isCurrentPlan && planConfig.id !== 'essencial' && (
-                    <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">
-                      Plano ativo atualmente
-                    </p>
+                    <p className="text-center text-xs text-[var(--color-brand)] font-semibold mt-3">Plano ativo atualmente</p>
                   )}
                 </SoftCard>
               )
             })}
           </div>
 
-          {/* Tabela comparativa dentro de um card branco, com textos escuros */}
-          <SoftCard className="mb-10 rounded-3xl border border-[var(--color-pink-snow)]/90 bg-white/96 px-4 py-5 sm:px-6 sm:py-6 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-1">
-              Comparando os planos
-            </h3>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">
-              Um resumo dos principais recursos em cada plano, para te ajudar a
-              escolher com calma o que faz mais sentido para a sua rotina.
-            </p>
+          {/* Comparando os planos (perfumado + legibilidade) */}
+          <SoftCard className="mb-10 rounded-3xl border border-[var(--color-pink-snow)]/90 bg-white/95 px-4 py-5 sm:px-6 sm:py-6 shadow-[0_8px_26px_rgba(0,0,0,0.08)] overflow-hidden">
+            {/* Faixa suave no topo para “dar cara” sem mudar layout */}
+            <div className="-mx-4 -mt-5 mb-4 sm:-mx-6 sm:-mt-6 px-4 sm:px-6 py-3 bg-[#fff5fb]/90 border-b border-[var(--color-pink-snow)]/60">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-pink-snow)]/70 bg-white/90">
+                  <AppIcon name="sparkles" size={14} decorative className="text-[var(--color-brand)]" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] leading-snug">
+                    Comparando os planos
+                  </h3>
+                  <p className="text-sm text-[var(--color-text-main)]/75 leading-relaxed">
+                    Um resumo simples para você escolher com calma — sem pressão.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <div className="overflow-x-auto">
-              <div className="min-w-[640px] rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/98">
-                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-white/98 rounded-t-2xl">
+              <div className="min-w-[680px] rounded-2xl border border-[var(--color-pink-snow)]/80 bg-white/98">
+                <div className="grid grid-cols-4 text-xs sm:text-sm font-semibold text-[var(--color-text-main)] border-b border-[var(--color-pink-snow)]/70 bg-[#fffafd] rounded-t-2xl">
                   <div className="px-3 py-3">Recurso</div>
                   <div className="px-3 py-3 text-center">Essencial</div>
                   <div className="px-3 py-3 text-center">Materna+</div>
@@ -335,86 +315,35 @@ export default function PlanosPage() {
                 </div>
 
                 {[
-                  {
-                    feature: 'Planner diário',
-                    essencial: 'Básico',
-                    plus: 'Avançado',
-                    full: 'Avançado + visão por semanas',
-                  },
-                  {
-                    feature: 'Humor e energia',
-                    essencial: 'Registro simples',
-                    plus: 'Visão ampliada',
-                    full: 'Com resumos e histórico',
-                  },
-                  {
-                    feature: 'Orientações personalizadas',
-                    essencial: 'Até 5 por dia',
-                    plus: 'Até 40 por dia',
-                    full: 'Ilimitadas',
-                  },
-                  {
-                    feature: 'Biblioteca Materna',
-                    essencial: 'Limitada',
-                    plus: 'Completa',
-                    full: 'Completa + conteúdos avançados',
-                  },
-                  {
-                    feature: 'Trilhas educativas',
-                    essencial: 'Introdutória',
-                    plus: 'Completas',
-                    full: 'Personalizadas',
-                  },
-                  {
-                    feature: 'Exportar PDF',
-                    essencial: 'Não incluído',
-                    plus: 'Disponível',
-                    full: 'Disponível',
-                  },
-                  {
-                    feature: 'Produtos digitais',
-                    essencial: 'Não incluídos',
-                    plus: 'Incluídos',
-                    full: 'Incluídos',
-                  },
-                  {
-                    feature: 'Conquistas',
-                    essencial: 'Não disponível',
-                    plus: 'Níveis 1 e 2',
-                    full: 'Níveis 3 a 5 e painel avançado',
-                  },
-                  {
-                    feature: 'Mentorias com parceiros',
-                    essencial: 'Valor integral',
-                    plus: 'Valor integral',
-                    full: 'Descontos de 10% a 15%',
-                  },
-                  {
-                    feature: 'MaternaBox',
-                    essencial: 'Sem benefícios adicionais',
-                    plus: 'Condições especiais',
-                    full: 'Condições especiais',
-                  },
+                  { feature: 'Planner diário', essencial: 'Básico', plus: 'Avançado', full: 'Avançado + visão por semanas' },
+                  { feature: 'Humor e energia', essencial: 'Registro simples', plus: 'Visão ampliada', full: 'Com resumos e histórico' },
+                  { feature: 'Orientações personalizadas', essencial: 'Até 5 por dia', plus: 'Até 40 por dia', full: 'Ilimitadas' },
+                  { feature: 'Biblioteca Materna', essencial: 'Limitada', plus: 'Completa', full: 'Completa + conteúdos avançados' },
+                  { feature: 'Trilhas educativas', essencial: 'Introdutória', plus: 'Completas', full: 'Personalizadas' },
+                  { feature: 'Exportar PDF', essencial: 'Não incluído', plus: 'Disponível', full: 'Disponível' },
+                  { feature: 'Produtos digitais', essencial: 'Não incluídos', plus: 'Incluídos', full: 'Incluídos' },
+                  { feature: 'Conquistas', essencial: 'Não disponível', plus: 'Níveis 1 e 2', full: 'Níveis 3 a 5 e painel avançado' },
+                  { feature: 'Mentorias com parceiros', essencial: 'Valor integral', plus: 'Valor integral', full: 'Descontos de 10% a 15%' },
+                  { feature: 'MaternaBox', essencial: 'Sem benefícios adicionais', plus: 'Condições especiais', full: 'Condições especiais' },
                 ].map((row) => (
                   <div
                     key={row.feature}
-                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[11px] sm:text-xs odd:bg-white even:bg-[#fff5fb]/80"
+                    className="grid grid-cols-4 border-t border-[var(--color-pink-snow)]/50 text-[12px] sm:text-xs odd:bg-white even:bg-[#fff7fb]/55"
                   >
-                    <div className="px-3 py-2 font-medium text-[var(--color-text-main)]">
-                      {row.feature}
-                    </div>
-                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
-                      {row.essencial}
-                    </div>
-                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
-                      {row.plus}
-                    </div>
-                    <div className="px-3 py-2 text-center text-[var(--color-text-muted)]">
-                      {row.full}
-                    </div>
+                    <div className="px-3 py-2 font-semibold text-[var(--color-text-main)]">{row.feature}</div>
+                    <div className="px-3 py-2 text-center text-[var(--color-text-main)]/70">{row.essencial}</div>
+                    <div className="px-3 py-2 text-center text-[var(--color-text-main)]/70">{row.plus}</div>
+                    <div className="px-3 py-2 text-center text-[var(--color-text-main)]/70">{row.full}</div>
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* micro-texto de fechamento (perfumaria) */}
+            <div className="mt-4 rounded-2xl border border-[var(--color-pink-snow)]/70 bg-[#fff5fb]/70 px-4 py-3">
+              <p className="text-[12px] sm:text-sm text-[var(--color-text-main)]/80 leading-relaxed">
+                Se estiver em dúvida: comece pelo Essencial e evolua quando fizer sentido. O Materna360 acompanha a sua fase — não exige “perfeição”.
+              </p>
             </div>
           </SoftCard>
 
@@ -423,44 +352,34 @@ export default function PlanosPage() {
             <h3 className="text-base sm:text-lg font-bold text-[var(--color-text-main)] mb-2">
               Valores especiais para quem já vive o Materna360
             </h3>
-            <p className="text-sm text-[var(--color-text-main)] mb-2">
-              Se você já faz parte da nossa jornada:
-            </p>
-            <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-muted)] mb-2">
-              <li>
-                Assinantes Materna+ recebem 5% de desconto no investimento da
-                MaternaBox.
-              </li>
-              <li>
-                Assinantes Materna+ 360 recebem 10% de desconto no valor final
-                da MaternaBox.
-              </li>
+
+            {/* AJUSTE legibilidade: corpo menos apagado */}
+            <p className="text-sm text-[var(--color-text-main)]/85 mb-2">Se você já faz parte da nossa jornada:</p>
+
+            <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--color-text-main)]/70 mb-2">
+              <li>Assinantes Materna+ recebem 5% de desconto no investimento da MaternaBox.</li>
+              <li>Assinantes Materna+ 360 recebem 10% de desconto no valor final da MaternaBox.</li>
             </ul>
-            <p className="text-xs sm:text-sm text-[var(--color-text-muted)]">
-              O ajuste é aplicado automaticamente no checkout. É a nossa forma
-              de agradecer por caminhar com você, mês após mês.
+
+            <p className="text-xs sm:text-sm text-[var(--color-text-main)]/70">
+              O ajuste é aplicado automaticamente no checkout. É a nossa forma de agradecer por caminhar com você, mês após mês.
             </p>
           </div>
 
           {/* CALL TO ACTION textual antes do FAQ */}
-          <div className="mb-8 text-center">
+          {/* AJUSTE: mais respiro + texto mais legível */}
+          <div className="mb-10 text-center">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-2">
               Escolha o plano que acolhe a sua rotina
             </h3>
-            <p className="text-sm sm:text-base text-[var(--color-text-muted)]">
-              Aqui, tudo acontece no seu tempo — com carinho, calma e presença.
-              Você pode começar pelo Essencial, seguir para o Materna+ ou
-              aprofundar sua jornada no Materna+ 360, sempre que sentir que é o
-              momento.
+
+            <p className="text-sm sm:text-base text-[var(--color-text-main)]/75">
+              Aqui, tudo acontece no seu tempo — com carinho, calma e presença. Você pode começar pelo Essencial, seguir para o Materna+ ou aprofundar sua
+              jornada no Materna+ 360, sempre que sentir que é o momento.
             </p>
 
             <div className="mt-4 flex justify-center">
-              <Button
-                variant="primary"
-                size="sm"
-                className="px-5"
-                onClick={() => handleUpgradeClick('materna-plus')}
-              >
+              <Button variant="primary" size="sm" className="px-5" onClick={() => handleUpgradeClick('materna-plus')}>
                 Ver upgrade recomendado
               </Button>
             </div>
@@ -468,9 +387,8 @@ export default function PlanosPage() {
 
           {/* FAQ */}
           <div className="max-w-2xl mx-auto">
-            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">
-              Perguntas frequentes
-            </h3>
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-text-main)] mb-4">Perguntas frequentes</h3>
+
             <div className="space-y-3">
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between rounded-lg border border-[var(--color-pink-snow)]/60 bg-white/70 p-4 font-medium text-[var(--color-text-main)] hover:bg-white/90 transition-colors">
@@ -479,10 +397,9 @@ export default function PlanosPage() {
                     <AppIcon name="chevron-down" size={20} decorative />
                   </span>
                 </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim. Você pode mudar de plano ou cancelar quando quiser. O
-                  Materna360 foi pensado para acompanhar as fases da sua
-                  maternidade, não para te prender em um contrato.
+                <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Sim. Você pode mudar de plano ou cancelar quando quiser. O Materna360 foi pensado para acompanhar as fases da sua maternidade, não para te
+                  prender em um contrato.
                 </div>
               </details>
 
@@ -493,10 +410,9 @@ export default function PlanosPage() {
                     <AppIcon name="chevron-down" size={20} decorative />
                   </span>
                 </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Não. O plano Essencial é gratuito, não exige cartão de
-                  crédito e foi criado para que você possa sentir o Materna360
-                  com calma, sem compromisso financeiro.
+                <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Não. O plano Essencial é gratuito, não exige cartão de crédito e foi criado para que você possa sentir o Materna360 com calma, sem
+                  compromisso financeiro.
                 </div>
               </details>
 
@@ -507,11 +423,9 @@ export default function PlanosPage() {
                     <AppIcon name="chevron-down" size={20} decorative />
                   </span>
                 </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Seus registros permanecem guardados com segurança. Você pode
-                  voltar para o plano Essencial e seguir usando o app de forma
-                  gratuita, ou reativar um plano pago quando fizer sentido para
-                  você.
+                <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Seus registros permanecem guardados com segurança. Você pode voltar para o plano Essencial e seguir usando o app de forma gratuita, ou
+                  reativar um plano pago quando fizer sentido para você.
                 </div>
               </details>
 
@@ -522,10 +436,9 @@ export default function PlanosPage() {
                     <AppIcon name="chevron-down" size={20} decorative />
                   </span>
                 </summary>
-                <div className="p-4 text-sm text-[var(--color-text-muted)] border-t border-[var(--color-pink-snow)]/60 bg-white/60">
-                  Sim. Seus dados são armazenados com segurança e não são
-                  compartilhados com terceiros. O que você registra aqui é
-                  tratado com respeito e sigilo.
+                <div className="p-4 text-sm text-[var(--color-text-main)]/75 border-t border-[var(--color-pink-snow)]/60 bg-white/60">
+                  Sim. Seus dados são armazenados com segurança e não são compartilhados com terceiros. O que você registra aqui é tratado com respeito e
+                  sigilo.
                 </div>
               </details>
             </div>
@@ -535,12 +448,7 @@ export default function PlanosPage() {
         {/* Sheet de upgrade
             re-mount quando mudar selectedPlanId (sem alterar API do componente).
          */}
-        <UpgradeSheet
-          key={selectedPlanId}
-          open={open}
-          onOpenChange={setOpen}
-          planId={sheetPlanId}
-        />
+        <UpgradeSheet key={selectedPlanId} open={open} onOpenChange={setOpen} planId={sheetPlanId} />
       </div>
 
       <LegalFooter />
