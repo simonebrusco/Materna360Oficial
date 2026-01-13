@@ -300,7 +300,7 @@ export default function MaternaBoxPage() {
     >
       <ClientOnly>
         {/* AJUSTE: reduz o “vazio” logo após o header (mobile mais agressivo) */}
-        <div className="pt-0 -mt-10 sm:-mt-12 md:-mt-4 pb-24 space-y-4 sm:space-y-5 md:space-y-10">
+        <div className="pt-0 -mt-14 sm:-mt-16 md:-mt-4 pb-24 space-y-4 sm:space-y-5 md:space-y-10">
           {/* PRE-LAUNCH BANNER */}
           <Reveal>
             <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-5 sm:p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
