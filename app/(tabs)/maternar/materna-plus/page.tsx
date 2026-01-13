@@ -15,7 +15,25 @@ import {
 } from '@/app/lib/profissionais'
 
 type SpecialtyFilterId = 'todos' | SpecialtyId
-type Professional = ProfessionalApi
+
+/**
+ * Preparação para o admin:
+ * - Esses campos podem vir depois pela API/DB.
+ * - Nada aqui é obrigatório. Se não vier, não renderiza.
+ */
+type Professional = ProfessionalApi & {
+  fullName?: string
+  registrationType?: string // ex: "CRP", "CRM", "CREFITO", "Registro"
+  registrationNumber?: string
+  miniCurriculum?: string // mini currículo (texto curto)
+  approach?: string // abordagem / especialidade prática
+  experienceYears?: number
+  languages?: string[] // opcional
+  appointmentFormat?: ('online' | 'presencial' | 'hibrido')[]
+  clinicName?: string
+  clinicAddress?: string
+  cityState?: string // se quiser separar do city atual
+}
 
 function getInitials(name: string): string {
   const parts = name
@@ -26,7 +44,7 @@ function getInitials(name: string): string {
 }
 
 function trackProfessionalEvent(
-  type: 'view' | 'whatsapp_click',
+  type: 'view' | 'request_whatsapp',
   professional: Professional,
 ) {
   if (typeof window === 'undefined') return
@@ -41,8 +59,7 @@ const SPECIALTIES: { id: SpecialtyFilterId; label: string }[] = [
   { id: 'todos', label: 'Todos os profissionais' },
   { id: 'psicologia-infantil', label: 'Psicologia infantil' },
   { id: 'psicopedagogia', label: 'Psicopedagogia' },
-  // mantém seu id para compatibilidade com backend/types; ajusta só o label visual
-  { id: 'nutricao-materno-infantil', label: 'Nutrição materno-infantil' },
+  { id: 'nutricao-materno-infantil', label: 'Nutrição materno-infantantil' },
   { id: 'sono-infantil', label: 'Sono infantil' },
   { id: 'parentalidade-familia', label: 'Parentalidade & família' },
 ]
@@ -67,6 +84,46 @@ function BulletLine({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * WhatsApp do Materna (concierge).
+ * Defina em env: NEXT_PUBLIC_MATERNA_WHATSAPP_URL
+ * Ex.: https://wa.me/55XXXXXXXXXXX
+ */
+const MATERNAR_WHATSAPP_URL =
+  process.env.NEXT_PUBLIC_MATERNA_WHATSAPP_URL ?? ''
+
+function buildMaternaWhatsAppLink(professional: Professional) {
+  if (!MATERNAR_WHATSAPP_URL) return null
+
+  const reg =
+    professional.registrationType && professional.registrationNumber
+      ? `${professional.registrationType} ${professional.registrationNumber}`
+      : professional.registrationType
+        ? professional.registrationType
+        : professional.registrationNumber
+          ? professional.registrationNumber
+          : ''
+
+  const loc = professional.cityState || professional.city || ''
+  const specialty = professional.specialtyLabel || ''
+
+  const msgLines = [
+    'Olá! Quero solicitar um profissional pelo Materna+.',
+    '',
+    `Profissional: ${professional.fullName || professional.name}`,
+    specialty ? `Área: ${specialty}` : '',
+    reg ? `Registro: ${reg}` : '',
+    loc ? `Local: ${loc}` : '',
+    '',
+    'Pode me orientar com os próximos passos e agenda?',
+  ].filter(Boolean)
+
+  const text = encodeURIComponent(msgLines.join('\n'))
+  // suporta links do tipo wa.me e api.whatsapp.com
+  const joinChar = MATERNAR_WHATSAPP_URL.includes('?') ? '&' : '?'
+  return `${MATERNAR_WHATSAPP_URL}${joinChar}text=${text}`
+}
+
 export default function MaternaPlusPage() {
   const [selectedSpecialty, setSelectedSpecialty] =
     useState<SpecialtyFilterId>('todos')
@@ -87,7 +144,7 @@ export default function MaternaPlusPage() {
         setError(null)
         const data = await getProfessionals()
         if (!isMounted) return
-        setProfessionals(data)
+        setProfessionals(data as Professional[])
       } catch {
         if (!isMounted) return
         setError('Não conseguimos carregar a lista de profissionais agora.')
@@ -108,11 +165,21 @@ export default function MaternaPlusPage() {
       ? professionals
       : professionals.filter((p) => p.specialtyId === selectedSpecialty)
 
-  const handleContactProfessional = () => {
-    if (!selectedProfessional) return
-    trackProfessionalEvent('whatsapp_click', selectedProfessional)
+  const handleRequestViaMaternaWhatsApp = (professional: Professional) => {
+    trackProfessionalEvent('request_whatsapp', professional)
+
+    const link = buildMaternaWhatsAppLink(professional)
+    if (!link) {
+      if (typeof window !== 'undefined') {
+        window.alert(
+          'WhatsApp do Materna ainda não foi configurado. Defina NEXT_PUBLIC_MATERNA_WHATSAPP_URL para ativar esse botão.',
+        )
+      }
+      return
+    }
+
     if (typeof window !== 'undefined') {
-      window.open(selectedProfessional.whatsappUrl, '_blank')
+      window.open(link, '_blank')
     }
   }
 
@@ -192,13 +259,22 @@ export default function MaternaPlusPage() {
     )
   }
 
-  // ✅ Polimento 1: “um CTA dominante” no Premium
-  // - primário: “Conhecer Materna+”
-  // - secundário: “Ver profissionais parceiros”
-  // ✅ Polimento 2: remover “alert” e colocar microcopy de monetização (sem fricção)
-  const handleConhecerMaternaPlus = () => {
-    // scroll suave para o bloco Premium (onde a explicação já está)
-    scrollTo('premium')
+  const ProfessionalMetaRow = ({
+    label,
+    value,
+  }: {
+    label: string
+    value?: string | null
+  }) => {
+    if (!value) return null
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6A6A6A]">
+          {label}
+        </p>
+        <p className="text-[13px] text-[#545454]">{value}</p>
+      </div>
+    )
   }
 
   return (
@@ -266,7 +342,7 @@ export default function MaternaPlusPage() {
                         Profissionais
                       </p>
                       <p className="text-[13px] text-[#545454] leading-snug">
-                        Curadoria e contato direto no WhatsApp.
+                        Curadoria + solicitação pelo WhatsApp do Materna.
                       </p>
                     </div>
 
@@ -322,7 +398,7 @@ export default function MaternaPlusPage() {
             </SoftCard>
           </Reveal>
 
-          {/* PREMIUM (UPGRADED) */}
+          {/* PREMIUM (mantido) */}
           <Reveal delay={40}>
             <SoftCard
               id="materna-plus-premium"
@@ -342,7 +418,6 @@ export default function MaternaPlusPage() {
                 </header>
 
                 <div className="grid gap-4 md:grid-cols-[1.15fr,0.85fr] items-start">
-                  {/* NARRATIVA (valor real) */}
                   <div className="space-y-4">
                     <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
@@ -397,7 +472,6 @@ export default function MaternaPlusPage() {
                     </SoftCard>
                   </div>
 
-                  {/* HERO CARD (CTA dominante + microcopy) */}
                   <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-5 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
                       COMEÇE POR AQUI
@@ -425,18 +499,16 @@ export default function MaternaPlusPage() {
                       </div>
                     </div>
 
-                    {/* ✅ Polimento 2: microcopy de monetização (sem alert) */}
-                    <p className="mt-4 text-[11px] md:text-[12px] text-[#6A6A6A] leading-relaxed">
-                      Planos e valores serão apresentados quando o Materna+ abrir.
-                    </p>
-
-                    {/* ✅ Polimento 1: CTA dominante + secundário bem separado */}
-                    <div className="mt-4 flex flex-col gap-2">
+                    <div className="mt-5 flex flex-col gap-2">
                       <Button
                         variant="primary"
                         size="sm"
                         className="w-full text-[13px]"
-                        onClick={handleConhecerMaternaPlus}
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.alert('Planos e checkout serão conectados quando o Materna+ abrir.')
+                          }
+                        }}
                       >
                         Conhecer Materna+
                       </Button>
@@ -453,7 +525,6 @@ export default function MaternaPlusPage() {
                   </SoftCard>
                 </div>
 
-                {/* EM EVOLUÇÃO (contido, sem cara de filtro) */}
                 <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
                     EM EVOLUÇÃO COM CUIDADO
@@ -469,7 +540,7 @@ export default function MaternaPlusPage() {
             </SoftCard>
           </Reveal>
 
-          {/* PROFISSIONAIS */}
+          {/* PROFISSIONAIS (ATUALIZADO PARA WHATSAPP DO MATERNA) */}
           <Reveal delay={60}>
             <SoftCard
               id="materna-plus-profissionais"
@@ -481,13 +552,14 @@ export default function MaternaPlusPage() {
                     PROFISSIONAIS PARCEIROS
                   </p>
                   <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
-                    Rede Materna+. Contato direto no WhatsApp.
+                    Rede Materna+. Solicite pelo WhatsApp do Materna.
                   </h2>
                   <p className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed">
-                    Filtre por área. Escolha um profissional. Fale direto no WhatsApp.
+                    Filtre por área. Escolha um profissional. Solicite pelo WhatsApp do Materna — a gente organiza o agendamento com você.
                   </p>
+
                   <p className="text-[12px] text-[#6A6A6A]">
-                    <span className="font-semibold">Importante:</span> o Materna360 não intermedia pagamentos.
+                    <span className="font-semibold">Como funciona:</span> o Materna faz a ponte e confirma o agendamento. Depois, o atendimento segue diretamente com o profissional.
                   </p>
                 </header>
 
@@ -523,8 +595,8 @@ export default function MaternaPlusPage() {
                       </p>
                       <div className="space-y-2">
                         <BulletLine>Filtre a área e escolha um profissional.</BulletLine>
-                        <BulletLine>Veja detalhes e vá para o WhatsApp.</BulletLine>
-                        <BulletLine>Combine direto: horários, valores e pagamento.</BulletLine>
+                        <BulletLine>Abra o perfil e clique em “Solicitar no WhatsApp do Materna”.</BulletLine>
+                        <BulletLine>O Materna organiza o agendamento. Depois, segue com o profissional.</BulletLine>
                       </div>
                     </SoftCard>
                   </div>
@@ -579,7 +651,7 @@ export default function MaternaPlusPage() {
                               }}
                               className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
                             >
-                              Ver detalhes
+                              Ver perfil
                             </button>
                           </div>
 
@@ -595,6 +667,17 @@ export default function MaternaPlusPage() {
                                 {tag}
                               </span>
                             ))}
+                          </div>
+
+                          <div className="pt-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="text-[13px]"
+                              onClick={() => handleRequestViaMaternaWhatsApp(prof)}
+                            >
+                              Solicitar no WhatsApp do Materna
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -710,6 +793,7 @@ export default function MaternaPlusPage() {
 
           <MotivationalFooter routeKey="materna-plus" />
 
+          {/* MODAL PERFIL PROFISSIONAL (pronto para admin) */}
           {selectedProfessional && (
             <div
               className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
@@ -726,7 +810,7 @@ export default function MaternaPlusPage() {
                       </div>
                       <div className="space-y-1">
                         <h3 className="text-[20px] font-semibold text-[#545454]">
-                          {selectedProfessional.name}
+                          {selectedProfessional.fullName || selectedProfessional.name}
                         </h3>
                         <p className="text-[13px] text-[#6A6A6A]">
                           {selectedProfessional.specialtyLabel}
@@ -743,13 +827,65 @@ export default function MaternaPlusPage() {
                     </button>
                   </div>
 
+                  <div className="mt-4 space-y-3">
+                    <ProfessionalMetaRow
+                      label="Registro"
+                      value={
+                        selectedProfessional.registrationType && selectedProfessional.registrationNumber
+                          ? `${selectedProfessional.registrationType} ${selectedProfessional.registrationNumber}`
+                          : selectedProfessional.registrationType || selectedProfessional.registrationNumber || ''
+                      }
+                    />
+
+                    <ProfessionalMetaRow
+                      label="Local"
+                      value={selectedProfessional.cityState || selectedProfessional.city || ''}
+                    />
+
+                    <ProfessionalMetaRow
+                      label="Clínica"
+                      value={selectedProfessional.clinicName || ''}
+                    />
+
+                    <ProfessionalMetaRow
+                      label="Endereço"
+                      value={selectedProfessional.clinicAddress || ''}
+                    />
+
+                    {typeof selectedProfessional.experienceYears === 'number' &&
+                      selectedProfessional.experienceYears > 0 && (
+                        <ProfessionalMetaRow
+                          label="Experiência"
+                          value={`${selectedProfessional.experienceYears} ano(s)`}
+                        />
+                      )}
+                  </div>
+
                   <p className="mt-4 text-[14px] text-[#545454] leading-relaxed">
                     {selectedProfessional.shortBio}
                   </p>
 
-                  <p className="mt-2 text-[13px] text-[#6A6A6A]">
-                    {selectedProfessional.city}
-                  </p>
+                  {selectedProfessional.miniCurriculum && (
+                    <div className="mt-4 rounded-2xl border border-[#F5D7E5] bg-[#fff7fb] px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fd2597]/85">
+                        Mini currículo
+                      </p>
+                      <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
+                        {selectedProfessional.miniCurriculum}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProfessional.approach && (
+                    <div className="mt-3 rounded-2xl border border-[#F5D7E5] bg-white px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                        Abordagem
+                      </p>
+                      <p className="mt-2 text-[13px] text-[#545454] leading-relaxed">
+                        {selectedProfessional.approach}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {selectedProfessional.tags.map((tag) => (
@@ -763,7 +899,7 @@ export default function MaternaPlusPage() {
                   </div>
 
                   <p className="mt-4 text-[12px] text-[#6A6A6A] leading-relaxed">
-                    Agendamento, valores e pagamento são combinados diretamente com o profissional.
+                    Para solicitar esse profissional, fale com o Materna pelo WhatsApp. A gente organiza o agendamento com você.
                   </p>
 
                   <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -771,9 +907,9 @@ export default function MaternaPlusPage() {
                       variant="primary"
                       size="sm"
                       className="sm:w-auto w-full"
-                      onClick={handleContactProfessional}
+                      onClick={() => handleRequestViaMaternaWhatsApp(selectedProfessional)}
                     >
-                      Falar no WhatsApp
+                      Solicitar no WhatsApp do Materna
                     </Button>
                   </div>
                 </SoftCard>
