@@ -41,7 +41,8 @@ const SPECIALTIES: { id: SpecialtyFilterId; label: string }[] = [
   { id: 'todos', label: 'Todos os profissionais' },
   { id: 'psicologia-infantil', label: 'Psicologia infantil' },
   { id: 'psicopedagogia', label: 'Psicopedagogia' },
-  { id: 'nutricao-materno-infantil', label: 'Nutrição materno-infantantil' },
+  // mantém seu id para compatibilidade com backend/types; ajusta só o label visual
+  { id: 'nutricao-materno-infantil', label: 'Nutrição materno-infantil' },
   { id: 'sono-infantil', label: 'Sono infantil' },
   { id: 'parentalidade-familia', label: 'Parentalidade & família' },
 ]
@@ -189,6 +190,15 @@ export default function MaternaPlusPage() {
         {label}
       </button>
     )
+  }
+
+  // ✅ Polimento 1: “um CTA dominante” no Premium
+  // - primário: “Conhecer Materna+”
+  // - secundário: “Ver profissionais parceiros”
+  // ✅ Polimento 2: remover “alert” e colocar microcopy de monetização (sem fricção)
+  const handleConhecerMaternaPlus = () => {
+    // scroll suave para o bloco Premium (onde a explicação já está)
+    scrollTo('premium')
   }
 
   return (
@@ -387,7 +397,7 @@ export default function MaternaPlusPage() {
                     </SoftCard>
                   </div>
 
-                  {/* HERO CARD (um único bloco premium) */}
+                  {/* HERO CARD (CTA dominante + microcopy) */}
                   <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-5 shadow-[0_8px_26px_rgba(0,0,0,0.08)]">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
                       COMEÇE POR AQUI
@@ -415,16 +425,18 @@ export default function MaternaPlusPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 flex flex-col gap-2">
+                    {/* ✅ Polimento 2: microcopy de monetização (sem alert) */}
+                    <p className="mt-4 text-[11px] md:text-[12px] text-[#6A6A6A] leading-relaxed">
+                      Planos e valores serão apresentados quando o Materna+ abrir.
+                    </p>
+
+                    {/* ✅ Polimento 1: CTA dominante + secundário bem separado */}
+                    <div className="mt-4 flex flex-col gap-2">
                       <Button
                         variant="primary"
                         size="sm"
                         className="w-full text-[13px]"
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            window.alert('Planos e checkout serão conectados quando o Materna+ abrir.')
-                          }
-                        }}
+                        onClick={handleConhecerMaternaPlus}
                       >
                         Conhecer Materna+
                       </Button>
