@@ -24,7 +24,16 @@ function splitEditorialText(raw: string | null | undefined): string[] {
   const text = String(raw).trim()
   if (!text) return []
 
-  const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,', 'E', 'Mas', 'Se']
+  const markers = [
+    'No final,',
+    'No fim,',
+    'Depois,',
+    'Em seguida,',
+    'Por fim,',
+    'E',
+    'Mas',
+    'Se',
+  ]
   let working = text
 
   markers.forEach((m) => {
@@ -96,7 +105,11 @@ function RenderEditorialText({
   )
 }
 
-type PartnershipType = 'profissional_saude' | 'criadora_conteudo' | 'marca_produto' | 'outros'
+type PartnershipType =
+  | 'profissional_saude'
+  | 'criadora_conteudo'
+  | 'marca_produto'
+  | 'outros'
 
 interface PartnershipFormState {
   partnershipType: PartnershipType
@@ -155,7 +168,9 @@ export default function AjudaEParceriasPage() {
   const [supportError, setSupportError] = useState<string | null>(null)
 
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = event.target
     setForm((prev) => ({
@@ -165,7 +180,9 @@ export default function AjudaEParceriasPage() {
   }
 
   const handleSupportChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = event.target
     setSupport((prev) => ({
@@ -190,7 +207,9 @@ export default function AjudaEParceriasPage() {
       if (!response.ok) {
         const data = await response.json().catch(() => null)
         const messageFromApi =
-          data && typeof data.message === 'string' ? data.message : 'Algo não saiu como esperado.'
+          data && typeof data.message === 'string'
+            ? data.message
+            : 'Algo não saiu como esperado.'
         throw new Error(messageFromApi)
       }
 
@@ -224,7 +243,9 @@ export default function AjudaEParceriasPage() {
       if (!response.ok) {
         const data = await response.json().catch(() => null)
         const messageFromApi =
-          data && typeof data.message === 'string' ? data.message : 'Algo não saiu como esperado.'
+          data && typeof data.message === 'string'
+            ? data.message
+            : 'Algo não saiu como esperado.'
         throw new Error(messageFromApi)
       }
 
@@ -262,7 +283,7 @@ export default function AjudaEParceriasPage() {
         className={[
           'rounded-full border px-3 py-1.5 text-[12px] md:text-[13px] font-medium transition-colors',
           isActive
-            ? 'border-[#fd2597] bg-[#ffd8e6] text-[#b8236b]'
+            ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
             : 'border-[#F5D7E5] bg-white/70 text-[#545454] hover:border-[#fd2597] hover:bg-[#ffe1f1]',
         ].join(' ')}
       >
@@ -329,7 +350,9 @@ export default function AjudaEParceriasPage() {
 
                   {/* MINI MENU + CTAs */}
                   <div className="rounded-2xl border border-white/25 bg-white/10 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">MENU</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                      MENU
+                    </p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       {HUB_SECTIONS.map((s) => (
@@ -337,8 +360,7 @@ export default function AjudaEParceriasPage() {
                       ))}
                     </div>
 
-                    {/* Polimento: reduzir ruído de CTA (2 botões principais) */}
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
                       <Button
                         variant="primary"
                         size="sm"
@@ -346,6 +368,15 @@ export default function AjudaEParceriasPage() {
                         onClick={() => scrollTo('parcerias')}
                       >
                         Enviar proposta
+                      </Button>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-[13px] px-5 py-2"
+                        onClick={() => scrollTo('ajuda')}
+                      >
+                        Abrir ajuda
                       </Button>
 
                       <button
@@ -371,7 +402,8 @@ export default function AjudaEParceriasPage() {
 
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-[12px] text-white/85">
-                        Se fizer sentido para o seu momento, comece por <span className="font-semibold">Parcerias</span>.
+                        Se fizer sentido para o seu momento, comece por{' '}
+                        <span className="font-semibold">Parcerias</span>.
                       </p>
 
                       <button
@@ -396,18 +428,30 @@ export default function AjudaEParceriasPage() {
                   {/* Cards curtos */}
                   <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                      <p className="font-semibold text-[13px] text-[#fd2597]">Profissionais</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">Especialistas alinhados ao cuidado real.</p>
+                      <p className="font-semibold text-[13px] text-[#fd2597]">
+                        Profissionais
+                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Especialistas alinhados ao cuidado real.
+                      </p>
                     </div>
 
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                      <p className="font-semibold text-[13px] text-[#fd2597]">Criadoras</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">Conteúdo com responsabilidade e afeto.</p>
+                      <p className="font-semibold text-[13px] text-[#fd2597]">
+                        Criadoras
+                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Conteúdo com responsabilidade e afeto.
+                      </p>
                     </div>
 
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
-                      <p className="font-semibold text-[13px] text-[#fd2597]">Marcas</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">Produtos/serviços que respeitam mães reais.</p>
+                      <p className="font-semibold text-[13px] text-[#fd2597]">
+                        Marcas
+                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">
+                        Produtos/serviços que respeitam mães reais.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -453,9 +497,15 @@ export default function AjudaEParceriasPage() {
                           className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                           disabled={isSubmitting}
                         >
-                          <option value="profissional_saude">Profissional da saúde / desenvolvimento infantil</option>
-                          <option value="criadora_conteudo">Criadora de conteúdo</option>
-                          <option value="marca_produto">Marca / produto para mães ou crianças</option>
+                          <option value="profissional_saude">
+                            Profissional da saúde / desenvolvimento infantil
+                          </option>
+                          <option value="criadora_conteudo">
+                            Criadora de conteúdo
+                          </option>
+                          <option value="marca_produto">
+                            Marca / produto para mães ou crianças
+                          </option>
                           <option value="outros">Outro tipo de parceria</option>
                         </select>
                       </div>
@@ -556,21 +606,35 @@ export default function AjudaEParceriasPage() {
                         <div className="mt-3 space-y-2 text-[13px] text-[#545454]">
                           <p className="flex items-start gap-2">
                             <span className="mt-0.5 h-7 w-7 rounded-full bg-white border border-[#F5D7E5] flex items-center justify-center">
-                              <AppIcon name="heart" className="h-4 w-4 text-[#fd2597]" />
+                              <AppIcon
+                                name="heart"
+                                className="h-4 w-4 text-[#fd2597]"
+                              />
                             </span>
                             <span>Conteúdo/serviço com cuidado emocional.</span>
                           </p>
+
                           <p className="flex items-start gap-2">
                             <span className="mt-0.5 h-7 w-7 rounded-full bg-white border border-[#F5D7E5] flex items-center justify-center">
-                              <AppIcon name="sparkles" className="h-4 w-4 text-[#fd2597]" />
+                              <AppIcon
+                                name="sparkles"
+                                className="h-4 w-4 text-[#fd2597]"
+                              />
                             </span>
                             <span>Aplicável na rotina (sem promessas mágicas).</span>
                           </p>
+
                           <p className="flex items-start gap-2">
                             <span className="mt-0.5 h-7 w-7 rounded-full bg-white border border-[#F5D7E5] flex items-center justify-center">
-                              <AppIcon name="shield" className="h-4 w-4 text-[#fd2597]" />
+                              <AppIcon
+                                name="shield"
+                                className="h-4 w-4 text-[#fd2597]"
+                              />
                             </span>
-                            <span>Responsabilidade e ética (principalmente com mães e crianças).</span>
+                            <span>
+                              Responsabilidade e ética (principalmente com mães e
+                              crianças).
+                            </span>
                           </p>
                         </div>
                       </SoftCard>
@@ -603,10 +667,13 @@ export default function AjudaEParceriasPage() {
                     <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]">
                       AJUDA
                     </p>
-                    <h2 className="text-lg md:text-xl font-semibold text-[#545454]">Resolver o essencial</h2>
+                    <h2 className="text-lg md:text-xl font-semibold text-[#545454]">
+                      Resolver o essencial
+                    </h2>
 
+                    {/* ✅ Ajuste premium (sem "sem culpa / volta depois") */}
                     <RenderEditorialText
-                      text="Um FAQ curto para te destravar sem virar uma página enorme. Se não resolver, você segue sem culpa — e volta quando fizer sentido."
+                      text="Um FAQ para resolver problemas pontuais do app com rapidez. Se não encontrar sua resposta aqui, fale com o suporte — a gente prioriza retorno e resolução."
                       className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed"
                     />
                   </header>
@@ -618,7 +685,7 @@ export default function AjudaEParceriasPage() {
                       </summary>
 
                       <RenderEditorialText
-                        text="Verifique a internet e feche/abra o app. Se persistir, volte mais tarde: a experiência segue em evolução com cuidado."
+                        text="Verifique a internet e feche/abra o app. Se persistir, acione o suporte com o máximo de contexto (onde estava + o que clicou) para agilizar a análise."
                         className="mt-2 text-[13px] leading-relaxed text-[#545454]"
                       />
                     </details>
@@ -640,7 +707,7 @@ export default function AjudaEParceriasPage() {
                       </summary>
 
                       <RenderEditorialText
-                        text="Anote em uma frase: “o que eu esperava” vs “o que aconteceu”. Isso ajuda a gente a entender o contexto quando o canal direto de suporte for acionado."
+                        text="Anote em uma frase: “o que eu esperava” vs “o que aconteceu”. Se possível, inclua também “onde eu estava” + “o que cliquei”. Isso acelera o diagnóstico do time."
                         className="mt-2 text-[13px] leading-relaxed text-[#545454]"
                       />
                     </details>
@@ -651,7 +718,7 @@ export default function AjudaEParceriasPage() {
                       </summary>
 
                       <RenderEditorialText
-                        text="Use o botão “Falar com suporte” no topo para abrir o formulário. Se não resolver agora, tudo bem: você pode voltar depois, sem pendências."
+                        text="Use o botão “Falar com suporte” para abrir o formulário e enviar sua mensagem. A resposta chega por e-mail."
                         className="mt-2 text-[13px] leading-relaxed text-[#545454]"
                       />
                     </details>
@@ -663,17 +730,38 @@ export default function AjudaEParceriasPage() {
                     </p>
 
                     <RenderEditorialText
-                      text='Se você quiser, registre o contexto em uma frase: “onde eu estava” + “o que cliquei”. Ajuda a gente a reproduzir o cenário com mais precisão.'
+                      text='Se possível, registre o contexto em uma frase: “onde eu estava” + “o que cliquei”. Ajuda a gente a reproduzir o cenário com mais precisão.'
                       className="mt-2 text-[13px] text-[#545454] leading-relaxed"
                     />
                   </SoftCard>
 
-                  {/* Polimento: remover duplicidade do suporte aqui (fica no hero) */}
+                  {/* ✅ Garantia: aqui SEMPRE tem os 2 botões (proposta + suporte) */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-                    <p className="text-[12px] text-[#6A6A6A]">Quer propor algo para o Materna360? Use Parcerias.</p>
-                    <Button variant="secondary" size="sm" onClick={() => scrollTo('parcerias')}>
-                      Enviar proposta
-                    </Button>
+                    <p className="text-[12px] text-[#6A6A6A]">
+                      Quer propor algo para o Materna360? Use Parcerias.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => scrollTo('parcerias')}
+                      >
+                        Enviar proposta
+                      </Button>
+
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          setSupportSuccess(null)
+                          setSupportError(null)
+                          setSupportOpen(true)
+                        }}
+                      >
+                        Falar com suporte
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </SoftCard>
@@ -683,20 +771,25 @@ export default function AjudaEParceriasPage() {
           </div>
         </div>
 
-        {/* MODAL SUPORTE (novo) */}
+        {/* MODAL SUPORTE */}
         {supportOpen && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
             onClick={() => setSupportOpen(false)}
           >
-            <div className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="w-full max-w-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
               <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
                       SUPORTE
                     </p>
-                    <h3 className="text-[18px] font-semibold text-[#545454]">Como podemos te ajudar?</h3>
+                    <h3 className="text-[18px] font-semibold text-[#545454]">
+                      Como podemos te ajudar?
+                    </h3>
                     <p className="text-[12px] text-[#6A6A6A]">
                       Envie uma mensagem curta. A gente responde por e-mail.
                     </p>
