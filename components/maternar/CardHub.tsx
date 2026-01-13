@@ -126,39 +126,6 @@ const HUB_CARDS: HubCard[] = [
     ],
   },
 
-  // 4) CUIDAR COM AMOR — CUIDAR
-  {
-    id: 'cuidar-com-amor',
-    title: 'Cuidar com Amor',
-    tag: 'CUIDAR',
-    icons: [
-      {
-        id: 'alimentacao',
-        href: '/cuidar/cuidar-com-amor?abrir=alimentacao',
-        icon: 'heart',
-        label: 'Alimentação',
-      },
-      {
-        id: 'sono-rotina',
-        href: '/cuidar/cuidar-com-amor?abrir=sono',
-        icon: 'home',
-        label: 'Sono & Rotina',
-      },
-      {
-        id: 'conexao-afetuosa',
-        href: '/cuidar/cuidar-com-amor?abrir=conexao',
-        icon: 'care',
-        label: 'Conexão Afetuosa',
-      },
-      {
-        id: 'pequenos-rituais',
-        href: '/cuidar/cuidar-com-amor?abrir=rituais',
-        icon: 'star',
-        label: 'Pequenos Rituais',
-      },
-    ],
-  },
-
   // 5) MINHAS CONQUISTAS — MATERNAR
   {
     id: 'minhas-conquistas',
