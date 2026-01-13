@@ -126,13 +126,7 @@ function splitEditorialText(raw: string | null | undefined): string[] {
   return parts.slice(0, 3)
 }
 
-function RenderEditorialText({
-  text,
-  className,
-}: {
-  text: string | null | undefined
-  className: string
-}) {
+function RenderEditorialText({ text, className }: { text: string | null | undefined; className: string }) {
   const parts = splitEditorialText(text)
   if (parts.length === 0) return null
 
@@ -184,11 +178,6 @@ export default function MaternaBoxPage() {
     const offsetTop = rect.top + window.scrollY - headerOffset
 
     window.scrollTo({ top: offsetTop, behavior: 'smooth' })
-  }
-
-  const goToPlansPage = () => {
-    if (typeof window === 'undefined') return
-    window.location.href = '/maternar/materna-plus/planos'
   }
 
   useEffect(() => {
@@ -243,10 +232,7 @@ export default function MaternaBoxPage() {
     )
   }
 
-  const selectedPlanData = useMemo(
-    () => PLANS.find((p) => p.id === selectedPlan) ?? PLANS[0],
-    [selectedPlan]
-  )
+  const selectedPlanData = useMemo(() => PLANS.find((p) => p.id === selectedPlan) ?? PLANS[0], [selectedPlan])
 
   const openWaitlist = () => {
     setWaitlistSuccess(null)
@@ -291,10 +277,7 @@ export default function MaternaBoxPage() {
         throw new Error(msg)
       }
 
-      const msg =
-        data && typeof data.message === 'string'
-          ? data.message
-          : 'Você entrou na lista de espera da MaternaBox com sucesso.'
+      const msg = data && typeof data.message === 'string' ? data.message : 'Você entrou na lista de espera da MaternaBox com sucesso.'
 
       setWaitlistSuccess(msg)
       setWaitlist(initialWaitlist)
@@ -337,9 +320,14 @@ export default function MaternaBoxPage() {
                 </div>
 
                 <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
-                  <Button variant="primary" size="sm" className="text-[13px] px-5 py-2 w-full sm:w-auto" onClick={openWaitlist}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="text-[13px] px-5 py-2 w-full sm:w-auto"
+                    onClick={openWaitlist}
+                  >
                     Entrar na lista de espera
-                  </Button>       
+                  </Button>
                 </div>
               </div>
             </SoftCard>
@@ -383,12 +371,7 @@ export default function MaternaBoxPage() {
                       <Button variant="primary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={openWaitlist}>
                         Entrar na lista de espera
                       </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-[13px] w-full sm:w-auto"
-                        onClick={() => scrollTo('planos')}
-                      >
+                      <Button variant="secondary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={() => scrollTo('planos')}>
                         Ver ritmos disponíveis
                       </Button>
                     </div>
@@ -413,7 +396,7 @@ export default function MaternaBoxPage() {
                   </p>
                 </div>
 
-                {/* Menu + CTAs (full width abaixo, como no print) */}
+                {/* Menu + CTAs (full width) */}
                 <div className="md:col-span-2">
                   <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">MENU</p>
@@ -425,25 +408,13 @@ export default function MaternaBoxPage() {
                     </div>
 
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-[12px] text-[#545454]">
-                        Se fizer sentido para o seu momento: veja os detalhes e depois escolha o ritmo.
-                      </p>
+                      <p className="text-[12px] text-[#545454]">Se fizer sentido para o seu momento: veja os detalhes e depois escolha o ritmo.</p>
 
                       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="text-[13px] px-5 py-2 w-full sm:w-auto"
-                          onClick={() => scrollTo('como-funciona')}
-                        >
+                        <Button variant="secondary" size="sm" className="text-[13px] px-5 py-2 w-full sm:w-auto" onClick={() => scrollTo('como-funciona')}>
                           Ver detalhes
                         </Button>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          className="text-[13px] px-5 py-2 w-full sm:w-auto"
-                          onClick={() => scrollTo('planos')}
-                        >
+                        <Button variant="primary" size="sm" className="text-[13px] px-5 py-2 w-full sm:w-auto" onClick={() => scrollTo('planos')}>
                           Ver ritmos
                         </Button>
                       </div>
@@ -453,9 +424,7 @@ export default function MaternaBoxPage() {
                   <div className="mt-4 grid gap-3 md:gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">
-                        Sem pesquisar atividades. Só abrir, escolher e fazer.
-                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">Sem pesquisar atividades. Só abrir, escolher e fazer.</p>
                     </div>
 
                     <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
@@ -470,20 +439,10 @@ export default function MaternaBoxPage() {
                   </div>
 
                   <div className="mt-4 pt-1 flex flex-col sm:flex-row gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="text-[13px] w-full sm:w-auto"
-                      onClick={() => scrollTo('como-funciona')}
-                    >
+                    <Button variant="primary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={() => scrollTo('como-funciona')}>
                       Conhecer a MaternaBox
                     </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="text-[13px] w-full sm:w-auto"
-                      onClick={openWaitlist}
-                    >
+                    <Button variant="secondary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={openWaitlist}>
                       Entrar na lista de espera
                     </Button>
                   </div>
@@ -494,18 +453,11 @@ export default function MaternaBoxPage() {
 
           {/* COMO FUNCIONA */}
           <Reveal delay={20}>
-            <SoftCard
-              id="maternabox-como-funciona"
-              className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
-            >
+            <SoftCard id="maternabox-como-funciona" className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="space-y-4">
                 <header className="space-y-2">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    COMO FUNCIONA
-                  </p>
-                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
-                    Três passos. Sem complicar.
-                  </h2>
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">COMO FUNCIONA</p>
+                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">Três passos. Sem complicar.</h2>
                 </header>
 
                 <div className="grid gap-3 md:grid-cols-3">
@@ -544,15 +496,10 @@ export default function MaternaBoxPage() {
 
           {/* PARA QUEM É */}
           <Reveal delay={40}>
-            <SoftCard
-              id="maternabox-para-quem"
-              className="rounded-3xl border border-[#F5D7E5] bg-white/96 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
-            >
+            <SoftCard id="maternabox-para-quem" className="rounded-3xl border border-[#F5D7E5] bg-white/96 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="grid gap-4 md:grid-cols-2 md:items-start">
                 <div className="space-y-3">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    PARA QUEM É
-                  </p>
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">PARA QUEM É</p>
                   <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
                     Para mães que querem presença — sem perfeição.
                   </h2>
@@ -603,18 +550,11 @@ export default function MaternaBoxPage() {
 
           {/* FAIXA ETÁRIA */}
           <Reveal delay={60}>
-            <SoftCard
-              id="maternabox-faixa"
-              className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
-            >
+            <SoftCard id="maternabox-faixa" className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="space-y-4">
                 <header className="space-y-2">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    FAIXA ETÁRIA
-                  </p>
-                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
-                    Selecione a fase do seu filho.
-                  </h2>
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">FAIXA ETÁRIA</p>
+                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">Selecione a fase do seu filho.</h2>
                   <p className="text-[12px] text-[#6A6A6A]">Você pode mudar depois, sem pressa.</p>
                 </header>
 
@@ -642,8 +582,7 @@ export default function MaternaBoxPage() {
                 <SoftCard className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/70 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                   <p className="text-[13px] font-semibold text-[#545454]">Selecionado:</p>
                   <p className="text-[13px] text-[#545454]">
-                    Faixa <span className="font-semibold">{AGE_BANDS.find((a) => a.id === selectedAge)?.label}</span> —
-                    a curadoria é ajustada para essa fase.
+                    Faixa <span className="font-semibold">{AGE_BANDS.find((a) => a.id === selectedAge)?.label}</span> — a curadoria é ajustada para essa fase.
                   </p>
                 </SoftCard>
 
@@ -661,18 +600,11 @@ export default function MaternaBoxPage() {
 
           {/* RITMOS */}
           <Reveal delay={80}>
-            <SoftCard
-              id="maternabox-planos"
-              className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
-            >
+            <SoftCard id="maternabox-planos" className="rounded-3xl border border-[#F5D7E5] bg-white/98 p-5 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
               <div className="space-y-5">
                 <header className="space-y-2">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    RITMOS
-                  </p>
-                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
-                    Escolha o ritmo que faz sentido.
-                  </h2>
+                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">RITMOS</p>
+                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">Escolha o ritmo que faz sentido.</h2>
                   <RenderEditorialText
                     text="Aqui você define a estrutura da sua escolha. Nesta fase, a MaternaBox está em pré-lançamento — entre na lista para ser avisada primeiro quando abrirmos."
                     className="text-[12px] text-[#6A6A6A] leading-relaxed"
@@ -696,9 +628,7 @@ export default function MaternaBoxPage() {
                           isSelected ? 'ring-2 ring-[#fd2597]/25' : '',
                         ].join(' ')}
                       >
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b8236b]">
-                          {plan.kicker}
-                        </p>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b8236b]">{plan.kicker}</p>
                         <h3 className="mt-1 text-[15px] font-semibold text-[#545454]">{plan.title}</h3>
                         <p className="mt-1 text-[12px] text-[#6A6A6A]">{plan.subtitle}</p>
 
@@ -712,9 +642,7 @@ export default function MaternaBoxPage() {
                           <span
                             className={[
                               'inline-flex items-center justify-center rounded-full px-3 py-1 text-[12px] font-semibold border',
-                              isSelected
-                                ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
-                                : 'border-[#F5D7E5] bg-white text-[#545454]',
+                              isSelected ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]' : 'border-[#F5D7E5] bg-white text-[#545454]',
                             ].join(' ')}
                           >
                             {isSelected ? 'Selecionado' : 'Selecionar'}
@@ -741,12 +669,7 @@ export default function MaternaBoxPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-[13px] w-full sm:w-auto"
-                        onClick={() => scrollTo('faixa')}
-                      >
+                      <Button variant="secondary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={() => scrollTo('faixa')}>
                         Ajustar faixa
                       </Button>
                       <Button variant="primary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={openWaitlist}>
@@ -755,12 +678,6 @@ export default function MaternaBoxPage() {
                     </div>
                   </div>
                 </SoftCard>
-
-                <div className="pt-1 flex flex-col sm:flex-row gap-2">
-                  <Button variant="secondary" size="sm" className="text-[13px] w-full sm:w-auto" onClick={goToPlansPage}>
-                    Ver planos no Materna+
-                  </Button>
-                </div>
               </div>
             </SoftCard>
           </Reveal>
@@ -779,13 +696,9 @@ export default function MaternaBoxPage() {
               <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
-                      LISTA DE ESPERA
-                    </p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">LISTA DE ESPERA</p>
                     <h3 className="text-[18px] font-semibold text-[#545454]">Entre para ser avisada primeiro</h3>
-                    <p className="text-[12px] text-[#6A6A6A]">
-                      Sem compromisso. A ideia é medir interesse e te avisar quando abrirmos.
-                    </p>
+                    <p className="text-[12px] text-[#6A6A6A]">Sem compromisso. A ideia é medir interesse e te avisar quando abrirmos.</p>
                   </div>
 
                   <button
@@ -800,10 +713,7 @@ export default function MaternaBoxPage() {
                 <form className="mt-5 space-y-4" onSubmit={handleWaitlistSubmit}>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <label
-                        htmlFor="waitlistName"
-                        className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                      >
+                      <label htmlFor="waitlistName" className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]">
                         Nome (opcional)
                       </label>
                       <input
@@ -819,10 +729,7 @@ export default function MaternaBoxPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label
-                        htmlFor="waitlistEmail"
-                        className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                      >
+                      <label htmlFor="waitlistEmail" className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]">
                         E-mail (obrigatório)
                       </label>
                       <input
@@ -840,10 +747,7 @@ export default function MaternaBoxPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label
-                      htmlFor="waitlistWhatsapp"
-                      className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
-                    >
+                    <label htmlFor="waitlistWhatsapp" className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]">
                       WhatsApp (opcional)
                     </label>
                     <input
@@ -856,21 +760,15 @@ export default function MaternaBoxPage() {
                       className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
                       disabled={waitlistSubmitting}
                     />
-                    <p className="text-[11px] text-[#6A6A6A] leading-relaxed">
-                      Se você preferir, deixe só o e-mail. O WhatsApp ajuda em avisos rápidos.
-                    </p>
+                    <p className="text-[11px] text-[#6A6A6A] leading-relaxed">Se você preferir, deixe só o e-mail. O WhatsApp ajuda em avisos rápidos.</p>
                   </div>
 
                   {waitlistSuccess && (
-                    <p className="rounded-2xl bg-[#ffe1f1] px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
-                      {waitlistSuccess}
-                    </p>
+                    <p className="rounded-2xl bg-[#ffe1f1] px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">{waitlistSuccess}</p>
                   )}
 
                   {waitlistError && (
-                    <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
-                      {waitlistError}
-                    </p>
+                    <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">{waitlistError}</p>
                   )}
 
                   <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
