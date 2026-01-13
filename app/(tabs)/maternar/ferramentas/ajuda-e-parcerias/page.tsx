@@ -232,9 +232,7 @@ export default function AjudaEParceriasPage() {
       setSupport(initialSupportState)
     } catch (error) {
       console.error('[Materna360][Suporte] erro ao enviar formulário', error)
-      setSupportError(
-        'Não conseguimos enviar seu pedido agora. Tente novamente em alguns instantes.',
-      )
+      setSupportError('Não conseguimos enviar seu pedido agora. Tente novamente em alguns instantes.')
     } finally {
       setSupportSubmitting(false)
     }
@@ -264,7 +262,7 @@ export default function AjudaEParceriasPage() {
         className={[
           'rounded-full border px-3 py-1.5 text-[12px] md:text-[13px] font-medium transition-colors',
           isActive
-            ? 'border-[#fd2597] bg-[#fdbed7] text-[#fd2597]'
+            ? 'border-[#fd2597] bg-[#ffd8e6] text-[#b8236b]'
             : 'border-[#F5D7E5] bg-white/70 text-[#545454] hover:border-[#fd2597] hover:bg-[#ffe1f1]',
         ].join(' ')}
       >
@@ -331,9 +329,7 @@ export default function AjudaEParceriasPage() {
 
                   {/* MINI MENU + CTAs */}
                   <div className="rounded-2xl border border-white/25 bg-white/10 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
-                      MENU
-                    </p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">MENU</p>
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       {HUB_SECTIONS.map((s) => (
@@ -341,8 +337,8 @@ export default function AjudaEParceriasPage() {
                       ))}
                     </div>
 
-                    {/* AQUI: só garantir o botão "Falar com suporte" abrindo modal */}
-                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {/* Polimento: reduzir ruído de CTA (2 botões principais) */}
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       <Button
                         variant="primary"
                         size="sm"
@@ -350,15 +346,6 @@ export default function AjudaEParceriasPage() {
                         onClick={() => scrollTo('parcerias')}
                       >
                         Enviar proposta
-                      </Button>
-
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-[13px] px-5 py-2"
-                        onClick={() => scrollTo('ajuda')}
-                      >
-                        Abrir ajuda
                       </Button>
 
                       <button
@@ -384,8 +371,7 @@ export default function AjudaEParceriasPage() {
 
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-[12px] text-white/85">
-                        Se fizer sentido para o seu momento, comece por{' '}
-                        <span className="font-semibold">Parcerias</span>.
+                        Se fizer sentido para o seu momento, comece por <span className="font-semibold">Parcerias</span>.
                       </p>
 
                       <button
@@ -411,23 +397,17 @@ export default function AjudaEParceriasPage() {
                   <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">Profissionais</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">
-                        Especialistas alinhados ao cuidado real.
-                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">Especialistas alinhados ao cuidado real.</p>
                     </div>
 
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">Criadoras</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">
-                        Conteúdo com responsabilidade e afeto.
-                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">Conteúdo com responsabilidade e afeto.</p>
                     </div>
 
                     <div className="rounded-2xl bg-white/95 border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                       <p className="font-semibold text-[13px] text-[#fd2597]">Marcas</p>
-                      <p className="text-[13px] text-[#545454] leading-snug">
-                        Produtos/serviços que respeitam mães reais.
-                      </p>
+                      <p className="text-[13px] text-[#545454] leading-snug">Produtos/serviços que respeitam mães reais.</p>
                     </div>
                   </div>
                 </div>
@@ -688,24 +668,12 @@ export default function AjudaEParceriasPage() {
                     />
                   </SoftCard>
 
+                  {/* Polimento: remover duplicidade do suporte aqui (fica no hero) */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
                     <p className="text-[12px] text-[#6A6A6A]">Quer propor algo para o Materna360? Use Parcerias.</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <Button variant="secondary" size="sm" onClick={() => scrollTo('parcerias')}>
-                        Enviar proposta
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => {
-                          setSupportSuccess(null)
-                          setSupportError(null)
-                          setSupportOpen(true)
-                        }}
-                      >
-                        Falar com suporte
-                      </Button>
-                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => scrollTo('parcerias')}>
+                      Enviar proposta
+                    </Button>
                   </div>
                 </div>
               </SoftCard>
