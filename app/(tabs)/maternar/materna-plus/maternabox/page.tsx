@@ -339,15 +339,7 @@ export default function MaternaBoxPage() {
                 <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
                   <Button variant="primary" size="sm" className="text-[13px] px-5 py-2 w-full sm:w-auto" onClick={openWaitlist}>
                     Entrar na lista de espera
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="text-[13px] px-5 py-2 w-full sm:w-auto"
-                    onClick={() => scrollTo('visao')}
-                  >
-                    Ver a MaternaBox
-                  </Button>
+                  </Button>       
                 </div>
               </div>
             </SoftCard>
