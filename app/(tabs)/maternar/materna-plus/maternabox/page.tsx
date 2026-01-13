@@ -1,6 +1,8 @@
+// app/(tabs)/maternar/materna-plus/maternabox/page.tsx
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import Image from 'next/image'
 import { PageTemplate } from '@/components/common/PageTemplate'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { SoftCard } from '@/components/ui/card'
@@ -145,10 +147,38 @@ function RenderEditorialText({
   )
 }
 
+/* =========================
+   Pré-lançamento — Lista de espera
+========================= */
+
+type WaitlistState = {
+  name: string
+  email: string
+  message: string
+}
+
+const initialWaitlist: WaitlistState = {
+  name: '',
+  email: '',
+  message: '',
+}
+
 export default function MaternaBoxPage() {
   const [activeSection, setActiveSection] = useState<HubSectionId>('visao')
   const [selectedAge, setSelectedAge] = useState<AgeBand>('3-5')
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('mensal')
+
+  // Lista de espera (modal)
+  const [waitlistOpen, setWaitlistOpen] = useState(false)
+  const [waitlist, setWaitlist] = useState<WaitlistState>(initialWaitlist)
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false)
+  const [waitlistSuccess, setWaitlistSuccess] = useState<string | null>(null)
+  const [waitlistError, setWaitlistError] = useState<string | null>(null)
+
+  const selectedPlanData = useMemo(
+    () => PLANS.find((p) => p.id === selectedPlan) ?? PLANS[0],
+    [selectedPlan],
+  )
 
   const scrollTo = (id: HubSectionId) => {
     if (typeof window === 'undefined') return
@@ -166,6 +196,60 @@ export default function MaternaBoxPage() {
     if (typeof window === 'undefined') return
     // caminho provável dentro de /maternar/materna-plus (consistência com esta rota)
     window.location.href = '/maternar/materna-plus/planos'
+  }
+
+  const openWaitlist = () => {
+    setWaitlistSuccess(null)
+    setWaitlistError(null)
+    setWaitlistOpen(true)
+  }
+
+  const handleWaitlistChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setWaitlist((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleWaitlistSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setWaitlistSuccess(null)
+    setWaitlistError(null)
+    setWaitlistSubmitting(true)
+
+    try {
+      // Endpoint planejado para etapa de pré-lançamento (adm/CRM virá depois).
+      // Se ainda não existir, o erro é tratado com mensagem clara.
+      const response = await fetch('/api/maternar/maternabox-waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...waitlist,
+          selectedAge,
+          selectedPlan,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        const messageFromApi =
+          data && typeof data.message === 'string'
+            ? data.message
+            : 'Algo não saiu como esperado.'
+        throw new Error(messageFromApi)
+      }
+
+      setWaitlistSuccess(
+        'Perfeito. Você entrou na lista de espera. Quando a primeira edição abrir, a gente avisa por e-mail com o próximo passo.',
+      )
+      setWaitlist(initialWaitlist)
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[Materna360][MaternaBox][Waitlist] erro ao enviar', err)
+      setWaitlistError(
+        'Não conseguimos registrar seu interesse agora. Tente novamente em alguns instantes.',
+      )
+    } finally {
+      setWaitlistSubmitting(false)
+    }
   }
 
   useEffect(() => {
@@ -192,7 +276,7 @@ export default function MaternaBoxPage() {
         root: null,
         rootMargin: '-120px 0px -55% 0px',
         threshold: [0.05, 0.15, 0.25, 0.35],
-      }
+      },
     )
 
     elements.forEach((el) => observer.observe(el))
@@ -220,8 +304,6 @@ export default function MaternaBoxPage() {
     )
   }
 
-  const selectedPlanData = useMemo(() => PLANS.find((p) => p.id === selectedPlan) ?? PLANS[0], [selectedPlan])
-
   return (
     <PageTemplate
       headerTone="light"
@@ -234,25 +316,116 @@ export default function MaternaBoxPage() {
       <ClientOnly>
         {/* pb maior para não encostar na tab bar no mobile */}
         <div className="pt-3 md:pt-4 pb-24 space-y-6 md:space-y-10">
+          {/* BANNER PRÉ-LANÇAMENTO (demanda) */}
+          <Reveal>
+            <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-[#fff7fb] p-5 md:p-6 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+                    PRÉ-LANÇAMENTO
+                  </p>
+                  <p className="text-[14px] md:text-[15px] font-semibold text-[#545454]">
+                    Estamos organizando a primeira edição da MaternaBox.
+                  </p>
+                  <p className="text-[12px] md:text-[13px] text-[#6A6A6A] leading-relaxed max-w-2xl">
+                    Neste momento, abrimos apenas a lista de espera para medir interesse e avisar primeiro quando a
+                    abertura acontecer.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="text-[13px] w-full sm:w-auto"
+                    onClick={openWaitlist}
+                  >
+                    Entrar na lista de espera
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="text-[13px] w-full sm:w-auto"
+                    onClick={() => scrollTo('visao')}
+                  >
+                    Ver a MaternaBox
+                  </Button>
+                </div>
+              </div>
+            </SoftCard>
+          </Reveal>
+
           <Reveal>
             <SoftCard
               id="maternabox-visao"
               className="rounded-3xl border border-[#F5D7E5] bg-white/95 p-5 sm:p-6 md:p-7 shadow-[0_6px_22px_rgba(0,0,0,0.06)]"
             >
               <div className="space-y-4 md:space-y-6">
-                <div className="max-w-3xl space-y-2.5">
-                  <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
-                    MATERNABOX
-                  </p>
+                <div className="grid gap-5 md:grid-cols-[1.05fr,0.95fr] md:items-start">
+                  <div className="max-w-3xl space-y-2.5">
+                    <p className="text-[11px] md:text-[12px] font-semibold uppercase tracking-[0.24em] text-[#fd2597]/85">
+                      MATERNABOX
+                    </p>
 
-                  <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
-                    Você escolhe o ritmo. A gente entrega o ritual pronto.
-                  </h2>
+                    <h2 className="text-[16px] md:text-xl font-semibold text-[#545454] leading-snug">
+                      Você escolhe o ritmo. A gente entrega o ritual pronto.
+                    </h2>
 
-                  <RenderEditorialText
-                    text="Uma experiência de brincar e vínculo, com curadoria por fase. Vem com guia curto de “como usar” para você aplicar sem ficar caçando ideias."
-                    className="text-[13px] md:text-[15px] text-[#545454] leading-relaxed"
-                  />
+                    <RenderEditorialText
+                      text="Uma experiência de brincar e vínculo, com curadoria por fase. Vem com um guia curto de “como usar” para você aplicar sem ficar caçando ideias. São momentos simples, possíveis — do jeito que a rotina deixa."
+                      className="text-[13px] md:text-[15px] text-[#545454] leading-relaxed"
+                    />
+
+                    <SoftCard className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                        PRÉ-LANÇAMENTO
+                      </p>
+                      <p className="mt-2 text-[12px] text-[#545454] leading-relaxed">
+                        A MaternaBox está em preparação. Entre na lista de espera para ser avisada primeiro quando a
+                        primeira edição abrir.
+                      </p>
+
+                      <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="text-[13px] w-full sm:w-auto"
+                          onClick={openWaitlist}
+                        >
+                          Entrar na lista de espera
+                        </Button>
+
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-[13px] w-full sm:w-auto"
+                          onClick={() => scrollTo('planos')}
+                        >
+                          Ver ritmos disponíveis
+                        </Button>
+                      </div>
+                    </SoftCard>
+                  </div>
+
+                  {/* IMAGEM (humaniza) */}
+                  <div className="space-y-2">
+                    <div className="rounded-3xl border border-[#F5D7E5] bg-white p-3 shadow-[0_6px_22px_rgba(0,0,0,0.06)]">
+                      <div className="relative w-full overflow-hidden rounded-2xl">
+                        <Image
+                          src="/images/maternabox2.png"
+                          alt="MaternaBox"
+                          width={1200}
+                          height={900}
+                          className="h-auto w-full object-cover"
+                          priority={false}
+                        />
+                      </div>
+                      <p className="mt-3 text-[12px] text-[#6A6A6A] leading-relaxed">
+                        Um produto pensado para a vida real: guia curto, curadoria por fase e um “próximo passo” mais
+                        claro.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/55 p-4 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
@@ -284,7 +457,7 @@ export default function MaternaBoxPage() {
                         className="text-[13px] px-5 py-2 w-full sm:w-auto"
                         onClick={() => scrollTo('planos')}
                       >
-                        Ver planos
+                        Ver ritmos
                       </Button>
                     </div>
                   </div>
@@ -293,17 +466,23 @@ export default function MaternaBoxPage() {
                 <div className="grid gap-3 md:gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">Pronto para usar</p>
-                    <p className="text-[13px] text-[#545454] leading-snug">Sem pesquisar atividades. Só abrir e fazer.</p>
+                    <p className="text-[13px] text-[#545454] leading-snug">
+                      Sem pesquisar atividades. Só abrir, escolher e fazer.
+                    </p>
                   </div>
 
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">Pouco tempo</p>
-                    <p className="text-[13px] text-[#545454] leading-snug">Ideias que cabem na rotina real (10–20 min).</p>
+                    <p className="text-[13px] text-[#545454] leading-snug">
+                      Ideias que cabem na rotina real (10–20 min).
+                    </p>
                   </div>
 
                   <div className="rounded-2xl bg-white border border-[#F5D7E5] px-4 py-3 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
                     <p className="font-semibold text-[13px] text-[#fd2597]">Por fase</p>
-                    <p className="text-[13px] text-[#545454] leading-snug">Você escolhe a faixa etária e ajusta depois.</p>
+                    <p className="text-[13px] text-[#545454] leading-snug">
+                      Você escolhe a faixa etária e ajusta depois.
+                    </p>
                   </div>
                 </div>
 
@@ -320,9 +499,9 @@ export default function MaternaBoxPage() {
                     variant="secondary"
                     size="sm"
                     className="text-[13px] w-full sm:w-auto"
-                    onClick={() => scrollTo('planos')}
+                    onClick={openWaitlist}
                   >
-                    Ver planos
+                    Entrar na lista de espera
                   </Button>
                 </div>
               </div>
@@ -379,9 +558,9 @@ export default function MaternaBoxPage() {
                     variant="primary"
                     size="sm"
                     className="text-[13px] w-full sm:w-auto"
-                    onClick={() => scrollTo('planos')}
+                    onClick={openWaitlist}
                   >
-                    Ver planos
+                    Entrar na lista de espera
                   </Button>
                 </div>
               </div>
@@ -422,6 +601,11 @@ export default function MaternaBoxPage() {
                       <span>Quando você quer rotina com leveza, sem “inventar moda”.</span>
                     </li>
                   </ul>
+
+                  <RenderEditorialText
+                    text="A proposta é te poupar decisão e fricção. Você não compra “mais uma tarefa”. Você compra um caminho mais claro para o próximo momento de presença."
+                    className="text-[12px] text-[#6A6A6A] leading-relaxed"
+                  />
                 </div>
 
                 <div className="rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1] p-4 space-y-2 text-[13px] text-[#545454] shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
@@ -429,6 +613,12 @@ export default function MaternaBoxPage() {
                   <p>• Você busca “resultado rápido” sem prática.</p>
                   <p>• Você não quer nenhuma atividade guiada.</p>
                   <p>• Você prefere escolher tudo sozinha, sem curadoria.</p>
+
+                  <div className="pt-2">
+                    <Button variant="secondary" size="sm" className="text-[13px] w-full" onClick={openWaitlist}>
+                      Entrar na lista de espera
+                    </Button>
+                  </div>
                 </div>
               </div>
             </SoftCard>
@@ -486,15 +676,15 @@ export default function MaternaBoxPage() {
                     className="text-[13px] w-full sm:w-auto"
                     onClick={() => scrollTo('planos')}
                   >
-                    Ver planos
+                    Ver ritmos
                   </Button>
                   <Button
                     variant="primary"
                     size="sm"
                     className="text-[13px] w-full sm:w-auto"
-                    onClick={goToPlansPage}
+                    onClick={openWaitlist}
                   >
-                    Ver planos no Materna+
+                    Entrar na lista de espera
                   </Button>
                 </div>
               </div>
@@ -515,7 +705,7 @@ export default function MaternaBoxPage() {
                     Escolha o ritmo que faz sentido.
                   </h2>
                   <RenderEditorialText
-                    text="Aqui você define a estrutura da sua escolha. Valores e disponibilidade ficam na página de Planos, sem pressão e com clareza."
+                    text="Nesta fase, você escolhe o ritmo e a faixa para registrar interesse. Quando a primeira edição abrir, valores e disponibilidade serão apresentados com clareza."
                     className="text-[12px] text-[#6A6A6A] leading-relaxed"
                   />
                 </header>
@@ -572,14 +762,12 @@ export default function MaternaBoxPage() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">SEU RESUMO</p>
 
                       <RenderEditorialText
-                        text={`${selectedPlanData.title} · Faixa ${
-                          AGE_BANDS.find((a) => a.id === selectedAge)?.label
-                        }`}
+                        text={`${selectedPlanData.title} · Faixa ${AGE_BANDS.find((a) => a.id === selectedAge)?.label}`}
                         className="text-[13px] text-[#545454] leading-relaxed"
                       />
 
                       <RenderEditorialText
-                        text="Se fizer sentido para o seu momento, você vê os detalhes completos em Planos e decide com calma."
+                        text="Se isso faz sentido para o seu momento, entre na lista de espera com essa escolha. Assim, a primeira edição nasce a partir de demanda real."
                         className="text-[12px] text-[#6A6A6A] leading-relaxed"
                       />
                     </div>
@@ -597,11 +785,25 @@ export default function MaternaBoxPage() {
                         variant="primary"
                         size="sm"
                         className="text-[13px] w-full sm:w-auto"
-                        onClick={goToPlansPage}
+                        onClick={openWaitlist}
                       >
-                        Ver planos
+                        Entrar na lista de espera
                       </Button>
                     </div>
+                  </div>
+                </SoftCard>
+
+                {/* Link “Planos” futuro, mantido mas sem pressão */}
+                <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-5 shadow-[0_4px_18px_rgba(0,0,0,0.05)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">PRÓXIMO PASSO</p>
+                  <p className="mt-2 text-[12px] text-[#6A6A6A] leading-relaxed">
+                    Quando a MaternaBox abrir oficialmente, a página de Planos do Materna+ concentrará valores,
+                    disponibilidade e regras operacionais, com clareza.
+                  </p>
+                  <div className="mt-3">
+                    <Button variant="secondary" size="sm" className="text-[13px]" onClick={goToPlansPage}>
+                      Ver página de Planos (Materna+)
+                    </Button>
                   </div>
                 </SoftCard>
               </div>
@@ -611,6 +813,144 @@ export default function MaternaBoxPage() {
           <MotivationalFooter routeKey="maternabox" />
           <div className="PageSafeBottom" />
         </div>
+
+        {/* MODAL — LISTA DE ESPERA */}
+        {waitlistOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+            onClick={() => setWaitlistOpen(false)}
+          >
+            <div className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
+              <SoftCard className="rounded-3xl border border-[#F5D7E5] bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]/85">
+                      LISTA DE ESPERA · MATERNABOX
+                    </p>
+                    <h3 className="text-[18px] font-semibold text-[#545454]">Entrar na lista de espera</h3>
+                    <p className="text-[12px] text-[#6A6A6A]">
+                      Conte o mínimo. A gente usa isso para organizar a primeira edição e avisar você primeiro.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setWaitlistOpen(false)}
+                    className="text-[12px] font-semibold text-[#fd2597] hover:text-[#b8236b]"
+                  >
+                    Fechar
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#F5D7E5] bg-[#ffe1f1]/60 p-4">
+                  <p className="text-[12px] text-[#545454]">
+                    <span className="font-semibold">Sua seleção atual:</span>{' '}
+                    {AGE_BANDS.find((a) => a.id === selectedAge)?.label} · {selectedPlanData.title}
+                  </p>
+                </div>
+
+                <form className="mt-5 space-y-4" onSubmit={handleWaitlistSubmit}>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="wlName"
+                        className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                      >
+                        Nome
+                      </label>
+                      <input
+                        id="wlName"
+                        name="name"
+                        type="text"
+                        value={waitlist.name}
+                        onChange={handleWaitlistChange}
+                        placeholder="Como você gostaria de ser chamada?"
+                        className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                        disabled={waitlistSubmitting}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="wlEmail"
+                        className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                      >
+                        E-mail
+                      </label>
+                      <input
+                        id="wlEmail"
+                        name="email"
+                        type="email"
+                        required
+                        value={waitlist.email}
+                        onChange={handleWaitlistChange}
+                        placeholder="Seu melhor e-mail"
+                        className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                        disabled={waitlistSubmitting}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="wlMessage"
+                      className="text-[12px] font-medium uppercase tracking-[0.16em] text-[#6A6A6A]"
+                    >
+                      Observação (opcional)
+                    </label>
+                    <textarea
+                      id="wlMessage"
+                      name="message"
+                      rows={4}
+                      value={waitlist.message}
+                      onChange={handleWaitlistChange}
+                      placeholder="Se quiser, diga o que você mais quer destravar com a MaternaBox (ex.: rotina, conexão, ideias prontas)."
+                      className="w-full rounded-2xl border border-[#ffd8e6] bg-white px-3 py-2 text-[14px] leading-relaxed text-[#2F3A56] placeholder:text-[#545454]/60 outline-none focus:border-[#fd2597] focus:ring-2 focus:ring-[#fd2597]/30"
+                      disabled={waitlistSubmitting}
+                    />
+                  </div>
+
+                  {waitlistSuccess && (
+                    <p className="rounded-2xl bg-[#ffe1f1] px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                      {waitlistSuccess}
+                    </p>
+                  )}
+
+                  {waitlistError && (
+                    <p className="rounded-2xl bg-[#fd2597]/10 px-4 py-2 text-[12px] leading-relaxed text-[#2F3A56]">
+                      {waitlistError}
+                    </p>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      type="button"
+                      onClick={() => setWaitlistOpen(false)}
+                      className="sm:w-auto w-full"
+                    >
+                      Cancelar
+                    </Button>
+
+                    <button
+                      type="submit"
+                      disabled={waitlistSubmitting}
+                      className="inline-flex w-full sm:w-auto items-center justify-center rounded-2xl bg-[#fd2597] px-5 py-2.5 text-[14px] font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#e0218c] disabled:cursor-not-allowed disabled:bg-[#fd2597]/60"
+                    >
+                      {waitlistSubmitting ? 'Enviando...' : 'Entrar na lista'}
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-[#6A6A6A] leading-relaxed">
+                    Ao enviar, você não cria obrigação de compra. É apenas um registro de interesse para a primeira
+                    edição.
+                  </p>
+                </form>
+              </SoftCard>
+            </div>
+          </div>
+        )}
       </ClientOnly>
     </PageTemplate>
   )
