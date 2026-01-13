@@ -333,8 +333,8 @@ export default function BibliotecaMaternaPage() {
         : presetFilter === 'trilhas'
           ? 'Para quando você quer seguir uma sequência pronta e consistente.'
           : presetFilter === 'tema-fase'
-            ? 'Para quando você quer algo que combine com a fase do seu filho.'
-            : 'A biblioteca já pode te mostrar o que resolve primeiro.'
+            ? 'Para quando você quer navegar por fase com mais objetividade.'
+            : 'A biblioteca já pode te mostrar o que priorizar primeiro.'
 
   function setChip(next: ViewStep) {
     setView(next)
@@ -368,9 +368,8 @@ export default function BibliotecaMaternaPage() {
                 Biblioteca Materna
               </h1>
 
-              {/* P34.10: agora quebra corretamente e não deixa “—” órfão */}
               <RenderEditorialText
-                text="Você entra sem saber o que procurar e sai com um material certo para o seu momento — sem ficar caçando."
+                text="Curadoria para você chegar e encontrar algo útil — sem ficar caçando."
                 className="text-sm md:text-base text-white/90 leading-relaxed max-w-2xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
               />
             </div>
@@ -409,11 +408,10 @@ export default function BibliotecaMaternaPage() {
 
                       <div className="space-y-1">
                         <div className="text-[12px] text-white/85">
-                          {presetLabel ? presetLabel : 'Sugestão do Materna • pronta para usar'}
+                          {presetLabel ? presetLabel : 'Curadoria Materna • pronta para ajudar'}
                           {selectedTheme ? ` • tema: ${selectedTheme}` : ''}
                         </div>
 
-                        {/* FIX: título agora é uma linha normal (não “coluna estreita”) */}
                         <div className="text-[18px] md:text-[20px] font-semibold text-white leading-snug drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                           {suggestionTitle}
                         </div>
@@ -424,7 +422,7 @@ export default function BibliotecaMaternaPage() {
                       </div>
                     </div>
 
-                    {/* FIX: botões em linha com largura no mobile */}
+                    {/* botões */}
                     <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
                       <button
                         onClick={() => setChip('filtrar')}
@@ -468,7 +466,7 @@ export default function BibliotecaMaternaPage() {
                         { id: 'sugestao' as const, label: 'Sugestão' },
                         { id: 'filtrar' as const, label: 'Filtrar' },
                         { id: 'materiais' as const, label: 'Materiais' },
-                        { id: 'insight' as const, label: 'Insight' },
+                        { id: 'insight' as const, label: 'Por fase' },
                       ] as const
                     ).map((it) => {
                       const active = view === it.id
@@ -505,7 +503,7 @@ export default function BibliotecaMaternaPage() {
                   {view === 'sugestao' ? (
                     <div className="space-y-4">
                       <div className="text-[14px] text-[#2f3a56] font-semibold">
-                        Se você não quer pensar: escolha um atalho.
+                        Se você não quer pensar muito: escolha um atalho.
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -524,7 +522,7 @@ export default function BibliotecaMaternaPage() {
                             Guias & checklists
                           </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Passo a passo curto pra resolver mais rápido.
+                            Passo a passo curto para destravar o agora.
                           </div>
                         </button>
 
@@ -562,7 +560,7 @@ export default function BibliotecaMaternaPage() {
                             Trilhas educativas
                           </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Uma sequência pronta pra seguir.
+                            Uma sequência pronta para seguir, no seu ritmo.
                           </div>
                         </button>
 
@@ -575,20 +573,20 @@ export default function BibliotecaMaternaPage() {
                           className="rounded-3xl border border-[#f5d7e5] bg-white hover:bg-[#ffe1f1] transition p-4 text-left"
                         >
                           <div className="text-[11px] text-[#b8236b] font-semibold uppercase tracking-wide">
-                            em breve
+                            em evolução
                           </div>
                           <div className="text-[13px] font-semibold text-[#2f3a56] mt-1">
                             Por idade & fase
                           </div>
                           <div className="text-[12px] text-[#6a6a6a] mt-2">
-                            Vai conectar com o Eu360 e sugerir sozinho.
+                            Navegação por fase para você escolher com mais segurança.
                           </div>
                         </button>
                       </div>
 
                       {!hasActiveFilter ? (
                         <div className="text-[12px] text-[#6a6a6a]">
-                          Nenhum filtro ativo — você está vendo uma amostra geral da biblioteca.
+                          Sem filtros ativos — você está vendo uma amostra da curadoria.
                         </div>
                       ) : (
                         <div className="text-[12px] text-[#6a6a6a]">
@@ -602,11 +600,9 @@ export default function BibliotecaMaternaPage() {
                   {view === 'filtrar' ? (
                     <div className="space-y-5">
                       <div className="flex flex-col gap-1">
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">
-                          Ajuste rápido
-                        </div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">Ajuste rápido</div>
                         <div className="text-[12px] text-[#6a6a6a]">
-                          Se quiser refinar, escolha tema e/ou formato. Se não quiser, só vá em “Materiais”.
+                          Se quiser refinar, escolha tema e/ou formato. Se não quiser, vá direto em “Materiais”.
                         </div>
 
                         {presetLabel ? (
@@ -697,11 +693,9 @@ export default function BibliotecaMaternaPage() {
                   {view === 'materiais' ? (
                     <div ref={materialsRef} className="space-y-4">
                       <div className="flex flex-col gap-1">
-                        <div className="text-[14px] text-[#2f3a56] font-semibold">
-                          Materiais disponíveis
-                        </div>
+                        <div className="text-[14px] text-[#2f3a56] font-semibold">Materiais</div>
                         <div className="text-[12px] text-[#6a6a6a]">
-                          Clique em um card para abrir. (Downloads: em breve.)
+                          Abra um card para ver o que ele resolve e, quando estiver disponível, acessar o conteúdo.
                         </div>
                         <div className="text-[12px] text-[#6a6a6a]">
                           {filteredMaterials.length} resultado(s) agora.
@@ -736,8 +730,8 @@ export default function BibliotecaMaternaPage() {
 
                               <div className="mt-auto pt-1 text-[11px] font-semibold text-[#fd2597]">
                                 {material.href && material.href !== '#'
-                                  ? 'Clique para acessar o material'
-                                  : 'Em breve disponível para download'}
+                                  ? 'Abrir material'
+                                  : 'Catálogo em curadoria'}
                               </div>
                             </SoftCard>
                           ))}
@@ -752,29 +746,35 @@ export default function BibliotecaMaternaPage() {
                           Ajustar filtros
                         </button>
 
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-full px-5 bg-[#fd2597] text-white hover:opacity-95 shadow-[0_10px_26px_rgba(253,37,151,0.35)]"
-                        >
-                          <AppIcon name="crown" className="mr-2 h-4 w-4 text-white" />
-                          Conhecer Materna+
-                        </Button>
+                        <Link href="/maternar/materna-plus" className="inline-flex">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full px-5 bg-[#fd2597] text-white hover:opacity-95 shadow-[0_10px_26px_rgba(253,37,151,0.35)]"
+                          >
+                            <AppIcon name="crown" className="mr-2 h-4 w-4 text-white" />
+                            Conhecer Materna+
+                          </Button>
+                        </Link>
+
+                        <div className="w-full text-[11px] text-[#6a6a6a]">
+                          Se fizer sentido para o seu momento, o Materna+ destrava uma camada a mais de apoio — sem pressa.
+                        </div>
                       </div>
                     </div>
                   ) : null}
 
-                  {/* VIEW: Insight */}
+                  {/* VIEW: Por fase */}
                   {view === 'insight' ? (
                     <div className="space-y-4">
                       <div className="text-[14px] text-[#2f3a56] font-semibold">
-                        Insight personalizado
+                        Por idade & fase (em evolução)
                       </div>
 
                       <div className="text-[12px] text-[#6a6a6a] max-w-2xl">
-                        Em breve, a Biblioteca vai conversar com o Eu360 para sugerir materiais sob medida para a fase do seu filho
-                        e explicar por que aquele material é o “certo para agora”.
+                        Esta área está sendo construída para deixar a escolha ainda mais tranquila: você entra, entende o que priorizar na fase
+                        e encontra o material com menos decisão.
                       </div>
 
                       <div className="rounded-3xl bg-[#fff7fb] border border-[#f5d7e5] p-6">
@@ -783,15 +783,13 @@ export default function BibliotecaMaternaPage() {
                             <AppIcon name="idea" className="h-5 w-5 text-[#fd2597]" />
                           </div>
                           <div className="space-y-1">
-                            <div className="text-[13px] font-semibold text-[#2f3a56]">
-                              Como vai funcionar
-                            </div>
+                            <div className="text-[13px] font-semibold text-[#2f3a56]">Como usar agora</div>
                             <div className="text-[12px] text-[#6a6a6a] leading-relaxed">
-                              1) Eu360 entende seu dia e a fase do seu filho.
+                              1) Escolha um atalho (guias, PDFs, trilhas) ou filtre por tema.
                               <br />
-                              2) A Biblioteca sugere um material e diz o motivo.
+                              2) Veja os materiais e selecione o que combina com o seu momento.
                               <br />
-                              3) Você aplica sem ficar procurando.
+                              3) Sem pressão: você pode ajustar depois.
                             </div>
                           </div>
                         </div>
@@ -801,13 +799,13 @@ export default function BibliotecaMaternaPage() {
                             onClick={() => setChip('materiais')}
                             className="rounded-full bg-[#fd2597] text-white px-4 py-2 text-[12px] shadow-lg hover:opacity-95 transition"
                           >
-                            Ver materiais agora
+                            Ver materiais
                           </button>
                           <button
                             onClick={() => setChip('filtrar')}
                             className="rounded-full bg-white border border-[#f5d7e5] text-[#2f3a56] px-4 py-2 text-[12px] hover:bg-[#ffe1f1] transition"
                           >
-                            Ajustar manualmente
+                            Ajustar
                           </button>
                         </div>
                       </div>
