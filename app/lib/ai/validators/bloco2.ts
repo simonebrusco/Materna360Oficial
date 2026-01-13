@@ -21,16 +21,21 @@ export type MeuFilhoBloco2ValidationReason =
 
 const MIN_CARDS = 3
 const MAX_CARDS = 5
-const MAX_DESC_CHARS = 120
+
+// Ajuste: 120 estava “matando” muitas sugestões boas.
+// 180 mantém o texto curto, mas permite 2 frases curtas (“Faça X. Depois Y.”).
+const MAX_DESC_CHARS = 180
+
 const MAX_TITLE_CHARS = 48
 
-// Banlist conservadora (sem “catálogo”, sem didatismo, sem convite/hesitação)
+// Banlist conservadora, mas menos agressiva:
+// Mantém bloqueio do que vira catálogo / “pinterest” / lista de opções / tom de aula.
+// Remove “que tal”, “você pode”, “uma ideia” (muito comuns e não necessariamente ruins).
 const BANNED_RE =
-  /\b(que tal|talvez|se quiser|uma ideia|você pode|voce pode|atividade educativa|educativa|pinterest|lista|várias opções|diversas opções)\b/i
+  /\b(pinterest|lista|várias opções|varias opcoes|diversas opções|diversas opcoes|atividade educativa|educativa)\b/i
 
 // Bloqueio simples de emojis (regra do prompt)
-const EMOJI_RE =
-  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u
+const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u
 
 function normalizeText(raw: unknown): string {
   return String(raw ?? '')
@@ -45,7 +50,7 @@ function clampChars(s: string, max: number): string {
 }
 
 function looksLikeListyText(s: string): boolean {
-  // evita “listas” em uma frase: bullets, numeração, ou separadores em série
+  // evita “listas” em uma frase: bullets, numeração, ou quebras
   if (/(^|\s)[•\-–—]\s+/.test(s)) return true
   if (/(^|\s)\d+\)\s+/.test(s)) return true
   if (s.includes('\n')) return true
@@ -58,8 +63,10 @@ function isGenericTitle(s: string): boolean {
     t === 'brincadeira' ||
     t === 'atividade' ||
     t === 'conexão' ||
+    t === 'conexao' ||
     t === 'rotina' ||
     t === 'ideia rápida' ||
+    t === 'ideia rapida' ||
     t === 'ideia'
   )
 }
@@ -68,22 +75,33 @@ function signatureKey(title: string, desc: string): string {
   return `${title.toLowerCase()}|${desc.toLowerCase()}`
 }
 
+function countSentences(s: string): number {
+  // Permite até 2 frases curtas. Evita parágrafos/explicações longas.
+  const parts = s
+    .split(/[.!?]+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  return parts.length
+}
+
 /**
  * Valida e sanitiza cards do Bloco 2.
  * - 3–5 cards
  * - title curto e acionável (<= 48 chars)
- * - description até 120 chars, 1 frase curta, sem lista, sem emoji, sem banlist
+ * - description até 180 chars, 1–2 frases curtas, sem lista, sem emoji, sem banlist
  * - dedupe por assinatura simples (title+desc)
  * - withChild: true
+ *
+ * Importante: NÃO “hard-fail” no primeiro card ruim.
+ * A estratégia é: filtra os bons e só reprova se ficar < 3 no final.
  */
 export function sanitizeMeuFilhoBloco2Suggestions(
   raw: RotinaQuickSuggestion[] | null | undefined,
   tempoDisponivel: number | null | undefined,
 ): RotinaQuickSuggestion[] {
   if (!Array.isArray(raw) || raw.length === 0) return []
-  if (raw.length < MIN_CARDS) return []
   if (raw.length > 20) {
-    // se a IA “surtar” e mandar lista enorme, a gente reprova direto
+    // se a IA “surtar” e mandar lista enorme, reprova direto
     return []
   }
 
@@ -91,30 +109,34 @@ export function sanitizeMeuFilhoBloco2Suggestions(
   const seen = new Set<string>()
 
   for (const item of raw) {
-    const title = normalizeText(item?.title)
-    const description = normalizeText(item?.description)
+    const titleRaw = normalizeText(item?.title)
+    const descRaw = normalizeText(item?.description)
 
-    if (!title) return []
-    if (!description) return []
+    // Em vez de hard-fail, apenas ignora cards inválidos
+    if (!titleRaw) continue
+    if (!descRaw) continue
 
-    if (EMOJI_RE.test(title) || EMOJI_RE.test(description)) return []
-    if (BANNED_RE.test(title) || BANNED_RE.test(description)) return []
-    if (looksLikeListyText(description)) return []
-    if (isGenericTitle(title)) return []
+    if (EMOJI_RE.test(titleRaw) || EMOJI_RE.test(descRaw)) continue
+    if (BANNED_RE.test(titleRaw) || BANNED_RE.test(descRaw)) continue
+    if (looksLikeListyText(descRaw)) continue
+    if (isGenericTitle(titleRaw)) continue
 
-    const safeTitle = clampChars(title, MAX_TITLE_CHARS)
-    const safeDesc = clampChars(description, MAX_DESC_CHARS)
+    // Sanitiza
+    const safeTitle = clampChars(titleRaw, MAX_TITLE_CHARS)
+    const safeDesc = clampChars(descRaw, MAX_DESC_CHARS)
 
-    if (!safeTitle) return []
-    if (!safeDesc) return []
-    if (safeDesc.length > MAX_DESC_CHARS) return []
-    if (safeDesc.length < 1) return []
+    if (!safeTitle) continue
+    if (!safeDesc) continue
+
+    // Guardrail: 1–2 frases (curtas)
+    const sentences = countSentences(safeDesc)
+    if (sentences < 1 || sentences > 2) continue
+
+    // Guardrail: descrição não pode ser “micro demais” (evita cards vazios)
+    if (safeDesc.length < 10) continue
 
     const key = signatureKey(safeTitle, safeDesc)
-    if (seen.has(key)) {
-      // duplicado -> ignora
-      continue
-    }
+    if (seen.has(key)) continue
     seen.add(key)
 
     const estimatedMinutes =
@@ -133,7 +155,7 @@ export function sanitizeMeuFilhoBloco2Suggestions(
     if (out.length >= MAX_CARDS) break
   }
 
-  // hard rule: 3–5 cards após limpeza
+  // Hard rule: 3–5 cards após limpeza
   if (out.length < MIN_CARDS) return []
   if (out.length > MAX_CARDS) return out.slice(0, MAX_CARDS)
 
