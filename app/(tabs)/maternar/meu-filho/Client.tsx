@@ -1,3 +1,4 @@
+
 // app/(tabs)/maternar/meu-filho/Client.tsx
 'use client'
 
@@ -53,7 +54,7 @@ type Kit = {
 }
 
 /**
- * P34.10  Tema (decisão mínima) para Bloco 3
+ * P34.10 — Tema (decisão mínima) para Bloco 3
  */
 type RotinaTema = 'transicao' | 'banho' | 'jantar' | 'sono' | 'manha'
 type ConexaoTema = 'checkin' | 'carinho' | 'conversa' | 'calmaria'
@@ -74,7 +75,7 @@ const CONEXAO_TEMAS: { id: ConexaoTema; label: string }[] = [
 ]
 
 /**
- * Filtros  Brincadeiras (Bloco 2)
+ * Filtros — Brincadeiras (Bloco 2)
  */
 type PlayLocation = 'casa' | 'ar_livre' | 'deslocamento'
 type SkillId = 'motor' | 'linguagem' | 'emocional' | 'cognitivo' | 'social' | 'autonomia'
@@ -95,7 +96,7 @@ const SKILLS: { id: SkillId; label: string }[] = [
 ]
 
 /**
- * Filtros  Fase (Bloco 4)
+ * Filtros — Fase (Bloco 4)
  */
 type FaseFoco = 'atencao' | 'emocao' | 'autonomia' | 'social' | 'linguagem'
 const FASE_FOCOS: { id: FaseFoco; label: string }[] = [
@@ -144,13 +145,13 @@ function timeTitle(t: TimeMode) {
 }
 
 function timeHint(t: TimeMode) {
-  if (t === '5') return 'Para quando voc só precisa conectar e seguir.'
+  if (t === '5') return 'Para quando você só precisa “conectar e seguir”.'
   if (t === '10') return 'Para quando dá para brincar sem complicar.'
-  return 'Para quando voc quer fechar o dia com presença de verdade.'
+  return 'Para quando você quer fechar o dia com presença de verdade.'
 }
 
 /**
- * Preferncias silenciosas do hub Meu Filho.
+ * Preferências “silenciosas” do hub Meu Filho.
  */
 const HUB_PREF = {
   time: 'maternar/meu-filho/pref/time',
@@ -190,14 +191,7 @@ function normalizeSkills(v: unknown): SkillId[] {
   const out: SkillId[] = []
   v.forEach((x) => {
     const s = String(x ?? '').trim()
-    if (
-      s === 'motor' ||
-      s === 'linguagem' ||
-      s === 'emocional' ||
-      s === 'cognitivo' ||
-      s === 'social' ||
-      s === 'autonomia'
-    ) {
+    if (s === 'motor' || s === 'linguagem' || s === 'emocional' || s === 'cognitivo' || s === 'social' || s === 'autonomia') {
       out.push(s)
     }
   })
@@ -262,7 +256,7 @@ function inferContext(): {
 }
 
 /* =========================
-   Helpers  variação / anti-cache
+   Helpers — variação / anti-cache
 ========================= */
 
 function newNonce() {
@@ -273,150 +267,8 @@ function newNonce() {
   return `n_${Math.random().toString(16).slice(2)}_${Date.now()}`
 }
 
-/**
- * Fallback rotativo/determinístico (para não repetir eternamente)
- * - muda por dia
- * - muda por filtros
- * - não vira "random louco": é estável no mesmo dia com os mesmos filtros
- */
-function todayKeyLocal(): string {
-  try {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  } catch {
-    return 'day'
-  }
-}
-
-function hashToInt(s: string): number {
-  let h = 2166136261
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return Math.abs(h >>> 0)
-}
-
-function skillHints(skill: SkillId): string[] {
-  if (skill === 'motor') return ['movimento', 'circuito', 'pular', 'pista', 'equilíbrio', 'equilibrio']
-  if (skill === 'linguagem') return ['fala', 'história', 'historia', 'leitura', 'conversa', 'perguntas', 'frases']
-  if (skill === 'emocional') return ['calmo', 'abraço', 'abraco', 'check-in', 'carinho', 'respiração', 'respiracao']
-  if (skill === 'cognitivo') return ['desafio', 'pista', 'achar', 'perguntas', 'tema', 'jogo']
-  if (skill === 'social') return ['juntos', 'turno', 'troca', 'cada um', 'revezar']
-  if (skill === 'autonomia') return ['ajuda', 'função', 'funcao', 'escolhe', 'organizar', 'guardar', 'combinado']
-  return []
-}
-
-function locationHints(loc: PlayLocation): string[] {
-  if (loc === 'casa') return ['casa', 'mesa', 'guardar', 'cantinho', 'organizar', 'toalha', 'almofada']
-  if (loc === 'ar_livre') return ['ar livre', 'parque', 'quintal', 'movimento', 'correr', 'pular', 'caminho', 'circuito']
-  // deslocamento
-  return ['fila', 'carro', 'espera', 'rápido', 'rapido', 'fala', 'perguntas', 'check-in', 'respiração', 'respiracao']
-}
-
-function scoreItem(it: PlanItem, loc: PlayLocation, skills: SkillId[]): number {
-  const text = `${it.tag} ${it.title} ${it.how}`.toLowerCase()
-  let score = 0
-
-  // location
-  const lh = locationHints(loc)
-  lh.forEach((k) => {
-    if (text.includes(k)) score += 2
-  })
-
-  // skills
-  skills.forEach((sk) => {
-    const sh = skillHints(sk)
-    sh.forEach((k) => {
-      if (text.includes(k)) score += 1
-    })
-  })
-
-  // leve bias para itens "curtos"
-  if (text.includes('rápido') || text.includes('rapido')) score += 1
-  if (text.includes('calmo') || text.includes('respiração') || text.includes('respiracao')) score += 1
-
-  return score
-}
-
-type Bloco2Items = { a: PlanItem; b: PlanItem; c: PlanItem }
-
-/**
- * Fallback do Bloco 2 que:
- * - usa um pool maior (combina planos de 5/10/15 do mesmo ageBand)
- * - prioriza o que combina com filtros
- * - rotaciona por dia + filtros
- */
-function buildBloco2Fallback(args: {
-  age: AgeBand
-  time: TimeMode
-  playLocation: PlayLocation
-  skills: SkillId[]
-}): Bloco2Items {
-  const { age, time, playLocation, skills } = args
-
-  const poolRaw: PlanItem[] = []
-  try {
-    const k5 = KITS[age]['5'].plan
-    const k10 = KITS[age]['10'].plan
-    const k15 = KITS[age]['15'].plan
-    ;([k5.a, k5.b, k5.c, k10.a, k10.b, k10.c, k15.a, k15.b, k15.c] as PlanItem[]).forEach((p) => poolRaw.push(p))
-  } catch {
-    // fallback mínimo: usa o kit atual se algo der errado
-    const kp = KITS[age][time].plan
-    return {
-      a: { ...kp.a, time },
-      b: { ...kp.b, time },
-      c: { ...kp.c, time },
-    }
-  }
-
-  // normaliza time (o card deve refletir o tempo selecionado)
-  const pool = poolRaw.map((p) => ({ ...p, time }))
-
-  // rank por aderncia aos filtros
-  const ranked = pool
-    .map((p) => ({ p, s: scoreItem(p, playLocation, skills) }))
-    .sort((x, y) => y.s - x.s || x.p.title.localeCompare(y.p.title))
-    .map((x) => x.p)
-
-  // seed determinístico (dia + filtros)
-  const seed = hashToInt(`mf:b2:${todayKeyLocal()}:age:${age}:t:${time}:loc:${playLocation}:skills:${skills.slice().sort().join(',')}`)
-  const start = ranked.length ? seed % ranked.length : 0
-
-  // pega 3 distintos, rotacionando no ranked
-  const pick: PlanItem[] = []
-  const used = new Set<string>()
-  for (let i = 0; i < ranked.length && pick.length < 3; i++) {
-    const idx = (start + i) % ranked.length
-    const it = ranked[idx]
-    const key = `${it.title}|${it.how}`.toLowerCase()
-    if (used.has(key)) continue
-    used.add(key)
-    pick.push(it)
-  }
-
-  // garantia: se por algum motivo não pegou 3, completa com o kit padrão
-  while (pick.length < 3) {
-    const kp = KITS[age][time].plan
-    const extra = [kp.a, kp.b, kp.c][pick.length]
-    pick.push({ ...extra, time })
-  }
-
-  // tags mais verdadeiras (para não parecer genérico)
-  const tagLoc = playLocation === 'casa' ? 'casa' : playLocation === 'ar_livre' ? 'ao ar livre' : 'deslocamento'
-  const a = { ...pick[0], tag: pick[0].tag || tagLoc, time }
-  const b = { ...pick[1], tag: pick[1].tag || tagLoc, time }
-  const c = { ...pick[2], tag: pick[2].tag || tagLoc, time }
-
-  return { a, b, c }
-}
-
 /* =========================
-   P34.11.2  Anti-repetição local (silencioso)
+   P34.11.2 — Anti-repetição local (silencioso)
 ========================= */
 
 const HUB_AI = 'maternar/meu-filho' as const
@@ -449,6 +301,7 @@ async function withAntiRepeatText(args: {
         return { text, source: 'ai' as const }
       }
 
+      // repetiu: tenta de novo silenciosamente (novo nonce)
       continue
     }
   }
@@ -462,6 +315,8 @@ async function withAntiRepeatText(args: {
 
   return { text: fb, source: 'fallback' as const }
 }
+
+type Bloco2Items = { a: PlanItem; b: PlanItem; c: PlanItem }
 
 async function withAntiRepeatPack(args: {
   themeSignature: string
@@ -511,7 +366,7 @@ async function withAntiRepeatPack(args: {
 }
 
 /* =========================
-   P26  Guardrails + Jornada
+   P26 — Guardrails + Jornada
 ========================= */
 
 type TaskWithStatus = MyDayTaskItem & { status?: 'active' | 'snoozed' | 'done'; done?: boolean; source?: string }
@@ -534,31 +389,31 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 }
 
 /* =========================
-   BLOCO 1  CANÔNICO (fallback silencioso)
+   BLOCO 1 — CANÔNICO (fallback silencioso)
 ========================= */
 
 const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
   '0-2': {
     '5':
-      'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga agora vamos guardar.',
+      'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
     '10':
-      'Faça um caminho curto com almofadas e atravessem juntos trs vezes. A cada volta, nomeie um movimento (pula, passa, senta). No final, guardem uma almofada por vez lado a lado.',
+      'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
     '15':
       'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
   },
   '3-4': {
     '5':
-      'Escolham trs objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
+      'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
     '10':
-      'Crie uma pista simples no chão e ele percorre duas rodadas com voc narrando. Na última volta, ele escolhe um movimento para voc copiar. No final, vocs guardam e fecham com um abraço curto.',
+      'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
     '15':
-      'Faça uma missão com trs tarefas rápidas: buscar, entregar e organizar um cantinho. Voc narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga missão cumprida.',
+      'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
   },
   '5-6': {
     '5':
-      'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um obrigada por me contar.',
+      'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
     '10':
-      'Monte um circuito com trs movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e voc segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
+      'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
     '15':
       'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
   },
@@ -566,16 +421,13 @@ const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
     '5':
       'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
     '10':
-      'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um valeu por fazer junto.',
+      'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
     '15':
-      'Deixe ele escolher 10 minutos de algo simples para vocs fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
+      'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
   },
 }
 
-type Bloco1State =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'done'; text: string; source: 'ai' | 'fallback' }
+type Bloco1State = { status: 'idle' } | { status: 'loading' } | { status: 'done'; text: string; source: 'ai' | 'fallback' }
 
 async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string }): Promise<string | null> {
   try {
@@ -606,7 +458,7 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string })
 }
 
 /* =========================
-   BLOCO 2  IA + FALLBACK (Exploração Guiada)
+   BLOCO 2 — IA + FALLBACK (Exploração Guiada)
 ========================= */
 
 type Bloco2State =
@@ -617,23 +469,18 @@ type Bloco2State =
 function stripEmojiAndBullets(s: string) {
   const text = String(s ?? '')
   const noBullets = text
-    // bullets comuns (• ●   ◦) via unicode escapes (evita problemas de encoding)
-    .replace(/(^|\n)\s*[\u2022\u25CF\u25AA\u25AB\u25E6]\s+/g, '$1')
-    // traços de lista (- – —)
-    .replace(/(^|\n)\s*[-\u2013\u2014]\s+/g, '$1')
+    .replace(/(^|\n)\s*[•●▪▫◦]\s+/g, '$1')
+    .replace(/(^|\n)\s*[-–—]\s+/g, '$1')
     .replace(/\s+/g, ' ')
     .trim()
 
-  return noBullets
-    .replace(/[\p{Extended_Pictographic}]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return noBullets.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').replace(/\s+/g, ' ').trim()
 }
 
 function clampText(s: string, max: number) {
   const t = stripEmojiAndBullets(String(s ?? '').trim())
   if (t.length <= max) return t
-  return t.slice(0, max - 1).trimEnd() + ''
+  return t.slice(0, max - 1).trimEnd() + '…'
 }
 
 function safeBloco2Title(raw: unknown): string | null {
@@ -729,7 +576,7 @@ async function fetchBloco2Cards(args: {
 }
 
 /* =========================
-   BLOCO 3  ROTINAS / CONEXÃO
+   BLOCO 3 — ROTINAS / CONEXÃO
 ========================= */
 
 // Payload-safe (sem acentos) para evitar mismatch no backend/schema
@@ -749,7 +596,7 @@ function clampBloco3Text(raw: unknown): string | null {
   const banned = ['todo dia', 'todos os dias', 'sempre', 'nunca', 'crie o hábito', 'hábito', 'disciplina', 'rotina ideal', 'o mais importante é']
   if (banned.some((b) => low.includes(b))) return null
 
-  if (t.includes('\n') || t.includes('') || t.includes('- ')) return null
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
   const sentences = t
     .split(/[.!?]+/)
@@ -762,16 +609,16 @@ function clampBloco3Text(raw: unknown): string | null {
 
 const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
   rotina: {
-    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga agora vamos guardar e faça junto por 30 segundos. Isso já reduz a resistncia.',
-    '3-4': 'Antes de mudar de atividade, faça um sinal de troca sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
+    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga “agora vamos guardar” e faça junto por 30 segundos. Isso já reduz a resistência.',
+    '3-4': 'Antes de mudar de atividade, faça um “sinal de troca” sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
     '5-6': 'Escolha um encerramento simples para a brincadeira: guardar 1 item juntos e pronto. Isso evita esticar e ajuda a passar para a próxima parte do dia.',
-    '6+': 'Feche a atividade com um combinado objetivo: agora é X, depois Y. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
+    '6+': 'Feche a atividade com um combinado objetivo: “agora é X, depois Y”. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
   },
   conexao: {
     '0-2': 'No final, faça 10 segundos de olho no olho e um abraço curto. Sem conversa. Só presença antes de seguir.',
-    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e valeu por brincar. Não precisa durar. Só marca o fim com carinho.',
-    '5-6': 'Use uma frase curta e específica no final: eu gostei de brincar com vocÝ. Depois siga para o próximo passo do dia. Presença curta já conta.',
-    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com valeu por fazer junto. Conexão curta, sem estender.',
+    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e “valeu por brincar”. Não precisa durar. Só marca o fim com carinho.',
+    '5-6': 'Use uma frase curta e específica no final: “eu gostei de brincar com você”. Depois siga para o próximo passo do dia. Presença curta já conta.',
+    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com “valeu por fazer junto”. Conexão curta, sem estender.',
   },
 }
 
@@ -824,15 +671,12 @@ async function fetchBloco3Suggestion(args: {
 }
 
 /* =========================
-   BLOCO 4  FASES / CONTEXTO
+   BLOCO 4 — “FASES / CONTEXTO”
 ========================= */
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
 
-type Bloco4State =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'done'; text: string; source: 'ai' | 'fallback'; momento?: MomentoDesenvolvimento }
+type Bloco4State = { status: 'idle' } | { status: 'loading' } | { status: 'done'; text: string; source: 'ai' | 'fallback'; momento?: MomentoDesenvolvimento }
 
 function inferMomentoDesenvolvimento(ageBand: AgeBand): MomentoDesenvolvimento | undefined {
   if (ageBand === '0-2') return 'exploracao'
@@ -858,7 +702,7 @@ function clampBloco4Text(raw: unknown): string | null {
     'deve',
     'deveria',
     'tem que',
-    'tm que',
+    'têm que',
     'diagnóstico',
     'atraso',
     'anormal',
@@ -866,7 +710,7 @@ function clampBloco4Text(raw: unknown): string | null {
   ]
   if (banned.some((b) => low.includes(b))) return null
 
-  if (t.includes('\n') || t.includes('') || t.includes('- ')) return null
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
 
   const sentences = t
     .split(/[.!?]+/)
@@ -881,7 +725,7 @@ const BLOCO4_FALLBACK: Record<AgeBand, string> = {
   '0-2': 'Nesta fase, repetir gestos simples e curtos costuma manter o interesse sem esticar demais.',
   '3-4': 'Nesta fase, faz de conta curto com começo e fim claro costuma reduzir atrito e prender a atenção.',
   '5-6': 'Nesta fase, dar escolha entre duas opções simples costuma ajudar a colaborar sem disputa.',
-  '6+': 'Nesta fase, combinados curtos e respeito à autonomia costumam diminuir resistncia nas transições.',
+  '6+': 'Nesta fase, combinados curtos e respeito à autonomia costumam diminuir resistência nas transições.',
 }
 
 async function fetchBloco4Suggestion(args: {
@@ -939,71 +783,71 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
   '0-2': {
     '5': {
       id: 'k-0-2-5',
-      title: 'Conexão em 5 min (02)',
+      title: 'Conexão em 5 min (0–2)',
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Voc faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
         b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
         c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise agora vamos guardar antes de trocar de atividade.' },
-      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só voc e ele.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
+      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
       id: 'k-0-2-10',
-      title: 'Presença prática em 10 min (02)',
+      title: 'Presença prática em 10 min (0–2)',
       subtitle: 'Brincadeira curta + conexão no final.',
       time: '10',
       plan: {
         a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
         b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
-        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça voz por 5 min. Feche com abraço.' },
+        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma janela de movimento antes do jantar reduz irritação.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
       connection: { label: 'Gesto de conexão', note: 'Um abraço demorado com respiração junto (3 respirações).' },
     },
     '15': {
       id: 'k-0-2-15',
-      title: 'Momento completo em 15 min (02)',
+      title: 'Momento completo em 15 min (0–2)',
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
         a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
-        b: { tag: 'sensório', time: '15', title: 'Caixa de coisas seguras', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
         c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (mais 2 min e vamos) ajudam muito.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: eu tô aqui com vocÝ e sorrir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: “eu tô aqui com você” e sorrir.' },
     },
   },
   '3-4': {
     '5': {
       id: 'k-3-4-5',
-      title: 'Conexão em 5 min (34)',
+      title: 'Conexão em 5 min (3–4)',
       subtitle: 'Uma brincadeira que cabe antes da janta.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocs criam juntos 5 frases e pronto.' },
-        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Voc faz 1 traço, ele copia. Troca. 5 rodadas.' },
-        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Voc faz 4 movimentos (pular, girar, agachar). Ele repete.' },
+        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
+        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
+        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: mais 2 min).' },
-      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: o que foi legal hoje? e ouvir 20 segundos.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).' },
+      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.' },
     },
     '10': {
       id: 'k-3-4-10',
-      title: 'Presença prática em 10 min (34)',
+      title: 'Presença prática em 10 min (3–4)',
       subtitle: 'Brincar sem produção e fechar bem.',
       time: '10',
       plan: {
-        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma pista com fita/almofadas. Ele percorre 3 vezes.' },
-        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relmpago', how: 'Ele cozinha e serve. Voc faz 2 pedidos engraçados.' },
-        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: eu gostei quando vocÝ.' },
+        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma “pista” com fita/almofadas. Ele percorre 3 vezes.' },
+        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relâmpago', how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.' },
+        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: “eu gostei quando você…”.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um mini ritual pré-janta (2 min) organiza o resto do período.' },
@@ -1011,76 +855,76 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
     },
     '15': {
       id: 'k-3-4-15',
-      title: 'Momento completo em 15 min (34)',
+      title: 'Momento completo em 15 min (3–4)',
       subtitle: 'O clássico: brincar + organizar + fechar com carinho.',
       time: '15',
       plan: {
         a: { tag: 'casa', time: '15', title: 'Caça aos tesouros', how: 'Escolham 3 itens para achar. Depois guardam juntos.' },
-        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 missões: pular, buscar, entregar. Voc narra.' },
+        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 “missões”: pular, buscar, entregar. Você narra.' },
         c: { tag: 'calmo', time: '15', title: 'História + abraço', how: '10 min de história inventada + 5 min de abraço e guardar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Imaginação + necessidade de rotina clara.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado brinca e depois guarda funciona melhor com timer simples.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer: obrigada por brincar comigo e sorrir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “obrigada por brincar comigo” e sorrir.' },
     },
   },
   '5-6': {
     '5': {
       id: 'k-5-6-5',
-      title: 'Conexão em 5 min (56)',
+      title: 'Conexão em 5 min (5–6)',
       subtitle: 'Rápido e direto: presença sem esticar.',
       time: '5',
       plan: {
-        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte melhor parte do dia? e uma coisa difícil?. Abraço.' },
+        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
         b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
-        c: { tag: 'calmo', time: '5', title: 'Leitura relmpago', how: 'Leia 2 páginas e combine depois continua.' },
+        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “depois continua”.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Um combinado curto evita disputa: 5 min e depois.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: eu vi voc se esforçando em.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: “eu vi você se esforçando em…”.' },
     },
     '10': {
       id: 'k-5-6-10',
-      title: 'Presença prática em 10 min (56)',
+      title: 'Presença prática em 10 min (5–6)',
       subtitle: 'Brincar e fechar com organização mínima.',
       time: '10',
       plan: {
         a: { tag: 'movimento', time: '10', title: 'Circuito rápido', how: '3 estações: pular, agachar, correr parado. 2 rodadas.' },
-        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: o melhor do dia. 5 min desenha, 5 min conta.' },
-        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Voc elogia o esforço.' },
+        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.' },
+        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma função simples.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
       connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
     },
     '15': {
       id: 'k-5-6-15',
-      title: 'Momento completo em 15 min (56)',
-      subtitle: 'Um ciclo simples: brincar  ajudar  fechar.',
+      title: 'Momento completo em 15 min (5–6)',
+      subtitle: 'Um ciclo simples: brincar → ajudar → fechar.',
       time: '15',
       plan: {
         a: { tag: 'equilíbrio', time: '15', title: 'Brinca 10 + ajuda 5', how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.' },
-        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e voc escreve 3 frases.' },
-        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (qual animal?). Fecha com abraço.' },
+        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e você escreve 3 frases.' },
+        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (“qual animal…?”). Fecha com abraço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Vontade de participar e de ser levado a sério.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um timer visível ajuda a encerrar sem briga.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer: eu gosto de voc do jeito que voc é (curto, direto).' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).' },
     },
   },
   '6+': {
     '5': {
       id: 'k-6p-5',
       title: 'Conexão em 5 min (6+)',
-      subtitle: 'Curto e respeitoso  sem infantilizar.',
+      subtitle: 'Curto e respeitoso — sem infantilizar.',
       time: '5',
       plan: {
-        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: 'De 0 a 10, como foi seu dia? e uma frase de escuta.' },
+        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: '“De 0 a 10, como foi seu dia?” e uma frase de escuta.' },
         b: { tag: 'corpo', time: '5', title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado do dia.' },
-        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Voc agradece e reconhece.' },
+        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Você agradece e reconhece.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia, mais opinião, mais sensibilidade a respeito.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar o que vem agora evita atrito nas transições.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar “o que vem agora” evita atrito nas transições.' },
       connection: { label: 'Gesto de conexão', note: 'Escuta de 30 segundos sem corrigir.' },
     },
     '10': {
@@ -1091,11 +935,11 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       plan: {
         a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
         b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
-        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e voc elogia o esforço, não o resultado.' },
+        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (isso ou aquilo).' },
-      connection: { label: 'Gesto de conexão', note: 'Perguntar: quer minha ajuda ou só que eu te ouça?' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
+      connection: { label: 'Gesto de conexão', note: 'Perguntar: “quer minha ajuda ou só que eu te ouça?”' },
     },
     '15': {
       id: 'k-6p-15',
@@ -1109,13 +953,13 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       },
       development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },
-      connection: { label: 'Gesto de conexão', note: 'Reconhecer: eu vi que foi difícil e voc tentou.' },
+      connection: { label: 'Gesto de conexão', note: 'Reconhecer: “eu vi que foi difícil e você tentou”.' },
     },
   },
 }
 
 /* =========================
-   P34.10  Legibilidade Mobile (quebra editorial)
+   P34.10 — Legibilidade Mobile (quebra editorial)
 ========================= */
 
 function splitEditorialText(raw: string | null | undefined): string[] {
@@ -1221,11 +1065,11 @@ export default function MeuFilhoClient() {
   const bloco2ReqSeq = useRef(0)
 
   // Bloco 3
-  const [bloco3, setBloco3] = useState<any>({ status: 'idle' })
+  const [bloco3, setBloco3] = useState<Bloco3State>({ status: 'idle' })
   const bloco3ReqSeq = useRef(0)
 
   // Bloco 4
-  const [bloco4, setBloco4] = useState<any>({ status: 'idle' })
+  const [bloco4, setBloco4] = useState<Bloco4State>({ status: 'idle' })
   const bloco4ReqSeq = useRef(0)
 
   useEffect(() => {
@@ -1279,13 +1123,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }, [])
 
-  const kit = useMemo(() => {
-    // Guardrail: evita crash se age/time vierem inválidos
-    const safeAge = (KITS as any)?.[age] ? age : ("3-4" as any)
-    const byAge = (KITS as any)[safeAge]
-    const safeTime = byAge?.[time] ? time : ("10" as any)
-    return byAge[safeTime]
-  }, [age, time])
+  const kit = useMemo(() => KITS[age][time], [age, time])
 
   const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } | null = useMemo(() => {
     if (bloco2.status === 'done') return bloco2.items
@@ -1355,7 +1193,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  //  FIX typing (SkillId[] garantido)
+  // ✅ FIX typing (SkillId[] garantido)
   function toggleSkill(id: SkillId) {
     setSkills((prev): SkillId[] => {
       const has = prev.includes(id)
@@ -1409,8 +1247,7 @@ export default function MeuFilhoClient() {
     const out = await withAntiRepeatPack({
       themeSignature,
       run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
-      //  NOVO: fallback variável por filtros + rotação por dia
-      fallback: () => buildBloco2Fallback({ age, time, playLocation, skills }),
+      fallback: () => kit.plan,
       maxTries: 2,
     })
 
@@ -1419,7 +1256,63 @@ export default function MeuFilhoClient() {
     setChosen('a')
   }
 
-  // (restante do arquivo continua igual ao seu  sem alterar fluxo/layout)
+  async function generateBloco4() {
+    const seq = ++bloco4ReqSeq.current
+    setBloco4({ status: 'loading' })
+
+    const momento = inferMomentoDesenvolvimento(age)
+    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) =>
+        await fetchBloco4Suggestion({
+          faixa_etaria: age,
+          momento_desenvolvimento: momento,
+          contexto: 'fase',
+          foco: faseFoco,
+          nonce,
+        }),
+      fallback: () => BLOCO4_FALLBACK[age],
+      maxTries: 2,
+    })
+
+    if (seq !== bloco4ReqSeq.current) return
+    setBloco4({ status: 'done', text: out.text, source: out.source, momento })
+  }
+
+  async function generateBloco3(kind: Bloco3Type) {
+    const seq = ++bloco3ReqSeq.current
+
+    const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
+    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+    if (!tema) {
+      toast.info('Escolha um tema antes de gerar.')
+      return
+    }
+
+    setBloco3({ status: 'loading', kind })
+
+    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) =>
+        await fetchBloco3Suggestion({
+          faixa_etaria: age,
+          momento_do_dia: momento,
+          tipo_experiencia: kind,
+          contexto: 'continuidade',
+          tema,
+          nonce,
+        }),
+      fallback: () => BLOCO3_FALLBACK[kind][age],
+      maxTries: 2,
+    })
+
+    if (seq !== bloco3ReqSeq.current) return
+    setBloco3({ status: 'done', kind, text: out.text, source: out.source, momento })
+  }
 
   function saveSelectedToMyDay(title: string) {
     const ORIGIN = 'family' as const
@@ -1428,7 +1321,7 @@ export default function MeuFilhoClient() {
     const today = listMyDayTasks()
     const activeCount = countActiveFamilyFromMeuFilhoToday(today)
     if (activeCount >= 3) {
-      toast.info('Voc já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
+      toast.info('Você já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
       return
     }
 
@@ -1455,6 +1348,8 @@ export default function MeuFilhoClient() {
 
   const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
   const bloco2Items = bloco2.status === 'done' ? bloco2.items : null
+  const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
+  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   return (
     <main
@@ -1470,10 +1365,516 @@ export default function MeuFilhoClient() {
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
-          {/* ... (seu JSX inteiro permanece igual daqui para baixo) ... */}
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+            <div className="space-y-3">
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar para o Maternar
+              </Link>
 
-          {/* Observação: mantive todo o restante do JSX exatamente como estava.
-              A única mudança funcional foi o fallback do Bloco 2 para variar com filtros e dia. */}
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Meu Filho
+              </h1>
+
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
+              </p>
+
+              {childLabel ? (
+                <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
+                  Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
+                </div>
+              ) : null}
+
+              {/* (debug silencioso de fonte, opcional manter) */}
+              {profileSource !== 'none' ? <div className="text-[11px] text-white/60">Fonte de perfil: {profileSource}</div> : null}
+            </div>
+          </header>
+
+          <Reveal>
+            <section
+              className="
+                rounded-3xl
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                overflow-hidden
+              "
+            >
+              {/* TOP CONTROLS */}
+              <div className="p-4 md:p-6 border-b border-white/25">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
+                      <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                    </div>
+
+                    <div>
+                      <div className="text-[12px] text-white/85">
+                        Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
+                      </div>
+                      <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
+                        Plano pronto para agora
+                      </div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{timeHint(time)}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => go('brincadeiras')}
+                    className="
+                      rounded-full
+                      bg-white/90 hover:bg-white
+                      text-[#2f3a56]
+                      px-4 py-2 text-[12px]
+                      shadow-lg transition
+                    "
+                  >
+                    Começar
+                  </button>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Quanto tempo você tem agora?</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['5', '10', '15'] as TimeMode[]).map((t) => {
+                        const active = time === t
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => onSelectTime(t)}
+                            className={[
+                              'rounded-xl border px-3 py-2 text-[12px] text-left transition',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                          >
+                            <div className="font-semibold">{timeLabel(t)}</div>
+                            <div className="text-[11px] opacity-90">{timeTitle(t)}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Faixa (ajusta a ideia)</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
+                        const active = age === a
+                        return (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => onSelectAge(a)}
+                            className={[
+                              'rounded-xl border px-2.5 py-2 text-[12px] transition',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                          >
+                            {a}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Chip label="Brincadeiras" active={step === 'brincadeiras'} onClick={() => go('brincadeiras')} />
+                  <Chip label="Fase" active={step === 'desenvolvimento'} onClick={() => go('desenvolvimento')} />
+                  <Chip label="Rotina" active={step === 'rotina'} onClick={() => go('rotina')} />
+                  <Chip label="Conexão" active={step === 'conexao'} onClick={() => go('conexao')} />
+                </div>
+              </div>
+
+              {/* BODY */}
+              <div className="p-4 md:p-6">
+                {/* STEP 1 — BRINCADEIRAS */}
+                {step === 'brincadeiras' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Plano pronto para agora</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
+                            Você só escolhe o cenário — eu te entrego 3 opções boas.
+                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">Sem catálogo infinito. Só 3 opções que cabem no seu tempo.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Onde vocês estão?</div>
+                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {PLAY_LOCATIONS.map((l) => {
+                              const active = playLocation === l.id
+                              return (
+                                <button
+                                  key={l.id}
+                                  type="button"
+                                  onClick={() => onSelectPlayLocation(l.id)}
+                                  className={[
+                                    'rounded-xl border p-3 text-left transition',
+                                    active ? 'bg-[#fff3f8] border-[#fd2597]' : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                  ].join(' ')}
+                                >
+                                  <div className="text-[12px] font-semibold text-[#2f3a56]">{l.label}</div>
+                                  <div className="text-[11px] text-[#545454] mt-1">{l.hint}</div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Que habilidades você quer estimular?</div>
+                          <div className="text-[12px] text-[#545454] mt-1">
+                            Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {SKILLS.map((s) => {
+                              const active = skills.includes(s.id)
+                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={generateBloco1}
+                          className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-lg transition"
+                        >
+                          Gerar plano para agora
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generateBloco2}
+                          className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] shadow-sm transition"
+                        >
+                          Gerar 3 opções
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => go('desenvolvimento')}
+                          className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] shadow-sm transition"
+                        >
+                          Ir para Fase
+                        </button>
+                      </div>
+
+                      <div className="mt-5 border-t border-[#ffd1e6] pt-5">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para agora</div>
+
+                        <div className="mt-2 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                          {bloco1.status === 'idle' ? (
+                            <div className="text-[13px] text-[#545454]">Clique em “Gerar plano para agora” para receber uma sugestão curta e pronta.</div>
+                          ) : bloco1.status === 'loading' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <RenderEditorialText text={bloco1Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
+                          )}
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveSelectedToMyDay(`Meu Filho: ${timeLabel(time)} — plano para agora`)}
+                              className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                            >
+                              Salvar no Meu Dia
+                            </button>
+                            <button
+                              type="button"
+                              onClick={generateBloco1}
+                              className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                            >
+                              Nova sugestão
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-5">
+                          <div className="text-[12px] font-semibold text-[#fd2597]">3 opções (com base nos filtros)</div>
+
+                          {bloco2.status === 'idle' ? (
+                            <div className="mt-2 text-[13px] text-[#545454]">
+                              Clique em “Gerar 3 opções” para receber brincadeiras completas (com começo, meio e fim).
+                            </div>
+                          ) : bloco2.status === 'loading' ? (
+                            <div className="mt-2 text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <div className="mt-3 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {(['a', 'b', 'c'] as const).map((k) => {
+                                  const it = (bloco2Items ?? kit.plan)[k]
+                                  const active = chosen === k
+                                  return (
+                                    <button
+                                      key={k}
+                                      type="button"
+                                      onClick={() => onChoose(k)}
+                                      className={[
+                                        'rounded-2xl border p-4 text-left transition',
+                                        active ? 'bg-[#fff3f8] border-[#fd2597]' : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                      ].join(' ')}
+                                    >
+                                      <div className="text-[11px] font-semibold text-[#fd2597] uppercase tracking-wide">
+                                        {it.tag} • {timeLabel(it.time)}
+                                      </div>
+                                      <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{it.title}</div>
+                                      <div className="mt-2 text-[12px] text-[#545454] line-clamp-3">{it.how}</div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+
+                              <div className="rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                                <div className="text-[12px] font-semibold text-[#fd2597]">Opção selecionada</div>
+                                <div className="mt-1 text-[15px] font-semibold text-[#2f3a56]">{selected.title}</div>
+                                <div className="mt-2">
+                                  <RenderEditorialText text={selected.how} pClassName="text-[13px] text-[#2f3a56] leading-relaxed" />
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveSelectedToMyDay(`Meu Filho: ${selected.title}`)}
+                                    className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                                  >
+                                    Salvar no Meu Dia
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={generateBloco2}
+                                    className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                                  >
+                                    Gerar novas 3 opções
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => go('conexao')}
+                                    className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                                  >
+                                    Fechar com conexão
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="text-[11px] text-[#545454]">Fonte: {bloco2.source === 'ai' ? 'gerado' : 'opções locais (fallback)'}.</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 2 — FASE */}
+                {step === 'desenvolvimento' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="info" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Desenvolvimento por fase</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">O que costuma aparecer</div>
+                          <div className="text-[13px] text-[#545454] mt-1">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o foco</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {FASE_FOCOS.map((f) => (
+                            <SubChip key={f.id} label={f.label} active={faseFoco === f.id} onClick={() => onSelectFaseFoco(f.id)} />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={generateBloco4}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                          >
+                            Nova orientação
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('rotina')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Ajuste de rotina
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Voltar para brincadeiras
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Nesta fase</div>
+                        <div className="mt-2">
+                          {bloco4.status === 'idle' ? (
+                            <div className="text-[13px] text-[#545454]">Clique em “Nova orientação” para receber uma frase útil para hoje.</div>
+                          ) : bloco4.status === 'loading' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <div className="text-[14px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 3 — ROTINA */}
+                {step === 'rotina' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="sun" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Rotina leve da criança</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">Ajuste que ajuda hoje</div>
+                          <div className="text-[13px] text-[#545454] mt-1">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {ROTINA_TEMAS.map((t) => (
+                            <SubChip key={t.id} label={t.label} active={rotinaTema === t.id} onClick={() => setRotinaTema(t.id)} />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => generateBloco3('rotina')}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                          >
+                            Novo ajuste
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Voltar para brincadeiras
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('conexao')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Ir para conexão
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para encaixar no dia</div>
+                        <div className="mt-2">
+                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
+                            <RenderEditorialText text={bloco3Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
+                          ) : (
+                            <div className="text-[13px] text-[#545454]">Selecione um tema e clique em “Novo ajuste”.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 4 — CONEXÃO */}
+                {step === 'conexao' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Gestos de conexão</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">Gesto de conexão</div>
+                          <div className="text-[13px] text-[#545454] mt-1">O final simples que faz a criança sentir: “minha mãe tá aqui”.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {CONEXAO_TEMAS.map((t) => (
+                            <SubChip key={t.id} label={t.label} active={conexaoTema === t.id} onClick={() => setConexaoTema(t.id)} />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => generateBloco3('conexao')}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                          >
+                            Novo gesto
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={registerFamilyJourney}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Registrar na Minha Jornada
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Escolher outra brincadeira
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para encerrar</div>
+                        <div className="mt-2">
+                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
+                            <RenderEditorialText text={bloco3Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
+                          ) : (
+                            <div className="text-[13px] text-[#545454]">Selecione um tema e clique em “Novo gesto”.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          </Reveal>
 
           <div className="mt-6">
             <LegalFooter />
