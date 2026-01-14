@@ -469,12 +469,17 @@ type Bloco2State =
 function stripEmojiAndBullets(s: string) {
   const text = String(s ?? '')
   const noBullets = text
-    .replace(/(^|\n)\s*[•●▪▫◦]\s+/g, '$1')
-    .replace(/(^|\n)\s*[-–—]\s+/g, '$1')
+    // bullets comuns (• ● ▪ ▫ ◦) via unicode escapes (evita caracteres literais no arquivo)
+    .replace(/(^|\n)\s*[\u2022\u25CF\u25AA\u25AB\u25E6]\s+/g, '$1')
+    // traços de lista (- – —)
+    .replace(/(^|\n)\s*[-\u2013\u2014]\s+/g, '$1')
     .replace(/\s+/g, ' ')
     .trim()
 
-  return noBullets.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').replace(/\s+/g, ' ').trim()
+  return noBullets
+    .replace(/[\p{Extended_Pictographic}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function clampText(s: string, max: number) {
@@ -1193,7 +1198,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  // ✅ FIX typing (SkillId[] garantido)
+  // FIX typing (SkillId[] garantido)
   function toggleSkill(id: SkillId) {
     setSkills((prev): SkillId[] => {
       const has = prev.includes(id)
@@ -1367,10 +1372,13 @@ export default function MeuFilhoClient() {
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
-                <span className="mr-1.5 text-lg leading-none">←</span>
-                Voltar para o Maternar
-              </Link>
+             <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+  <span className="mr-1.5 text-lg leading-none" aria-hidden="true">
+    Voltar
+  </span>
+  <span className="sr-only">Voltar para o Maternar</span>
+  <span className="ml-1">para o Maternar</span>
+</Link>
 
               <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 Meu Filho
