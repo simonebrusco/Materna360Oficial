@@ -41,9 +41,13 @@ type RotinaRequestBody = {
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
 
-  // Campos extras (Meu Filho Blocos 2–4)
+  // Campos extras (Meu Filho Blocos 1–4)
   ageBand?: string | null
   contexto?: string | null
+
+  // Meu Filho - filtros Bloco 2
+  playLocation?: string | null
+  skills?: string[] | null
 
   // Bloco 3 (Rotinas / Conexão)
   idade?: number | string | null
@@ -385,7 +389,6 @@ export async function POST(req: Request) {
         {
           blocked: true,
           message: DAILY_LIMIT_MESSAGE,
-          // Mantém shapes compatíveis com os dois caminhos principais deste endpoint
           suggestions: [],
           recipes: [],
         },
@@ -416,30 +419,28 @@ export async function POST(req: Request) {
       child: MaternaChildProfile | null
     }
 
-    // Tratamos micro-ritmos e fase como variações de quick-ideas (sem estourar tipos do core)
     const isQuick =
       body.feature === 'quick-ideas' || body.feature === 'micro-ritmos' || body.feature === 'fase'
 
     if (isQuick) {
-      // IMPORTANTÍSSIMO:
-      // RotinaQuickIdeasContext (do core) não conhece campos como "idade".
-      // Então montamos como "any" aqui para não quebrar o build, mantendo o contrato do core intacto.
+      // RotinaQuickIdeasContext (do core) não conhece alguns campos extra.
+      // Montamos como "any" para manter o contrato do core intacto.
       const ctx: any = {
         tempoDisponivel: body.tempoDisponivel ?? null,
         comQuem: body.comQuem ?? null,
         tipoIdeia: body.tipoIdeia ?? null,
 
-        // extras (podem ser usados pelo prompt do core, sem tipagem rígida aqui)
         ageBand: body.ageBand ?? null,
         contexto: body.contexto ?? null,
 
-        // bloco 3
+        playLocation: body.playLocation ?? null,
+        skills: Array.isArray(body.skills) ? body.skills : null,
+
         idade: body.idade ?? null,
         faixa_etaria: body.faixa_etaria ?? null,
         momento_do_dia: body.momento_do_dia ?? null,
         tipo_experiencia: body.tipo_experiencia ?? null,
 
-        // bloco 4
         momento_desenvolvimento: body.momento_desenvolvimento ?? null,
       }
 
@@ -450,45 +451,29 @@ export async function POST(req: Request) {
         context: ctx,
       })
 
-      // ✅ Meu Filho — Bloco 1
       if (body.tipoIdeia === 'meu-filho-bloco-1') {
-        const sanitized = sanitizeMeuFilhoBloco1(
-          result.suggestions,
-          body.tempoDisponivel ?? null,
-          ctx,
-        )
+        const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null, ctx)
         return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
-      // ✅ Meu Filho — Bloco 2
       if (body.tipoIdeia === 'meu-filho-bloco-2') {
-        const sanitized = sanitizeMeuFilhoBloco2Suggestions(
-          result.suggestions ?? [],
-          body.tempoDisponivel ?? null,
-        )
+        const sanitized = sanitizeMeuFilhoBloco2Suggestions(result.suggestions ?? [], body.tempoDisponivel ?? null)
         return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
-      // ✅ Meu Filho — Bloco 3 (Rotinas / Conexão)
       if (body.tipoIdeia === 'meu-filho-bloco-3') {
         const sanitized = sanitizeMeuFilhoBloco3(result.suggestions ?? [], ctx)
         return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
-      // ✅ Meu Filho — Bloco 4 (Fases / Contexto)
       if (body.tipoIdeia === 'meu-filho-bloco-4') {
         const sanitized = sanitizeMeuFilhoBloco4(result.suggestions ?? [], ctx)
         return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
-      // default: contrato original
-      return NextResponse.json(
-        { suggestions: result.suggestions ?? [] },
-        { status: 200, headers: NO_STORE_HEADERS },
-      )
+      return NextResponse.json({ suggestions: result.suggestions ?? [] }, { status: 200, headers: NO_STORE_HEADERS })
     }
 
-    // Receitas
     const result = await callMaternaAI({
       mode: 'smart-recipes',
       profile,
@@ -500,22 +485,15 @@ export async function POST(req: Request) {
       },
     })
 
-    return NextResponse.json(
-      { recipes: result.recipes ?? [] },
-      { status: 200, headers: NO_STORE_HEADERS },
-    )
+    return NextResponse.json({ recipes: result.recipes ?? [] }, { status: 200, headers: NO_STORE_HEADERS })
   } catch (error) {
-    // Se já consumimos cota e falhou antes de entregar resposta "final", liberamos o consumo
     if (gate) {
       await releaseDailyAI(gate.actorId, gate.dateKey)
     }
 
     if (error instanceof RateLimitError) {
       console.warn('[API /api/ai/rotina] Rate limit atingido:', error.message)
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status ?? 429, headers: NO_STORE_HEADERS },
-      )
+      return NextResponse.json({ error: error.message }, { status: error.status ?? 429, headers: NO_STORE_HEADERS })
     }
 
     console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', error)
