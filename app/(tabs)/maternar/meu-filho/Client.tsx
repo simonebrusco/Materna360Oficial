@@ -1,3 +1,4 @@
+
 // app/(tabs)/maternar/meu-filho/Client.tsx
 'use client'
 
@@ -6,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { safeMeuFilhoBloco1Text, clampMeuFilhoBloco1Text } from '@/app/lib/ai/validators/bloco1'
+import { pick3DiverseSuggestions } from '@/app/lib/ai/pick3DiverseSuggestions'
 import {
   hasPerceptiveRepetition,
   recordAntiRepeat,
@@ -13,8 +15,6 @@ import {
   makeThemeSignature,
   resetAntiRepeatIfDayChanged,
 } from '@/app/lib/ai/antiRepetitionLocal'
-
-import { pick3DiverseSuggestions, type SuggestionPack } from '@/app/lib/ai/pick3DiverseSuggestions'
 
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -302,6 +302,7 @@ async function withAntiRepeatText(args: {
         return { text, source: 'ai' as const }
       }
 
+      // repetiu: tenta de novo silenciosamente (novo nonce)
       continue
     }
   }
@@ -469,7 +470,7 @@ type Bloco2State =
 function stripEmojiAndBullets(s: string) {
   const text = String(s ?? '')
   const noBullets = text
-    // bullets comuns (• ● ▪ ▫ ◦) via unicode escapes (evita caracteres literais no arquivo)
+    // bullets comuns (\u2022 \u25CF \u25AA \u25AB \u25E6) via unicode escapes (evita caracteres literais no arquivo)
     .replace(/(^|\n)\s*[\u2022\u25CF\u25AA\u25AB\u25E6]\s+/g, '$1')
     // traços de lista (- – —)
     .replace(/(^|\n)\s*[-\u2013\u2014]\s+/g, '$1')
@@ -515,6 +516,8 @@ function safeBloco2How(raw: unknown): string | null {
   return t
 }
 
+type SuggestionPack = { title: string; description: string }
+
 async function fetchBloco2Cards(args: {
   tempoDisponivel: number
   age: AgeBand
@@ -545,9 +548,7 @@ async function fetchBloco2Cards(args: {
 
     if (!res.ok) return null
     const data = await res.json().catch(() => null)
-
-    // ✅ P34.12 — diversidade no Bloco 2 (sem pegar sempre [0,1,2])
-    const picked: SuggestionPack[] | null = pick3DiverseSuggestions(data, args.nonce)
+    const picked = pick3DiverseSuggestions(data, args.nonce)
     if (!picked) return null
 
     const mk = (i: { title: string; description: string }): PlanItem | null => {
@@ -589,7 +590,7 @@ function clampBloco3Text(raw: unknown): string | null {
   const banned = ['todo dia', 'todos os dias', 'sempre', 'nunca', 'crie o hábito', 'hábito', 'disciplina', 'rotina ideal', 'o mais importante é']
   if (banned.some((b) => low.includes(b))) return null
 
-  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+  if (t.includes('\n') || t.includes('\u2022') || t.includes('- ')) return null
 
   const sentences = t
     .split(/[.!?]+/)
@@ -703,7 +704,7 @@ function clampBloco4Text(raw: unknown): string | null {
   ]
   if (banned.some((b) => low.includes(b))) return null
 
-  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+  if (t.includes('\n') || t.includes('\u2022') || t.includes('- ')) return null
 
   const sentences = t
     .split(/[.!?]+/)
@@ -1360,13 +1361,13 @@ export default function MeuFilhoClient() {
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
-                <span className="mr-1.5 text-lg leading-none" aria-hidden="true">
-                  Voltar
-                </span>
-                <span className="sr-only">Voltar para o Maternar</span>
-                <span className="ml-1">para o Maternar</span>
-              </Link>
+             <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+  <span className="mr-1.5 text-lg leading-none" aria-hidden="true">
+    Voltar
+  </span>
+  <span className="sr-only">Voltar para o Maternar</span>
+  <span className="ml-1">para o Maternar</span>
+</Link>
 
               <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 Meu Filho
@@ -1408,7 +1409,7 @@ export default function MeuFilhoClient() {
 
                     <div>
                       <div className="text-[12px] text-white/85">
-                        Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
+                        Passo {stepIndex(step)}/4 \u2022 {timeTitle(time)} \u2022 {timeLabel(time)} \u2022 faixa {age}
                       </div>
                       <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
                         Plano pronto para agora
@@ -1625,7 +1626,7 @@ export default function MeuFilhoClient() {
                                       ].join(' ')}
                                     >
                                       <div className="text-[11px] font-semibold text-[#fd2597] uppercase tracking-wide">
-                                        {it.tag} • {timeLabel(it.time)}
+                                        {it.tag} \u2022 {timeLabel(it.time)}
                                       </div>
                                       <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{it.title}</div>
                                       <div className="mt-2 text-[12px] text-[#545454] line-clamp-3">{it.how}</div>
