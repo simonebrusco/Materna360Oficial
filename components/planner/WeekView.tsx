@@ -17,7 +17,7 @@ type WeekDaySummary = {
 
 type WeekViewProps = {
   weekData: WeekDaySummary[]
-  density?: Density // ✅ novo (opcional)
+  density?: Density //  novo (opcional)
 }
 
 export default function WeekView({ weekData, density = 'normal' }: WeekViewProps) {

@@ -62,7 +62,7 @@ function axisFromRitmo(r: Ritmo): VariationAxis {
 const PERSIST_KEYS = {
   cuidarDeMimRitmo: 'cuidar_de_mim.ritmo.v1',
 
-  // ✅ estado do “Plano para agora” (variação + limite diário)
+  //  estado do “Plano para agora” (variação + limite diário)
   cdmPlanState: 'cuidar_de_mim.para_agora.plan.v1',
 } as const
 
@@ -315,7 +315,7 @@ export default function Client() {
     laterCount: 0,
   }))
 
-  // ✅ estado do plano “para agora”
+  //  estado do plano “para agora”
   const [planSelected, setPlanSelected] = useState<PlanItem | null>(null)
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planFeedback, setPlanFeedback] = useState<string>('')
@@ -360,7 +360,7 @@ export default function Client() {
     const s = readDaySignals()
     setDaySignals(s)
 
-    // ✅ recuperar (ou inicializar) o plano do dia, sem gerar automaticamente em load
+    //  recuperar (ou inicializar) o plano do dia, sem gerar automaticamente em load
     try {
       const todayKey = getBrazilDateKey(new Date())
       const existing = load<PlanPersist | null>(PERSIST_KEYS.cdmPlanState, null) ?? null
@@ -904,7 +904,7 @@ export default function Client() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 items-stretch">
                             <ParaAgoraSupportCard variant="embedded" className="h-full" />
 
-                            {/* ✅ Estrutura inteligente (plano + 3 opções + salvar) */}
+                            {/*  Estrutura inteligente (plano + 3 opções + salvar) */}
                             <div className="h-full rounded-2xl bg-white/60 backdrop-blur border border-[#f5d7e5]/70 shadow-[0_10px_26px_rgba(184,35,107,0.08)] p-4 sm:p-5 md:p-6">
                               <div className="flex items-start gap-3">
                                 <div className="h-10 w-10 rounded-full bg-[#ffe1f1]/80 border border-[#f5d7e5]/70 flex items-center justify-center shrink-0">

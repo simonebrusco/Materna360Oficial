@@ -340,10 +340,10 @@ export default function ParaAgoraSupportCard({
       let data: any = null
       if (res.ok) data = await res.json().catch(() => null)
 
-      // ✅ Regra P34.11.1: normalização respeita 1 axis por geração
+      //  Regra P34.11.1: normalização respeita 1 axis por geração
       const normalized = normalizeFromEmocional(data, variation_axis)
 
-      // ✅ Fallback coerente com o axis (sem tags fora do vocabulário)
+      //  Fallback coerente com o axis (sem tags fora do vocabulário)
       const nextItems = (normalized ?? fallbackByAxis(variation_axis, baseSeed)).slice(0, 3)
 
       const sig = signature(nextItems)
@@ -368,7 +368,7 @@ export default function ParaAgoraSupportCard({
   const headerTitle = isEmbedded ? 'Um respiro para agora' : 'Um apoio para este momento'
 
   /* =========================================================
-     ✅ P34.11 — 3 ALTERAÇÕES (COPY FINAL)
+      P34.11 — 3 ALTERAÇÕES (COPY FINAL)
      1) Subtítulo
      2) Label do botão (idle/done)
      3) “Não agora” -> “Fechar este”
@@ -472,7 +472,7 @@ export default function ParaAgoraSupportCard({
             <span className={pillClass}>Para agora</span>
             <h3 className={titleClass}>{headerTitle}</h3>
 
-            {/* ✅ ALTERAÇÃO 1: subtítulo */}
+            {/*  ALTERAÇÃO 1: subtítulo */}
             <p className={subtitleClass}>{subtitleText}</p>
           </div>
         </div>
@@ -480,16 +480,16 @@ export default function ParaAgoraSupportCard({
         <div className="w-full sm:w-auto shrink-0">
           {isEmbedded ? (
             <Button variant="secondary" className={embeddedButtonClass} onClick={() => void fetchCards()}>
-              {/* ✅ ALTERAÇÃO 2: labels */}
+              {/*  ALTERAÇÃO 2: labels */}
               {primaryButtonLabel}
             </Button>
           ) : state.status === 'idle' ? (
-            // ✅ idle: sem variant (evita "default" inválido)
+            //  idle: sem variant (evita "default" inválido)
             <Button className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
               {primaryButtonLabel}
             </Button>
           ) : (
-            // ✅ done: secondary (aceito pelo seu ButtonVariant)
+            //  done: secondary (aceito pelo seu ButtonVariant)
             <Button variant="secondary" className="px-4 w-full sm:w-auto" onClick={() => void fetchCards()}>
               {primaryButtonLabel}
             </Button>
@@ -531,7 +531,7 @@ export default function ParaAgoraSupportCard({
 
                   <div className="flex items-center gap-2 shrink-0">
                     <button type="button" className={dismissBtnClass} onClick={() => dismissOne(item.id)}>
-                      {/* ✅ ALTERAÇÃO 3: label */}
+                      {/*  ALTERAÇÃO 3: label */}
                       {dismissLabel}
                     </button>
                   </div>

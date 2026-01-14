@@ -19,7 +19,7 @@ import { getExperienceTier } from '@/app/lib/experience/experienceTier'
 import { getDensityLevel } from '@/app/lib/experience/density'
 import { track } from '@/app/lib/telemetry'
 
-// ✅ Jornada: marcar no ato de concluir (antes de remover)
+//  Jornada: marcar no ato de concluir (antes de remover)
 import { markJourneyFamilyDone, markJourneySelfcareDone } from '@/app/lib/journey.client'
 
 type GroupId = keyof GroupedTasks
@@ -225,9 +225,9 @@ export default function MyDayGroups({
     window.addEventListener('storage', sync)
     window.addEventListener('m360:plan-updated', sync as EventListener)
 
-    // ✅ compat (legado)
+    //  compat (legado)
     window.addEventListener('eu360:persona-updated', sync as EventListener)
-    // ✅ novo (preferências)
+    //  novo (preferências)
     window.addEventListener('eu360:prefs-updated', sync as EventListener)
 
     return () => {
@@ -263,7 +263,7 @@ export default function MyDayGroups({
   /* ---------- ações ---------- */
 
   async function onDone(t: MyDayTaskItem) {
-    // ✅ Jornada é evento semântico: marcar no ato de concluir (antes de remover)
+    //  Jornada é evento semântico: marcar no ato de concluir (antes de remover)
     try {
       if (t.origin === 'selfcare') {
         markJourneySelfcareDone('meu-dia')
@@ -344,7 +344,7 @@ export default function MyDayGroups({
                   ) : null}
                 </div>
 
-                {/* ✅ “Hoje pode ser menos” (somente quando o sinal pedir) */}
+                {/*  “Hoje pode ser menos” (somente quando o sinal pedir) */}
                 {!isExpanded && euSignal?.showLessLine ? (
                   <p className="mt-2 text-[12px] text-[var(--color-text-muted)]">{labels.lessLine}</p>
                 ) : null}

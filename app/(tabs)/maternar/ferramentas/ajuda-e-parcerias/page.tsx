@@ -671,7 +671,7 @@ export default function AjudaEParceriasPage() {
                       Resolver o essencial
                     </h2>
 
-                    {/* ✅ Ajuste premium (sem "sem culpa / volta depois") */}
+                    {/*  Ajuste premium (sem "sem culpa / volta depois") */}
                     <RenderEditorialText
                       text="Um FAQ para resolver problemas pontuais do app com rapidez. Se não encontrar sua resposta aqui, fale com o suporte — a gente prioriza retorno e resolução."
                       className="text-sm md:text-[15px] text-[#545454] max-w-2xl leading-relaxed"
@@ -735,7 +735,7 @@ export default function AjudaEParceriasPage() {
                     />
                   </SoftCard>
 
-                  {/* ✅ Garantia: aqui SEMPRE tem os 2 botões (proposta + suporte) */}
+                  {/*  Garantia: aqui SEMPRE tem os 2 botões (proposta + suporte) */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
                     <p className="text-[12px] text-[#6A6A6A]">
                       Quer propor algo para o Materna360? Use Parcerias.

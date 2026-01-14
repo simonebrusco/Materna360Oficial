@@ -431,7 +431,7 @@ export default function WeeklyPlannerCore() {
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
   /**
-   * ✅ FIX CANÔNICO:
+   *  FIX CANÔNICO:
    * plannerLimit é o limitador único usado no Planner para:
    * - lembretes
    * - compromissos

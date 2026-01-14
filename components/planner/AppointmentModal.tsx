@@ -23,7 +23,7 @@ type Props = {
   onSubmit: (data: AppointmentModalSubmit) => void
   onClose: () => void
   onDelete?: () => void
-  density?: Density // ✅ novo (opcional)
+  density?: Density //  novo (opcional)
 }
 
 function formatPtBr(dateKey: string) {
@@ -50,7 +50,7 @@ export default function AppointmentModal({
   onSubmit,
   onClose,
   onDelete,
-  density = 'normal', // ✅ default seguro
+  density = 'normal', //  default seguro
 }: Props) {
   const [dateKey, setDateKey] = React.useState(initialDateKey)
   const [title, setTitle] = React.useState(initialTitle ?? '')

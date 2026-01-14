@@ -53,7 +53,7 @@ type Kit = {
 }
 
 /**
- * P34.10 — Tema (decisão mínima) para Bloco 3
+ * P34.10  Tema (decisão mínima) para Bloco 3
  */
 type RotinaTema = 'transicao' | 'banho' | 'jantar' | 'sono' | 'manha'
 type ConexaoTema = 'checkin' | 'carinho' | 'conversa' | 'calmaria'
@@ -74,7 +74,7 @@ const CONEXAO_TEMAS: { id: ConexaoTema; label: string }[] = [
 ]
 
 /**
- * Filtros — Brincadeiras (Bloco 2)
+ * Filtros  Brincadeiras (Bloco 2)
  */
 type PlayLocation = 'casa' | 'ar_livre' | 'deslocamento'
 type SkillId = 'motor' | 'linguagem' | 'emocional' | 'cognitivo' | 'social' | 'autonomia'
@@ -95,7 +95,7 @@ const SKILLS: { id: SkillId; label: string }[] = [
 ]
 
 /**
- * Filtros — Fase (Bloco 4)
+ * Filtros  Fase (Bloco 4)
  */
 type FaseFoco = 'atencao' | 'emocao' | 'autonomia' | 'social' | 'linguagem'
 const FASE_FOCOS: { id: FaseFoco; label: string }[] = [
@@ -144,13 +144,13 @@ function timeTitle(t: TimeMode) {
 }
 
 function timeHint(t: TimeMode) {
-  if (t === '5') return 'Para quando você só precisa “conectar e seguir”.'
+  if (t === '5') return 'Para quando voc só precisa conectar e seguir.'
   if (t === '10') return 'Para quando dá para brincar sem complicar.'
-  return 'Para quando você quer fechar o dia com presença de verdade.'
+  return 'Para quando voc quer fechar o dia com presença de verdade.'
 }
 
 /**
- * Preferências “silenciosas” do hub Meu Filho.
+ * Preferncias silenciosas do hub Meu Filho.
  */
 const HUB_PREF = {
   time: 'maternar/meu-filho/pref/time',
@@ -262,7 +262,7 @@ function inferContext(): {
 }
 
 /* =========================
-   Helpers — variação / anti-cache
+   Helpers  variação / anti-cache
 ========================= */
 
 function newNonce() {
@@ -377,7 +377,7 @@ function buildBloco2Fallback(args: {
   // normaliza time (o card deve refletir o tempo selecionado)
   const pool = poolRaw.map((p) => ({ ...p, time }))
 
-  // rank por aderência aos filtros
+  // rank por aderncia aos filtros
   const ranked = pool
     .map((p) => ({ p, s: scoreItem(p, playLocation, skills) }))
     .sort((x, y) => y.s - x.s || x.p.title.localeCompare(y.p.title))
@@ -406,7 +406,7 @@ function buildBloco2Fallback(args: {
     pick.push({ ...extra, time })
   }
 
-  // tags mais “verdadeiras” (para não parecer genérico)
+  // tags mais verdadeiras (para não parecer genérico)
   const tagLoc = playLocation === 'casa' ? 'casa' : playLocation === 'ar_livre' ? 'ao ar livre' : 'deslocamento'
   const a = { ...pick[0], tag: pick[0].tag || tagLoc, time }
   const b = { ...pick[1], tag: pick[1].tag || tagLoc, time }
@@ -416,7 +416,7 @@ function buildBloco2Fallback(args: {
 }
 
 /* =========================
-   P34.11.2 — Anti-repetição local (silencioso)
+   P34.11.2  Anti-repetição local (silencioso)
 ========================= */
 
 const HUB_AI = 'maternar/meu-filho' as const
@@ -511,7 +511,7 @@ async function withAntiRepeatPack(args: {
 }
 
 /* =========================
-   P26 — Guardrails + Jornada
+   P26  Guardrails + Jornada
 ========================= */
 
 type TaskWithStatus = MyDayTaskItem & { status?: 'active' | 'snoozed' | 'done'; done?: boolean; source?: string }
@@ -534,31 +534,31 @@ function countActiveFamilyFromMeuFilhoToday(tasks: MyDayTaskItem[]) {
 }
 
 /* =========================
-   BLOCO 1 — CANÔNICO (fallback silencioso)
+   BLOCO 1  CANÔNICO (fallback silencioso)
 ========================= */
 
 const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
   '0-2': {
     '5':
-      'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga “agora vamos guardar”.',
+      'Sente no chão com ele e faça 3 gestos simples para ele copiar. Repita cada um duas vezes e comemore cada acerto com um sorriso. No fim, abrace e diga agora vamos guardar.',
     '10':
-      'Faça um caminho curto com almofadas e atravessem juntos três vezes. A cada volta, nomeie um movimento (“pula”, “passa”, “senta”). No final, guardem uma almofada por vez lado a lado.',
+      'Faça um caminho curto com almofadas e atravessem juntos trs vezes. A cada volta, nomeie um movimento (pula, passa, senta). No final, guardem uma almofada por vez lado a lado.',
     '15':
       'Escolha 5 itens seguros da casa e explore um por vez com ele por alguns segundos. Repita dois itens que ele mais gostar e mantenha o ritmo curto. No final, guardem tudo juntos e feche com um abraço.',
   },
   '3-4': {
     '5':
-      'Escolham três objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
+      'Escolham trs objetos da casa para procurar juntos. Cada achado vira uma pequena comemoração com palma e sorriso. No final, guardem tudo lado a lado.',
     '10':
-      'Crie uma “pista” simples no chão e ele percorre duas rodadas com você narrando. Na última volta, ele escolhe um movimento para você copiar. No final, vocês guardam e fecham com um abraço curto.',
+      'Crie uma pista simples no chão e ele percorre duas rodadas com voc narrando. Na última volta, ele escolhe um movimento para voc copiar. No final, vocs guardam e fecham com um abraço curto.',
     '15':
-      'Faça uma “missão” com três tarefas rápidas: buscar, entregar e organizar um cantinho. Você narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga “missão cumprida”.',
+      'Faça uma missão com trs tarefas rápidas: buscar, entregar e organizar um cantinho. Voc narra como se fosse uma aventura e ele executa. No final, guardem juntos e diga missão cumprida.',
   },
   '5-6': {
     '5':
-      'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um “obrigada por me contar”.',
+      'Faça duas perguntas curtas sobre o dia e escute sem corrigir. Em seguida, escolham um desafio rápido de 1 minuto de movimento. No final, feche com um abraço e um obrigada por me contar.',
     '10':
-      'Monte um circuito com três movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e você segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
+      'Monte um circuito com trs movimentos e façam duas rodadas cronometradas. Na segunda, ele escolhe a ordem e voc segue. No final, guardem um item juntos e encerre com um elogio do esforço.',
     '15':
       'Brinquem 10 minutos de algo rápido que ele escolha e mantenha o ritmo sem pausar. Depois, ele ajuda 5 minutos em uma tarefa pequena da casa. No final, agradeça e feche com um abraço curto.',
   },
@@ -566,9 +566,9 @@ const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
     '5':
       'Pergunte de 0 a 10 como foi o dia e escute a resposta inteira. Façam 2 minutos de alongamento e 2 minutos de respiração juntos. No final, combinem uma coisa simples para agora e siga.',
     '10':
-      'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um “valeu por fazer junto”.',
+      'Faça duas perguntas objetivas e deixe ele escolher uma atividade rápida de 6 minutos. Depois, organizem um cantinho por 3 minutos com música. No final, feche com um valeu por fazer junto.',
     '15':
-      'Deixe ele escolher 10 minutos de algo simples para vocês fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
+      'Deixe ele escolher 10 minutos de algo simples para vocs fazerem lado a lado. Em seguida, façam 5 minutos de organização mínima do espaço. No final, reconheça o esforço e encerre sem estender.',
   },
 }
 
@@ -606,7 +606,7 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string })
 }
 
 /* =========================
-   BLOCO 2 — IA + FALLBACK (Exploração Guiada)
+   BLOCO 2  IA + FALLBACK (Exploração Guiada)
 ========================= */
 
 type Bloco2State =
@@ -617,18 +617,24 @@ type Bloco2State =
 function stripEmojiAndBullets(s: string) {
   const text = String(s ?? '')
   const noBullets = text
-    .replace(/(^|\n)\s*[•●▪▫◦]\s+/g, '$1')
-    .replace(/(^|\n)\s*[-–—]\s+/g, '$1')
+    // bullets comuns (    ) usando escapes unicode para evitar corrupção de encoding
+    .replace(/(^|\n)\s*[\u2022\u25CF\u25AA\u25AB\u25E6]\s+/g, '$1')
+    // traços de lista (-  )
+    .replace(/(^|\n)\s*[-\u2013\u2014]\s+/g, '$1')
     .replace(/\s+/g, ' ')
     .trim()
 
-  return noBullets.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').replace(/\s+/g, ' ').trim()
+  return noBullets
+    // remove emojis (property escape)
+    .replace(/[\p{Extended_Pictographic}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function clampText(s: string, max: number) {
   const t = stripEmojiAndBullets(String(s ?? '').trim())
   if (t.length <= max) return t
-  return t.slice(0, max - 1).trimEnd() + '…'
+  return t.slice(0, max - 1).trimEnd() + ''
 }
 
 function safeBloco2Title(raw: unknown): string | null {
@@ -724,7 +730,7 @@ async function fetchBloco2Cards(args: {
 }
 
 /* =========================
-   BLOCO 3 — ROTINAS / CONEXÃO
+   BLOCO 3  ROTINAS / CONEXÃO
 ========================= */
 
 // Payload-safe (sem acentos) para evitar mismatch no backend/schema
@@ -744,7 +750,7 @@ function clampBloco3Text(raw: unknown): string | null {
   const banned = ['todo dia', 'todos os dias', 'sempre', 'nunca', 'crie o hábito', 'hábito', 'disciplina', 'rotina ideal', 'o mais importante é']
   if (banned.some((b) => low.includes(b))) return null
 
-  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+  if (t.includes('\n') || t.includes('') || t.includes('- ')) return null
 
   const sentences = t
     .split(/[.!?]+/)
@@ -757,16 +763,16 @@ function clampBloco3Text(raw: unknown): string | null {
 
 const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
   rotina: {
-    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga “agora vamos guardar” e faça junto por 30 segundos. Isso já reduz a resistência.',
-    '3-4': 'Antes de mudar de atividade, faça um “sinal de troca” sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
+    '0-2': 'Use o mesmo aviso curto antes de trocar de atividade. Diga agora vamos guardar e faça junto por 30 segundos. Isso já reduz a resistncia.',
+    '3-4': 'Antes de mudar de atividade, faça um sinal de troca sempre igual. Pode ser um timer curto ou uma frase fixa. A criança entende a transição sem discussão.',
     '5-6': 'Escolha um encerramento simples para a brincadeira: guardar 1 item juntos e pronto. Isso evita esticar e ajuda a passar para a próxima parte do dia.',
-    '6+': 'Feche a atividade com um combinado objetivo: “agora é X, depois Y”. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
+    '6+': 'Feche a atividade com um combinado objetivo: agora é X, depois Y. Sem explicar muito. A previsibilidade curta reduz atrito na transição.',
   },
   conexao: {
     '0-2': 'No final, faça 10 segundos de olho no olho e um abraço curto. Sem conversa. Só presença antes de seguir.',
-    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e “valeu por brincar”. Não precisa durar. Só marca o fim com carinho.',
-    '5-6': 'Use uma frase curta e específica no final: “eu gostei de brincar com você”. Depois siga para o próximo passo do dia. Presença curta já conta.',
-    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com “valeu por fazer junto”. Conexão curta, sem estender.',
+    '3-4': 'Feche com um gesto que se repete: toque no ombro, abraço curto e valeu por brincar. Não precisa durar. Só marca o fim com carinho.',
+    '5-6': 'Use uma frase curta e específica no final: eu gostei de brincar com vocÝ. Depois siga para o próximo passo do dia. Presença curta já conta.',
+    '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com valeu por fazer junto. Conexão curta, sem estender.',
   },
 }
 
@@ -819,7 +825,7 @@ async function fetchBloco3Suggestion(args: {
 }
 
 /* =========================
-   BLOCO 4 — “FASES / CONTEXTO”
+   BLOCO 4  FASES / CONTEXTO
 ========================= */
 
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
@@ -853,7 +859,7 @@ function clampBloco4Text(raw: unknown): string | null {
     'deve',
     'deveria',
     'tem que',
-    'têm que',
+    'tm que',
     'diagnóstico',
     'atraso',
     'anormal',
@@ -861,7 +867,7 @@ function clampBloco4Text(raw: unknown): string | null {
   ]
   if (banned.some((b) => low.includes(b))) return null
 
-  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+  if (t.includes('\n') || t.includes('') || t.includes('- ')) return null
 
   const sentences = t
     .split(/[.!?]+/)
@@ -876,7 +882,7 @@ const BLOCO4_FALLBACK: Record<AgeBand, string> = {
   '0-2': 'Nesta fase, repetir gestos simples e curtos costuma manter o interesse sem esticar demais.',
   '3-4': 'Nesta fase, faz de conta curto com começo e fim claro costuma reduzir atrito e prender a atenção.',
   '5-6': 'Nesta fase, dar escolha entre duas opções simples costuma ajudar a colaborar sem disputa.',
-  '6+': 'Nesta fase, combinados curtos e respeito à autonomia costumam diminuir resistência nas transições.',
+  '6+': 'Nesta fase, combinados curtos e respeito à autonomia costumam diminuir resistncia nas transições.',
 }
 
 async function fetchBloco4Suggestion(args: {
@@ -934,71 +940,71 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
   '0-2': {
     '5': {
       id: 'k-0-2-5',
-      title: 'Conexão em 5 min (0–2)',
+      title: 'Conexão em 5 min (02)',
       subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Voc faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
         b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
         c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
-      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise agora vamos guardar antes de trocar de atividade.' },
+      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só voc e ele.' },
     },
     '10': {
       id: 'k-0-2-10',
-      title: 'Presença prática em 10 min (0–2)',
+      title: 'Presença prática em 10 min (02)',
       subtitle: 'Brincadeira curta + conexão no final.',
       time: '10',
       plan: {
         a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
         b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
-        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
+        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça voz por 5 min. Feche com abraço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma janela de movimento antes do jantar reduz irritação.' },
       connection: { label: 'Gesto de conexão', note: 'Um abraço demorado com respiração junto (3 respirações).' },
     },
     '15': {
       id: 'k-0-2-15',
-      title: 'Momento completo em 15 min (0–2)',
+      title: 'Momento completo em 15 min (02)',
       subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
         a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
-        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de coisas seguras', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
         c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: “eu tô aqui com você” e sorrir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (mais 2 min e vamos) ajudam muito.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: eu tô aqui com vocÝ e sorrir.' },
     },
   },
   '3-4': {
     '5': {
       id: 'k-3-4-5',
-      title: 'Conexão em 5 min (3–4)',
+      title: 'Conexão em 5 min (34)',
       subtitle: 'Uma brincadeira que cabe antes da janta.',
       time: '5',
       plan: {
-        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
-        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
-        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
+        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocs criam juntos 5 frases e pronto.' },
+        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Voc faz 1 traço, ele copia. Troca. 5 rodadas.' },
+        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Voc faz 4 movimentos (pular, girar, agachar). Ele repete.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).' },
-      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: mais 2 min).' },
+      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: o que foi legal hoje? e ouvir 20 segundos.' },
     },
     '10': {
       id: 'k-3-4-10',
-      title: 'Presença prática em 10 min (3–4)',
+      title: 'Presença prática em 10 min (34)',
       subtitle: 'Brincar sem produção e fechar bem.',
       time: '10',
       plan: {
-        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma “pista” com fita/almofadas. Ele percorre 3 vezes.' },
-        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relâmpago', how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.' },
-        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: “eu gostei quando você…”.' },
+        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma pista com fita/almofadas. Ele percorre 3 vezes.' },
+        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relmpago', how: 'Ele cozinha e serve. Voc faz 2 pedidos engraçados.' },
+        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: eu gostei quando vocÝ.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um mini ritual pré-janta (2 min) organiza o resto do período.' },
@@ -1006,76 +1012,76 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
     },
     '15': {
       id: 'k-3-4-15',
-      title: 'Momento completo em 15 min (3–4)',
+      title: 'Momento completo em 15 min (34)',
       subtitle: 'O clássico: brincar + organizar + fechar com carinho.',
       time: '15',
       plan: {
         a: { tag: 'casa', time: '15', title: 'Caça aos tesouros', how: 'Escolham 3 itens para achar. Depois guardam juntos.' },
-        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 “missões”: pular, buscar, entregar. Você narra.' },
+        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 missões: pular, buscar, entregar. Voc narra.' },
         c: { tag: 'calmo', time: '15', title: 'História + abraço', how: '10 min de história inventada + 5 min de abraço e guardar.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Imaginação + necessidade de rotina clara.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer: “obrigada por brincar comigo” e sorrir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado brinca e depois guarda funciona melhor com timer simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: obrigada por brincar comigo e sorrir.' },
     },
   },
   '5-6': {
     '5': {
       id: 'k-5-6-5',
-      title: 'Conexão em 5 min (5–6)',
+      title: 'Conexão em 5 min (56)',
       subtitle: 'Rápido e direto: presença sem esticar.',
       time: '5',
       plan: {
-        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
+        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte melhor parte do dia? e uma coisa difícil?. Abraço.' },
         b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
-        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “depois continua”.' },
+        c: { tag: 'calmo', time: '5', title: 'Leitura relmpago', how: 'Leia 2 páginas e combine depois continua.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: “eu vi você se esforçando em…”.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um combinado curto evita disputa: 5 min e depois.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: eu vi voc se esforçando em.' },
     },
     '10': {
       id: 'k-5-6-10',
-      title: 'Presença prática em 10 min (5–6)',
+      title: 'Presença prática em 10 min (56)',
       subtitle: 'Brincar e fechar com organização mínima.',
       time: '10',
       plan: {
         a: { tag: 'movimento', time: '10', title: 'Circuito rápido', how: '3 estações: pular, agachar, correr parado. 2 rodadas.' },
-        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.' },
-        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
+        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: o melhor do dia. 5 min desenha, 5 min conta.' },
+        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Voc elogia o esforço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma função simples.' },
       connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
     },
     '15': {
       id: 'k-5-6-15',
-      title: 'Momento completo em 15 min (5–6)',
-      subtitle: 'Um ciclo simples: brincar → ajudar → fechar.',
+      title: 'Momento completo em 15 min (56)',
+      subtitle: 'Um ciclo simples: brincar  ajudar  fechar.',
       time: '15',
       plan: {
         a: { tag: 'equilíbrio', time: '15', title: 'Brinca 10 + ajuda 5', how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.' },
-        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e você escreve 3 frases.' },
-        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (“qual animal…?”). Fecha com abraço.' },
+        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e voc escreve 3 frases.' },
+        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (qual animal?). Fecha com abraço.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Vontade de participar e de ser levado a sério.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Um timer visível ajuda a encerrar sem briga.' },
-      connection: { label: 'Gesto de conexão', note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: eu gosto de voc do jeito que voc é (curto, direto).' },
     },
   },
   '6+': {
     '5': {
       id: 'k-6p-5',
       title: 'Conexão em 5 min (6+)',
-      subtitle: 'Curto e respeitoso — sem infantilizar.',
+      subtitle: 'Curto e respeitoso  sem infantilizar.',
       time: '5',
       plan: {
-        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: '“De 0 a 10, como foi seu dia?” e uma frase de escuta.' },
+        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: 'De 0 a 10, como foi seu dia? e uma frase de escuta.' },
         b: { tag: 'corpo', time: '5', title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado do dia.' },
-        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Você agradece e reconhece.' },
+        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Voc agradece e reconhece.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Mais autonomia, mais opinião, mais sensibilidade a respeito.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar “o que vem agora” evita atrito nas transições.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar o que vem agora evita atrito nas transições.' },
       connection: { label: 'Gesto de conexão', note: 'Escuta de 30 segundos sem corrigir.' },
     },
     '10': {
@@ -1086,11 +1092,11 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       plan: {
         a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
         b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
-        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
+        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e voc elogia o esforço, não o resultado.' },
       },
       development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
-      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
-      connection: { label: 'Gesto de conexão', note: 'Perguntar: “quer minha ajuda ou só que eu te ouça?”' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (isso ou aquilo).' },
+      connection: { label: 'Gesto de conexão', note: 'Perguntar: quer minha ajuda ou só que eu te ouça?' },
     },
     '15': {
       id: 'k-6p-15',
@@ -1104,13 +1110,13 @@ const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
       },
       development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
       routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },
-      connection: { label: 'Gesto de conexão', note: 'Reconhecer: “eu vi que foi difícil e você tentou”.' },
+      connection: { label: 'Gesto de conexão', note: 'Reconhecer: eu vi que foi difícil e voc tentou.' },
     },
   },
 }
 
 /* =========================
-   P34.10 — Legibilidade Mobile (quebra editorial)
+   P34.10  Legibilidade Mobile (quebra editorial)
 ========================= */
 
 function splitEditorialText(raw: string | null | undefined): string[] {
@@ -1274,7 +1280,13 @@ export default function MeuFilhoClient() {
     } catch {}
   }, [])
 
-  const kit = useMemo(() => KITS[age][time], [age, time])
+  const kit = useMemo(() => {
+    // Guardrail: evita crash se age/time vierem inválidos
+    const safeAge = (KITS as any)?.[age] ? age : ("3-4" as any)
+    const byAge = (KITS as any)[safeAge]
+    const safeTime = byAge?.[time] ? time : ("10" as any)
+    return byAge[safeTime]
+  }, [age, time])
 
   const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } | null = useMemo(() => {
     if (bloco2.status === 'done') return bloco2.items
@@ -1344,7 +1356,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  // ✅ FIX typing (SkillId[] garantido)
+  //  FIX typing (SkillId[] garantido)
   function toggleSkill(id: SkillId) {
     setSkills((prev): SkillId[] => {
       const has = prev.includes(id)
@@ -1398,7 +1410,7 @@ export default function MeuFilhoClient() {
     const out = await withAntiRepeatPack({
       themeSignature,
       run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
-      // ✅ NOVO: fallback variável por filtros + rotação por dia
+      //  NOVO: fallback variável por filtros + rotação por dia
       fallback: () => buildBloco2Fallback({ age, time, playLocation, skills }),
       maxTries: 2,
     })
@@ -1408,7 +1420,7 @@ export default function MeuFilhoClient() {
     setChosen('a')
   }
 
-  // (restante do arquivo continua igual ao seu — sem alterar fluxo/layout)
+  // (restante do arquivo continua igual ao seu  sem alterar fluxo/layout)
 
   function saveSelectedToMyDay(title: string) {
     const ORIGIN = 'family' as const
@@ -1417,7 +1429,7 @@ export default function MeuFilhoClient() {
     const today = listMyDayTasks()
     const activeCount = countActiveFamilyFromMeuFilhoToday(today)
     if (activeCount >= 3) {
-      toast.info('Você já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
+      toast.info('Voc já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
       return
     }
 
