@@ -1,4 +1,3 @@
-
 // app/(tabs)/maternar/meu-filho/Client.tsx
 'use client'
 
@@ -14,6 +13,8 @@ import {
   makeThemeSignature,
   resetAntiRepeatIfDayChanged,
 } from '@/app/lib/ai/antiRepetitionLocal'
+
+import { pick3DiverseSuggestions, type SuggestionPack } from '@/app/lib/ai/pick3DiverseSuggestions'
 
 import { track } from '@/app/lib/telemetry'
 import { toast } from '@/app/lib/toast'
@@ -301,7 +302,6 @@ async function withAntiRepeatText(args: {
         return { text, source: 'ai' as const }
       }
 
-      // repetiu: tenta de novo silenciosamente (novo nonce)
       continue
     }
   }
@@ -515,20 +515,6 @@ function safeBloco2How(raw: unknown): string | null {
   return t
 }
 
-type SuggestionPack = { title: string; description: string }
-function pick3Suggestions(data: unknown): SuggestionPack[] | null {
-  const d = data as { suggestions?: unknown }
-  const arr = Array.isArray(d?.suggestions) ? (d?.suggestions as any[]) : null
-  if (!arr || arr.length < 3) return null
-
-  const pack = [arr[0], arr[1], arr[2]].map((s) => ({
-    title: String(s?.title ?? '').trim(),
-    description: String(s?.description ?? '').trim(),
-  }))
-  if (pack.some((p) => !p.title || !p.description)) return null
-  return pack
-}
-
 async function fetchBloco2Cards(args: {
   tempoDisponivel: number
   age: AgeBand
@@ -559,7 +545,9 @@ async function fetchBloco2Cards(args: {
 
     if (!res.ok) return null
     const data = await res.json().catch(() => null)
-    const picked = pick3Suggestions(data)
+
+    // ✅ P34.12 — diversidade no Bloco 2 (sem pegar sempre [0,1,2])
+    const picked: SuggestionPack[] | null = pick3DiverseSuggestions(data, args.nonce)
     if (!picked) return null
 
     const mk = (i: { title: string; description: string }): PlanItem | null => {
@@ -1372,13 +1360,13 @@ export default function MeuFilhoClient() {
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
           <header className="pt-8 md:pt-10 mb-6 md:mb-8">
             <div className="space-y-3">
-             <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
-  <span className="mr-1.5 text-lg leading-none" aria-hidden="true">
-    Voltar
-  </span>
-  <span className="sr-only">Voltar para o Maternar</span>
-  <span className="ml-1">para o Maternar</span>
-</Link>
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+                <span className="mr-1.5 text-lg leading-none" aria-hidden="true">
+                  Voltar
+                </span>
+                <span className="sr-only">Voltar para o Maternar</span>
+                <span className="ml-1">para o Maternar</span>
+              </Link>
 
               <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 Meu Filho
