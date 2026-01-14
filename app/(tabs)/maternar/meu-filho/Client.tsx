@@ -617,15 +617,14 @@ type Bloco2State =
 function stripEmojiAndBullets(s: string) {
   const text = String(s ?? '')
   const noBullets = text
-    // bullets comuns (    ) usando escapes unicode para evitar corrupção de encoding
+    // bullets comuns (• ● ▪ ▫ ◦) via unicode escapes (evita problemas de encoding)
     .replace(/(^|\n)\s*[\u2022\u25CF\u25AA\u25AB\u25E6]\s+/g, '$1')
-    // traços de lista (-  )
+    // traços de lista (- – —)
     .replace(/(^|\n)\s*[-\u2013\u2014]\s+/g, '$1')
     .replace(/\s+/g, ' ')
     .trim()
 
   return noBullets
-    // remove emojis (property escape)
     .replace(/[\p{Extended_Pictographic}]/gu, '')
     .replace(/\s+/g, ' ')
     .trim()
