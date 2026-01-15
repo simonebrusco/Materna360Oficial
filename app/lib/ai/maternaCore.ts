@@ -74,7 +74,7 @@ export interface RotinaQuickIdeasContext {
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
 
-  // extras (sem tipagem rígida no endpoint, mas o core recebe e pode usar)
+  // extras (o endpoint pode enviar; o core recebe e pode usar no prompt/log)
   ageBand?: string | null
   contexto?: string | null
   requestId?: string | null
@@ -179,47 +179,47 @@ REGRAS:
  * tipoIdeia === "meu-filho-bloco-1"
  * (Maternar → Meu Filho → Brincadeiras)
  *
- * Objetivo: UMA microexperiência não óbvia, não genérica, não “blog”.
- * - Sem títulos, sem bullets, sem explicações educacionais.
- * - 1–3 frases, até 280 caracteres, executável agora.
- * - Precisa parecer pensada para o momento.
+ * Reforço aprovado: 3 obrigações (twist + objeto do ambiente + encerramento).
+ * Sem expandir escopo para outros tipoIdeia/hubs.
  */
 function buildPromptMeuFilhoBloco1Cognitivo(): string {
   return `
-Você está no Materna360 no hub "Meu Filho → Brincadeiras". Entregue UMA única microexperiência feita sob medida para agora.
+Você está no Materna360 no hub "Meu Filho → Brincadeiras". Entregue UMA microexperiência única, concreta e feita sob medida para agora.
 
 SEQUÊNCIA OBRIGATÓRIA (faça internamente antes de escrever):
-1) Leitura da realidade: faixa/idade, tempo, energia implícita da mãe, contexto de casa, vínculo buscado.
-2) Exclusão do óbvio: descarte qualquer ideia “de lista/blog” e qualquer coisa familiar demais.
+1) Leitura da realidade: faixa/idade, tempo disponível, energia implícita da mãe, contexto, vínculo buscado.
+2) Exclusão do óbvio: descarte ideias de blog/lista e qualquer coisa familiar demais.
 3) Escolha de UM arquétipo cognitivo (silencioso): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
 4) Microexperiência: começo claro → ação central simples → fechamento natural.
 5) Validação emocional: zero preparo, zero bagunça grande, sem obrigação, pode parar sem frustração.
 
-PROIBIDO (hard bans — se cair nisso, recomece):
-- “torre”, “blocos”, “empilhar”, “construir”
-- “caça ao tesouro”, “pista”, “esconder”
-- “massinha”, “pintura”, “desenho”, “recorte/colar”, “artesanato”
-- “circuito”, “dançar”, “música”, “mímica”, “teatro”
-- “história”, “conto”, “livro”
-- “observem um objeto”, “formas e cores” (genérico)
-- “pega-pega”, “esconde-esconde”, “pular”
-- qualquer variação, lista ou recomendação ampla
+PROIBIDO (se cair nisso, recomece do zero):
+- torre/blocos/empilhar/construir
+- caça ao tesouro/pistas/esconder
+- massinha/pintura/desenho/recorte/colar/artesanato
+- circuito/dança/música/mímica/teatro
+- história/conto/livro
+- “observem um objeto”, “formas e cores”, “texturas” (genérico)
+- caminhada lenta / mindfulness genérico / respirar e sentir (genérico)
+- pega-pega/esconde-esconde/pular
+- listas, variações, justificativas, explicações educacionais
 
-OBRIGATÓRIO (para não soar genérico):
-- Use UM “twist” cognitivo pequeno (ex.: troca de papéis, regra secreta, missão de 60 segundos, detalhe inesperado).
-- A última frase deve encerrar o momento de forma leve (sem cobrança).
+OBRIGAÇÕES (para provar que foi pensado e não é genérico):
+A) Use UM objeto comum do ambiente (ex.: pano, colher, almofada, fita, caixa vazia), sem virar artesanato.
+B) Inclua UMA “regra secreta” curta (3 a 6 palavras) dentro da ação. Ex.: “regra secreta: sem usar o dedo”.
+C) A última frase deve encerrar o momento com leveza (pode parar e seguir, sem cobrança).
 
 ENTREGA FINAL (obrigatória):
 - Sem título.
-- Sem lista/bullets.
+- Sem bullets/listas.
 - Sem explicação educacional.
 - Não use: “você pode”, “que tal”, “talvez”, “se quiser”, “uma ideia”.
 - 1 a 3 frases, no máximo 280 caracteres.
 - Convite contextual + ação principal + fechamento natural.
-- UMA única ideia por resposta.
+- Uma única ideia por resposta.
 
-FORMATO DE RESPOSTA:
-Responda APENAS com JSON válido no shape:
+FORMATO:
+Responda APENAS com JSON válido:
 {
   "suggestions": [
     {
@@ -241,9 +241,19 @@ function buildModeSpecializationPrompt(
   quickContext?: RotinaQuickIdeasContext | null,
 ): string {
   if (mode === 'quick-ideas') {
-    // ✅ Decisão de governança P34.17:
+    // Decisão de governança P34.17:
     // Prompt por tipoIdeia, APENAS para meu-filho-bloco-1.
     if (quickContext?.tipoIdeia === 'meu-filho-bloco-1') {
+      // DEV-only: prova auditável no terminal de qual prompt foi aplicado
+      if (process.env.NODE_ENV !== 'production') {
+        console.info('[AI_PROMPT]', {
+          variant: 'P34.17_meu-filho-bloco-1_cognitivo',
+          requestId: quickContext?.requestId ?? null,
+          nonce: quickContext?.nonce ?? null,
+          ageBand: quickContext?.ageBand ?? null,
+          tempoDisponivel: quickContext?.tempoDisponivel ?? null,
+        })
+      }
       return buildPromptMeuFilhoBloco1Cognitivo()
     }
 
