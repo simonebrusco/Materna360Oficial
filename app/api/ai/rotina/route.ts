@@ -58,6 +58,26 @@ type RotinaRequestBody = {
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
 
 /* =========================
+   Helpers de idade (Eu360 -> ageBand)
+========================= */
+
+function deriveAgeBandFromChild(child: MaternaChildProfile | null): string | null {
+  const m = child?.idadeMeses
+  if (typeof m !== 'number' || !Number.isFinite(m) || m < 0) return null
+
+  // faixas usadas no hub (ex.: "3-4")
+  if (m < 12) return '0-1'
+  if (m < 24) return '1-2'
+  if (m < 36) return '2-3'
+  if (m < 48) return '3-4'
+  if (m < 60) return '4-5'
+  if (m < 72) return '5-6'
+  if (m < 84) return '6-7'
+  if (m < 96) return '7-8'
+  return '8+'
+}
+
+/* =========================
    Helpers de texto
 ========================= */
 
@@ -126,9 +146,6 @@ function sanitizeMeuFilhoBloco1(
 
 /* =========================
    Bloco 3 — Rotinas / Conexão
-   - até 3 frases
-   - até 240 chars
-   - sem lista / sem cobrança / sem frequência
 ========================= */
 
 function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
@@ -174,9 +191,6 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
 
 /* =========================
    Bloco 4 — Fases / Contexto
-   - 1 frase
-   - até 140 chars
-   - neutro / observacional / sem norma
 ========================= */
 
 function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
@@ -276,6 +290,10 @@ export async function POST(req: Request) {
       child: MaternaChildProfile | null
     }
 
+    // Fonte de verdade: Eu360 (child.idadeMeses). Request vira fallback.
+    const ageBandFromEu360 = deriveAgeBandFromChild(child)
+    const effectiveAgeBand = ageBandFromEu360 ?? body.ageBand ?? null
+
     // Tratamos micro-ritmos e fase como variações de quick-ideas (sem estourar tipos do core)
     const isQuick =
       body.feature === 'quick-ideas' || body.feature === 'micro-ritmos' || body.feature === 'fase'
@@ -290,7 +308,7 @@ export async function POST(req: Request) {
         tipoIdeia: body.tipoIdeia ?? null,
 
         // extras (podem ser usados pelo prompt do core, sem tipagem rígida aqui)
-        ageBand: body.ageBand ?? null,
+        ageBand: effectiveAgeBand,
         contexto: body.contexto ?? null,
 
         // bloco 3
@@ -356,10 +374,7 @@ export async function POST(req: Request) {
       },
     })
 
-    return NextResponse.json(
-      { recipes: result.recipes ?? [] },
-      { status: 200, headers: NO_STORE_HEADERS },
-    )
+    return NextResponse.json({ recipes: result.recipes ?? [] }, { status: 200, headers: NO_STORE_HEADERS })
   } catch (error) {
     // Se já consumimos cota e falhou antes de entregar resposta "final", liberamos o consumo
     if (gate) {
