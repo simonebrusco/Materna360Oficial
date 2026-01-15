@@ -28,7 +28,7 @@ type Bloco3Tipo = 'rotina' | 'conexao'
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
 
 type RotinaRequestBody = {
-  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase'
+  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase' | 'fase-contexto'
   origin?: string
 
   // Receitas
@@ -45,37 +45,27 @@ type RotinaRequestBody = {
   ageBand?: string | null
   contexto?: string | null
 
-  // Bloco 3 (Rotinas / Conexão)
+  // ✅ Bloco 2 — Filtros do Client
+  local?: string | null
+  habilidades?: string[] | null
+
+  // ✅ Anti-repetição assistida (opcional)
+  avoid_titles?: string[] | null
+  avoid_themes?: string[] | null
+
+  // ✅ Bloco 3 (Rotinas / Conexão)
   idade?: number | string | null
   faixa_etaria?: string | null
   momento_do_dia?: MomentoDoDia | null
   tipo_experiencia?: Bloco3Tipo | null
+  tema?: string | null
 
-  // Bloco 4 (Fases / Contexto)
+  // ✅ Bloco 4 (Fases / Contexto)
   momento_desenvolvimento?: MomentoDesenvolvimento | null
+  foco?: string | null
 }
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
-
-/* =========================
-   Helpers de idade (Eu360 -> ageBand)
-========================= */
-
-function deriveAgeBandFromChild(child: MaternaChildProfile | null): string | null {
-  const m = child?.idadeMeses
-  if (typeof m !== 'number' || !Number.isFinite(m) || m < 0) return null
-
-  // faixas usadas no hub (ex.: "3-4")
-  if (m < 12) return '0-1'
-  if (m < 24) return '1-2'
-  if (m < 36) return '2-3'
-  if (m < 48) return '3-4'
-  if (m < 60) return '4-5'
-  if (m < 72) return '5-6'
-  if (m < 84) return '6-7'
-  if (m < 96) return '7-8'
-  return '8+'
-}
 
 /* =========================
    Helpers de texto
@@ -146,6 +136,9 @@ function sanitizeMeuFilhoBloco1(
 
 /* =========================
    Bloco 3 — Rotinas / Conexão
+   - até 3 frases
+   - até 240 chars
+   - sem lista / sem cobrança / sem frequência
 ========================= */
 
 function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
@@ -191,6 +184,9 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
 
 /* =========================
    Bloco 4 — Fases / Contexto
+   - 1 frase
+   - até 140 chars
+   - neutro / observacional / sem norma
 ========================= */
 
 function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
@@ -290,17 +286,16 @@ export async function POST(req: Request) {
       child: MaternaChildProfile | null
     }
 
-    // Fonte de verdade: Eu360 (child.idadeMeses). Request vira fallback.
-    const ageBandFromEu360 = deriveAgeBandFromChild(child)
-    const effectiveAgeBand = ageBandFromEu360 ?? body.ageBand ?? null
-
     // Tratamos micro-ritmos e fase como variações de quick-ideas (sem estourar tipos do core)
     const isQuick =
-      body.feature === 'quick-ideas' || body.feature === 'micro-ritmos' || body.feature === 'fase'
+      body.feature === 'quick-ideas' ||
+      body.feature === 'micro-ritmos' ||
+      body.feature === 'fase' ||
+      body.feature === 'fase-contexto'
 
     if (isQuick) {
       // IMPORTANTÍSSIMO:
-      // RotinaQuickIdeasContext (do core) não conhece campos como "idade".
+      // RotinaQuickIdeasContext (do core) não conhece todos os campos por tipagem rígida.
       // Então montamos como "any" aqui para não quebrar o build, mantendo o contrato do core intacto.
       const ctx: any = {
         tempoDisponivel: body.tempoDisponivel ?? null,
@@ -308,17 +303,27 @@ export async function POST(req: Request) {
         tipoIdeia: body.tipoIdeia ?? null,
 
         // extras (podem ser usados pelo prompt do core, sem tipagem rígida aqui)
-        ageBand: effectiveAgeBand,
+        ageBand: body.ageBand ?? null,
         contexto: body.contexto ?? null,
+
+        // ✅ Bloco 2 (filtros que o Client envia)
+        local: body.local ?? null,
+        habilidades: Array.isArray(body.habilidades) ? body.habilidades : null,
+
+        // ✅ Anti-repetição assistida (opcional)
+        avoid_titles: Array.isArray(body.avoid_titles) ? body.avoid_titles : null,
+        avoid_themes: Array.isArray(body.avoid_themes) ? body.avoid_themes : null,
 
         // bloco 3
         idade: body.idade ?? null,
         faixa_etaria: body.faixa_etaria ?? null,
         momento_do_dia: body.momento_do_dia ?? null,
         tipo_experiencia: body.tipo_experiencia ?? null,
+        tema: body.tema ?? null,
 
         // bloco 4
         momento_desenvolvimento: body.momento_desenvolvimento ?? null,
+        foco: body.foco ?? null,
       }
 
       const result = await callMaternaAI({
@@ -374,7 +379,10 @@ export async function POST(req: Request) {
       },
     })
 
-    return NextResponse.json({ recipes: result.recipes ?? [] }, { status: 200, headers: NO_STORE_HEADERS })
+    return NextResponse.json(
+      { recipes: result.recipes ?? [] },
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
   } catch (error) {
     // Se já consumimos cota e falhou antes de entregar resposta "final", liberamos o consumo
     if (gate) {
