@@ -74,7 +74,7 @@ export interface RotinaQuickIdeasContext {
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
 
-  // extras (o endpoint pode enviar; o core recebe e pode usar no prompt/log)
+  // extras (sem tipagem rígida no endpoint, mas o core recebe e pode usar)
   ageBand?: string | null
   contexto?: string | null
   requestId?: string | null
@@ -178,48 +178,37 @@ REGRAS:
  * P34.17 — Prompt cognitivo autorizado APENAS para:
  * tipoIdeia === "meu-filho-bloco-1"
  * (Maternar → Meu Filho → Brincadeiras)
- *
- * Reforço aprovado: 3 obrigações (twist + objeto do ambiente + encerramento).
- * Sem expandir escopo para outros tipoIdeia/hubs.
  */
 function buildPromptMeuFilhoBloco1Cognitivo(): string {
   return `
-Você está no Materna360 no hub "Meu Filho → Brincadeiras". Entregue UMA microexperiência única, concreta e feita sob medida para agora.
+Você está no Materna360, no hub "Meu Filho → Brincadeiras", e sua missão é entregar UMA microexperiência única, pensada para este momento.
 
-SEQUÊNCIA OBRIGATÓRIA (faça internamente antes de escrever):
-1) Leitura da realidade: faixa/idade, tempo disponível, energia implícita da mãe, contexto, vínculo buscado.
-2) Exclusão do óbvio: descarte ideias de blog/lista e qualquer coisa familiar demais.
-3) Escolha de UM arquétipo cognitivo (silencioso): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
-4) Microexperiência: começo claro → ação central simples → fechamento natural.
-5) Validação emocional: zero preparo, zero bagunça grande, sem obrigação, pode parar sem frustração.
+PROCESSO OBRIGATÓRIO (execute mentalmente antes de escrever):
+1) Leitura da realidade: idade/faixa, tempo disponível, energia implícita da mãe, contexto, vínculo buscado agora.
+2) Exclusão do óbvio: descarte ideias de blog/lista e brincadeiras “padrão”.
+3) Escolha de UM arquétipo (silencioso): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
+4) Microexperiência: início claro + ação central simples + fechamento natural.
+5) Validação emocional: sem preparo, sem bagunça grande, pode parar sem frustração, respeita o cansaço.
 
-PROIBIDO (se cair nisso, recomece do zero):
-- torre/blocos/empilhar/construir
-- caça ao tesouro/pistas/esconder
-- massinha/pintura/desenho/recorte/colar/artesanato
-- circuito/dança/música/mímica/teatro
-- história/conto/livro
-- “observem um objeto”, “formas e cores”, “texturas” (genérico)
-- caminhada lenta / mindfulness genérico / respirar e sentir (genérico)
-- pega-pega/esconde-esconde/pular
-- listas, variações, justificativas, explicações educacionais
+OBRIGAÇÕES (não negocie):
+A) Varie a abertura: NÃO comece sempre com "Agora,".
+B) Proibido repetir padrões comuns que viram “cara de IA”: evite "sente no chão", "caminhem devagar", "observe um objeto por um minuto" e variações diretas disso.
+C) Proibido “roteiro em etapas”: não use estrutura "Depois..., depois..." e não entregue 3 tarefas/3 passos.
 
-OBRIGAÇÕES (para provar que foi pensado e não é genérico):
-A) Use UM objeto comum do ambiente (ex.: pano, colher, almofada, fita, caixa vazia), sem virar artesanato.
-B) Inclua UMA “regra secreta” curta (3 a 6 palavras) dentro da ação. Ex.: “regra secreta: sem usar o dedo”.
-C) A última frase deve encerrar o momento com leveza (pode parar e seguir, sem cobrança).
-
-ENTREGA FINAL (obrigatória):
+PROIBIÇÕES:
 - Sem título.
-- Sem bullets/listas.
-- Sem explicação educacional.
-- Não use: “você pode”, “que tal”, “talvez”, “se quiser”, “uma ideia”.
+- Sem listas.
+- Sem bullets.
+- Sem explicações educacionais.
+- Sem “você pode”, sem “que tal”, sem “talvez”, sem “se quiser”, sem “uma ideia”.
+
+FORMATO DO TEXTO (obrigatório):
 - 1 a 3 frases, no máximo 280 caracteres.
 - Convite contextual + ação principal + fechamento natural.
 - Uma única ideia por resposta.
 
-FORMATO:
-Responda APENAS com JSON válido:
+FORMATO DE RESPOSTA:
+Responda APENAS com JSON válido no shape:
 {
   "suggestions": [
     {
@@ -236,45 +225,54 @@ Responda APENAS com JSON válido:
 `.trim()
 }
 
+function buildQuickIdeasGenericPrompt(): string {
+  return `
+Você está no Materna360 na funcionalidade "Rotina Leve / Ideias Rápidas".
+
+Regras:
+- Responda em JSON válido.
+- Gere 3 sugestões curtas e executáveis.
+- Sem julgamentos.
+- Evite clichês e listas de blog.
+
+Formato:
+{
+  "suggestions": [
+    { "id":"...", "category":"ideia-rapida", "title":"", "description":"...", "estimatedMinutes": <number>, "withChild": <boolean>, "moodImpact":"..." }
+  ]
+}
+`.trim()
+}
+
 function buildModeSpecializationPrompt(
   mode: MaternaMode,
   quickContext?: RotinaQuickIdeasContext | null,
 ): string {
   if (mode === 'quick-ideas') {
-    // Decisão de governança P34.17:
+    // ✅ Decisão de governança P34.17:
     // Prompt por tipoIdeia, APENAS para meu-filho-bloco-1.
     if (quickContext?.tipoIdeia === 'meu-filho-bloco-1') {
-      // DEV-only: prova auditável no terminal de qual prompt foi aplicado
-      if (process.env.NODE_ENV !== 'production') {
-        console.info('[AI_PROMPT]', {
-          variant: 'P34.17_meu-filho-bloco-1_cognitivo',
-          requestId: quickContext?.requestId ?? null,
-          nonce: quickContext?.nonce ?? null,
-          ageBand: quickContext?.ageBand ?? null,
-          tempoDisponivel: quickContext?.tempoDisponivel ?? null,
-        })
-      }
       return buildPromptMeuFilhoBloco1Cognitivo()
     }
 
-    // Mantém o comportamento atual para qualquer outro tipoIdeia.
-    // (Sem expandir escopo nesta P.)
-    return `
-${/* PROMPT CANÔNICO DO MEU FILHO — BLOCO 1 (mantido integralmente) */ ''}
-${/* Conteúdo exatamente como você definiu */ ''}
-`.trim()
+    // Mantém comportamento genérico para os demais (sem expandir escopo nesta P).
+    return buildQuickIdeasGenericPrompt()
   }
 
   if (mode === 'daily-inspiration') {
     return `
 Você está na funcionalidade "Inspirações do Dia".
-Responda com phrase, care e ritual.
+Responda com inspiration contendo phrase, care e ritual.
+Formato:
+{ "inspiration": { "phrase":"...", "care":"...", "ritual":"..." } }
 `.trim()
   }
 
   return `
 Você está na funcionalidade "Receitas Inteligentes".
 Responda com recipes.
+Formato:
+{ "recipes": [ { "id":"...", "title":"...", "description":"...", "timeLabel":"...", "ageLabel":"...", "preparation":"...", "safetyNote":"..." } ] }
 `.trim()
 }
 
