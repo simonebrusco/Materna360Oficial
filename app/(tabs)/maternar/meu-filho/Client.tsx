@@ -185,16 +185,23 @@ function normalizePlayLocation(v: unknown): PlayLocation | null {
   return null
 }
 
-function normalizeSkills(v: unknown): SkillId[] {
-  if (!Array.isArray(v)) return []
-  const out: SkillId[] = []
-  v.forEach((x) => {
-    const s = String(x ?? '').trim()
-    if (s === 'motor' || s === 'linguagem' || s === 'emocional' || s === 'cognitivo' || s === 'social' || s === 'autonomia') {
-      out.push(s)
+function normalizeSkillId(v: unknown): SkillId | null {
+  const s = String(v ?? '').trim()
+  if (s === 'motor' || s === 'linguagem' || s === 'emocional' || s === 'cognitivo' || s === 'social' || s === 'autonomia')
+    return s
+  return null
+}
+
+// compat: pode existir array legado salvo anteriormente; pegamos o primeiro válido
+function normalizeSkillsLegacyToSingle(v: unknown): SkillId | null {
+  if (Array.isArray(v)) {
+    for (const x of v) {
+      const s = normalizeSkillId(x)
+      if (s) return s
     }
-  })
-  return out
+    return null
+  }
+  return normalizeSkillId(v)
 }
 
 function normalizeFaseFoco(v: unknown): FaseFoco | null {
@@ -205,6 +212,7 @@ function normalizeFaseFoco(v: unknown): FaseFoco | null {
 
 const HUB_PREF_FILTERS = {
   playLocation: 'maternar/meu-filho/pref/playLocation',
+  // antes era array; agora é single-select. Mantemos o mesmo key, mas salvamos string.
   skills: 'maternar/meu-filho/pref/skills',
   faseFoco: 'maternar/meu-filho/pref/faseFoco',
 }
@@ -213,8 +221,9 @@ function inferContext(): {
   time: TimeMode
   age: AgeBand
   childLabel?: string
+  childId?: string | null
   playLocation: PlayLocation
-  skills: SkillId[]
+  skill: SkillId
   faseFoco: FaseFoco
 } {
   const prefTime = normalizeTimeMode(safeGetLS(HUB_PREF.time))
@@ -222,34 +231,48 @@ function inferContext(): {
   const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
 
   const prefLocation = normalizePlayLocation(safeGetLS(HUB_PREF_FILTERS.playLocation))
-  const prefSkills = normalizeSkills(
-    (() => {
-      try {
-        const raw = safeGetLS(HUB_PREF_FILTERS.skills)
-        if (!raw) return []
-        return JSON.parse(raw)
-      } catch {
-        return []
-      }
-    })(),
-  )
+
+  // skills: compat com legado (array JSON) e novo (string)
+  const prefSkill = (() => {
+    const raw = safeGetLS(HUB_PREF_FILTERS.skills)
+    if (!raw) return null
+
+    // 1) tenta como JSON (legado)
+    try {
+      const parsed = JSON.parse(raw)
+      const v = normalizeSkillsLegacyToSingle(parsed)
+      if (v) return v
+    } catch {}
+
+    // 2) tenta como string direta (novo)
+    const v2 = normalizeSkillsLegacyToSingle(raw)
+    if (v2) return v2
+
+    return null
+  })()
+
   const prefFaseFoco = normalizeFaseFoco(safeGetLS(HUB_PREF_FILTERS.faseFoco))
 
+  // Fonte de verdade: criança ativa (Eu360 / perfil)
   const child = getActiveChildOrNull(prefChildId)
   const derivedAgeBand = ageBandFromMonths(child?.ageMonths ?? null)
 
+  // compat legado (se existir)
   const legacyTime = normalizeTimeMode(safeGetLS('eu360_time_with_child'))
   const legacyAgeBand = normalizeAgeBand(safeGetLS('eu360_child_age_band'))
 
   const time: TimeMode = prefTime ?? legacyTime ?? '15'
-  const age: AgeBand = prefAgeBand ?? derivedAgeBand ?? legacyAgeBand ?? '3-4'
+
+  // IMPORTANT: idade deve vir do Eu360/child ativo. Só usamos prefs/legacy se não houver child válido.
+  const age: AgeBand = derivedAgeBand ?? prefAgeBand ?? legacyAgeBand ?? '3-4'
 
   return {
     time,
     age,
     childLabel: child?.label,
+    childId: child?.id ?? prefChildId ?? null,
     playLocation: prefLocation ?? 'casa',
-    skills: prefSkills.length ? prefSkills : (['emocional'] as SkillId[]),
+    skill: prefSkill ?? 'emocional',
     faseFoco: prefFaseFoco ?? 'emocao',
   }
 }
@@ -300,7 +323,6 @@ async function withAntiRepeatText(args: {
         return { text, source: 'ai' as const }
       }
 
-      // repetiu: tenta de novo silenciosamente (novo nonce)
       continue
     }
   }
@@ -527,7 +549,7 @@ async function fetchBloco2Cards(args: {
   tempoDisponivel: number
   age: AgeBand
   playLocation: PlayLocation
-  skills: SkillId[]
+  skill: SkillId
   nonce: string
 }): Promise<Bloco2Items | null> {
   try {
@@ -544,7 +566,8 @@ async function fetchBloco2Cards(args: {
         ageBand: args.age,
         contexto: 'exploracao',
         local: args.playLocation,
-        habilidades: args.skills,
+        // API aceita array; aqui é single-select, então enviamos [skill]
+        habilidades: [args.skill],
         requestId: args.nonce,
         nonce: args.nonce,
         variation: args.nonce,
@@ -1040,13 +1063,16 @@ export default function MeuFilhoClient() {
   const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
   const [childLabel, setChildLabel] = useState<string | undefined>(undefined)
+  const [childId, setChildId] = useState<string | null>(null)
   const [profileSource, setProfileSource] = useState<ProfileSource>('none')
 
   const [familyDoneToday, setFamilyDoneToday] = useState(false)
 
   // filtros: brincadeiras
   const [playLocation, setPlayLocation] = useState<PlayLocation>('casa')
-  const [skills, setSkills] = useState<SkillId[]>(['emocional'])
+
+  // ✅ SINGLE-SELECT: apenas 1 habilidade por vez (evita confusão e melhora direcionamento)
+  const [skill, setSkill] = useState<SkillId>('emocional')
 
   // foco: fase
   const [faseFoco, setFaseFoco] = useState<FaseFoco>('emocao')
@@ -1082,8 +1108,9 @@ export default function MeuFilhoClient() {
       time: '15',
       age: '3-4',
       playLocation: 'casa',
-      skills: ['emocional'],
+      skill: 'emocional',
       faseFoco: 'emocao',
+      childId: null,
     }
 
     try {
@@ -1093,8 +1120,9 @@ export default function MeuFilhoClient() {
     setTime(inferred.time)
     setAge(inferred.age)
     setChildLabel(inferred.childLabel)
+    setChildId(inferred.childId ?? null)
     setPlayLocation(inferred.playLocation)
-    setSkills(inferred.skills)
+    setSkill(inferred.skill)
     setFaseFoco(inferred.faseFoco)
     setStep('brincadeiras')
 
@@ -1164,19 +1192,12 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  function onSelectAge(next: AgeBand) {
-    setAge(next)
-    setChosen('a')
-
-    safeSetLS(HUB_PREF.ageBand, next)
-    safeSetLS('eu360_child_age_band', next)
-
-    setRotinaTema(null)
-    setConexaoTema(null)
-    hardResetGenerated()
-
+  // ✅ Idade vem do Eu360/child ativo (fonte de verdade).
+  // Mantemos um handler “no-op” para não quebrar chamadas antigas e para telemetria de tentativa.
+  function onAttemptChangeAge(_next: AgeBand) {
+    toast.info('A faixa etária vem do Eu360. Atualize o perfil do seu filho para ajustar as ideias.')
     try {
-      track('meu_filho.age.select', { age: next, reason: 'manual_override' })
+      track('meu_filho.age.change_blocked', { reason: 'locked_to_profile' })
     } catch {}
   }
 
@@ -1192,18 +1213,14 @@ export default function MeuFilhoClient() {
     } catch {}
   }
 
-  // ✅ FIX typing (SkillId[] garantido)
-  function toggleSkill(id: SkillId) {
-    setSkills((prev): SkillId[] => {
-      const has = prev.includes(id)
-      const next: SkillId[] = has ? prev.filter((x) => x !== id) : [...prev, id]
-      const safe: SkillId[] = next.length ? next : (['emocional'] as SkillId[])
-
-      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(safe))
-      return safe
-    })
-
+  // ✅ SINGLE-SELECT (radio): troca direta e salva como string (compat com key antiga)
+  function selectSkill(id: SkillId) {
+    setSkill(id)
+    safeSetLS(HUB_PREF_FILTERS.skills, id)
     setBloco2({ status: 'idle' })
+    try {
+      track('meu_filho.skill.select', { skill: id })
+    } catch {}
   }
 
   function onSelectPlayLocation(loc: PlayLocation) {
@@ -1241,11 +1258,11 @@ export default function MeuFilhoClient() {
     setBloco2({ status: 'loading' })
 
     const tempoDisponivel = Number(time)
-    const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}`
+    const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skill:${skill}`
 
     const out = await withAntiRepeatPack({
       themeSignature,
-      run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
+      run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skill, nonce }),
       fallback: () => kit.plan,
       maxTries: 2,
     })
@@ -1382,10 +1399,25 @@ export default function MeuFilhoClient() {
               {childLabel ? (
                 <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
                   Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
+                  <span className="mx-2 text-white/50">•</span>
+                  <span className="text-white/85">faixa</span> <span className="font-semibold text-white">{age}</span>
+                  <span className="ml-2">
+                    <Link href="/eu360" className="underline decoration-white/40 hover:decoration-white text-white/80 hover:text-white">
+                      alterar no Eu360
+                    </Link>
+                  </span>
                 </div>
-              ) : null}
+              ) : (
+                <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
+                  Faixa <span className="font-semibold text-white">{age}</span>{' '}
+                  <span className="ml-2">
+                    <Link href="/eu360" className="underline decoration-white/40 hover:decoration-white text-white/80 hover:text-white">
+                      configurar criança no Eu360
+                    </Link>
+                  </span>
+                </div>
+              )}
 
-              {/* (debug silencioso de fonte, opcional manter) */}
               {profileSource !== 'none' ? <div className="text-[11px] text-white/60">Fonte de perfil: {profileSource}</div> : null}
             </div>
           </header>
@@ -1459,19 +1491,43 @@ export default function MeuFilhoClient() {
                     </div>
                   </div>
 
+                  {/* ✅ Idade travada no perfil (Eu360) */}
                   <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
-                    <div className="text-[12px] text-white/85 mb-2">Faixa (ajusta a ideia)</div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="text-[12px] text-white/85">Faixa (do Eu360)</div>
+                        <div className="text-[13px] text-white mt-1">
+                          <span className="font-semibold">{age}</span>{' '}
+                          {childLabel ? <span className="text-white/75">• {childLabel}</span> : null}
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/eu360"
+                        className="
+                          rounded-full
+                          bg-white/90 hover:bg-white
+                          text-[#2f3a56]
+                          px-3 py-2 text-[12px]
+                          shadow-sm transition
+                        "
+                      >
+                        Ajustar no Eu360
+                      </Link>
+                    </div>
+
+                    {/* botões “fantasma” bloqueados para evitar confusão e manter consistência */}
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 opacity-60">
                       {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
                         const active = age === a
                         return (
                           <button
                             key={a}
                             type="button"
-                            onClick={() => onSelectAge(a)}
+                            onClick={() => onAttemptChangeAge(a)}
                             className={[
-                              'rounded-xl border px-2.5 py-2 text-[12px] transition',
-                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                              'rounded-xl border px-2.5 py-2 text-[12px] transition cursor-not-allowed',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90',
                             ].join(' ')}
                           >
                             {a}
@@ -1534,15 +1590,13 @@ export default function MeuFilhoClient() {
                         </div>
 
                         <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
-                          <div className="text-[13px] font-semibold text-[#2f3a56]">Que habilidades você quer estimular?</div>
-                          <div className="text-[12px] text-[#545454] mt-1">
-                            Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
-                          </div>
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Qual habilidade você quer estimular agora?</div>
+                          <div className="text-[12px] text-[#545454] mt-1">Escolha só 1 (fica mais claro e direcionado).</div>
 
                           <div className="mt-3 flex flex-wrap gap-2">
                             {SKILLS.map((s) => {
-                              const active = skills.includes(s.id)
-                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
+                              const active = skill === s.id
+                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => selectSkill(s.id)} />
                             })}
                           </div>
                         </div>
