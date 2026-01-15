@@ -26,7 +26,7 @@ export type RotinaComQuem = 'so-eu' | 'eu-e-meu-filho' | 'familia-toda'
  * RotinaTipoIdeia
  * ----------------
  * Expandido para suportar o Hub "Meu Filho" (P33.6) SEM criar nova rota/mode.
- * Mantém compat com usos existentes da Rotina Leve.
+ * Mantém compat com usos existentes.
  */
 export type RotinaTipoIdeia =
   | 'brincadeira'
@@ -69,14 +69,30 @@ export interface MaternaChildProfile {
   notes?: string
 }
 
+/**
+ * RotinaQuickIdeasContext
+ * - Campos básicos + extras por hub.
+ * - O backend pode incluir mais campos (sem quebrar o contrato),
+ *   mas estes são os suportados oficialmente aqui no core.
+ */
 export interface RotinaQuickIdeasContext {
   tempoDisponivel?: number | null
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
 
-  // extras (sem tipagem rígida no endpoint, mas o core recebe e pode usar)
-  ageBand?: string | null
+  // Meu Filho (todos os blocos)
+  ageBand?: string | null // ex: '0-2' | '3-4' | '5-6' | '6+'
   contexto?: string | null
+
+  // Bloco 2 (filtros)
+  local?: string | null // ex: 'casa' | 'ar_livre' | 'deslocamento'
+  habilidades?: string[] | null // ex: ['emocional'] (ou 1 item se UI for single-select)
+
+  // Anti-repetição assistida (opcional; quem decide enviar é o front/endpoint)
+  avoid_titles?: string[] | null
+  avoid_themes?: string[] | null
+
+  // rastreio / variação
   requestId?: string | null
   nonce?: string | null
 }
@@ -159,6 +175,28 @@ export function deriveAgeRangeFromMonths(ageMonths?: number | null): MaternaAgeR
   return '8+'
 }
 
+function inferAgeHint(context: RotinaQuickIdeasContext | null | undefined, child: MaternaChildProfile | null | undefined) {
+  // Obrigação: NÃO inventar idade.
+  // Regra: usar context.ageBand; senão child.ageRange; senão undefined.
+  const fromContext = String(context?.ageBand ?? '').trim()
+  if (fromContext) return fromContext
+  const fromChild = String(child?.ageRange ?? '').trim()
+  if (fromChild) return fromChild
+  return undefined
+}
+
+function compactList(arr: unknown, maxItems: number): string[] {
+  if (!Array.isArray(arr)) return []
+  const out: string[] = []
+  for (const x of arr) {
+    const s = String(x ?? '').trim()
+    if (!s) continue
+    out.push(s.slice(0, 80))
+    if (out.length >= maxItems) break
+  }
+  return out
+}
+
 // ---------- Prompts ----------
 
 function buildBaseSystemPrompt(): string {
@@ -178,31 +216,61 @@ REGRAS:
  * P34.17 — Prompt cognitivo autorizado APENAS para:
  * tipoIdeia === "meu-filho-bloco-1"
  * (Maternar → Meu Filho → Brincadeiras)
+ *
+ * Regras adicionais críticas:
+ * - Entregar UMA única microexperiência (não lista, não variações)
+ * - Sem títulos, sem bullets, sem explicações educacionais
+ * - Texto curto, concreto, executável agora
+ * - Precisa parecer pensado para o momento, não “catálogo”
+ *
+ * 3 obrigações reforçadas (escopo):
+ * 1) AUTORIZAÇÃO: só usar este prompt quando tipoIdeia for meu-filho-bloco-1.
+ * 2) IDADE: não inventar idade; use context.ageBand ou child.ageRange quando disponível.
+ * 3) ANTI-REPETIÇÃO: se existirem avoid_titles/avoid_themes, não repetir.
  */
-function buildPromptMeuFilhoBloco1Cognitivo(): string {
+function buildPromptMeuFilhoBloco1Cognitivo(args: {
+  ageHint?: string
+  avoidTitles?: string[]
+  avoidThemes?: string[]
+}): string {
+  const avoidTitles = (args.avoidTitles ?? []).filter(Boolean)
+  const avoidThemes = (args.avoidThemes ?? []).filter(Boolean)
+
+  const ageLine = args.ageHint ? `IDADE/FAIXA DISPONÍVEL: ${args.ageHint}` : `IDADE/FAIXA: não informada (não afirme idade).`
+
+  const antiRepeatBlock =
+    avoidTitles.length || avoidThemes.length
+      ? `
+ANTI-REPETIÇÃO (obrigatório):
+- NÃO gere nada com o mesmo núcleo/ideia que combine com estas referências.
+- avoid_titles: ${JSON.stringify(avoidTitles).slice(0, 500)}
+- avoid_themes: ${JSON.stringify(avoidThemes).slice(0, 500)}
+`
+      : `
+ANTI-REPETIÇÃO (obrigatório):
+- Evite brincar “de blog/lista” e evite repetir ideias muito comuns.
+`
+
   return `
 Você está no Materna360, no hub "Meu Filho → Brincadeiras", e sua missão é entregar UMA microexperiência única, pensada para este momento.
 
+${ageLine}
+
 PROCESSO OBRIGATÓRIO (execute mentalmente antes de escrever):
-1) Leitura da realidade: idade/faixa, tempo disponível, energia implícita da mãe, contexto, vínculo buscado agora.
-2) Exclusão do óbvio: descarte ideias de blog/lista e brincadeiras “padrão”.
-3) Escolha de UM arquétipo (silencioso): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
-4) Microexperiência: início claro + ação central simples + fechamento natural.
-5) Validação emocional: sem preparo, sem bagunça grande, pode parar sem frustração, respeita o cansaço.
+1) Leitura da realidade: idade/faixa (se disponível), tempo disponível, energia implícita da mãe, contexto de casa, vínculo buscado agora.
+2) Exclusão do óbvio: descarte brincadeiras comuns, ideias de blog/lista, sugestões familiares demais (ex.: caça ao tesouro genérico, massinha, pintura, circuito, dança livre, historinha inventada padrão, “pular corda”, “pega-pega”).
+3) Escolha de UM arquétipo cognitivo (silencioso, sem nomear): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
+4) Construção de microexperiência: início claro, ação central simples, fechamento natural.
+5) Validação emocional: sem preparo, sem bagunça grande, sem obrigação, pode parar sem frustração, respeita o cansaço.
 
-OBRIGAÇÕES (não negocie):
-A) Varie a abertura: NÃO comece sempre com "Agora,".
-B) Proibido repetir padrões comuns que viram “cara de IA”: evite "sente no chão", "caminhem devagar", "observe um objeto por um minuto" e variações diretas disso.
-C) Proibido “roteiro em etapas”: não use estrutura "Depois..., depois..." e não entregue 3 tarefas/3 passos.
+${antiRepeatBlock}
 
-PROIBIÇÕES:
+ENTREGA FINAL (obrigatória):
 - Sem título.
 - Sem listas.
 - Sem bullets.
 - Sem explicações educacionais.
 - Sem “você pode”, sem “que tal”, sem “talvez”, sem “se quiser”, sem “uma ideia”.
-
-FORMATO DO TEXTO (obrigatório):
 - 1 a 3 frases, no máximo 280 caracteres.
 - Convite contextual + ação principal + fechamento natural.
 - Uma única ideia por resposta.
@@ -225,20 +293,20 @@ Responda APENAS com JSON válido no shape:
 `.trim()
 }
 
-function buildQuickIdeasGenericPrompt(): string {
+function buildGenericQuickIdeasPrompt(): string {
+  // Mantém o comportamento para outros tipoIdeia sem expandir escopo de P.
+  // (Serve como base segura para não retornar vazio.)
   return `
-Você está no Materna360 na funcionalidade "Rotina Leve / Ideias Rápidas".
+Você está na funcionalidade "Ideias rápidas" do Materna360.
 
 Regras:
-- Responda em JSON válido.
-- Gere 3 sugestões curtas e executáveis.
-- Sem julgamentos.
-- Evite clichês e listas de blog.
-
-Formato:
+- Responda em Português do Brasil.
+- Sem julgamentos e sem discurso longo.
+- Sugestões práticas e viáveis.
+- Responda sempre com JSON válido no shape:
 {
   "suggestions": [
-    { "id":"...", "category":"ideia-rapida", "title":"", "description":"...", "estimatedMinutes": <number>, "withChild": <boolean>, "moodImpact":"..." }
+    { "id": "…", "category": "ideia-rapida", "title": "…", "description": "…", "estimatedMinutes": <number>, "withChild": <boolean>, "moodImpact": "acalma|energia|organiza|aproxima" }
   ]
 }
 `.trim()
@@ -247,32 +315,36 @@ Formato:
 function buildModeSpecializationPrompt(
   mode: MaternaMode,
   quickContext?: RotinaQuickIdeasContext | null,
+  child?: MaternaChildProfile | null,
 ): string {
   if (mode === 'quick-ideas') {
     // ✅ Decisão de governança P34.17:
     // Prompt por tipoIdeia, APENAS para meu-filho-bloco-1.
     if (quickContext?.tipoIdeia === 'meu-filho-bloco-1') {
-      return buildPromptMeuFilhoBloco1Cognitivo()
+      const avoidTitles = compactList(quickContext?.avoid_titles, 12)
+      const avoidThemes = compactList(quickContext?.avoid_themes, 12)
+      const ageHint = inferAgeHint(quickContext, child ?? null)
+
+      return buildPromptMeuFilhoBloco1Cognitivo({
+        ageHint,
+        avoidTitles,
+        avoidThemes,
+      })
     }
 
-    // Mantém comportamento genérico para os demais (sem expandir escopo nesta P).
-    return buildQuickIdeasGenericPrompt()
+    return buildGenericQuickIdeasPrompt()
   }
 
   if (mode === 'daily-inspiration') {
     return `
 Você está na funcionalidade "Inspirações do Dia".
-Responda com inspiration contendo phrase, care e ritual.
-Formato:
-{ "inspiration": { "phrase":"...", "care":"...", "ritual":"..." } }
+Responda com inspiration: { phrase, care, ritual }.
 `.trim()
   }
 
   return `
 Você está na funcionalidade "Receitas Inteligentes".
-Responda com recipes.
-Formato:
-{ "recipes": [ { "id":"...", "title":"...", "description":"...", "timeLabel":"...", "ageLabel":"...", "preparation":"...", "safetyNote":"..." } ] }
+Responda com recipes (lista).
 `.trim()
 }
 
@@ -302,7 +374,10 @@ export async function callMaternaAI<M extends MaternaMode>(
   const messages: OpenAIChatMessage[] = [
     {
       role: 'system',
-      content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode, quickContext),
+      content:
+        buildBaseSystemPrompt() +
+        '\n\n' +
+        buildModeSpecializationPrompt(payload.mode, quickContext, childWithAgeRange),
     },
     {
       role: 'user',
