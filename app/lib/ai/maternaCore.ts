@@ -22,18 +22,11 @@ export type MaternaFocusOfDay = 'Cansaço' | 'Culpa' | 'Organização' | 'Conex�
 export type MaternaMode = 'quick-ideas' | 'daily-inspiration' | 'smart-recipes'
 export type RotinaComQuem = 'so-eu' | 'eu-e-meu-filho' | 'familia-toda'
 
-/**
- * RotinaTipoIdeia
- * ----------------
- * Expandido para suportar o Hub "Meu Filho" (P33.6) SEM criar nova rota/mode.
- * Mantém compat com usos existentes da Rotina Leve.
- */
 export type RotinaTipoIdeia =
   | 'brincadeira'
   | 'organizacao'
   | 'autocuidado'
   | 'receita-rapida'
-  // Hub Meu Filho — blocos canônicos
   | 'meu-filho-bloco-1'
   | 'meu-filho-bloco-2'
   | 'meu-filho-bloco-3'
@@ -84,8 +77,6 @@ export interface SmartRecipesContext {
   tipoRefeicao?: string | null
   tempoPreparo?: number | null
 }
-
-// ---------- Tipos de saída ----------
 
 export type RotinaQuickSuggestion = {
   id: string
@@ -142,8 +133,6 @@ export interface MaternaAIResponseMap {
   'smart-recipes': { recipes: SmartRecipe[] }
 }
 
-// ---------- Helpers ----------
-
 export function deriveAgeRangeFromMonths(ageMonths?: number | null): MaternaAgeRange | undefined {
   if (typeof ageMonths !== 'number' || ageMonths < 0) return undefined
   if (ageMonths < 12) return '0-1'
@@ -172,8 +161,38 @@ REGRAS:
 function buildModeSpecializationPrompt(mode: MaternaMode): string {
   if (mode === 'quick-ideas') {
     return `
-${/* PROMPT CANÔNICO DO MEU FILHO — BLOCO 1 (mantido integralmente) */ ''}
-${/* Conteúdo exatamente como você definiu */ ''}
+Você está no modo "quick-ideas" do Materna360.
+
+REGRA-MÃE:
+Para context.tipoIdeia === "meu-filho-bloco-1", gere UMA única microexperiência pensada para o momento atual.
+
+FORMATO:
+- Retorne JSON válido
+- suggestions deve conter EXATAMENTE 1 item
+
+REGRAS DO TEXTO:
+- 1 a 3 frases curtas
+- Até 280 caracteres
+- Sem listas, sem títulos, sem bullets
+- Sem tom educacional ou explicativo
+- NÃO usar: "você pode", "que tal", "talvez", "se quiser", "uma ideia"
+- Não sugerir brincadeiras óbvias ou comuns
+
+PROCESSO INTERNO (não mostrar):
+1) Leia idade, tempo disponível, energia da mãe e contexto
+2) Elimine ideias óbvias ou genéricas
+3) Escolha UM arquétipo cognitivo (missão curta, observação, inversão, descoberta)
+4) Construa:
+   - convite breve
+   - ação simples
+   - fechamento natural
+5) Respeite o cansaço e permita encerrar sem frustração
+
+CONFIGURAÇÃO DO ITEM:
+- title: ""
+- withChild: true
+- moodImpact: "aproxima" ou "acalma"
+- estimatedMinutes: use context.tempoDisponivel ou 10
 `.trim()
   }
 
@@ -212,7 +231,10 @@ export async function callMaternaAI<M extends MaternaMode>(
       : payload.child ?? null
 
   const messages: OpenAIChatMessage[] = [
-    { role: 'system', content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode) },
+    {
+      role: 'system',
+      content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode),
+    },
     {
       role: 'user',
       content: JSON.stringify({
