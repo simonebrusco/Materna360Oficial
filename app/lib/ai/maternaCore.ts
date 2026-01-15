@@ -179,32 +179,44 @@ REGRAS:
  * tipoIdeia === "meu-filho-bloco-1"
  * (Maternar → Meu Filho → Brincadeiras)
  *
- * Regras adicionais críticas:
- * - Entregar UMA única microexperiência (não lista, não variações)
- * - Sem títulos, sem bullets, sem explicações educacionais
- * - Texto curto, concreto, executável agora
- * - Precisa parecer pensado para o momento, não “catálogo”
+ * Objetivo: UMA microexperiência não óbvia, não genérica, não “blog”.
+ * - Sem títulos, sem bullets, sem explicações educacionais.
+ * - 1–3 frases, até 280 caracteres, executável agora.
+ * - Precisa parecer pensada para o momento.
  */
 function buildPromptMeuFilhoBloco1Cognitivo(): string {
   return `
-Você está no Materna360, no hub "Meu Filho → Brincadeiras", e sua missão é entregar UMA microexperiência única, pensada para este momento.
+Você está no Materna360 no hub "Meu Filho → Brincadeiras". Entregue UMA única microexperiência feita sob medida para agora.
 
-PROCESSO OBRIGATÓRIO (execute mentalmente antes de escrever):
-1) Leitura da realidade: idade/faixa, tempo disponível, energia implícita da mãe, contexto de casa, vínculo buscado agora.
-2) Exclusão do óbvio: descarte brincadeiras comuns, ideias de blog/lista, sugestões familiares demais (ex.: caça ao tesouro genérico, massinha, pintura, circuito, dança livre, historinha inventada padrão, “pular corda”, “pega-pega”).
-3) Escolha de UM arquétipo cognitivo (silencioso, sem nomear): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
-4) Construção de microexperiência: início claro, ação central simples, fechamento natural.
-5) Validação emocional: sem preparo, sem bagunça grande, sem obrigação, pode parar sem frustração, respeita o cansaço.
+SEQUÊNCIA OBRIGATÓRIA (faça internamente antes de escrever):
+1) Leitura da realidade: faixa/idade, tempo, energia implícita da mãe, contexto de casa, vínculo buscado.
+2) Exclusão do óbvio: descarte qualquer ideia “de lista/blog” e qualquer coisa familiar demais.
+3) Escolha de UM arquétipo cognitivo (silencioso): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
+4) Microexperiência: começo claro → ação central simples → fechamento natural.
+5) Validação emocional: zero preparo, zero bagunça grande, sem obrigação, pode parar sem frustração.
+
+PROIBIDO (hard bans — se cair nisso, recomece):
+- “torre”, “blocos”, “empilhar”, “construir”
+- “caça ao tesouro”, “pista”, “esconder”
+- “massinha”, “pintura”, “desenho”, “recorte/colar”, “artesanato”
+- “circuito”, “dançar”, “música”, “mímica”, “teatro”
+- “história”, “conto”, “livro”
+- “observem um objeto”, “formas e cores” (genérico)
+- “pega-pega”, “esconde-esconde”, “pular”
+- qualquer variação, lista ou recomendação ampla
+
+OBRIGATÓRIO (para não soar genérico):
+- Use UM “twist” cognitivo pequeno (ex.: troca de papéis, regra secreta, missão de 60 segundos, detalhe inesperado).
+- A última frase deve encerrar o momento de forma leve (sem cobrança).
 
 ENTREGA FINAL (obrigatória):
 - Sem título.
-- Sem listas.
-- Sem bullets.
-- Sem explicações educacionais.
-- Sem “você pode”, sem “que tal”, sem “talvez”, sem “se quiser”, sem “uma ideia”.
+- Sem lista/bullets.
+- Sem explicação educacional.
+- Não use: “você pode”, “que tal”, “talvez”, “se quiser”, “uma ideia”.
 - 1 a 3 frases, no máximo 280 caracteres.
 - Convite contextual + ação principal + fechamento natural.
-- Uma única ideia por resposta.
+- UMA única ideia por resposta.
 
 FORMATO DE RESPOSTA:
 Responda APENAS com JSON válido no shape:
