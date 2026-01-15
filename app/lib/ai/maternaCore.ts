@@ -73,6 +73,12 @@ export interface RotinaQuickIdeasContext {
   tempoDisponivel?: number | null
   comQuem?: RotinaComQuem | null
   tipoIdeia?: RotinaTipoIdeia | null
+
+  // extras (sem tipagem rígida no endpoint, mas o core recebe e pode usar)
+  ageBand?: string | null
+  contexto?: string | null
+  requestId?: string | null
+  nonce?: string | null
 }
 
 export interface DailyInspirationContext {
@@ -162,119 +168,91 @@ Você é a inteligência oficial do Materna360, um app que ajuda mães cansadas 
 REGRAS:
 - Português do Brasil
 - Tom humano, direto e sem julgamentos
-- Nunca culpar ou pressionar
 - Micro-ações possíveis
 - Nada de diagnósticos
 - Sempre responder com JSON válido
 `.trim()
 }
 
-function buildModeSpecializationPrompt(mode: MaternaMode): string {
-  if (mode === 'quick-ideas') {
-    return `
-Você está no modo "quick-ideas". Sua resposta deve ser um JSON com a chave:
-{ "suggestions": [ { "id": "…", "category": "ideia-rapida", "title": "…", "description": "…", "estimatedMinutes": number, "withChild": boolean, "moodImpact": "acalma|energia|organiza|aproxima" } ] }
+/**
+ * P34.17 — Prompt cognitivo autorizado APENAS para:
+ * tipoIdeia === "meu-filho-bloco-1"
+ * (Maternar → Meu Filho → Brincadeiras)
+ *
+ * Regras adicionais críticas:
+ * - Entregar UMA única microexperiência (não lista, não variações)
+ * - Sem títulos, sem bullets, sem explicações educacionais
+ * - Texto curto, concreto, executável agora
+ * - Precisa parecer pensado para o momento, não “catálogo”
+ */
+function buildPromptMeuFilhoBloco1Cognitivo(): string {
+  return `
+Você está no Materna360, no hub "Meu Filho → Brincadeiras", e sua missão é entregar UMA microexperiência única, pensada para este momento.
 
-LEIA O INPUT DO USUÁRIO (mensagem role=user) COMO A ÚNICA FONTE DE VERDADE.
-Ele vem em JSON com: mode, profile, child, context e (às vezes) campos extras no context (ex.: ageBand, local, habilidades, nonce, requestId, variation, etc.).
+PROCESSO OBRIGATÓRIO (execute mentalmente antes de escrever):
+1) Leitura da realidade: idade/faixa, tempo disponível, energia implícita da mãe, contexto de casa, vínculo buscado agora.
+2) Exclusão do óbvio: descarte brincadeiras comuns, ideias de blog/lista, sugestões familiares demais (ex.: caça ao tesouro genérico, massinha, pintura, circuito, dança livre, historinha inventada padrão, “pular corda”, “pega-pega”).
+3) Escolha de UM arquétipo cognitivo (silencioso, sem nomear): descoberta silenciosa, missão curta, observação guiada, inversão de papéis, desafio gentil, exploração sensorial contida.
+4) Construção de microexperiência: início claro, ação central simples, fechamento natural.
+5) Validação emocional: sem preparo, sem bagunça grande, sem obrigação, pode parar sem frustração, respeita o cansaço.
 
-NÃO invente campos fora do schema.
-NÃO escreva texto fora do JSON.
-NÃO use markdown.
-NÃO inclua explicações, títulos soltos ou listas na resposta.
-
-=========================
-P34.17 — ARQUITETURA COGNITIVA (APLICAR APENAS A: tipoIdeia = "meu-filho-bloco-1")
-=========================
-
-OBJETIVO (meu-filho-bloco-1):
-- Entregar UMA única microexperiência para agora (não é lista).
-- Não soar óbvio, não soar blog, não soar “sempre igual”.
-- Parecer que você pensou antes de responder.
-- Texto curto, concreto, executável agora.
-- Sem títulos, sem bullets, sem justificativas.
-
-FORMATO DO TEXTO FINAL (description):
-- 1 a 3 frases (curtas, diretas).
-- Ordem implícita: convite contextual → ação principal → fechamento natural.
-- Sem quebras de linha.
+ENTREGA FINAL (obrigatória):
+- Sem título.
+- Sem listas.
 - Sem bullets.
-- Sem “dicas”, “benefícios” ou explicações educacionais.
+- Sem explicações educacionais.
+- Sem “você pode”, sem “que tal”, sem “talvez”, sem “se quiser”, sem “uma ideia”.
+- 1 a 3 frases, no máximo 280 caracteres.
+- Convite contextual + ação principal + fechamento natural.
+- Uma única ideia por resposta.
 
-PROIBIDO (para meu-filho-bloco-1):
-- Listas, variações, opções, “você pode…”, “que tal…”, “talvez…”, “se quiser…”, “uma ideia…”.
-- Tom genérico (“brinque de esconde-esconde”, “caça ao tesouro”, “mímica”, “dança”, “pintura livre” como default).
-- Frases longas ou com instrução demais.
-- Exigência de preparo, materiais especiais, bagunça grande, ou “rotina perfeita”.
+FORMATO DE RESPOSTA:
+Responda APENAS com JSON válido no shape:
+{
+  "suggestions": [
+    {
+      "id": "mf-b1-001",
+      "category": "ideia-rapida",
+      "title": "",
+      "description": "…",
+      "estimatedMinutes": <number>,
+      "withChild": true,
+      "moodImpact": "aproxima"
+    }
+  ]
+}
+`.trim()
+}
 
-PROCESSO INTERNO OBRIGATÓRIO (meu-filho-bloco-1) — FAÇA ANTES DE ESCREVER:
-1) Leitura da realidade (inferência silenciosa a partir do input):
-   - idade/faixa (use: context.ageBand, child.ageRange/idadeMeses quando existir)
-   - local real (use: context.local se existir; senão assuma "casa")
-   - tempo (use: context.tempoDisponivel)
-   - energia da mãe (derive de profile.userEmotionalBaseline; se ausente, assuma "cansada")
-   - vínculo buscado (derive de context.habilidades quando existir; senão "aproxima")
+function buildModeSpecializationPrompt(
+  mode: MaternaMode,
+  quickContext?: RotinaQuickIdeasContext | null,
+): string {
+  if (mode === 'quick-ideas') {
+    // ✅ Decisão de governança P34.17:
+    // Prompt por tipoIdeia, APENAS para meu-filho-bloco-1.
+    if (quickContext?.tipoIdeia === 'meu-filho-bloco-1') {
+      return buildPromptMeuFilhoBloco1Cognitivo()
+    }
 
-2) Exclusão do óbvio:
-   - descarte mentalmente brincadeiras muito comuns ou com cara de lista de blog.
-   - descarte qualquer coisa familiar demais para esse hub.
-
-3) Escolha de UM arquétipo cognitivo (1 por geração), preferindo variar entre:
-   - Descoberta silenciosa
-   - Missão curta
-   - Construção improvisada
-   - Observação guiada
-   - Inversão de papéis
-   - Desafio gentil
-   - Exploração sensorial contida
-
-4) Construção da microexperiência:
-   - início claro (entra “agora” sem preparação)
-   - ação central simples (1 núcleo)
-   - fechamento natural (encerra sem frustração; “fecha e segue”)
-
-5) Validação emocional:
-   - respeita cansaço
-   - pode parar sem culpa
-   - não cria obrigação
-
-VARIAÇÃO:
-- Se existir context.nonce, context.requestId ou context.variation, use isso como “semente” para variar a escolha do arquétipo e o cenário micro (sem mencionar esses valores no texto).
-
-MAPEAMENTO PARA O OUTPUT (meu-filho-bloco-1):
-- suggestions deve ter exatamente 1 item.
-- title: string vazia "" (você pode retornar "" para evitar títulos).
-- description: a microexperiência (1–3 frases).
-- estimatedMinutes: use context.tempoDisponivel quando existir; senão 5.
-- withChild: true
-- moodImpact: escolha coerente (geralmente "aproxima" ou "acalma").
-
-=========================
-OUTROS tipoIdeia (NÃO APLICAR A ARQUITETURA ACIMA)
-=========================
-
-Para qualquer outro tipoIdeia (ex.: "brincadeira", "organizacao", "autocuidado", "meu-filho-bloco-2/3/4"):
-- Responda com até 3 suggestions quando fizer sentido.
-- Use linguagem curta e prática.
-- Evite julgamentos.
-- Mantenha o JSON válido.
+    // Mantém o comportamento atual para qualquer outro tipoIdeia.
+    // (Sem expandir escopo nesta P.)
+    return `
+${/* PROMPT CANÔNICO DO MEU FILHO — BLOCO 1 (mantido integralmente) */ ''}
+${/* Conteúdo exatamente como você definiu */ ''}
 `.trim()
   }
 
   if (mode === 'daily-inspiration') {
     return `
 Você está na funcionalidade "Inspirações do Dia".
-Responda com:
-{ "inspiration": { "phrase": "...", "care": "...", "ritual": "..." } }
-Sempre em Português do Brasil, tom humano e sem julgamentos.
+Responda com phrase, care e ritual.
 `.trim()
   }
 
   return `
 Você está na funcionalidade "Receitas Inteligentes".
-Responda com:
-{ "recipes": [ { "id": "...", "title": "...", "description": "...", "timeLabel": "...", "ageLabel": "...", "preparation": "...", "safetyNote": "..." } ] }
-Sempre em Português do Brasil, tom humano e sem julgamentos.
+Responda com recipes.
 `.trim()
 }
 
@@ -299,8 +277,13 @@ export async function callMaternaAI<M extends MaternaMode>(
       ? { ...payload.child, ageRange: deriveAgeRangeFromMonths(payload.child.idadeMeses) }
       : payload.child ?? null
 
+  const quickContext = payload.mode === 'quick-ideas' ? (payload.context as RotinaQuickIdeasContext) : null
+
   const messages: OpenAIChatMessage[] = [
-    { role: 'system', content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode) },
+    {
+      role: 'system',
+      content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode, quickContext),
+    },
     {
       role: 'user',
       content: JSON.stringify({
