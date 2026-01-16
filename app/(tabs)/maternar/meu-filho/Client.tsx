@@ -122,7 +122,7 @@ function safeGetLS(key: string): string | null {
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(${LS_PREFIX}${key}, value)
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
     window.localStorage.setItem(key, value) // compat legado
   } catch {}
 }
