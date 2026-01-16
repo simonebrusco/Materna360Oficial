@@ -273,12 +273,7 @@ export async function POST(req: Request) {
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-2') {
-      suggestions = sanitizeMeuFilhoBloco2Suggestions(
-        suggestions,
-        body.tempoDisponivel,
-        body.local ?? null,
-        body.habilidades ?? null,
-      )
+      suggestions = sanitizeMeuFilhoBloco2Suggestions(suggestions, body.tempoDisponivel)
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-3') {
