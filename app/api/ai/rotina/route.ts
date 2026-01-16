@@ -1,100 +1,123 @@
+// app/api/ai/rotina/route.ts
+
 import { NextResponse } from 'next/server'
-import { callMaternaAI } from '@/app/lib/ai/maternaCore'
-import { getProfileSnapshot } from '@/app/lib/profile.server'
-import type { RotinaQuickSuggestion } from '@/app/lib/ai/types'
-import { NO_STORE_HEADERS } from '@/app/lib/http'
+import {
+  callMaternaAI,
+  type MaternaProfile,
+  type MaternaChildProfile,
+  type RotinaComQuem,
+  type RotinaTipoIdeia,
+  type RotinaQuickSuggestion,
+} from '@/app/lib/ai/maternaCore'
+import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
+import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
 
-function clampText(text: string, max: number) {
-  const t = text.trim()
-  return t.length > max ? t.slice(0, max).trim() : t
+import { sanitizeMeuFilhoBloco2Suggestions } from '@/app/lib/ai/validators/bloco2'
+import {
+  tryConsumeDailyAI,
+  releaseDailyAI,
+  DAILY_LIMIT_MESSAGE,
+  DAILY_LIMIT_ANON_COOKIE,
+  DAILY_LIMIT,
+} from '@/app/lib/ai/dailyLimit.server'
+
+export const runtime = 'nodejs'
+
+/* =========================
+   Tipos locais
+========================= */
+
+type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
+type Bloco3Tipo = 'rotina' | 'conexao'
+type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
+
+type RotinaRequestBody = {
+  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase' | 'fase-contexto'
+  origin?: string
+
+  // Receitas
+  ingredientePrincipal?: string | null
+  tipoRefeicao?: string | null
+  tempoPreparoMinutos?: number | null
+
+  // Quick ideas
+  tempoDisponivel?: number | null
+  comQuem?: RotinaComQuem | null
+  tipoIdeia?: RotinaTipoIdeia | null
+
+  // Blocos Meu Filho
+  ageBand?: string | null
+  contexto?: string | null
+  local?: string | null
+  habilidades?: string[] | null
+
+  // Anti-repetição
+  avoid_titles?: string[] | null
+  avoid_themes?: string[] | null
+
+  // Bloco 3
+  idade?: number | string | null
+  faixa_etaria?: string | null
+  momento_do_dia?: MomentoDoDia | null
+  tipo_experiencia?: Bloco3Tipo | null
+  tema?: string | null
+
+  // Bloco 4
+  momento_desenvolvimento?: MomentoDesenvolvimento | null
+  foco?: string | null
 }
 
-function countSentences(text: string) {
-  return text.split(/[.!?]+/).filter(Boolean).length
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
+
+/* =========================
+   Helpers de texto
+========================= */
+
+function stripEmojiAndBullets(s: string) {
+  const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
+  return noBullets
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function clampText(raw: unknown, max: number) {
+  const t = stripEmojiAndBullets(String(raw ?? '').trim())
+  if (!t) return ''
+  if (t.length <= max) return t
+  return t.slice(0, max - 1).trimEnd() + '…'
+}
+
+function countSentences(t: string) {
+  return t
+    .split(/[.!?]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean).length
 }
 
 /* =========================
-   Helper — eixo explícito
+   Bloco 1 — Guardrail
 ========================= */
-function axisMatchesBloco1(axis: string, text: string) {
-  const t = text.toLowerCase()
 
-  const map: Record<string, string[]> = {
-    observacao: ['observar', 'perceber', 'olhar', 'notar', 'escutar'],
-    micro_missao: ['escolher', 'procurar', 'achar', 'encontrar'],
-    corpo_movimento: ['pular', 'alongar', 'movimento', 'esticar', 'dançar'],
-    faz_de_conta: ['imaginar', 'fingir', 'brincar', 'história'],
-  }
-
-  const keys = map[axis]
-  if (!keys) return true
-
-  return keys.some((k) => t.includes(k))
-}
-
-/* =========================
-   Bloco 1 — Ideias rápidas
-========================= */
 function sanitizeMeuFilhoBloco1(
-  raw: any[],
-  tempoDisponivel: number | null,
-  variationAxis: string | null,
-  nonce: string | null,
+  raw: RotinaQuickSuggestion[] | null | undefined,
+  tempoDisponivel: number | null | undefined,
 ): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const anyFirst = first as any
-
-  const candidate = (first.description ?? anyFirst.text ?? anyFirst.output ?? '').toString()
-  const description = clampText(candidate, 280)
-  if (!description) return []
+  const description = String(first.description ?? '').trim()
 
   if (description.length < 1 || description.length > 280) return []
-
-  const n = countSentences(description)
-  if (n < 1 || n > 3) return []
+  if (countSentences(description) < 1 || countSentences(description) > 3) return []
 
   const forbidden = /\b(você pode|voce pode|que tal|talvez|se quiser|uma ideia)\b/i
   if (forbidden.test(description)) return []
 
-  if (variationAxis && !axisMatchesBloco1(variationAxis, description)) return []
-
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
       ? Math.max(1, Math.round(tempoDisponivel))
-      : first.estimatedMinutes ?? 0
-
-  const sanitized: RotinaQuickSuggestion = {
-    ...first,
-    id: `mf_b1_${variationAxis ?? 'geral'}_${nonce ?? Date.now()}`,
-    title: '',
-    description,
-    withChild: true,
-    estimatedMinutes,
-  }
-
-  return [sanitized]
-}
-
-/* =========================
-   Bloco 2
-========================= */
-function sanitizeMeuFilhoBloco2Suggestions(
-  raw: any[],
-  tempoDisponivel: number | null,
-): RotinaQuickSuggestion[] {
-  const first = Array.isArray(raw) ? raw[0] : null
-  if (!first) return []
-
-  const candidate = first.description ?? ''
-  const description = clampText(candidate, 280)
-  if (!description) return []
-
-  const estimatedMinutes =
-    typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
-      ? Math.max(1, Math.round(tempoDisponivel))
-      : first.estimatedMinutes ?? 0
+      : first.estimatedMinutes
 
   return [
     {
@@ -108,17 +131,24 @@ function sanitizeMeuFilhoBloco2Suggestions(
 }
 
 /* =========================
-   Bloco 3
+   Bloco 3 — Rotinas / Conexão
 ========================= */
+
 function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const candidate = (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
+  const candidate =
+    (first as any).description ??
+    (first as any).text ??
+    (first as any).output ??
+    ''
+
   const text = clampText(candidate, 240)
   if (!text) return []
 
-  const low = text.toLowerCase()
+  if (countSentences(text) > 3) return []
+  if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
 
   const banned = [
     'todo dia',
@@ -132,37 +162,6 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
     'rotina ideal',
     'o mais importante é',
   ]
-  if (banned.some((b) => low.includes(b))) return []
-
-  if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
-  if (countSentences(text) > 3) return []
-
-  return [
-    {
-      ...first,
-      title: '',
-      description: text,
-      withChild: true,
-      estimatedMinutes: 0,
-    },
-  ]
-}
-
-/* =========================
-   Bloco 4
-========================= */
-function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
-  const first = Array.isArray(raw) ? raw[0] : null
-  if (!first) return []
-
-  const candidate = (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
-  const text = clampText(candidate, 140)
-  if (!text) return []
-
-  if (countSentences(text) !== 1) return []
-  if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
-
-  const banned = ['deve', 'deveria', 'ideal', 'atraso', 'adiantado']
   if (banned.some((b) => text.toLowerCase().includes(b))) return []
 
   return [
@@ -176,66 +175,143 @@ function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
   ]
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    const profile = await getProfileSnapshot()
+/* =========================
+   Bloco 4 — Fases / Contexto
+========================= */
 
-    const ctx = {
-      tempoDisponivel: body.tempoDisponivel ?? null,
-      comQuem: body.comQuem ?? null,
-      local: body.local ?? null,
-      habilidades: body.habilidades ?? null,
-      idade: body.idade ?? null,
-      faixa_etaria: body.faixa_etaria ?? null,
-      variation_axis: body.variation_axis ?? null,
+function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  if (!first) return []
+
+  const candidate =
+    (first as any).description ??
+    (first as any).text ??
+    (first as any).output ??
+    ''
+
+  const text = clampText(candidate, 140)
+  if (!text) return []
+  if (countSentences(text) !== 1) return []
+  if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
+
+  const banned = [
+    'é esperado que',
+    'já deveria',
+    'o ideal é',
+    'precisa',
+    'deve',
+    'diagnóstico',
+    'tdah',
+    'autismo',
+  ]
+  if (banned.some((b) => text.toLowerCase().includes(b))) return []
+
+  return [
+    {
+      ...first,
+      title: '',
+      description: text,
+      withChild: true,
+      estimatedMinutes: 0,
+    },
+  ]
+}
+
+/* =========================
+   POST
+========================= */
+
+export async function POST(req: Request) {
+  let gate: { actorId: string; dateKey: string } | null = null
+
+  try {
+    assertRateLimit(req, 'ai-rotina', { limit: 20, windowMs: 5 * 60_000 })
+
+    const g = await tryConsumeDailyAI(DAILY_LIMIT)
+    gate = { actorId: g.actorId, dateKey: g.dateKey }
+
+    if (!g.allowed) {
+      return NextResponse.json(
+        {
+          blocked: true,
+          message: DAILY_LIMIT_MESSAGE,
+          suggestions: [],
+          recipes: [],
+        },
+        {
+          status: 200,
+          headers: {
+            ...NO_STORE_HEADERS,
+            'Set-Cookie': `${DAILY_LIMIT_ANON_COOKIE}=1; Path=/; Max-Age=86400`,
+          },
+        },
+      )
     }
 
-    const result = await callMaternaAI({
-      mode: 'quick-ideas',
+    const body = (await req.json()) as RotinaRequestBody
+
+    const ctx = await loadMaternaContextFromRequest(req)
+    const profile: MaternaProfile | null = ctx.profile ?? null
+    const child: MaternaChildProfile | null = ctx.child ?? null
+
+    const aiResponse = await callMaternaAI({
+      mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
       profile,
-      child: null,
-      context: ctx,
+      child,
+      context: {
+        tempoDisponivel: body.tempoDisponivel ?? null,
+        comQuem: body.comQuem ?? null,
+        tipoIdeia: body.tipoIdeia ?? null,
+      },
+      personalization: body,
     })
 
+    let suggestions = ('suggestions' in aiResponse ? (aiResponse.suggestions ?? []) : [])
+
     if (body.tipoIdeia === 'meu-filho-bloco-1') {
-      const sanitized = sanitizeMeuFilhoBloco1(
-        result.suggestions ?? [],
-        body.tempoDisponivel ?? null,
-        body.variation_axis ?? null,
-        body.nonce ?? null,
-      )
-      return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+      suggestions = sanitizeMeuFilhoBloco1(suggestions, body.tempoDisponivel)
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-2') {
-      const sanitized = sanitizeMeuFilhoBloco2Suggestions(
-        result.suggestions ?? [],
-        body.tempoDisponivel ?? null,
+      suggestions = sanitizeMeuFilhoBloco2Suggestions(
+        suggestions,
+        body.tempoDisponivel,
+        body.local ?? null,
+        body.habilidades ?? null,
       )
-      return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-3') {
-      return NextResponse.json(
-        { suggestions: sanitizeMeuFilhoBloco3(result.suggestions ?? []) },
-        { status: 200, headers: NO_STORE_HEADERS },
-      )
+      suggestions = sanitizeMeuFilhoBloco3(suggestions)
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-4') {
+      suggestions = sanitizeMeuFilhoBloco4(suggestions)
+    }
+
+    return NextResponse.json(
+      { suggestions },
+      { status: 200, headers: NO_STORE_HEADERS },
+    )
+  } catch (err) {
+    if (gate) {
+      await releaseDailyAI(gate.actorId, gate.dateKey)
+    }
+
+    if (err instanceof RateLimitError) {
       return NextResponse.json(
-        { suggestions: sanitizeMeuFilhoBloco4(result.suggestions ?? []) },
-        { status: 200, headers: NO_STORE_HEADERS },
+        { error: 'Muitas requisições, tente novamente em instantes.' },
+        { status: 429, headers: NO_STORE_HEADERS },
       )
     }
 
-    return NextResponse.json({ suggestions: [] }, { status: 200, headers: NO_STORE_HEADERS })
-  } catch (e) {
-    console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', e)
+    console.error('[API /api/ai/rotina] Erro:', err)
+
     return NextResponse.json(
-      { error: 'Não consegui gerar sugestões agora, tente novamente em instantes.' },
-      { status: 500 },
+      {
+        error: 'Não consegui gerar sugestões agora, tente novamente em instantes.',
+      },
+      { status: 500, headers: NO_STORE_HEADERS },
     )
   }
 }
