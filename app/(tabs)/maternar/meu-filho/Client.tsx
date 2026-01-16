@@ -968,8 +968,11 @@ function splitEditorialText(raw: string | null | undefined): string[] {
 
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
   let working = text
+
   markers.forEach((m) => {
-    working = working.replace(new RegExp(\\s*${m}, 'g'), \n\n${m})
+    // quebra antes do marcador, preservando o texto do marcador
+    // exemplo: "... X. No final, Y" -> "... X.\n\nNo final, Y"
+    working = working.replace(new RegExp(`\\s*${escapeRegExp(m)}`, 'g'), `\n\n${m}`)
   })
 
   const parts = working
@@ -979,6 +982,11 @@ function splitEditorialText(raw: string | null | undefined): string[] {
 
   if (parts.length === 0) return [text]
   return parts.slice(0, 4)
+}
+
+// helper local para não quebrar o RegExp caso o marcador tenha caracteres especiais
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function RenderEditorialText({
