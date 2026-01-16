@@ -101,11 +101,19 @@ function countSentences(t: string) {
 function sanitizeMeuFilhoBloco1(
   raw: RotinaQuickSuggestion[] | null | undefined,
   tempoDisponivel: number | null | undefined,
+  variationAxis: string | null | undefined,
+  nonce: string | null | undefined,
 ): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const description = String(first.description ?? '').trim()
+  // texto base (compatível com retornos variados)
+  const candidate = (first.description ?? first.text ?? (first as any).output ?? '').toString()
+  const description = clampText(candidate, 280)
+  if (!description) return []
+
+  // sem lista / quebra
+  if (description.includes('\n') || description.includes('•') || description.includes('- ')) return []
 
   // 1..280 chars
   if (description.length < 1 || description.length > 280) return []
@@ -118,13 +126,45 @@ function sanitizeMeuFilhoBloco1(
   const forbidden = /\b(você pode|voce pode|que tal|talvez|se quiser|uma ideia)\b/i
   if (forbidden.test(description)) return []
 
+  // ===== eixo explícito: NÃO pode derrubar a resposta =====
+  // Se não bater, seguimos mesmo assim (a mãe não pode receber vazio).
+  // O enforcement real deve ficar no prompt; aqui é só “assistência”.
+  const safeAxis =
+    (variationAxis ?? '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '')
+      .slice(0, 24) || null
+
+  if (safeAxis && typeof axisMatchesBloco1 === 'function') {
+    try {
+      // se não bater, não fazemos nada (sem return [])
+      axisMatchesBloco1(safeAxis, description)
+    } catch {
+      // nunca derrubar por causa do eixo
+    }
+  }
+
+  const safeNonce =
+    (nonce ?? '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '')
+      .slice(-12) || null
+
+  const forcedId = `mf_b1_${safeAxis || 'x'}_${safeNonce || 'n'}`
+
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
       ? Math.max(1, Math.round(tempoDisponivel))
-      : first.estimatedMinutes
+      : (first.estimatedMinutes ?? 0)
 
   const sanitized: RotinaQuickSuggestion = {
     ...first,
+    id: forcedId,
+    category: 'ideia-rapida',
     title: '',
     description,
     withChild: true,
@@ -133,6 +173,7 @@ function sanitizeMeuFilhoBloco1(
 
   return [sanitized]
 }
+
 
 /* =========================
    Bloco 3 — Rotinas / Conexão
