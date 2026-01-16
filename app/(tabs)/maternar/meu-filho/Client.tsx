@@ -775,6 +775,187 @@ async function fetchBloco4Suggestion(args: {
 /* =========================
    KITS (fallback local)
 ========================= */
+const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
+  '0-2': {
+    '5': {
+      id: 'k-0-2-5',
+      title: 'Conexão em 5 min (0–2)',
+      subtitle: 'Fallback local',
+      time: '5',
+      plan: {
+        a: { title: 'Conexão breve', how: 'Fique perto, observe e responda aos gestos da criança.', time: '5', tag: 'fallback' },
+        b: { title: 'Explorar juntos', how: 'Mostre um objeto simples e acompanhe a curiosidade.', time: '5', tag: 'fallback' },
+        c: { title: 'Presença calma', how: 'Sente-se ao lado e compartilhe o momento.', time: '5', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Exploração sensorial e repetição curta ajudam.' },
+      routine: { label: 'Rotina', note: 'Avise a transição com uma frase curta antes de mudar.' },
+      connection: { label: 'Conexão', note: 'Olho no olho por alguns segundos já conta.' },
+    },
+    '10': {
+      id: 'k-0-2-10',
+      title: 'Presença prática em 10 min (0–2)',
+      subtitle: 'Fallback local',
+      time: '10',
+      plan: {
+        a: { title: 'Exploração guiada', how: 'Incentive pequenos movimentos e sons.', time: '10', tag: 'fallback' },
+        b: { title: 'Interação afetiva', how: 'Converse e reaja às expressões da criança.', time: '10', tag: 'fallback' },
+        c: { title: 'Descoberta sensorial', how: 'Use algo do ambiente para explorar juntos.', time: '10', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Ritmo curto e previsível mantém o interesse.' },
+      routine: { label: 'Rotina', note: 'Feche com “agora vamos guardar” e guarde 1 item juntos.' },
+      connection: { label: 'Conexão', note: 'Abraço curto e respiração junto por 3 ciclos.' },
+    },
+    '15': {
+      id: 'k-0-2-15',
+      title: 'Momento completo em 15 min (0–2)',
+      subtitle: 'Fallback local',
+      time: '15',
+      plan: {
+        a: { title: 'Tempo juntos', how: 'Permaneça disponível e atento.', time: '15', tag: 'fallback' },
+        b: { title: 'Brincar simples', how: 'Repita gestos e sons com a criança.', time: '15', tag: 'fallback' },
+        c: { title: 'Acolhimento', how: 'Ofereça colo e contato visual.', time: '15', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Repetição e previsibilidade reduzem irritação.' },
+      routine: { label: 'Rotina', note: 'Use um aviso curto antes de cada troca de atividade.' },
+      connection: { label: 'Conexão', note: 'Presença silenciosa e sorriso encerram bem.' },
+    },
+  },
+
+  '3-4': {
+    '5': {
+      id: 'k-3-4-5',
+      title: 'Conexão em 5 min (3–4)',
+      subtitle: 'Fallback local',
+      time: '5',
+      plan: {
+        a: { title: 'Missão rápida', how: 'Convide a criança para uma tarefa simples juntos.', time: '5', tag: 'fallback' },
+        b: { title: 'Observação', how: 'Observe algo do ambiente e conversem.', time: '5', tag: 'fallback' },
+        c: { title: 'Movimento leve', how: 'Faça um pequeno movimento corporal junto.', time: '5', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Faz de conta curto com começo e fim ajuda.' },
+      routine: { label: 'Rotina', note: 'Transição fica melhor com aviso + contagem.' },
+      connection: { label: 'Conexão', note: 'Uma frase de reconhecimento encerra bem.' },
+    },
+    '10': {
+      id: 'k-3-4-10',
+      title: 'Presença prática em 10 min (3–4)',
+      subtitle: 'Fallback local',
+      time: '10',
+      plan: {
+        a: { title: 'Brincar dirigido', how: 'Proponha uma brincadeira curta.', time: '10', tag: 'fallback' },
+        b: { title: 'Exploração ativa', how: 'Use objetos comuns para criar algo.', time: '10', tag: 'fallback' },
+        c: { title: 'Conversa breve', how: 'Pergunte e escute com atenção.', time: '10', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Escolhas simples (2 opções) reduzem disputa.' },
+      routine: { label: 'Rotina', note: 'Timer curto ajuda a encerrar sem briga.' },
+      connection: { label: 'Conexão', note: 'Toque no ombro + olhar nos olhos por 5s.' },
+    },
+    '15': {
+      id: 'k-3-4-15',
+      title: 'Momento completo em 15 min (3–4)',
+      subtitle: 'Fallback local',
+      time: '15',
+      plan: {
+        a: { title: 'Atividade conjunta', how: 'Realizem algo simples do começo ao fim.', time: '15', tag: 'fallback' },
+        b: { title: 'Criar juntos', how: 'Inventem algo rápido.', time: '15', tag: 'fallback' },
+        c: { title: 'Conexão tranquila', how: 'Fique presente e disponível.', time: '15', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Ritual curto de encerramento ajuda transições.' },
+      routine: { label: 'Rotina', note: 'Feche brincadeira guardando 1 item juntos.' },
+      connection: { label: 'Conexão', note: '“Obrigada por brincar comigo” + sorriso.' },
+    },
+  },
+
+  '5-6': {
+    '5': {
+      id: 'k-5-6-5',
+      title: 'Conexão em 5 min (5–6)',
+      subtitle: 'Fallback local',
+      time: '5',
+      plan: {
+        a: { title: 'Desafio curto', how: 'Proponha um pequeno desafio.', time: '5', tag: 'fallback' },
+        b: { title: 'Organização leve', how: 'Arrumem algo juntos.', time: '5', tag: 'fallback' },
+        c: { title: 'Troca rápida', how: 'Conversem brevemente.', time: '5', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Reconhecer esforço melhora colaboração.' },
+      routine: { label: 'Rotina', note: 'Combinado curto “agora X, depois Y” ajuda.' },
+      connection: { label: 'Conexão', note: 'Diga algo específico que você percebeu.' },
+    },
+    '10': {
+      id: 'k-5-6-10',
+      title: 'Presença prática em 10 min (5–6)',
+      subtitle: 'Fallback local',
+      time: '10',
+      plan: {
+        a: { title: 'Jogo simples', how: 'Inicie um jogo rápido.', time: '10', tag: 'fallback' },
+        b: { title: 'Criação livre', how: 'Desenhem ou montem algo.', time: '10', tag: 'fallback' },
+        c: { title: 'Exploração guiada', how: 'Descubram algo novo.', time: '10', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Dar escolha entre 2 opções reduz atrito.' },
+      routine: { label: 'Rotina', note: 'Função simples (“você cuida de X”) facilita transição.' },
+      connection: { label: 'Conexão', note: '5 minutos 1:1 sem tela já muda o clima.' },
+    },
+    '15': {
+      id: 'k-5-6-15',
+      title: 'Momento completo em 15 min (5–6)',
+      subtitle: 'Fallback local',
+      time: '15',
+      plan: {
+        a: { title: 'Projeto curto', how: 'Planejem e executem algo simples.', time: '15', tag: 'fallback' },
+        b: { title: 'Brincadeira estruturada', how: 'Siga regras simples.', time: '15', tag: 'fallback' },
+        c: { title: 'Momento de vínculo', how: 'Conversem com calma.', time: '15', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Combinar começo e fim reduz resistência.' },
+      routine: { label: 'Rotina', note: 'Timer visível ajuda a encerrar sem disputa.' },
+      connection: { label: 'Conexão', note: 'Reconheça: “eu vi que foi difícil e você tentou”.' },
+    },
+  },
+
+  '6+': {
+    '5': {
+      id: 'k-6p-5',
+      title: 'Conexão em 5 min (6+)',
+      subtitle: 'Fallback local',
+      time: '5',
+      plan: {
+        a: { title: 'Check-in rápido', how: 'Pergunte “de 0 a 10, como foi seu dia?” e escute.', time: '5', tag: 'fallback' },
+        b: { title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado.', time: '5', tag: 'fallback' },
+        c: { title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa; você agradece e reconhece.', time: '5', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Respeito e autonomia aumentam cooperação.' },
+      routine: { label: 'Rotina', note: 'Combinar “o que vem agora” evita atrito.' },
+      connection: { label: 'Conexão', note: 'Escuta curta sem corrigir fecha bem.' },
+    },
+    '10': {
+      id: 'k-6p-10',
+      title: 'Presença prática em 10 min (6+)',
+      subtitle: 'Fallback local',
+      time: '10',
+      plan: {
+        a: { title: 'Conversa guiada', how: '2 perguntas e uma escuta direta.', time: '10', tag: 'fallback' },
+        b: { title: 'Atividade rápida', how: 'Ele escolhe algo curto para fazer lado a lado.', time: '10', tag: 'fallback' },
+        c: { title: 'Organizar junto', how: 'Organizem um cantinho por 5–8 minutos.', time: '10', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Escolhas claras reduzem resistência.' },
+      routine: { label: 'Rotina', note: 'Evite explicação longa; use combinado objetivo.' },
+      connection: { label: 'Conexão', note: 'Pergunte: “quer ajuda ou só que eu te ouça?”' },
+    },
+    '15': {
+      id: 'k-6p-15',
+      title: 'Momento completo em 15 min (6+)',
+      subtitle: 'Fallback local',
+      time: '15',
+      plan: {
+        a: { title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.', time: '15', tag: 'fallback' },
+        b: { title: 'Arrumar com música', how: 'Arrumem por 10 min com música; feche com conversa breve.', time: '15', tag: 'fallback' },
+        c: { title: 'Combinados do dia', how: 'Atividade curta + 3 min de combinados objetivos.', time: '15', tag: 'fallback' },
+      },
+      development: { label: 'Nesta fase', note: 'Previsibilidade curta e respeito ajudam transições.' },
+      routine: { label: 'Rotina', note: 'Feche sempre com “agora X, depois Y”.' },
+      connection: { label: 'Conexão', note: 'Reconheça o esforço, sem alongar.' },
+    },
+  },
+}
 
 /* =========================
    P34.10 — Legibilidade Mobile (quebra editorial)
