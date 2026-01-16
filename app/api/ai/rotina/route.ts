@@ -1,170 +1,73 @@
-// app/api/ai/rotina/route.ts
-
 import { NextResponse } from 'next/server'
-import {
-  callMaternaAI,
-  type MaternaProfile,
-  type MaternaChildProfile,
-  type RotinaComQuem,
-  type RotinaTipoIdeia,
-  type RotinaQuickSuggestion,
-} from '@/app/lib/ai/maternaCore'
-import { loadMaternaContextFromRequest } from '@/app/lib/ai/profileAdapter'
-import { assertRateLimit, RateLimitError } from '@/app/lib/ai/rateLimit'
+import { callMaternaAI } from '@/app/lib/ai/maternaCore'
+import { getProfileSnapshot } from '@/app/lib/profile.server'
+import type { RotinaQuickSuggestion } from '@/app/lib/ai/types'
+import { NO_STORE_HEADERS } from '@/app/lib/http'
 
-import { sanitizeMeuFilhoBloco2Suggestions } from '@/app/lib/ai/validators/bloco2'
-import {
-  tryConsumeDailyAI,
-  releaseDailyAI,
-  DAILY_LIMIT_MESSAGE,
-  DAILY_LIMIT_ANON_COOKIE,
-  DAILY_LIMIT,
-} from '@/app/lib/ai/dailyLimit.server'
-
-export const runtime = 'nodejs'
-
-type MomentoDoDia = 'manhã' | 'tarde' | 'noite' | 'transição'
-type Bloco3Tipo = 'rotina' | 'conexao'
-type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
-
-type RotinaRequestBody = {
-  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase' | 'fase-contexto'
-  origin?: string
-
-  // Receitas
-  ingredientePrincipal?: string | null
-  tipoRefeicao?: string | null
-  tempoPreparoMinutos?: number | null
-
-  // Quick ideas (geral)
-  tempoDisponivel?: number | null
-  comQuem?: RotinaComQuem | null
-  tipoIdeia?: RotinaTipoIdeia | null
-
-  // Campos extras (Meu Filho Blocos 2–4)
-  ageBand?: string | null
-  contexto?: string | null
-
-  // ✅ Bloco 2 — Filtros do Client
-  local?: string | null
-  habilidades?: string[] | null
-
-  // ✅ Anti-repetição assistida (opcional)
-  avoid_titles?: string[] | null
-  avoid_themes?: string[] | null
-
-  // ✅ Bloco 3 (Rotinas / Conexão)
-  idade?: number | string | null
-  faixa_etaria?: string | null
-  momento_do_dia?: MomentoDoDia | null
-  tipo_experiencia?: Bloco3Tipo | null
-  tema?: string | null
-
-  // ✅ Bloco 4 (Fases / Contexto)
-  momento_desenvolvimento?: MomentoDesenvolvimento | null
-  foco?: string | null
+function clampText(text: string, max: number) {
+  const t = text.trim()
+  return t.length > max ? t.slice(0, max).trim() : t
 }
 
-const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' }
-
-/* =========================
-   Helpers de texto
-========================= */
-
-function stripEmojiAndBullets(s: string) {
-  const noBullets = s.replace(/[•●▪▫◦–—-]\s*/g, '').replace(/\s+/g, ' ').trim()
-  return noBullets
-    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function clampText(raw: unknown, max: number) {
-  const t = stripEmojiAndBullets(String(raw ?? '').trim())
-  if (!t) return ''
-  if (t.length <= max) return t
-  return t.slice(0, max - 1).trimEnd() + '…'
-}
-
-function countSentences(t: string) {
-  const parts = t
-    .split(/[.!?]+/g)
-    .map((s) => s.trim())
-    .filter(Boolean)
-  return parts.length
+function countSentences(text: string) {
+  return text.split(/[.!?]+/).filter(Boolean).length
 }
 
 /* =========================
-   Bloco 1 — Guardrail servidor
+   Helper — eixo explícito
 ========================= */
+function axisMatchesBloco1(axis: string, text: string) {
+  const t = text.toLowerCase()
 
+  const map: Record<string, string[]> = {
+    observacao: ['observar', 'perceber', 'olhar', 'notar', 'escutar'],
+    micro_missao: ['escolher', 'procurar', 'achar', 'encontrar'],
+    corpo_movimento: ['pular', 'alongar', 'movimento', 'esticar', 'dançar'],
+    faz_de_conta: ['imaginar', 'fingir', 'brincar', 'história'],
+  }
+
+  const keys = map[axis]
+  if (!keys) return true
+
+  return keys.some((k) => t.includes(k))
+}
+
+/* =========================
+   Bloco 1 — Ideias rápidas
+========================= */
 function sanitizeMeuFilhoBloco1(
-  raw: RotinaQuickSuggestion[] | null | undefined,
-  tempoDisponivel: number | null | undefined,
-  variationAxis: string | null | undefined,
-  nonce: string | null | undefined,
+  raw: any[],
+  tempoDisponivel: number | null,
+  variationAxis: string | null,
+  nonce: string | null,
 ): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  // texto base (compatível com retornos variados)
-  const candidate = (first.description ?? first.text ?? (first as any).output ?? '').toString()
+  const anyFirst = first as any
+
+  const candidate = (first.description ?? anyFirst.text ?? anyFirst.output ?? '').toString()
   const description = clampText(candidate, 280)
   if (!description) return []
 
-  // sem lista / quebra
-  if (description.includes('\n') || description.includes('•') || description.includes('- ')) return []
-
-  // 1..280 chars
   if (description.length < 1 || description.length > 280) return []
 
-  // até 3 frases
   const n = countSentences(description)
   if (n < 1 || n > 3) return []
 
-  // linguagem proibida (bem conservador)
   const forbidden = /\b(você pode|voce pode|que tal|talvez|se quiser|uma ideia)\b/i
   if (forbidden.test(description)) return []
 
-  // ===== eixo explícito: NÃO pode derrubar a resposta =====
-  // Se não bater, seguimos mesmo assim (a mãe não pode receber vazio).
-  // O enforcement real deve ficar no prompt; aqui é só “assistência”.
-  const safeAxis =
-    (variationAxis ?? '')
-      .toString()
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, '')
-      .slice(0, 24) || null
-
-  if (safeAxis && typeof axisMatchesBloco1 === 'function') {
-    try {
-      // se não bater, não fazemos nada (sem return [])
-      axisMatchesBloco1(safeAxis, description)
-    } catch {
-      // nunca derrubar por causa do eixo
-    }
-  }
-
-  const safeNonce =
-    (nonce ?? '')
-      .toString()
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, '')
-      .slice(-12) || null
-
-  const forcedId = `mf_b1_${safeAxis || 'x'}_${safeNonce || 'n'}`
+  if (variationAxis && !axisMatchesBloco1(variationAxis, description)) return []
 
   const estimatedMinutes =
     typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
       ? Math.max(1, Math.round(tempoDisponivel))
-      : (first.estimatedMinutes ?? 0)
+      : first.estimatedMinutes ?? 0
 
   const sanitized: RotinaQuickSuggestion = {
     ...first,
-    id: forcedId,
-    category: 'ideia-rapida',
+    id: `mf_b1_${variationAxis ?? 'geral'}_${nonce ?? Date.now()}`,
     title: '',
     description,
     withChild: true,
@@ -174,19 +77,44 @@ function sanitizeMeuFilhoBloco1(
   return [sanitized]
 }
 
+/* =========================
+   Bloco 2
+========================= */
+function sanitizeMeuFilhoBloco2Suggestions(
+  raw: any[],
+  tempoDisponivel: number | null,
+): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  if (!first) return []
+
+  const candidate = first.description ?? ''
+  const description = clampText(candidate, 280)
+  if (!description) return []
+
+  const estimatedMinutes =
+    typeof tempoDisponivel === 'number' && Number.isFinite(tempoDisponivel)
+      ? Math.max(1, Math.round(tempoDisponivel))
+      : first.estimatedMinutes ?? 0
+
+  return [
+    {
+      ...first,
+      title: '',
+      description,
+      withChild: true,
+      estimatedMinutes,
+    },
+  ]
+}
 
 /* =========================
-   Bloco 3 — Rotinas / Conexão
-   - até 3 frases
-   - até 240 chars
-   - sem lista / sem cobrança / sem frequência
+   Bloco 3
 ========================= */
-
 function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const candidate = first.description ?? first.text ?? first.output ?? ''
+  const candidate = first.description ?? ''
   const text = clampText(candidate, 240)
   if (!text) return []
 
@@ -206,243 +134,108 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   ]
   if (banned.some((b) => low.includes(b))) return []
 
-  // sem lista
   if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
-
-  // até 3 frases
   if (countSentences(text) > 3) return []
 
-  const sanitized: RotinaQuickSuggestion = {
-    ...first,
-    title: '',
-    description: text,
-    withChild: true,
-    estimatedMinutes: 0,
-  }
-
-  return [sanitized]
+  return [
+    {
+      ...first,
+      title: '',
+      description: text,
+      withChild: true,
+      estimatedMinutes: 0,
+    },
+  ]
 }
 
 /* =========================
-   Bloco 4 — Fases / Contexto
-   - 1 frase
-   - até 140 chars
-   - neutro / observacional / sem norma
+   Bloco 4
 ========================= */
-
 function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
-  const candidate = first.description ?? first.text ?? first.output ?? ''
+  const candidate = first.description ?? ''
   const text = clampText(candidate, 140)
   if (!text) return []
 
-  const low = text.toLowerCase()
-
-  // 1 frase (bem conservador)
   if (countSentences(text) !== 1) return []
-
-  // sem lista/quebra
   if (text.includes('\n') || text.includes('•') || text.includes('- ')) return []
 
-  // frases proibidas (normativas / comparativas / ansiosas)
-  const bannedPhrases = [
-    'é esperado que',
-    'esperado que',
-    'normalmente já deveria',
-    'já deveria',
-    'o ideal é',
-    'crianças dessa idade precisam',
-    'precisam de',
-    'deve',
-    'deveria',
-    'atraso',
-    'adiantado',
-    'comparado',
-    'comparar',
-    'diagnóstico',
-    'tdah',
-    'autismo',
+  const banned = ['deve', 'deveria', 'ideal', 'atraso', 'adiantado']
+  if (banned.some((b) => text.toLowerCase().includes(b))) return []
+
+  return [
+    {
+      ...first,
+      title: '',
+      description: text,
+      withChild: true,
+      estimatedMinutes: 0,
+    },
   ]
-  if (bannedPhrases.some((b) => low.includes(b))) return []
-
-  const sanitized: RotinaQuickSuggestion = {
-    ...first,
-    title: '',
-    description: text,
-    withChild: true,
-    estimatedMinutes: 0,
-  }
-
-  return [sanitized]
 }
 
 export async function POST(req: Request) {
-  let gate: { actorId: string; dateKey: string } | null = null
-
   try {
-    assertRateLimit(req, 'ai-rotina', {
-      limit: 20,
-      windowMs: 5 * 60_000,
-    })
+    const body = await req.json()
+    const profile = await getProfileSnapshot()
 
-    // Limite diário global (ética) — backend como fonte de verdade
-    const g = await tryConsumeDailyAI(DAILY_LIMIT)
-    gate = { actorId: g.actorId, dateKey: g.dateKey }
-
-    if (!g.allowed) {
-      const res = NextResponse.json(
-        {
-          blocked: true,
-          message: DAILY_LIMIT_MESSAGE,
-          // Mantém shapes compatíveis com os dois caminhos principais deste endpoint
-          suggestions: [],
-          recipes: [],
-        },
-        { status: 200, headers: NO_STORE_HEADERS },
-      )
-
-      if (g.anonToSet) {
-        res.cookies.set(DAILY_LIMIT_ANON_COOKIE, g.anonToSet, {
-          httpOnly: true,
-          sameSite: 'lax',
-          path: '/',
-        })
-      }
-
-      console.info('[AI_LIMIT] blocked', {
-        route: '/api/ai/rotina',
-        actorId: g.actorId,
-        dateKey: g.dateKey,
-      })
-
-      return res
+    const ctx = {
+      tempoDisponivel: body.tempoDisponivel ?? null,
+      comQuem: body.comQuem ?? null,
+      local: body.local ?? null,
+      habilidades: body.habilidades ?? null,
+      idade: body.idade ?? null,
+      faixa_etaria: body.faixa_etaria ?? null,
+      variation_axis: body.variation_axis ?? null,
     }
 
-    const body = (await req.json()) as RotinaRequestBody
-
-    const { profile, child } = (await loadMaternaContextFromRequest(req)) as {
-      profile: MaternaProfile | null
-      child: MaternaChildProfile | null
-    }
-
-    // Tratamos micro-ritmos e fase como variações de quick-ideas (sem estourar tipos do core)
-    const isQuick =
-      body.feature === 'quick-ideas' ||
-      body.feature === 'micro-ritmos' ||
-      body.feature === 'fase' ||
-      body.feature === 'fase-contexto'
-
-    if (isQuick) {
-      // IMPORTANTÍSSIMO:
-      // RotinaQuickIdeasContext (do core) não conhece todos os campos por tipagem rígida.
-      // Então montamos como "any" aqui para não quebrar o build, mantendo o contrato do core intacto.
-      const ctx: any = {
-        tempoDisponivel: body.tempoDisponivel ?? null,
-        comQuem: body.comQuem ?? null,
-        tipoIdeia: body.tipoIdeia ?? null,
-
-        // extras (podem ser usados pelo prompt do core, sem tipagem rígida aqui)
-        ageBand: body.ageBand ?? null,
-        contexto: body.contexto ?? null,
-
-        // ✅ Bloco 2 (filtros que o Client envia)
-        local: body.local ?? null,
-        habilidades: Array.isArray(body.habilidades) ? body.habilidades : null,
-
-        // ✅ Anti-repetição assistida (opcional)
-        avoid_titles: Array.isArray(body.avoid_titles) ? body.avoid_titles : null,
-        avoid_themes: Array.isArray(body.avoid_themes) ? body.avoid_themes : null,
-
-        // bloco 3
-        idade: body.idade ?? null,
-        faixa_etaria: body.faixa_etaria ?? null,
-        momento_do_dia: body.momento_do_dia ?? null,
-        tipo_experiencia: body.tipo_experiencia ?? null,
-        tema: body.tema ?? null,
-
-        // bloco 4
-        momento_desenvolvimento: body.momento_desenvolvimento ?? null,
-        foco: body.foco ?? null,
-      }
-
-      const result = await callMaternaAI({
-        mode: 'quick-ideas',
-        profile,
-        child,
-        context: ctx,
-      })
-
-      // ✅ Meu Filho — Bloco 1
-      if (body.tipoIdeia === 'meu-filho-bloco-1') {
-        const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
-      }
-
-      // ✅ Meu Filho — Bloco 2
-      if (body.tipoIdeia === 'meu-filho-bloco-2') {
-        const sanitized = sanitizeMeuFilhoBloco2Suggestions(
-          result.suggestions ?? [],
-          body.tempoDisponivel ?? null,
-        )
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
-      }
-
-      // ✅ Meu Filho — Bloco 3 (Rotinas / Conexão)
-      if (body.tipoIdeia === 'meu-filho-bloco-3') {
-        const sanitized = sanitizeMeuFilhoBloco3(result.suggestions ?? [])
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
-      }
-
-      // ✅ Meu Filho — Bloco 4 (Fases / Contexto)
-      if (body.tipoIdeia === 'meu-filho-bloco-4') {
-        const sanitized = sanitizeMeuFilhoBloco4(result.suggestions ?? [])
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
-      }
-
-      // default: contrato original
-      return NextResponse.json(
-        { suggestions: result.suggestions ?? [] },
-        { status: 200, headers: NO_STORE_HEADERS },
-      )
-    }
-
-    // Receitas
     const result = await callMaternaAI({
-      mode: 'smart-recipes',
+      mode: 'quick-ideas',
       profile,
-      child,
-      context: {
-        ingredientePrincipal: body.ingredientePrincipal ?? null,
-        tipoRefeicao: body.tipoRefeicao ?? null,
-        tempoPreparo: body.tempoPreparoMinutos ?? null,
-      },
+      child: null,
+      context: ctx,
     })
 
-    return NextResponse.json(
-      { recipes: result.recipes ?? [] },
-      { status: 200, headers: NO_STORE_HEADERS },
-    )
-  } catch (error) {
-    // Se já consumimos cota e falhou antes de entregar resposta "final", liberamos o consumo
-    if (gate) {
-      await releaseDailyAI(gate.actorId, gate.dateKey)
+    if (body.tipoIdeia === 'meu-filho-bloco-1') {
+      const sanitized = sanitizeMeuFilhoBloco1(
+        result.suggestions ?? [],
+        body.tempoDisponivel ?? null,
+        body.variation_axis ?? null,
+        body.nonce ?? null,
+      )
+      return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
     }
 
-    if (error instanceof RateLimitError) {
-      console.warn('[API /api/ai/rotina] Rate limit atingido:', error.message)
+    if (body.tipoIdeia === 'meu-filho-bloco-2') {
+      const sanitized = sanitizeMeuFilhoBloco2Suggestions(
+        result.suggestions ?? [],
+        body.tempoDisponivel ?? null,
+      )
+      return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+    }
+
+    if (body.tipoIdeia === 'meu-filho-bloco-3') {
       return NextResponse.json(
-        { error: error.message },
-        { status: error.status ?? 429, headers: NO_STORE_HEADERS },
+        { suggestions: sanitizeMeuFilhoBloco3(result.suggestions ?? []) },
+        { status: 200, headers: NO_STORE_HEADERS },
       )
     }
 
-    console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', error)
+    if (body.tipoIdeia === 'meu-filho-bloco-4') {
+      return NextResponse.json(
+        { suggestions: sanitizeMeuFilhoBloco4(result.suggestions ?? []) },
+        { status: 200, headers: NO_STORE_HEADERS },
+      )
+    }
 
+    return NextResponse.json({ suggestions: [] }, { status: 200, headers: NO_STORE_HEADERS })
+  } catch (e) {
+    console.error('[API /api/ai/rotina] Erro ao gerar sugestões:', e)
     return NextResponse.json(
       { error: 'Não consegui gerar sugestões agora, tente novamente em instantes.' },
-      { status: 500, headers: NO_STORE_HEADERS },
+      { status: 500 },
     )
   }
 }
