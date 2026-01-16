@@ -259,11 +259,11 @@ function inferContext(): {
 ========================= */
 
 function newNonce() {
-  try {
+ try {
     const c = globalThis.crypto
     if (c && typeof c.randomUUID === 'function') return c.randomUUID()
   } catch {}
-  return n_${Math.random().toString(16).slice(2)}_${Date.now()}
+  return `n_${Math.random().toString(16).slice(2)}_${Date.now()}`
 }
 
 /* =========================
