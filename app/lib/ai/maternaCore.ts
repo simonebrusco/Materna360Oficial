@@ -169,8 +169,76 @@ REGRAS:
 `.trim()
 }
 
-function buildModeSpecializationPrompt(mode: MaternaMode): string {
+/**
+ * P34.17 — Arquitetura Cognitiva (recorte controlado)
+ * ---------------------------------------------------
+ * A partir desta P, o cérebro NÃO pode mais depender apenas de "mode".
+ * Implementação deliberadamente restrita:
+ * - Só altera comportamento quando: mode=quick-ideas E context.tipoIdeia === 'meu-filho-bloco-1'
+ * - Qualquer outro tipoIdeia permanece exatamente como antes.
+ */
+function buildMeuFilhoBloco1BrainPrompt(): string {
+  return `
+VOCÊ ESTÁ EM: MATERNAR > MEU FILHO > BLOCO 1 (micro-experiência única)
+
+MISSÃO
+Gerar UMA única micro-experiência para fazer agora com a criança. Não é uma lista, não é catálogo, não é blog.
+
+FORMATO OBRIGATÓRIO
+Responder APENAS com JSON no shape:
+{
+  "suggestions": [
+    {
+      "id": "mf_b1_<curto>",
+      "category": "ideia-rapida",
+      "title": "",
+      "description": "<1 a 3 frases, natural, específico, sem template>",
+      "estimatedMinutes": <number>,
+      "withChild": true,
+      "moodImpact": "acalma" | "energia" | "organiza" | "aproxima"
+    }
+  ]
+}
+
+REGRAS DE QUALIDADE (não negociáveis)
+- Entregar 1 micro-cena prática com começo, meio e fim (em 1–3 frases).
+- A descrição deve soar como algo pensado para o momento, não como conselho geral.
+- NÃO usar linguagem “template” (proibido: "você pode", "que tal", "talvez", "se quiser", "uma ideia").
+- NÃO escrever em formato de lista, passos numerados, bullets ou “dicas”.
+- NÃO soar como blog, artigo, ou “atividade educativa genérica”.
+- NÃO sugerir rotina, frequência ou hábito (sem "todo dia", "sempre", "crie o hábito", etc.).
+- Evitar materiais especiais; preferir o que já existe em casa.
+
+VARIAÇÃO ANTIRREPETIÇÃO (cérebro, não texto)
+Para evitar duas gerações seguidas parecidas, escolha UM “ângulo mental” por resposta, variando a cada chamada:
+1) Jogo de observação
+2) Micro-missão com objetos comuns
+3) Corpo e movimento pequeno
+4) Faz-de-conta curto
+5) Linguagem e sons
+6) Organização leve com participação da criança
+7) Conexão/acolhimento (sem discursar)
+8) Exploração sensorial simples
+
+Use o context (tempoDisponivel, ageBand, contexto, local, etc. se vierem) para ajustar a micro-experiência.
+Se não houver contexto, ainda assim gere algo específico (não genérico).
+
+LIMITES
+- description: 1 a 3 frases, no máximo 280 caracteres.
+- estimatedMinutes: coerente com tempoDisponivel quando disponível.
+`.trim()
+}
+
+function buildModeSpecializationPrompt(mode: MaternaMode, context?: unknown): string {
   if (mode === 'quick-ideas') {
+    // P34.17 — roteamento por tipoIdeia (apenas recorte aprovado)
+    const tipoIdeia = (context as any)?.tipoIdeia as RotinaTipoIdeia | undefined
+    if (tipoIdeia === 'meu-filho-bloco-1') {
+      return buildMeuFilhoBloco1BrainPrompt()
+    }
+
+    // IMPORTANTE:
+    // Mantém o prompt existente do quick-ideas COMO ESTAVA (não alterar outros tipoIdeia nesta P).
     return `
 ${/* PROMPT CANÔNICO DO MEU FILHO — BLOCO 1 (mantido integralmente) */ ''}
 ${/* Conteúdo exatamente como você definiu */ ''}
@@ -201,7 +269,7 @@ type OpenAIChatMessage = {
 }
 
 export async function callMaternaAI<M extends MaternaMode>(
-  payload: MaternaAIRequestPayload & { mode: M }
+  payload: MaternaAIRequestPayload & { mode: M },
 ): Promise<MaternaAIResponseMap[M]> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY não configurada')
@@ -211,8 +279,11 @@ export async function callMaternaAI<M extends MaternaMode>(
       ? { ...payload.child, ageRange: deriveAgeRangeFromMonths(payload.child.idadeMeses) }
       : payload.child ?? null
 
+  const systemPrompt =
+    buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode, payload.context)
+
   const messages: OpenAIChatMessage[] = [
-    { role: 'system', content: buildBaseSystemPrompt() + '\n\n' + buildModeSpecializationPrompt(payload.mode) },
+    { role: 'system', content: systemPrompt },
     {
       role: 'user',
       content: JSON.stringify({
