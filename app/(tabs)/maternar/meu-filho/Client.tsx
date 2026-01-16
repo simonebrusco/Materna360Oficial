@@ -363,6 +363,7 @@ async function withAntiRepeatPack(args: {
 
   return { items: fb, source: 'fallback' as const }
 }
+
 /* =========================
    P26 — Guardrails + Jornada
 ========================= */
@@ -572,6 +573,7 @@ async function fetchBloco2Cards(args: {
     return null
   }
 }
+
 /* =========================
    BLOCO 3 — ROTINAS / CONEXÃO
 ========================= */
@@ -775,184 +777,182 @@ async function fetchBloco4Suggestion(args: {
 /* =========================
    KITS (fallback local)
 ========================= */
+
 const KITS: Record<AgeBand, Record<TimeMode, Kit>> = {
   '0-2': {
     '5': {
       id: 'k-0-2-5',
       title: 'Conexão em 5 min (0–2)',
-      subtitle: 'Fallback local',
+      subtitle: 'Sem preparar nada. Só presença simples.',
       time: '5',
       plan: {
-        a: { title: 'Conexão breve', how: 'Fique perto, observe e responda aos gestos da criança.', time: '5', tag: 'fallback' },
-        b: { title: 'Explorar juntos', how: 'Mostre um objeto simples e acompanhe a curiosidade.', time: '5', tag: 'fallback' },
-        c: { title: 'Presença calma', how: 'Sente-se ao lado e compartilhe o momento.', time: '5', tag: 'fallback' },
+        a: { tag: 'rápido', time: '5', title: 'Cópia de gestos', how: 'Você faz 3 gestos (bater palmas, tchau, abraço). Ele copia.' },
+        b: { tag: 'calmo', time: '5', title: 'Música + colo', how: 'Uma música curta. Balance devagar e respire junto.' },
+        c: { tag: 'sensório', time: '5', title: 'Texturas da casa', how: 'Mostre 3 texturas (toalha, almofada, papel). Nomeie e deixe tocar.' },
       },
-      development: { label: 'Nesta fase', note: 'Exploração sensorial e repetição curta ajudam.' },
-      routine: { label: 'Rotina', note: 'Avise a transição com uma frase curta antes de mudar.' },
-      connection: { label: 'Conexão', note: 'Olho no olho por alguns segundos já conta.' },
+      development: { label: 'O que costuma aparecer', note: 'Explorar com os sentidos e repetir ações simples.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição suave: avise “agora vamos guardar” antes de trocar de atividade.' },
+      connection: { label: 'Gesto de conexão', note: 'Olho no olho por 10 segundos. Sem tela. Só você e ele.' },
     },
     '10': {
       id: 'k-0-2-10',
       title: 'Presença prática em 10 min (0–2)',
-      subtitle: 'Fallback local',
+      subtitle: 'Brincadeira curta + conexão no final.',
       time: '10',
       plan: {
-        a: { title: 'Exploração guiada', how: 'Incentive pequenos movimentos e sons.', time: '10', tag: 'fallback' },
-        b: { title: 'Interação afetiva', how: 'Converse e reaja às expressões da criança.', time: '10', tag: 'fallback' },
-        c: { title: 'Descoberta sensorial', how: 'Use algo do ambiente para explorar juntos.', time: '10', tag: 'fallback' },
+        a: { tag: 'movimento', time: '10', title: 'Caminho de almofadas', how: 'Monte um caminho no chão e atravessem juntos 3 vezes.' },
+        b: { tag: 'fala', time: '10', title: 'Nomear tudo', how: 'Passe pela casa nomeando 10 coisas e apontando junto.' },
+        c: { tag: 'calmo', time: '10', title: 'Livro rápido', how: 'Escolha um livrinho e faça “voz” por 5 min. Feche com abraço.' },
       },
-      development: { label: 'Nesta fase', note: 'Ritmo curto e previsível mantém o interesse.' },
-      routine: { label: 'Rotina', note: 'Feche com “agora vamos guardar” e guarde 1 item juntos.' },
-      connection: { label: 'Conexão', note: 'Abraço curto e respiração junto por 3 ciclos.' },
+      development: { label: 'O que costuma aparecer', note: 'Movimento, curiosidade e vontade de repetir.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Uma “janela de movimento” antes do jantar reduz irritação.' },
+      connection: { label: 'Gesto de conexão', note: 'Um abraço demorado com respiração junto (3 respirações).' },
     },
     '15': {
       id: 'k-0-2-15',
       title: 'Momento completo em 15 min (0–2)',
-      subtitle: 'Fallback local',
+      subtitle: 'Brincar + desacelerar sem estender demais.',
       time: '15',
       plan: {
-        a: { title: 'Tempo juntos', how: 'Permaneça disponível e atento.', time: '15', tag: 'fallback' },
-        b: { title: 'Brincar simples', how: 'Repita gestos e sons com a criança.', time: '15', tag: 'fallback' },
-        c: { title: 'Acolhimento', how: 'Ofereça colo e contato visual.', time: '15', tag: 'fallback' },
+        a: { tag: 'rotina', time: '15', title: 'Mini ritual pré-janta', how: '2 min de música + 8 min de brincar + 5 min para guardar juntos.' },
+        b: { tag: 'sensório', time: '15', title: 'Caixa de “coisas seguras”', how: 'Separe 5 itens (colher, copo plástico, pano). Explorem juntos.' },
+        c: { tag: 'calmo', time: '15', title: 'Banho de brinquedos', how: 'No banho, leve 2 brinquedos e invente 3 ações repetidas.' },
       },
-      development: { label: 'Nesta fase', note: 'Repetição e previsibilidade reduzem irritação.' },
-      routine: { label: 'Rotina', note: 'Use um aviso curto antes de cada troca de atividade.' },
-      connection: { label: 'Conexão', note: 'Presença silenciosa e sorriso encerram bem.' },
+      development: { label: 'O que costuma aparecer', note: 'Ritmo próprio e necessidade de previsibilidade.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Avisos curtos (“mais 2 min e vamos…”) ajudam muito.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer em voz alta: “eu tô aqui com você” e sorrir.' },
     },
   },
-
   '3-4': {
     '5': {
       id: 'k-3-4-5',
       title: 'Conexão em 5 min (3–4)',
-      subtitle: 'Fallback local',
+      subtitle: 'Uma brincadeira que cabe antes da janta.',
       time: '5',
       plan: {
-        a: { title: 'Missão rápida', how: 'Convide a criança para uma tarefa simples juntos.', time: '5', tag: 'fallback' },
-        b: { title: 'Observação', how: 'Observe algo do ambiente e conversem.', time: '5', tag: 'fallback' },
-        c: { title: 'Movimento leve', how: 'Faça um pequeno movimento corporal junto.', time: '5', tag: 'fallback' },
+        a: { tag: 'rápido', time: '5', title: 'História de 5 frases', how: 'Cada um fala uma frase. Vocês criam juntos 5 frases e pronto.' },
+        b: { tag: 'conexão', time: '5', title: 'Desenho espelhado', how: 'Você faz 1 traço, ele copia. Troca. 5 rodadas.' },
+        c: { tag: 'movimento', time: '5', title: 'Siga o líder', how: 'Você faz 4 movimentos (pular, girar, agachar). Ele repete.' },
       },
-      development: { label: 'Nesta fase', note: 'Faz de conta curto com começo e fim ajuda.' },
-      routine: { label: 'Rotina', note: 'Transição fica melhor com aviso + contagem.' },
-      connection: { label: 'Conexão', note: 'Uma frase de reconhecimento encerra bem.' },
+      development: { label: 'O que costuma aparecer', note: 'Faz de conta em alta e muita imaginação.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transições ficam melhores com aviso + contagem (ex.: “mais 2 min”).' },
+      connection: { label: 'Gesto de conexão', note: 'Pergunta simples: “o que foi legal hoje?” e ouvir 20 segundos.' },
     },
     '10': {
       id: 'k-3-4-10',
       title: 'Presença prática em 10 min (3–4)',
-      subtitle: 'Fallback local',
+      subtitle: 'Brincar sem produção e fechar bem.',
       time: '10',
       plan: {
-        a: { title: 'Brincar dirigido', how: 'Proponha uma brincadeira curta.', time: '10', tag: 'fallback' },
-        b: { title: 'Exploração ativa', how: 'Use objetos comuns para criar algo.', time: '10', tag: 'fallback' },
-        c: { title: 'Conversa breve', how: 'Pergunte e escute com atenção.', time: '10', tag: 'fallback' },
+        a: { tag: 'movimento', time: '10', title: 'Pista no chão', how: 'Faça uma “pista” com fita/almofadas. Ele percorre 3 vezes.' },
+        b: { tag: 'faz de conta', time: '10', title: 'Restaurante relâmpago', how: 'Ele “cozinha” e serve. Você faz 2 pedidos engraçados.' },
+        c: { tag: 'calmo', time: '10', title: 'Cartas de elogio', how: 'Diga 2 coisas específicas: “eu gostei quando você…”.' },
       },
-      development: { label: 'Nesta fase', note: 'Escolhas simples (2 opções) reduzem disputa.' },
-      routine: { label: 'Rotina', note: 'Timer curto ajuda a encerrar sem briga.' },
-      connection: { label: 'Conexão', note: 'Toque no ombro + olhar nos olhos por 5s.' },
+      development: { label: 'O que costuma aparecer', note: 'Teste de limites e necessidade de previsibilidade.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um mini ritual pré-janta (2 min) organiza o resto do período.' },
+      connection: { label: 'Gesto de conexão', note: 'Toque no ombro + olhar nos olhos por 5 segundos.' },
     },
     '15': {
       id: 'k-3-4-15',
       title: 'Momento completo em 15 min (3–4)',
-      subtitle: 'Fallback local',
+      subtitle: 'O clássico: brincar + organizar + fechar com carinho.',
       time: '15',
       plan: {
-        a: { title: 'Atividade conjunta', how: 'Realizem algo simples do começo ao fim.', time: '15', tag: 'fallback' },
-        b: { title: 'Criar juntos', how: 'Inventem algo rápido.', time: '15', tag: 'fallback' },
-        c: { title: 'Conexão tranquila', how: 'Fique presente e disponível.', time: '15', tag: 'fallback' },
+        a: { tag: 'casa', time: '15', title: 'Caça aos tesouros', how: 'Escolham 3 itens para achar. Depois guardam juntos.' },
+        b: { tag: 'faz de conta', time: '15', title: 'Missão do herói', how: '3 “missões”: pular, buscar, entregar. Você narra.' },
+        c: { tag: 'calmo', time: '15', title: 'História + abraço', how: '10 min de história inventada + 5 min de abraço e guardar.' },
       },
-      development: { label: 'Nesta fase', note: 'Ritual curto de encerramento ajuda transições.' },
-      routine: { label: 'Rotina', note: 'Feche brincadeira guardando 1 item juntos.' },
-      connection: { label: 'Conexão', note: '“Obrigada por brincar comigo” + sorriso.' },
+      development: { label: 'O que costuma aparecer', note: 'Imaginação + necessidade de rotina clara.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'O combinado “brinca e depois guarda” funciona melhor com timer simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “obrigada por brincar comigo” e sorrir.' },
     },
   },
-
   '5-6': {
     '5': {
       id: 'k-5-6-5',
       title: 'Conexão em 5 min (5–6)',
-      subtitle: 'Fallback local',
+      subtitle: 'Rápido e direto: presença sem esticar.',
       time: '5',
       plan: {
-        a: { title: 'Desafio curto', how: 'Proponha um pequeno desafio.', time: '5', tag: 'fallback' },
-        b: { title: 'Organização leve', how: 'Arrumem algo juntos.', time: '5', tag: 'fallback' },
-        c: { title: 'Troca rápida', how: 'Conversem brevemente.', time: '5', tag: 'fallback' },
+        a: { tag: 'fala', time: '5', title: '2 perguntas + 1 abraço', how: 'Pergunte “melhor parte do dia?” e “uma coisa difícil?”. Abraço.' },
+        b: { tag: 'rápido', time: '5', title: 'Desafio do minuto', how: '1 min de equilíbrio / 1 min de pular / 1 min de alongar.' },
+        c: { tag: 'calmo', time: '5', title: 'Leitura relâmpago', how: 'Leia 2 páginas e combine “depois continua”.' },
       },
-      development: { label: 'Nesta fase', note: 'Reconhecer esforço melhora colaboração.' },
-      routine: { label: 'Rotina', note: 'Combinado curto “agora X, depois Y” ajuda.' },
-      connection: { label: 'Conexão', note: 'Diga algo específico que você percebeu.' },
+      development: { label: 'O que costuma aparecer', note: 'Curiosidade, perguntas e vontade de participar das decisões.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um “combinado curto” evita disputa: “5 min e depois…”.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer algo específico: “eu vi você se esforçando em…”.' },
     },
     '10': {
       id: 'k-5-6-10',
       title: 'Presença prática em 10 min (5–6)',
-      subtitle: 'Fallback local',
+      subtitle: 'Brincar e fechar com organização mínima.',
       time: '10',
       plan: {
-        a: { title: 'Jogo simples', how: 'Inicie um jogo rápido.', time: '10', tag: 'fallback' },
-        b: { title: 'Criação livre', how: 'Desenhem ou montem algo.', time: '10', tag: 'fallback' },
-        c: { title: 'Exploração guiada', how: 'Descubram algo novo.', time: '10', tag: 'fallback' },
+        a: { tag: 'movimento', time: '10', title: 'Circuito rápido', how: '3 estações: pular, agachar, correr parado. 2 rodadas.' },
+        b: { tag: 'mesa', time: '10', title: 'Desenho com tema', how: 'Tema: “o melhor do dia”. 5 min desenha, 5 min conta.' },
+        c: { tag: 'casa', time: '10', title: 'Ajuda rápida', how: 'Ele ajuda em 1 tarefa (pôr guardanapo). Você elogia o esforço.' },
       },
-      development: { label: 'Nesta fase', note: 'Dar escolha entre 2 opções reduz atrito.' },
-      routine: { label: 'Rotina', note: 'Função simples (“você cuida de X”) facilita transição.' },
-      connection: { label: 'Conexão', note: '5 minutos 1:1 sem tela já muda o clima.' },
+      development: { label: 'O que costuma aparecer', note: 'Mais autonomia e mais opinião.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Transição fica mais fácil quando ele tem uma “função” simples.' },
+      connection: { label: 'Gesto de conexão', note: 'Tempo 1:1 de 5 minutos sem tela.' },
     },
     '15': {
       id: 'k-5-6-15',
       title: 'Momento completo em 15 min (5–6)',
-      subtitle: 'Fallback local',
+      subtitle: 'Um ciclo simples: brincar → ajudar → fechar.',
       time: '15',
       plan: {
-        a: { title: 'Projeto curto', how: 'Planejem e executem algo simples.', time: '15', tag: 'fallback' },
-        b: { title: 'Brincadeira estruturada', how: 'Siga regras simples.', time: '15', tag: 'fallback' },
-        c: { title: 'Momento de vínculo', how: 'Conversem com calma.', time: '15', tag: 'fallback' },
+        a: { tag: 'equilíbrio', time: '15', title: 'Brinca 10 + ajuda 5', how: '10 min de jogo rápido + 5 min ajudando numa tarefa pequena.' },
+        b: { tag: 'criativo', time: '15', title: 'História com desenho', how: '5 min desenha, 10 min cria história e você escreve 3 frases.' },
+        c: { tag: 'calmo', time: '15', title: 'Jogo de perguntas', how: 'Faça 6 perguntas leves (“qual animal…?”). Fecha com abraço.' },
       },
-      development: { label: 'Nesta fase', note: 'Combinar começo e fim reduz resistência.' },
-      routine: { label: 'Rotina', note: 'Timer visível ajuda a encerrar sem disputa.' },
-      connection: { label: 'Conexão', note: 'Reconheça: “eu vi que foi difícil e você tentou”.' },
+      development: { label: 'O que costuma aparecer', note: 'Vontade de participar e de ser levado a sério.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Um timer visível ajuda a encerrar sem briga.' },
+      connection: { label: 'Gesto de conexão', note: 'Dizer: “eu gosto de você do jeito que você é” (curto, direto).' },
     },
   },
-
   '6+': {
     '5': {
       id: 'k-6p-5',
       title: 'Conexão em 5 min (6+)',
-      subtitle: 'Fallback local',
+      subtitle: 'Curto e respeitoso — sem infantilizar.',
       time: '5',
       plan: {
-        a: { title: 'Check-in rápido', how: 'Pergunte “de 0 a 10, como foi seu dia?” e escute.', time: '5', tag: 'fallback' },
-        b: { title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado.', time: '5', tag: 'fallback' },
-        c: { title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa; você agradece e reconhece.', time: '5', tag: 'fallback' },
+        a: { tag: 'fala', time: '5', title: 'Check-in rápido', how: '“De 0 a 10, como foi seu dia?” e uma frase de escuta.' },
+        b: { tag: 'corpo', time: '5', title: 'Descompressão', how: '2 min alongar + 2 min respirar + 1 min combinado do dia.' },
+        c: { tag: 'casa', time: '5', title: 'Ajuda prática', how: 'Ele ajuda em 1 coisa. Você agradece e reconhece.' },
       },
-      development: { label: 'Nesta fase', note: 'Respeito e autonomia aumentam cooperação.' },
-      routine: { label: 'Rotina', note: 'Combinar “o que vem agora” evita atrito.' },
-      connection: { label: 'Conexão', note: 'Escuta curta sem corrigir fecha bem.' },
+      development: { label: 'O que costuma aparecer', note: 'Mais autonomia, mais opinião, mais sensibilidade a respeito.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinar “o que vem agora” evita atrito nas transições.' },
+      connection: { label: 'Gesto de conexão', note: 'Escuta de 30 segundos sem corrigir.' },
     },
     '10': {
       id: 'k-6p-10',
       title: 'Presença prática em 10 min (6+)',
-      subtitle: 'Fallback local',
+      subtitle: 'Sem grandes jogos: presença e organização.',
       time: '10',
       plan: {
-        a: { title: 'Conversa guiada', how: '2 perguntas e uma escuta direta.', time: '10', tag: 'fallback' },
-        b: { title: 'Atividade rápida', how: 'Ele escolhe algo curto para fazer lado a lado.', time: '10', tag: 'fallback' },
-        c: { title: 'Organizar junto', how: 'Organizem um cantinho por 5–8 minutos.', time: '10', tag: 'fallback' },
+        a: { tag: 'fala', time: '10', title: 'Conversa guiada', how: '2 perguntas + 1 coisa que ele escolhe fazer (rápida).' },
+        b: { tag: 'jogo', time: '10', title: 'Mini competição', how: 'Desafio curto (quem guarda mais rápido / quem acha 3 itens).' },
+        c: { tag: 'casa', time: '10', title: 'Função + elogio', how: 'Ele escolhe uma função e você elogia o esforço, não o resultado.' },
       },
-      development: { label: 'Nesta fase', note: 'Escolhas claras reduzem resistência.' },
-      routine: { label: 'Rotina', note: 'Evite explicação longa; use combinado objetivo.' },
-      connection: { label: 'Conexão', note: 'Pergunte: “quer ajuda ou só que eu te ouça?”' },
+      development: { label: 'O que costuma aparecer', note: 'Necessidade de sentir controle e escolha.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Dar 2 opções evita disputa (“isso ou aquilo”).' },
+      connection: { label: 'Gesto de conexão', note: 'Perguntar: “quer minha ajuda ou só que eu te ouça?”' },
     },
     '15': {
       id: 'k-6p-15',
       title: 'Momento completo em 15 min (6+)',
-      subtitle: 'Fallback local',
+      subtitle: 'Conexão + rotina leve do jeito que cabe.',
       time: '15',
       plan: {
-        a: { title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.', time: '15', tag: 'fallback' },
-        b: { title: 'Arrumar com música', how: 'Arrumem por 10 min com música; feche com conversa breve.', time: '15', tag: 'fallback' },
-        c: { title: 'Combinados do dia', how: 'Atividade curta + 3 min de combinados objetivos.', time: '15', tag: 'fallback' },
+        a: { tag: 'equilíbrio', time: '15', title: '10 min + 5 min', how: '10 min de escolha dele + 5 min de organização simples.' },
+        b: { tag: 'casa', time: '15', title: 'Arrumar junto', how: 'Arrumar um cantinho por 10 min com música. Fecha com conversa.' },
+        c: { tag: 'fala', time: '15', title: 'Plano para depois', how: '2 min check-in + 10 min atividade + 3 min combinados.' },
       },
-      development: { label: 'Nesta fase', note: 'Previsibilidade curta e respeito ajudam transições.' },
-      routine: { label: 'Rotina', note: 'Feche sempre com “agora X, depois Y”.' },
-      connection: { label: 'Conexão', note: 'Reconheça o esforço, sem alongar.' },
+      development: { label: 'O que costuma aparecer', note: 'Autonomia e necessidade de respeito nas decisões.' },
+      routine: { label: 'Ajuste que ajuda hoje', note: 'Combinados curtos e claros reduzem conflito.' },
+      connection: { label: 'Gesto de conexão', note: 'Reconhecer: “eu vi que foi difícil e você tentou”.' },
     },
   },
 }
@@ -968,9 +968,8 @@ function splitEditorialText(raw: string | null | undefined): string[] {
 
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
   let working = text
-
   markers.forEach((m) => {
-    working = working.replace(new RegExp(`\\s*${escapeRegExp(m)}`, 'g'), `\n\n${m}`)
+    working = working.replace(new RegExp(`\\s*${m}`, 'g'), `\n\n${m}`)
   })
 
   const parts = working
@@ -980,10 +979,6 @@ function splitEditorialText(raw: string | null | undefined): string[] {
 
   if (parts.length === 0) return [text]
   return parts.slice(0, 4)
-}
-
-function escapeRegExp(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function RenderEditorialText({
@@ -1045,43 +1040,315 @@ export default function MeuFilhoClient() {
   const [chosen, setChosen] = useState<'a' | 'b' | 'c'>('a')
 
   const [childLabel, setChildLabel] = useState<string | undefined>(undefined)
+  const [profileSource, setProfileSource] = useState<ProfileSource>('none')
+
   const [familyDoneToday, setFamilyDoneToday] = useState(false)
 
+  // filtros: brincadeiras
   const [playLocation, setPlayLocation] = useState<PlayLocation>('casa')
   const [skills, setSkills] = useState<SkillId[]>(['emocional'])
+
+  // foco: fase
   const [faseFoco, setFaseFoco] = useState<FaseFoco>('emocao')
 
+  // seleção mínima de tema antes de gerar Bloco 3
   const [rotinaTema, setRotinaTema] = useState<RotinaTema | null>(null)
   const [conexaoTema, setConexaoTema] = useState<ConexaoTema | null>(null)
 
+  // Bloco 1
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
+  const bloco1ReqSeq = useRef(0)
+
+  // Bloco 2
   const [bloco2, setBloco2] = useState<Bloco2State>({ status: 'idle' })
+  const bloco2ReqSeq = useRef(0)
+
+  // Bloco 3
   const [bloco3, setBloco3] = useState<Bloco3State>({ status: 'idle' })
+  const bloco3ReqSeq = useRef(0)
+
+  // Bloco 4
   const [bloco4, setBloco4] = useState<Bloco4State>({ status: 'idle' })
+  const bloco4ReqSeq = useRef(0)
+
+  useEffect(() => {
+    try {
+      track('nav.view', { tab: 'maternar', page: 'meu-filho', timestamp: new Date().toISOString() })
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    let inferred: ReturnType<typeof inferContext> = {
+      time: '15',
+      age: '3-4',
+      playLocation: 'casa',
+      skills: ['emocional'],
+      faseFoco: 'emocao',
+    }
+
+    try {
+      inferred = inferContext()
+    } catch {}
+
+    setTime(inferred.time)
+    setAge(inferred.age)
+    setChildLabel(inferred.childLabel)
+    setPlayLocation(inferred.playLocation)
+    setSkills(inferred.skills)
+    setFaseFoco(inferred.faseFoco)
+    setStep('brincadeiras')
+
+    setBloco1({ status: 'idle' })
+    setBloco2({ status: 'idle' })
+    setBloco3({ status: 'idle' })
+    setBloco4({ status: 'idle' })
+
+    try {
+      const snap = getProfileSnapshot()
+      setProfileSource(snap.source)
+      try {
+        track('meu_filho.open', {
+          time: inferred.time,
+          age: inferred.age,
+          childLabel: inferred.childLabel ?? null,
+          profileSource: snap.source,
+        })
+      } catch {}
+    } catch {}
+
+    try {
+      const js = getJourneySnapshot()
+      setFamilyDoneToday(js.family.doneToday)
+    } catch {}
+  }, [])
 
   const kit = useMemo(() => KITS[age][time], [age, time])
 
-  const effectivePlan = bloco2.status === 'done' ? bloco2.items : kit.plan
-  const selected = effectivePlan[chosen]
+  const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } | null = useMemo(() => {
+    if (bloco2.status === 'done') return bloco2.items
+    return null
+  }, [bloco2])
 
-  function saveSelectedToMyDay(title: string) {
-    const today = listMyDayTasks()
-    const activeCount = countActiveFamilyFromMeuFilhoToday(today)
+  const selected = useMemo(() => {
+    if (effectivePlan) return effectivePlan[chosen]
+    return kit.plan[chosen]
+  }, [effectivePlan, chosen, kit.plan])
 
-    if (activeCount >= 3) {
-      toast.info('Você já salvou 3 ações do Meu Filho hoje.')
+  function go(next: Step) {
+    setStep(next)
+    try {
+      track('meu_filho.step', { step: next })
+    } catch {}
+  }
+
+  function hardResetGenerated() {
+    setBloco1({ status: 'idle' })
+    setBloco2({ status: 'idle' })
+    setBloco3({ status: 'idle' })
+    setBloco4({ status: 'idle' })
+  }
+
+  function onSelectTime(next: TimeMode) {
+    setTime(next)
+    setChosen('a')
+
+    safeSetLS(HUB_PREF.time, next)
+    safeSetLS('eu360_time_with_child', next)
+
+    setRotinaTema(null)
+    setConexaoTema(null)
+    hardResetGenerated()
+
+    try {
+      track('meu_filho.time.select', { time: next })
+    } catch {}
+  }
+
+  function onSelectAge(next: AgeBand) {
+    setAge(next)
+    setChosen('a')
+
+    safeSetLS(HUB_PREF.ageBand, next)
+    safeSetLS('eu360_child_age_band', next)
+
+    setRotinaTema(null)
+    setConexaoTema(null)
+    hardResetGenerated()
+
+    try {
+      track('meu_filho.age.select', { age: next, reason: 'manual_override' })
+    } catch {}
+  }
+
+  function onChoose(k: 'a' | 'b' | 'c') {
+    setChosen(k)
+    try {
+      track('meu_filho.plan.choose', {
+        which: k,
+        time,
+        age,
+        source: bloco2.status === 'done' ? bloco2.source : 'none',
+      })
+    } catch {}
+  }
+
+  // ✅ FIX typing (SkillId[] garantido)
+  function toggleSkill(id: SkillId) {
+    setSkills((prev): SkillId[] => {
+      const has = prev.includes(id)
+      const next: SkillId[] = has ? prev.filter((x) => x !== id) : [...prev, id]
+      const safe: SkillId[] = next.length ? next : (['emocional'] as SkillId[])
+
+      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(safe))
+      return safe
+    })
+
+    setBloco2({ status: 'idle' })
+  }
+
+  function onSelectPlayLocation(loc: PlayLocation) {
+    setPlayLocation(loc)
+    safeSetLS(HUB_PREF_FILTERS.playLocation, loc)
+    setBloco2({ status: 'idle' })
+  }
+
+  function onSelectFaseFoco(f: FaseFoco) {
+    setFaseFoco(f)
+    safeSetLS(HUB_PREF_FILTERS.faseFoco, f)
+    setBloco4({ status: 'idle' })
+  }
+
+  async function generateBloco1() {
+    const seq = ++bloco1ReqSeq.current
+    setBloco1({ status: 'loading' })
+
+    const tempoDisponivel = Number(time)
+    const themeSignature = `bloco1|age:${age}|time:${time}|tempo:${tempoDisponivel}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) => await fetchBloco1Plan({ tempoDisponivel, nonce }),
+      fallback: () => clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time]),
+      maxTries: 2,
+    })
+
+    if (seq !== bloco1ReqSeq.current) return
+    setBloco1({ status: 'done', text: out.text, source: out.source })
+  }
+
+  async function generateBloco2() {
+    const seq = ++bloco2ReqSeq.current
+    setBloco2({ status: 'loading' })
+
+    const tempoDisponivel = Number(time)
+    const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}`
+
+    const out = await withAntiRepeatPack({
+      themeSignature,
+      run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
+      fallback: () => kit.plan,
+      maxTries: 2,
+    })
+
+    if (seq !== bloco2ReqSeq.current) return
+    setBloco2({ status: 'done', items: out.items, source: out.source })
+    setChosen('a')
+  }
+
+  async function generateBloco4() {
+    const seq = ++bloco4ReqSeq.current
+    setBloco4({ status: 'loading' })
+
+    const momento = inferMomentoDesenvolvimento(age)
+    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) =>
+        await fetchBloco4Suggestion({
+          faixa_etaria: age,
+          momento_desenvolvimento: momento,
+          contexto: 'fase',
+          foco: faseFoco,
+          nonce,
+        }),
+      fallback: () => BLOCO4_FALLBACK[age],
+      maxTries: 2,
+    })
+
+    if (seq !== bloco4ReqSeq.current) return
+    setBloco4({ status: 'done', text: out.text, source: out.source, momento })
+  }
+
+  async function generateBloco3(kind: Bloco3Type) {
+    const seq = ++bloco3ReqSeq.current
+
+    const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
+    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+    if (!tema) {
+      toast.info('Escolha um tema antes de gerar.')
       return
     }
 
-    const res = addTaskToMyDay({
-      title,
-      origin: 'family',
-      source: MY_DAY_SOURCES.MATERNAR_MEU_FILHO,
+    setBloco3({ status: 'loading', kind })
+
+    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
+
+    const out = await withAntiRepeatText({
+      themeSignature,
+      run: async (nonce) =>
+        await fetchBloco3Suggestion({
+          faixa_etaria: age,
+          momento_do_dia: momento,
+          tipo_experiencia: kind,
+          contexto: 'continuidade',
+          tema,
+          nonce,
+        }),
+      fallback: () => BLOCO3_FALLBACK[kind][age],
+      maxTries: 2,
     })
+
+    if (seq !== bloco3ReqSeq.current) return
+    setBloco3({ status: 'done', kind, text: out.text, source: out.source, momento })
+  }
+
+  function saveSelectedToMyDay(title: string) {
+    const ORIGIN = 'family' as const
+    const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
+
+    const today = listMyDayTasks()
+    const activeCount = countActiveFamilyFromMeuFilhoToday(today)
+    if (activeCount >= 3) {
+      toast.info('Você já salvou 3 ações do Meu Filho hoje. Conclua uma ou escolha só 1 para agora.')
+      return
+    }
+
+    const res = addTaskToMyDay({ title, origin: ORIGIN, source: SOURCE })
+
+    if (res.limitHit) {
+      toast.info('Seu Meu Dia já está cheio hoje. Conclua ou adie algo antes de salvar mais.')
+      return
+    }
 
     if (res.created) toast.success('Salvo no Meu Dia')
     else toast.info('Já estava no Meu Dia')
   }
+
+  function registerFamilyJourney() {
+    if (familyDoneToday) {
+      toast.info('Isso já contou para a sua Jornada hoje')
+      return
+    }
+    markJourneyFamilyDone(MY_DAY_SOURCES.MATERNAR_MEU_FILHO)
+    setFamilyDoneToday(true)
+    toast.success('Registrado na sua Jornada')
+  }
+
+  const bloco1Text = bloco1.status === 'done' ? bloco1.text : null
+  const bloco2Items = bloco2.status === 'done' ? bloco2.items : null
+  const bloco3Text = bloco3.status === 'done' ? bloco3.text : null
+  const bloco4Text = bloco4.status === 'done' ? bloco4.text : null
 
   return (
     <main
@@ -1096,79 +1363,523 @@ export default function MeuFilhoClient() {
       "
     >
       <ClientOnly>
-        <section className="px-4 pt-6 space-y-6">
+        <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6">
+          <header className="pt-8 md:pt-10 mb-6 md:mb-8">
+            <div className="space-y-3">
+              <Link href="/maternar" className="inline-flex items-center text-[12px] text-white/85 hover:text-white transition mb-1">
+                <span className="mr-1.5 text-lg leading-none">←</span>
+                Voltar para o Maternar
+              </Link>
 
-          {/* HEADER */}
-          <header className="text-white space-y-1">
-            <h1 className="text-[22px] font-semibold leading-tight">
-              Meu Filho{childLabel ? ` · ${childLabel}` : ''}
-            </h1>
-            <p className="text-[13px] opacity-90">
-              Um plano simples para agora — sem culpa, sem exagero.
-            </p>
+              <h1 className="text-2xl md:text-3xl font-semibold text-white leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+                Meu Filho
+              </h1>
+
+              <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
+                Você entra sem ideias e sai com um plano simples para agora — sem precisar pensar.
+              </p>
+
+              {childLabel ? (
+                <div className="text-[12px] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
+                  Ajustado para: <span className="font-semibold text-white">{childLabel}</span>
+                </div>
+              ) : null}
+
+              {/* (debug silencioso de fonte, opcional manter) */}
+              {profileSource !== 'none' ? <div className="text-[11px] text-white/60">Fonte de perfil: {profileSource}</div> : null}
+            </div>
           </header>
 
-          {/* TEMPO */}
-          <div className="flex gap-2">
-            {(['5', '10', '15'] as TimeMode[]).map((t) => (
-              <Chip key={t} label={timeLabel(t)} active={time === t} onClick={() => setTime(t)} />
-            ))}
-          </div>
+          <Reveal>
+            <section
+              className="
+                rounded-3xl
+                bg-white/10
+                border border-white/35
+                backdrop-blur-xl
+                shadow-[0_18px_45px_rgba(184,35,107,0.25)]
+                overflow-hidden
+              "
+            >
+              {/* TOP CONTROLS */}
+              <div className="p-4 md:p-6 border-b border-white/25">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-2xl bg-white/80 flex items-center justify-center shrink-0">
+                      <AppIcon name="toy" size={22} className="text-[#fd2597]" />
+                    </div>
 
-          {/* PLANOS */}
-          <div className="space-y-3">
-            {(['a', 'b', 'c'] as const).map((k) => {
-              const item = effectivePlan[k]
-              return (
-                <div
-                  key={k}
-                  className={[
-                    'rounded-xl border p-4 transition',
-                    chosen === k ? 'bg-white border-white' : 'bg-white/70 border-white/40',
-                  ].join(' ')}
-                  onClick={() => setChosen(k)}
-                >
-                  <h3 className="font-semibold text-[#2f3a56]">{item.title}</h3>
-                  <RenderEditorialText
-                    text={item.how}
-                    pClassName="text-[13px] text-[#545454] leading-relaxed"
-                  />
+                    <div>
+                      <div className="text-[12px] text-white/85">
+                        Passo {stepIndex(step)}/4 • {timeTitle(time)} • {timeLabel(time)} • faixa {age}
+                      </div>
+                      <div className="text-[16px] md:text-[18px] font-semibold text-white mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.25)]">
+                        Plano pronto para agora
+                      </div>
+                      <div className="text-[13px] text-white/85 mt-1 drop-shadow-[0_1px_6px_rgba(0,0,0,0.2)]">{timeHint(time)}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => go('brincadeiras')}
+                    className="
+                      rounded-full
+                      bg-white/90 hover:bg-white
+                      text-[#2f3a56]
+                      px-4 py-2 text-[12px]
+                      shadow-lg transition
+                    "
+                  >
+                    Começar
+                  </button>
                 </div>
-              )
-            })}
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Quanto tempo você tem agora?</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['5', '10', '15'] as TimeMode[]).map((t) => {
+                        const active = time === t
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => onSelectTime(t)}
+                            className={[
+                              'rounded-xl border px-3 py-2 text-[12px] text-left transition',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                          >
+                            <div className="font-semibold">{timeLabel(t)}</div>
+                            <div className="text-[11px] opacity-90">{timeTitle(t)}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/20 border border-white/25 p-3">
+                    <div className="text-[12px] text-white/85 mb-2">Faixa (ajusta a ideia)</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {(['0-2', '3-4', '5-6', '6+'] as AgeBand[]).map((a) => {
+                        const active = age === a
+                        return (
+                          <button
+                            key={a}
+                            type="button"
+                            onClick={() => onSelectAge(a)}
+                            className={[
+                              'rounded-xl border px-2.5 py-2 text-[12px] transition',
+                              active ? 'bg-white/90 border-white/60 text-[#2f3a56]' : 'bg-white/20 border-white/35 text-white/90 hover:bg-white/30',
+                            ].join(' ')}
+                          >
+                            {a}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Chip label="Brincadeiras" active={step === 'brincadeiras'} onClick={() => go('brincadeiras')} />
+                  <Chip label="Fase" active={step === 'desenvolvimento'} onClick={() => go('desenvolvimento')} />
+                  <Chip label="Rotina" active={step === 'rotina'} onClick={() => go('rotina')} />
+                  <Chip label="Conexão" active={step === 'conexao'} onClick={() => go('conexao')} />
+                </div>
+              </div>
+
+              {/* BODY */}
+              <div className="p-4 md:p-6">
+                {/* STEP 1 — BRINCADEIRAS */}
+                {step === 'brincadeiras' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="sparkles" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Plano pronto para agora</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">
+                            Você só escolhe o cenário — eu te entrego 3 opções boas.
+                          </div>
+                          <div className="text-[13px] text-[#545454] mt-1">Sem catálogo infinito. Só 3 opções que cabem no seu tempo.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Onde vocês estão?</div>
+                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {PLAY_LOCATIONS.map((l) => {
+                              const active = playLocation === l.id
+                              return (
+                                <button
+                                  key={l.id}
+                                  type="button"
+                                  onClick={() => onSelectPlayLocation(l.id)}
+                                  className={[
+                                    'rounded-xl border p-3 text-left transition',
+                                    active ? 'bg-[#fff3f8] border-[#fd2597]' : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                  ].join(' ')}
+                                >
+                                  <div className="text-[12px] font-semibold text-[#2f3a56]">{l.label}</div>
+                                  <div className="text-[11px] text-[#545454] mt-1">{l.hint}</div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                          <div className="text-[13px] font-semibold text-[#2f3a56]">Que habilidades você quer estimular?</div>
+                          <div className="text-[12px] text-[#545454] mt-1">
+                            Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {SKILLS.map((s) => {
+                              const active = skills.includes(s.id)
+                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={generateBloco1}
+                          className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-lg transition"
+                        >
+                          Gerar plano para agora
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generateBloco2}
+                          className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] shadow-sm transition"
+                        >
+                          Gerar 3 opções
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => go('desenvolvimento')}
+                          className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] shadow-sm transition"
+                        >
+                          Ir para Fase
+                        </button>
+                      </div>
+
+                      <div className="mt-5 border-t border-[#ffd1e6] pt-5">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para agora</div>
+
+                        <div className="mt-2 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                          {bloco1.status === 'idle' ? (
+                            <div className="text-[13px] text-[#545454]">Clique em “Gerar plano para agora” para receber uma sugestão curta e pronta.</div>
+                          ) : bloco1.status === 'loading' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <RenderEditorialText text={bloco1Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
+                          )}
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveSelectedToMyDay(`Meu Filho: ${timeLabel(time)} — plano para agora`)}
+                              className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                            >
+                              Salvar no Meu Dia
+                            </button>
+                            <button
+                              type="button"
+                              onClick={generateBloco1}
+                              className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                            >
+                              Nova sugestão
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-5">
+                          <div className="text-[12px] font-semibold text-[#fd2597]">3 opções (com base nos filtros)</div>
+
+                          {bloco2.status === 'idle' ? (
+                            <div className="mt-2 text-[13px] text-[#545454]">
+                              Clique em “Gerar 3 opções” para receber brincadeiras completas (com começo, meio e fim).
+                            </div>
+                          ) : bloco2.status === 'loading' ? (
+                            <div className="mt-2 text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <div className="mt-3 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {(['a', 'b', 'c'] as const).map((k) => {
+                                  const it = (bloco2Items ?? kit.plan)[k]
+                                  const active = chosen === k
+                                  return (
+                                    <button
+                                      key={k}
+                                      type="button"
+                                      onClick={() => onChoose(k)}
+                                      className={[
+                                        'rounded-2xl border p-4 text-left transition',
+                                        active ? 'bg-[#fff3f8] border-[#fd2597]' : 'bg-white border-[#ffd1e6] hover:bg-[#fff7fa]',
+                                      ].join(' ')}
+                                    >
+                                      <div className="text-[11px] font-semibold text-[#fd2597] uppercase tracking-wide">
+                                        {it.tag} • {timeLabel(it.time)}
+                                      </div>
+                                      <div className="mt-1 text-[14px] font-semibold text-[#2f3a56]">{it.title}</div>
+                                      <div className="mt-2 text-[12px] text-[#545454] line-clamp-3">{it.how}</div>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+
+                              <div className="rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                                <div className="text-[12px] font-semibold text-[#fd2597]">Opção selecionada</div>
+                                <div className="mt-1 text-[15px] font-semibold text-[#2f3a56]">{selected.title}</div>
+                                <div className="mt-2">
+                                  <RenderEditorialText text={selected.how} pClassName="text-[13px] text-[#2f3a56] leading-relaxed" />
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => saveSelectedToMyDay(`Meu Filho: ${selected.title}`)}
+                                    className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                                  >
+                                    Salvar no Meu Dia
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={generateBloco2}
+                                    className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                                  >
+                                    Gerar novas 3 opções
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => go('conexao')}
+                                    className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                                  >
+                                    Fechar com conexão
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="text-[11px] text-[#545454]">Fonte: {bloco2.source === 'ai' ? 'gerado' : 'opções locais (fallback)'}.</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 2 — FASE */}
+                {step === 'desenvolvimento' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="info" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Desenvolvimento por fase</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">O que costuma aparecer</div>
+                          <div className="text-[13px] text-[#545454] mt-1">Pistas simples para ajustar o jeito de fazer hoje. Sem rótulos.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o foco</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {FASE_FOCOS.map((f) => (
+                            <SubChip key={f.id} label={f.label} active={faseFoco === f.id} onClick={() => onSelectFaseFoco(f.id)} />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={generateBloco4}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                          >
+                            Nova orientação
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('rotina')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Ajuste de rotina
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Voltar para brincadeiras
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Nesta fase</div>
+                        <div className="mt-2">
+                          {bloco4.status === 'idle' ? (
+                            <div className="text-[13px] text-[#545454]">Clique em “Nova orientação” para receber uma frase útil para hoje.</div>
+                          ) : bloco4.status === 'loading' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : (
+                            <div className="text-[14px] text-[#2f3a56] leading-relaxed">{bloco4Text}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 3 — ROTINA */}
+                {step === 'rotina' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="sun" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Rotina leve da criança</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">Ajuste que ajuda hoje</div>
+                          <div className="text-[13px] text-[#545454] mt-1">Um ajuste pequeno para o dia fluir melhor — sem “rotina perfeita”.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {ROTINA_TEMAS.map((t) => (
+                            <SubChip key={t.id} label={t.label} active={rotinaTema === t.id} onClick={() => setRotinaTema(t.id)} />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => generateBloco3('rotina')}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                          >
+                            Novo ajuste
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Voltar para brincadeiras
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => go('conexao')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Ir para conexão
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para encaixar no dia</div>
+                        <div className="mt-2">
+                          {bloco3.status === 'loading' && bloco3.kind === 'rotina' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : bloco3.status === 'done' && bloco3.kind === 'rotina' ? (
+                            <RenderEditorialText text={bloco3Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
+                          ) : (
+                            <div className="text-[13px] text-[#545454]">Selecione um tema e clique em “Novo ajuste”.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* STEP 4 — CONEXÃO */}
+                {step === 'conexao' ? (
+                  <div className="rounded-3xl bg-white/85 border border-white/60 shadow-[0_20px_60px_rgba(184,35,107,0.18)] overflow-hidden">
+                    <div className="p-5 md:p-6">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-[#ffd8e6] flex items-center justify-center shrink-0">
+                          <AppIcon name="heart" size={20} className="text-[#fd2597]" />
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-semibold text-[#fd2597]">Gestos de conexão</div>
+                          <div className="text-[18px] md:text-[20px] font-semibold text-[#2f3a56] mt-1">Gesto de conexão</div>
+                          <div className="text-[13px] text-[#545454] mt-1">O final simples que faz a criança sentir: “minha mãe tá aqui”.</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-white border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#2f3a56]">Escolha o tema</div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {CONEXAO_TEMAS.map((t) => (
+                            <SubChip key={t.id} label={t.label} active={conexaoTema === t.id} onClick={() => setConexaoTema(t.id)} />
+                          ))}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => generateBloco3('conexao')}
+                            className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
+                          >
+                            Novo gesto
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={registerFamilyJourney}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Registrar na Minha Jornada
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => go('brincadeiras')}
+                            className="rounded-full bg-white hover:bg-[#fff3f8] text-[#2f3a56] border border-[#ffd1e6] px-4 py-2 text-[12px] transition"
+                          >
+                            Escolher outra brincadeira
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 rounded-2xl bg-[#fff7fa] border border-[#ffd1e6] p-4">
+                        <div className="text-[12px] font-semibold text-[#fd2597]">Para encerrar</div>
+                        <div className="mt-2">
+                          {bloco3.status === 'loading' && bloco3.kind === 'conexao' ? (
+                            <div className="text-[13px] text-[#545454]">Gerando…</div>
+                          ) : bloco3.status === 'done' && bloco3.kind === 'conexao' ? (
+                            <RenderEditorialText text={bloco3Text} pClassName="text-[14px] text-[#2f3a56] leading-relaxed" />
+                          ) : (
+                            <div className="text-[13px] text-[#545454]">Selecione um tema e clique em “Novo gesto”.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          </Reveal>
+
+          <div className="mt-6">
+            <LegalFooter />
           </div>
-
-          {/* AÇÕES */}
-          <div className="flex gap-3">
-            <button
-              className="flex-1 rounded-xl bg-[#fd2597] text-white py-3 font-medium"
-              onClick={() =>
-                saveSelectedToMyDay(`Meu Filho: ${timeLabel(time)} — plano para agora`)
-              }
-            >
-              Salvar no Meu Dia
-            </button>
-
-            <button
-              className="rounded-xl bg-white text-[#2f3a56] px-4"
-              onClick={() => saveSelectedToMyDay(`Meu Filho: ${selected.title}`)}
-            >
-              Só este
-            </button>
-          </div>
-
-          {/* BLOCO 4 */}
-          {bloco4.status === 'done' && (
-            <div className="rounded-xl bg-white/80 p-4">
-              <p className="text-[13px] text-[#2f3a56] leading-relaxed">{bloco4.text}</p>
-            </div>
-          )}
-
-          <LegalFooter />
-        </section>
+        </div>
       </ClientOnly>
     </main>
   )
 }
-
-
