@@ -38,21 +38,18 @@ export default async function MaternarPage(props: {
 
   // Feature flag do Maternar Hub
   const cookieVal = cookies().get('ff_maternar')?.value ?? null
-  const cookieBool =
-    cookieVal === '1' ? true : cookieVal === '0' ? false : null
+  const cookieBool = cookieVal === '1' ? true : cookieVal === '0' ? false : null
 
-  const isPreview = process.env.VERCEL_ENV === 'preview'
-  const envDefault = toBool(
-    process.env.NEXT_PUBLIC_FF_MATERNAR_HUB,
-    isPreview,
-  )
+  /**
+   * Correção:
+   * - Em produção, o default NÃO pode ser "false" quando env não existe,
+   *   senão a aba Maternar vira redirect permanente para /meu-dia.
+   * - Portanto: se NEXT_PUBLIC_FF_MATERNAR_HUB estiver ausente, default = true.
+   */
+  const envDefault = toBool(process.env.NEXT_PUBLIC_FF_MATERNAR_HUB, true)
 
   // Em preview do Builder, sempre habilita o hub
-  const ff_maternar_hub = isBuilderPreview
-    ? true
-    : cookieBool !== null
-      ? cookieBool
-      : envDefault
+  const ff_maternar_hub = isBuilderPreview ? true : cookieBool !== null ? cookieBool : envDefault
 
   // Se a feature estiver desligada, redireciona para /meu-dia
   // (exceto no preview do Builder)
