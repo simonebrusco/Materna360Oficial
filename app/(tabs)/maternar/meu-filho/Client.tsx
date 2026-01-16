@@ -113,7 +113,7 @@ function safeGetLS(key: string): string | null {
     if (typeof window === 'undefined') return null
     const direct = window.localStorage.getItem(key)
     if (direct !== null) return direct
-    return window.localStorage.getItem(${LS_PREFIX}${key})
+    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
   } catch {
     return null
   }
