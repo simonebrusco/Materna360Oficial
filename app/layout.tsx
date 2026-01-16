@@ -51,14 +51,36 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Materna360" />
         <link rel="manifest" href="/manifest.json" />
 
-        {/* Service Worker registration for PWA */}
+        {/* Service Worker registration for PWA
+            - PROD: registra normalmente
+            - DEV: desregistra SWs existentes para evitar interceptação/redirect (Safari em especial)
+        */}
         <Script id="sw-register" strategy="afterInteractive">
           {`
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.register('/sw.js').catch((err) => {
-                console.log('Service Worker registration failed:', err);
-              });
-            }
+            (function () {
+              try {
+                var isProd = ${process.env.NODE_ENV === 'production' ? 'true' : 'false'};
+                if (!('serviceWorker' in navigator)) return;
+
+                // Em DEV, remove SWs antigos para evitar interceptações e erros de navegação
+                if (!isProd) {
+                  navigator.serviceWorker
+                    .getRegistrations()
+                    .then(function (regs) {
+                      regs.forEach(function (r) {
+                        r.unregister();
+                      });
+                    })
+                    .catch(function () {});
+                  return;
+                }
+
+                // Em PROD, registra SW normalmente
+                navigator.serviceWorker.register('/sw.js').catch(function (err) {
+                  console.log('Service Worker registration failed:', err);
+                });
+              } catch (e) {}
+            })();
           `}
         </Script>
 
