@@ -113,7 +113,7 @@ function safeGetLS(key: string): string | null {
     if (typeof window === 'undefined') return null
     const direct = window.localStorage.getItem(key)
     if (direct !== null) return direct
-    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
   } catch {
     return null
   }
@@ -331,7 +331,7 @@ async function withAntiRepeatPack(args: {
     const items = await args.run(nonce)
 
     if (items) {
-      const titleComposite = `${items.a.title} | ${items.b.title} | ${items.c.title}`
+      const titleComposite = `${items.a.title} | ${items.b.title} | ${items.c.title}``
       const titleSig = makeTitleSignature(titleComposite)
       const themeSig = makeThemeSignature(args.themeSignature)
 
@@ -1231,7 +1231,7 @@ export default function MeuFilhoClient() {
     setBloco1({ status: 'loading' })
 
     const tempoDisponivel = Number(time)
-    const themeSignature = bloco1|age:${age}|time:${time}|tempo:${tempoDisponivel}
+    const themeSignature = `bloco1|age:${age}|time:${time}|tempo:${tempoDisponivel}`
 
     const out = await withAntiRepeatText({
       themeSignature,
@@ -1249,7 +1249,7 @@ export default function MeuFilhoClient() {
     setBloco2({ status: 'loading' })
 
     const tempoDisponivel = Number(time)
-    const themeSignature = bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}
+    const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}`
 
     const out = await withAntiRepeatPack({
       themeSignature,
@@ -1268,7 +1268,7 @@ export default function MeuFilhoClient() {
     setBloco4({ status: 'loading' })
 
     const momento = inferMomentoDesenvolvimento(age)
-    const themeSignature = bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}
+    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
 
     const out = await withAntiRepeatText({
       themeSignature,
@@ -1300,8 +1300,7 @@ export default function MeuFilhoClient() {
 
     setBloco3({ status: 'loading', kind })
 
-    const themeSignature = bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}
-
+    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
     const out = await withAntiRepeatText({
       themeSignature,
       run: async (nonce) =>
