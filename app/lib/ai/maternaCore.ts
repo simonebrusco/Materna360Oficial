@@ -203,14 +203,21 @@ Responder APENAS com JSON no shape:
 REGRAS DE QUALIDADE (não negociáveis)
 - Entregar 1 micro-cena prática com começo, meio e fim (em 1–3 frases).
 - A descrição deve soar como algo pensado para o momento, não como conselho geral.
-- NÃO usar linguagem “template” (proibido: "você pode", "que tal", "talvez", "se quiser", "uma ideia").
+- NÃO usar linguagem “template” (proibido: "você pode", "voce pode", "que tal", "talvez", "se quiser", "uma ideia").
 - NÃO escrever em formato de lista, passos numerados, bullets ou “dicas”.
 - NÃO soar como blog, artigo, ou “atividade educativa genérica”.
-- NÃO sugerir rotina, frequência ou hábito (sem "todo dia", "sempre", "crie o hábito", etc.).
+- NÃO sugerir rotina, frequência ou hábito (sem "todo dia", "todos os dias", "sempre", "crie o hábito", etc.).
 - Evitar materiais especiais; preferir o que já existe em casa.
 
+ANTI-CATÁLOGO (estrutura mental)
+A micro-experiência deve conter os 3 blocos abaixo, sem rotular e sem parecer “passo a passo”:
+1) Preparar (1 detalhe concreto do ambiente/objeto)
+2) Fazer (1 ação principal)
+3) Fechar (1 fecho curto: conexão, celebração ou “guardar juntos”, sem discurso)
+
 VARIAÇÃO ANTIRREPETIÇÃO (cérebro, não texto)
-Para evitar duas gerações seguidas parecidas, escolha UM “ângulo mental” por resposta, variando a cada chamada:
+Escolha APENAS UM ângulo mental por resposta e NÃO repita o mesmo ângulo em duas respostas seguidas.
+Ângulos possíveis:
 1) Jogo de observação
 2) Micro-missão com objetos comuns
 3) Corpo e movimento pequeno
@@ -220,8 +227,12 @@ Para evitar duas gerações seguidas parecidas, escolha UM “ângulo mental” 
 7) Conexão/acolhimento (sem discursar)
 8) Exploração sensorial simples
 
-Use o context (tempoDisponivel, ageBand, contexto, local, etc. se vierem) para ajustar a micro-experiência.
-Se não houver contexto, ainda assim gere algo específico (não genérico).
+Se o contexto trouxer "avoid_titles" ou "avoid_themes", trate como “não repetir clima/tema” e mude o ângulo mental.
+
+USO DO CONTEXTO (para parecer “agora”)
+- Se existir tempoDisponivel: faça caber nele (não enfeite).
+- Se existir ageBand/idade/ageRange: ajuste complexidade e linguagem (sem escolarização).
+- Se existir local/contexto/habilidades: use UM detalhe para ancorar a cena, sem virar explicação.
 
 LIMITES
 - description: 1 a 3 frases, no máximo 280 caracteres.
@@ -296,6 +307,13 @@ export async function callMaternaAI<M extends MaternaMode>(
     },
   ]
 
+  // ✅ P34.17 (recorte controlado): parâmetros cognitivos só para Meu Filho Bloco 1
+  const isMeuFilhoBloco1 =
+    payload.mode === 'quick-ideas' &&
+    ((payload.context as any)?.tipoIdeia as RotinaTipoIdeia | undefined) === 'meu-filho-bloco-1'
+
+  const temperature = isMeuFilhoBloco1 ? 0.75 : 0.6
+
   const res = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
     method: 'POST',
     headers: {
@@ -305,7 +323,9 @@ export async function callMaternaAI<M extends MaternaMode>(
     body: JSON.stringify({
       model: process.env.MATERNA360_AI_MODEL || DEFAULT_MATERNA_MODEL,
       messages,
-      temperature: 0.6,
+      temperature,
+      // Penalidades leves para reduzir repetição estrutural sem virar “criatividade aleatória”
+      ...(isMeuFilhoBloco1 ? { frequency_penalty: 0.45, presence_penalty: 0.25 } : {}),
       response_format: { type: 'json_object' },
     }),
   })
