@@ -331,7 +331,7 @@ async function withAntiRepeatPack(args: {
     const items = await args.run(nonce)
 
     if (items) {
-      const titleComposite = ${items.a.title} | ${items.b.title} | ${items.c.title}
+      const titleComposite = `${items.a.title} | ${items.b.title} | ${items.c.title}`
       const titleSig = makeTitleSignature(titleComposite)
       const themeSig = makeThemeSignature(args.themeSignature)
 
@@ -352,7 +352,7 @@ async function withAntiRepeatPack(args: {
 
   const fb = args.fallback()
   try {
-    const titleComposite = ${fb.a.title} | ${fb.b.title} | ${fb.c.title}
+    const titleComposite = `${fb.a.title} | ${fb.b.title} | ${fb.c.title}`
     recordAntiRepeat({
       hub: HUB_AI,
       title_signature: makeTitleSignature(titleComposite),
