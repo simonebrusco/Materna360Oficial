@@ -114,7 +114,11 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
+<<<<<<< HEAD
   const candidate = first.description ?? ''
+=======
+  const candidate = (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
+>>>>>>> 1ff9fb48 (fix(P34.17): corrigir typing do Bloco 1 em /api/ai/rotina)
   const text = clampText(candidate, 240)
   if (!text) return []
 
@@ -155,7 +159,11 @@ function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
   const first = Array.isArray(raw) ? raw[0] : null
   if (!first) return []
 
+<<<<<<< HEAD
   const candidate = first.description ?? ''
+=======
+  const candidate = (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
+>>>>>>> 1ff9fb48 (fix(P34.17): corrigir typing do Bloco 1 em /api/ai/rotina)
   const text = clampText(candidate, 140)
   if (!text) return []
 
