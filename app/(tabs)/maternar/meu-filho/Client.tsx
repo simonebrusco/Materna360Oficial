@@ -352,6 +352,15 @@ function rotateVariationAxis(): VariationAxis {
   return next
 }
 
+function makeNonce(): string {
+  try {
+    const c = globalThis.crypto
+    if (c && typeof c.randomUUID === 'function') return c.randomUUID()
+  } catch {}
+  return `n_${Math.random().toString(16).slice(2)}_${Date.now()}`
+}
+
+
 
 
 async function withAntiRepeatText(args: {
@@ -520,33 +529,40 @@ async function fetchBloco1Plan(args: {
     const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
     const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b1_titles, 2)
     const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b1_themes, 2)
-    const res = await fetch('/api/ai/rotina', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-      body: JSON.stringify({
-        feature: 'quick-ideas',
-        origin: 'maternar/meu-filho',
-        tempoDisponivel: args.tempoDisponivel,
-        comQuem: 'eu-e-meu-filho',
-        tipoIdeia: 'meu-filho-bloco-1',
-        avoid_titles: avoidTitles.length ? avoidTitles : undefined,
-        avoid_themes: avoidThemes.length ? avoidThemes : undefined,
-        variation_axis: axis,
-        variation: axis ? `${axis}:${args.nonce}` : args.nonce,
-        requestId: args.nonce,
-        nonce: args.nonce,
-      }),
-    })
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const nonce = attempt === 0 ? args.nonce : makeNonce()
+          const res = await fetch('/api/ai/rotina', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store',
+            body: JSON.stringify({
+              feature: 'quick-ideas',
+              origin: 'maternar/meu-filho',
+              tempoDisponivel: args.tempoDisponivel,
+              comQuem: 'eu-e-meu-filho',
+              tipoIdeia: 'meu-filho-bloco-1',
+              avoid_titles: avoidTitles.length ? avoidTitles : undefined,
+              avoid_themes: avoidThemes.length ? avoidThemes : undefined,
+              variation_axis: axis,
+              variation: axis ? `${axis}:${nonce}` : nonce,
+              requestId: nonce,
+              nonce: nonce,
+            }),
+          })
 
-    if (!res.ok) return null
-    const data = (await res.json().catch(() => null)) as { suggestions?: { description?: string }[] } | null
-    const desc = data?.suggestions?.[0]?.description
-    const cleaned = safeMeuFilhoBloco1Text(desc)
-    if (!cleaned) return null
-    pushRecentAvoid(MF_LS.b1_titles, makeTitleSignature(cleaned), 2)
-    pushRecentAvoid(MF_LS.b1_themes, makeThemeSignature(`b1|t:${args.tempoDisponivel}|axis:${axis}|out:${cleaned}`), 2)
-    return cleaned
+          if (!res.ok) continue
+          const data = (await res.json().catch(() => null)) as { suggestions?: { description?: string }[] } | null
+          const desc = data?.suggestions?.[0]?.description
+          const cleaned = safeMeuFilhoBloco1Text(desc)
+          if (!cleaned) return null
+          pushRecentAvoid(MF_LS.b1_titles, makeTitleSignature(cleaned), 2)
+          pushRecentAvoid(MF_LS.b1_themes, makeThemeSignature(`b1|t:${args.tempoDisponivel}|axis:${axis}|out:${cleaned}`), 2)
+          return cleaned
+      pushRecentAvoid(MF_LS.b1_titles, makeTitleSignature(cleaned), 2)
+      pushRecentAvoid(MF_LS.b1_themes, makeThemeSignature(`b1|t:${args.tempoDisponivel}|axis:${axis}|out:${cleaned}`), 2)
+      return cleaned
+    }
+    return null
   } catch {
     return null
   }
@@ -633,55 +649,59 @@ async function fetchBloco2Cards(args: {
     const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
     const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b2_titles, 2)
     const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b2_themes, 2)
-    const res = await fetch('/api/ai/rotina', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-      body: JSON.stringify({
-        feature: 'quick-ideas',
-        origin: 'maternar/meu-filho',
-        tempoDisponivel: args.tempoDisponivel,
-        comQuem: 'eu-e-meu-filho',
-        tipoIdeia: 'meu-filho-bloco-2',
-        ageBand: args.age,
-        contexto: 'exploracao',
-        local: args.playLocation,
-        // API aceita array; aqui é single-select, então enviamos [skill]
-        habilidades: [args.skill],
-        avoid_titles: avoidTitles.length ? avoidTitles : undefined,
-        avoid_themes: avoidThemes.length ? avoidThemes : undefined,
-        variation_axis: axis,
-        requestId: args.nonce,
-        nonce: args.nonce,
-        variation: axis ? `${axis}:${args.nonce}` : args.nonce,
-      }),
-    })
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const nonce = attempt === 0 ? args.nonce : makeNonce()
+          const res = await fetch('/api/ai/rotina', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store',
+            body: JSON.stringify({
+              feature: 'quick-ideas',
+              origin: 'maternar/meu-filho',
+              tempoDisponivel: args.tempoDisponivel,
+              comQuem: 'eu-e-meu-filho',
+              tipoIdeia: 'meu-filho-bloco-2',
+              ageBand: args.age,
+              contexto: 'exploracao',
+              local: args.playLocation,
+              // API aceita array; aqui é single-select, então enviamos [skill]
+              habilidades: [args.skill],
+              avoid_titles: avoidTitles.length ? avoidTitles : undefined,
+              avoid_themes: avoidThemes.length ? avoidThemes : undefined,
+              variation_axis: axis,
+              requestId: nonce,
+              nonce: nonce,
+              variation: axis ? `${axis}:${nonce}` : nonce,
+            }),
+          })
 
-    if (!res.ok) return null
-    const data = await res.json().catch(() => null)
-    const picked = pick3Suggestions(data)
-    if (!picked) return null
+          if (!res.ok) continue
+          const data = await res.json().catch(() => null)
+          const picked = pick3Suggestions(data)
+          if (!picked) continue
 
-    const mk = (i: { title: string; description: string }): PlanItem | null => {
-      const title = safeBloco2Title(i.title)
-      const how = safeBloco2How(i.description)
-      if (!title || !how) return null
-      return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
+          const mk = (i: { title: string; description: string }): PlanItem | null => {
+            const title = safeBloco2Title(i.title)
+            const how = safeBloco2How(i.description)
+            if (!title || !how) return null
+            return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
+          }
+
+          const a = mk(picked[0])
+          const b = mk(picked[1])
+          const c = mk(picked[2])
+          if (!a || !b || !c) continue
+
+          const titleComposite = `${a.title} | ${b.title} | ${c.title}`
+          pushRecentAvoid(MF_LS.b2_titles, makeTitleSignature(titleComposite), 2)
+          pushRecentAvoid(
+            MF_LS.b2_themes,
+            makeThemeSignature(`b2|t:${args.tempoDisponivel}|age:${args.age}|local:${args.playLocation}|skill:${args.skill}|axis:${axis}|out:${titleComposite}`),
+            2,
+          )
+          return { a, b, c }
     }
-
-    const a = mk(picked[0])
-    const b = mk(picked[1])
-    const c = mk(picked[2])
-    if (!a || !b || !c) return null
-
-    const titleComposite = `${a.title} | ${b.title} | ${c.title}`
-    pushRecentAvoid(MF_LS.b2_titles, makeTitleSignature(titleComposite), 2)
-    pushRecentAvoid(
-      MF_LS.b2_themes,
-      makeThemeSignature(`b2|t:${args.tempoDisponivel}|age:${args.age}|local:${args.playLocation}|skill:${args.skill}|axis:${axis}|out:${titleComposite}`),
-      2,
-    )
-    return { a, b, c }
+    return null
   } catch {
     return null
   }
