@@ -517,6 +517,9 @@ async function fetchBloco1Plan(args: {
   variation_axis?: VariationAxis
 }): Promise<string | null> {
   try {
+    const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
+    const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b1_titles, 2)
+    const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b1_themes, 2)
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -527,10 +530,10 @@ async function fetchBloco1Plan(args: {
         tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-1',
-        avoid_titles: Array.isArray(args.avoid_titles) ? args.avoid_titles : undefined,
-        avoid_themes: Array.isArray(args.avoid_themes) ? args.avoid_themes : undefined,
-        variation_axis: args.variation_axis,
-        variation: args.variation_axis ? `${args.variation_axis}:${args.nonce}` : args.nonce,
+        avoid_titles: avoidTitles.length ? avoidTitles : undefined,
+        avoid_themes: avoidThemes.length ? avoidThemes : undefined,
+        variation_axis: axis,
+        variation: axis ? `${axis}:${args.nonce}` : args.nonce,
         requestId: args.nonce,
         nonce: args.nonce,
       }),
@@ -541,6 +544,8 @@ async function fetchBloco1Plan(args: {
     const desc = data?.suggestions?.[0]?.description
     const cleaned = safeMeuFilhoBloco1Text(desc)
     if (!cleaned) return null
+    pushRecentAvoid(MF_LS.b1_titles, makeTitleSignature(cleaned), 2)
+    pushRecentAvoid(MF_LS.b1_themes, makeThemeSignature(`b1|t:${args.tempoDisponivel}|axis:${axis}|out:${cleaned}`), 2)
     return cleaned
   } catch {
     return null
@@ -625,6 +630,9 @@ async function fetchBloco2Cards(args: {
   variation_axis?: VariationAxis
 }): Promise<Bloco2Items | null> {
   try {
+    const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
+    const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b2_titles, 2)
+    const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b2_themes, 2)
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -640,12 +648,12 @@ async function fetchBloco2Cards(args: {
         local: args.playLocation,
         // API aceita array; aqui é single-select, então enviamos [skill]
         habilidades: [args.skill],
-        avoid_titles: Array.isArray(args.avoid_titles) ? args.avoid_titles : undefined,
-        avoid_themes: Array.isArray(args.avoid_themes) ? args.avoid_themes : undefined,
-        variation_axis: args.variation_axis,
+        avoid_titles: avoidTitles.length ? avoidTitles : undefined,
+        avoid_themes: avoidThemes.length ? avoidThemes : undefined,
+        variation_axis: axis,
         requestId: args.nonce,
         nonce: args.nonce,
-        variation: args.variation_axis ? `${args.variation_axis}:${args.nonce}` : args.nonce,
+        variation: axis ? `${axis}:${args.nonce}` : args.nonce,
       }),
     })
 
@@ -666,6 +674,13 @@ async function fetchBloco2Cards(args: {
     const c = mk(picked[2])
     if (!a || !b || !c) return null
 
+    const titleComposite = `${a.title} | ${b.title} | ${c.title}`
+    pushRecentAvoid(MF_LS.b2_titles, makeTitleSignature(titleComposite), 2)
+    pushRecentAvoid(
+      MF_LS.b2_themes,
+      makeThemeSignature(`b2|t:${args.tempoDisponivel}|age:${args.age}|local:${args.playLocation}|skill:${args.skill}|axis:${axis}|out:${titleComposite}`),
+      2,
+    )
     return { a, b, c }
   } catch {
     return null
