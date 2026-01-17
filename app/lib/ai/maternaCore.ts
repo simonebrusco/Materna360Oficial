@@ -195,15 +195,16 @@ function buildMeuFilhoBloco1BrainPrompt(): string {
 VOCÊ ESTÁ EM: MATERNAR > MEU FILHO > BLOCO 1 (micro-experiência única)
 
 MISSÃO
-Gerar UMA única micro-experiência para fazer agora com a criança — pensada para o momento real.
+Gerar UMA única micro-experiência para fazer agora com a criança.
+Ela precisa parecer "pensada para agora", não genérica.
 
-DADOS DISPONÍVEIS (use 1 ou 2 para ancorar o "agora", sem explicar)
-- context.tempoDisponivel (minutos)
-- personalization.local (ex.: casa / ao ar livre) e/ou personalization.contexto
-- personalization.ageBand e/ou child.idadeMeses
-- personalization.habilidades (se vier)
-- personalization.avoid_titles / avoid_themes (evitar repetir clima/tema)
-- personalization.requestId / nonce / variation (se vier)
+ENTRADAS (vêm no JSON do usuário)
+- tempoDisponivel (minutos)
+- ageBand (faixa)
+- local (casa | ar_livre | deslocamento)  [pode vir como local ou playLocation]
+- habilidades (array com 1 item)           [ex.: ["emocional"]]
+- variation_axis (energia | calma | organizacao | aproxima)
+- avoid_titles (array) / avoid_themes (array) — últimos 2 cliques
 
 FORMATO OBRIGATÓRIO
 Responder APENAS com JSON no shape:
@@ -212,7 +213,7 @@ Responder APENAS com JSON no shape:
     {
       "id": "mf_b1_<curto>",
       "category": "ideia-rapida",
-      "title": "",
+      "title": "<curto e específico>",
       "description": "<1 a 3 frases, natural, específico, sem template>",
       "estimatedMinutes": <number>,
       "withChild": true,
@@ -223,32 +224,42 @@ Responder APENAS com JSON no shape:
 
 REGRAS (não negociáveis)
 - description: 1 a 3 frases, no máximo 280 caracteres.
-- Proibido: "você pode", "voce pode", "que tal", "talvez", "se quiser", "uma ideia".
-- Proibido: listas, bullets, passos numerados, hífens, quebras de linha.
-- Proibido: rotina/frequência/hábito ("todo dia", "sempre", etc.).
-- Não escolarizar. Não dar aula. Não explicar “porquê”.
-- A experiência deve ter começo-meio-fim, mas sem virar checklist.
+- Proibido linguagem “template”:
+  NÃO use: "você pode", "voce pode", "que tal", "talvez", "se quiser", "uma ideia", "experimente".
+- NÃO listar passos, bullets, listas, nem numerar.
+- NÃO sugerir rotina/frequência/hábito ("todo dia", "sempre", etc.).
+- NÃO soar escolarizado (nada de “atividade pedagógica”, “objetivo”, “estimule”, etc.).
+- A micro-experiência deve ter começo-meio-fim implícitos, sem rotular.
 
-ANTI-COLAPSO (OBRIGATÓRIO)
-Para evitar respostas parecidas, escolha UM “arco” diferente a cada geração.
-Use requestId/nonce/variation se existir; se não existir, varie mesmo assim.
-Nunca nomeie o arco; apenas escreva a micro-experiência.
+COERÊNCIA COM FILTROS (obrigatório)
+- Use 1 detalhe explícito de LOCAL (casa / ar livre / deslocamento) na cena.
+- Use a HABILIDADE escolhida para direcionar o tipo de ação:
+  motor => corpo/movimento simples
+  linguagem => fala/sons/história curta
+  emocional => nomear sentimento + co-regulação
+  cognitivo => organizar/achar/associar simples
+  social => turnos/revezar/combinar rápido
+  autonomia => escolha + pequena responsabilidade
 
-Arcos possíveis (escolha 1):
-A) Silêncio + detalhe (acalmar com um microfoco sensorial)
-B) Missão-relâmpago (energia com um desafio curtíssimo)
-C) Dupla de arrumação (organiza com um gesto simples compartilhado)
-D) História-objeto (aproxima com narrativa de 1 objeto do ambiente)
-E) Espelho (aproxima imitando um ao outro por 20–40 segundos)
-F) “Escolha pequena” (autonomia: a criança escolhe entre 2 coisas simples)
+EIXO DE VARIAÇÃO (obrigatório, anti-colapso)
+- variation_axis define o "clima" e deve trocar a estrutura do momento.
+  energia      => moodImpact="energia"     (mais movimento, mais ritmo)
+  calma        => moodImpact="acalma"      (desacelera, regula)
+  organizacao  => moodImpact="organiza"    (organiza um cantinho, ordenar, guardar)
+  aproxima     => moodImpact="aproxima"    (olho no olho, conversa curta, gesto final)
+- Mesmo com o mesmo filtro, mude o objeto/gancho e a linguagem quando o eixo mudar.
 
-EVITAR REPETIÇÃO
-- Se houver avoid_titles/avoid_themes, não reutilize os mesmos substantivos/objetos/“clima”.
-- Se o último tema parecia “corrida/movimento”, mude para “calma/observação” (ou vice-versa).
-- Mude o cenário (mesa/chão/porta/janela/banheiro/quintal) quando possível.
+ANTI-REPETIÇÃO (janela 2 cliques)
+- Se houver avoid_titles, NÃO repita título parecido.
+- Se houver avoid_themes, mude o “motivo” da micro-experiência:
+  não reaproveite o mesmo gancho (ex.: "missão", "caça", "circuito", "história", "pista") e não use os mesmos objetos-chave.
+- O resultado deve soar novo mesmo quando a mãe clica duas vezes seguidas.
 
-QUALIDADE
-A micro-experiência deve soar como algo pensado para agora, não como conselho genérico.
+ANTI-CATÁLOGO (estrutura mental)
+A micro-experiência deve conter, sem rotular:
+1) Preparar (1 detalhe do ambiente/objeto)
+2) Fazer (1 ação principal)
+3) Fechar (1 fecho curto de conexão/celebração/guardar junto)
 `.trim()
 }
 
