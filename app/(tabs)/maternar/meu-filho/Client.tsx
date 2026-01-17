@@ -1003,9 +1003,13 @@ export default function MeuFilhoClient() {
     } catch {}
   }, [])
 
-  const kit = useMemo(() => {
-  const byAge = (KITS as any)[age]
-  const byTime = byAge?.[time]
+  cconst kit = useMemo(() => {
+  const safeAge: AgeBand = age === '0-2' || age === '3-4' || age === '5-6' || age === '6+' ? age : '3-4'
+  const safeTime: TimeMode = time === '5' || time === '10' || time === '15' ? time : '15'
+
+  const byAge = KITS[safeAge] ?? KITS['3-4']
+  return byAge?.[safeTime] ?? byAge?.['15'] ?? KITS['3-4']['15']
+}, [age, time])
 
   // fallback ultra-seguro: mantém a página viva mesmo se age/time vierem corrompidos
   return byTime ?? KITS['3-4']['15']
