@@ -113,7 +113,7 @@ function safeGetLS(key: string): string | null {
     if (typeof window === 'undefined') return null
     const direct = window.localStorage.getItem(key)
     if (direct !== null) return direct
-    return window.localStorage.getItem(${LS_PREFIX}${key})
+    return window.localStorage.getItem(`${LS_PREFIX}${key}`)
   } catch {
     return null
   }
@@ -122,7 +122,7 @@ function safeGetLS(key: string): string | null {
 function safeSetLS(key: string, value: string) {
   try {
     if (typeof window === 'undefined') return
-    window.localStorage.setItem(${LS_PREFIX}${key}, value)
+    window.localStorage.setItem(`${LS_PREFIX}${key}`, value)
     window.localStorage.setItem(key, value) // compat legado
   } catch {}
 }
@@ -286,7 +286,7 @@ function newNonce() {
     const c = globalThis.crypto
     if (c && typeof c.randomUUID === 'function') return c.randomUUID()
   } catch {}
-  return n_${Math.random().toString(16).slice(2)}_${Date.now()}
+  return `n_${Math.random().toString(16).slice(2)}_${Date.now()}`
 }
 
 /* =========================
@@ -353,7 +353,7 @@ async function withAntiRepeatPack(args: {
     const items = await args.run(nonce)
 
     if (items) {
-      const titleComposite = ${items.a.title} | ${items.b.title} | ${items.c.title}
+      const titleComposite = `${items.a.title} | ${items.b.title} | ${items.c.title}`
       const titleSig = makeTitleSignature(titleComposite)
       const themeSig = makeThemeSignature(args.themeSignature)
 
@@ -374,7 +374,7 @@ async function withAntiRepeatPack(args: {
 
   const fb = args.fallback()
   try {
-    const titleComposite = ${fb.a.title} | ${fb.b.title} | ${fb.c.title}
+    const titleComposite = `${fb.a.title} | ${fb.b.title} | ${fb.c.title}`
     recordAntiRepeat({
       hub: HUB_AI,
       title_signature: makeTitleSignature(titleComposite),
@@ -999,7 +999,7 @@ function splitEditorialText(raw: string | null | undefined): string[] {
   const markers = ['No final,', 'No fim,', 'Depois,', 'Em seguida,', 'Por fim,']
   let working = text
   markers.forEach((m) => {
-    working = working.replace(new RegExp(\\s*${m}, 'g'), \n\n${m})
+    working = working.replace(new RegExp(`\\s*${m}`, 'g'), `\n\n${m}`)
   })
 
   const parts = working
@@ -1257,7 +1257,7 @@ export default function MeuFilhoClient() {
     // (Importante: sem “que tal” e sem template. Mantemos curto.)
     const base = String(kit?.plan?.a?.how ?? '').trim()
     const secondary = clampMeuFilhoBloco1Text(
-      base ? ${base} No final, guardem juntos e fechem com um abraço curto. : BLOCO1_FALLBACK[age][time],
+      base ? `${base} No final, guardem juntos e fechem com um abraço curto.` : BLOCO1_FALLBACK[age][time],
     )
 
     const uniq = Array.from(new Set([primary, secondary].map((s) => String(s ?? '').trim()).filter(Boolean)))
@@ -1344,7 +1344,7 @@ export default function MeuFilhoClient() {
     setBloco2({ status: 'loading' })
 
     const tempoDisponivel = Number(time)
-    const themeSignature = bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skill:${skill}
+    const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skill:${skill}`
 
     const out = await withAntiRepeatPack({
       themeSignature,
@@ -1363,7 +1363,7 @@ export default function MeuFilhoClient() {
     setBloco4({ status: 'loading' })
 
     const momento = inferMomentoDesenvolvimento(age)
-    const themeSignature = bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}
+    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
 
     const out = await withAntiRepeatText({
       themeSignature,
@@ -1395,7 +1395,7 @@ export default function MeuFilhoClient() {
 
     setBloco3({ status: 'loading', kind })
 
-    const themeSignature = bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}
+    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
 
     const out = await withAntiRepeatText({
       themeSignature,
@@ -1727,7 +1727,7 @@ export default function MeuFilhoClient() {
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               type="button"
-                              onClick={() => saveSelectedToMyDay(Meu Filho: ${timeLabel(time)} — plano para agora)}
+                              onClick={() => saveSelectedToMyDay(`Meu Filho: ${timeLabel(time)} — plano para agora`)}
                               className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
                             >
                               Salvar no Meu Dia
@@ -1787,7 +1787,7 @@ export default function MeuFilhoClient() {
                                 <div className="mt-4 flex flex-wrap gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => saveSelectedToMyDay(Meu Filho: ${selected.title})}
+                                    onClick={() => saveSelectedToMyDay(`Meu Filho: ${selected.title}`)}
                                     className="rounded-full bg-[#fd2597] hover:brightness-95 text-white px-4 py-2 text-[12px] shadow-md transition"
                                   >
                                     Salvar no Meu Dia
@@ -2022,4 +2022,4 @@ export default function MeuFilhoClient() {
       </ClientOnly>
     </main>
   )
-} 
+}
