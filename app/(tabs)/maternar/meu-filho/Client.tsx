@@ -295,6 +295,65 @@ function newNonce() {
 
 const HUB_AI = 'maternar/meu-filho' as const
 
+// =========================
+// P34.17 — Anti-repetição (janela 2) + eixo de variação
+// =========================
+
+type VariationAxis = 'energia' | 'calma' | 'organizacao'
+const VARIATION_AXES: VariationAxis[] = ['energia', 'calma', 'organizacao'] as const
+
+const MF_LS = {
+  b1_titles: 'maternar/meu-filho/anti/b1/avoid_titles',
+  b1_themes: 'maternar/meu-filho/anti/b1/avoid_themes',
+  b2_titles: 'maternar/meu-filho/anti/b2/avoid_titles',
+  b2_themes: 'maternar/meu-filho/anti/b2/avoid_themes',
+  variation_axis: 'maternar/meu-filho/pref/variation_axis',
+} as const
+
+function safeGetLSArray(key: string): string[] {
+  const raw = safeGetLS(key)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed.map((x) => String(x ?? '').trim()).filter(Boolean)
+    }
+  } catch {}
+  const v = String(raw ?? '').trim()
+  return v ? [v] : []
+}
+
+function getRecentAvoid(key: string, maxItems = 2): string[] {
+  const arr = safeGetLSArray(key)
+  const out: string[] = []
+  for (const x of arr) {
+    const xx = String(x ?? '').trim()
+    if (!xx) continue
+    if (out.includes(xx)) continue
+    out.push(xx)
+    if (out.length >= maxItems) break
+  }
+  return out
+}
+
+function pushRecentAvoid(key: string, value: string, maxItems = 2) {
+  const v = String(value ?? '').trim()
+  if (!v) return
+  const current = getRecentAvoid(key, 50)
+  const next = [v, ...current.filter((x) => x !== v)].slice(0, maxItems)
+  safeSetLS(key, JSON.stringify(next))
+}
+
+function rotateVariationAxis(): VariationAxis {
+  const prev = String(safeGetLS(MF_LS.variation_axis) ?? '').trim() as VariationAxis
+  const idx = VARIATION_AXES.indexOf(prev)
+  const next = VARIATION_AXES[(idx >= 0 ? idx + 1 : 0) % VARIATION_AXES.length]
+  safeSetLS(MF_LS.variation_axis, next)
+  return next
+}
+
+
+
 async function withAntiRepeatText(args: {
   themeSignature: string
   run: (nonce: string) => Promise<string | null>
