@@ -195,7 +195,15 @@ function buildMeuFilhoBloco1BrainPrompt(): string {
 VOCÊ ESTÁ EM: MATERNAR > MEU FILHO > BLOCO 1 (micro-experiência única)
 
 MISSÃO
-Gerar UMA única micro-experiência para fazer agora com a criança.
+Gerar UMA única micro-experiência para fazer agora com a criança — pensada para o momento real.
+
+DADOS DISPONÍVEIS (use 1 ou 2 para ancorar o "agora", sem explicar)
+- context.tempoDisponivel (minutos)
+- personalization.local (ex.: casa / ao ar livre) e/ou personalization.contexto
+- personalization.ageBand e/ou child.idadeMeses
+- personalization.habilidades (se vier)
+- personalization.avoid_titles / avoid_themes (evitar repetir clima/tema)
+- personalization.requestId / nonce / variation (se vier)
 
 FORMATO OBRIGATÓRIO
 Responder APENAS com JSON no shape:
@@ -214,19 +222,33 @@ Responder APENAS com JSON no shape:
 }
 
 REGRAS (não negociáveis)
-- 1 a 3 frases, no máximo 280 caracteres em description.
-- Não usar linguagem “template” (proibido: "você pode", "voce pode", "que tal", "talvez", "se quiser", "uma ideia").
-- Não listar passos, bullets, listas.
-- Não sugerir rotina/frequência/hábito ("todo dia", "sempre", etc.).
-- Usar um detalhe do contexto para ancorar a cena (tempo/local/idade), sem escolarização.
+- description: 1 a 3 frases, no máximo 280 caracteres.
+- Proibido: "você pode", "voce pode", "que tal", "talvez", "se quiser", "uma ideia".
+- Proibido: listas, bullets, passos numerados, hífens, quebras de linha.
+- Proibido: rotina/frequência/hábito ("todo dia", "sempre", etc.).
+- Não escolarizar. Não dar aula. Não explicar “porquê”.
+- A experiência deve ter começo-meio-fim, mas sem virar checklist.
 
-ANTI-CATÁLOGO (estrutura mental)
-A micro-experiência deve conter, sem rotular:
-1) Preparar (1 detalhe do ambiente/objeto)
-2) Fazer (1 ação principal)
-3) Fechar (1 fecho curto de conexão/celebração/guardar junto)
+ANTI-COLAPSO (OBRIGATÓRIO)
+Para evitar respostas parecidas, escolha UM “arco” diferente a cada geração.
+Use requestId/nonce/variation se existir; se não existir, varie mesmo assim.
+Nunca nomeie o arco; apenas escreva a micro-experiência.
 
-Se houver avoid_titles/avoid_themes, mude o “clima” e não repita tema.
+Arcos possíveis (escolha 1):
+A) Silêncio + detalhe (acalmar com um microfoco sensorial)
+B) Missão-relâmpago (energia com um desafio curtíssimo)
+C) Dupla de arrumação (organiza com um gesto simples compartilhado)
+D) História-objeto (aproxima com narrativa de 1 objeto do ambiente)
+E) Espelho (aproxima imitando um ao outro por 20–40 segundos)
+F) “Escolha pequena” (autonomia: a criança escolhe entre 2 coisas simples)
+
+EVITAR REPETIÇÃO
+- Se houver avoid_titles/avoid_themes, não reutilize os mesmos substantivos/objetos/“clima”.
+- Se o último tema parecia “corrida/movimento”, mude para “calma/observação” (ou vice-versa).
+- Mude o cenário (mesa/chão/porta/janela/banheiro/quintal) quando possível.
+
+QUALIDADE
+A micro-experiência deve soar como algo pensado para agora, não como conselho genérico.
 `.trim()
 }
 
@@ -320,9 +342,10 @@ export async function callMaternaAI<TMode extends MaternaMode>(
             category: 'ideia-rapida',
             title: '',
             description: String(content || '').slice(0, 280),
-            estimatedMinutes: typeof (payload.context as any)?.tempoDisponivel === 'number'
-              ? Math.max(1, Math.round((payload.context as any).tempoDisponivel))
-              : 5,
+            estimatedMinutes:
+              typeof (payload.context as any)?.tempoDisponivel === 'number'
+                ? Math.max(1, Math.round((payload.context as any).tempoDisponivel))
+                : 5,
             withChild: true,
             moodImpact: 'aproxima',
           },
