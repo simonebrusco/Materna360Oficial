@@ -514,6 +514,7 @@ async function fetchBloco1Plan(args: {
   nonce: string
   avoid_titles?: string[]
   avoid_themes?: string[]
+  variation_axis?: VariationAxis
 }): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
@@ -528,6 +529,8 @@ async function fetchBloco1Plan(args: {
         tipoIdeia: 'meu-filho-bloco-1',
         avoid_titles: Array.isArray(args.avoid_titles) ? args.avoid_titles : undefined,
         avoid_themes: Array.isArray(args.avoid_themes) ? args.avoid_themes : undefined,
+        variation_axis: args.variation_axis,
+        variation: args.variation_axis ? `${args.variation_axis}:${args.nonce}` : args.nonce,
         requestId: args.nonce,
         nonce: args.nonce,
       }),
@@ -617,6 +620,9 @@ async function fetchBloco2Cards(args: {
   playLocation: PlayLocation
   skill: SkillId
   nonce: string
+  avoid_titles?: string[]
+  avoid_themes?: string[]
+  variation_axis?: VariationAxis
 }): Promise<Bloco2Items | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
@@ -634,9 +640,12 @@ async function fetchBloco2Cards(args: {
         local: args.playLocation,
         // API aceita array; aqui é single-select, então enviamos [skill]
         habilidades: [args.skill],
+        avoid_titles: Array.isArray(args.avoid_titles) ? args.avoid_titles : undefined,
+        avoid_themes: Array.isArray(args.avoid_themes) ? args.avoid_themes : undefined,
+        variation_axis: args.variation_axis,
         requestId: args.nonce,
         nonce: args.nonce,
-        variation: args.nonce,
+        variation: args.variation_axis ? `${args.variation_axis}:${args.nonce}` : args.nonce,
       }),
     })
 
