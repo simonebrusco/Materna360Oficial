@@ -1003,7 +1003,7 @@ export default function MeuFilhoClient() {
     } catch {}
   }, [])
 
-  cconst kit = useMemo(() => {
+  const kit = useMemo(() => {
   const safeAge: AgeBand = age === '0-2' || age === '3-4' || age === '5-6' || age === '6+' ? age : '3-4'
   const safeTime: TimeMode = time === '5' || time === '10' || time === '15' ? time : '15'
 
