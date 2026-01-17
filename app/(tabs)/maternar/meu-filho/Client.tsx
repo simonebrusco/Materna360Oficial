@@ -1003,7 +1003,13 @@ export default function MeuFilhoClient() {
     } catch {}
   }, [])
 
-  const kit = useMemo(() => KITS[age][time], [age, time])
+  const kit = useMemo(() => {
+  const byAge = (KITS as any)[age]
+  const byTime = byAge?.[time]
+
+  // fallback ultra-seguro: mantém a página viva mesmo se age/time vierem corrompidos
+  return byTime ?? KITS['3-4']['15']
+}, [age, time])
 
   const effectivePlan: { a: PlanItem; b: PlanItem; c: PlanItem } | null = useMemo(() => {
     if (bloco2.status === 'done') return bloco2.items
