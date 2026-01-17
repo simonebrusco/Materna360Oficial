@@ -450,7 +450,12 @@ const BLOCO1_FALLBACK: Record<AgeBand, Record<TimeMode, string>> = {
 
 type Bloco1State = { status: 'idle' } | { status: 'loading' } | { status: 'done'; text: string; source: 'ai' | 'fallback' }
 
-async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string }): Promise<string | null> {
+async function fetchBloco1Plan(args: {
+  tempoDisponivel: number
+  nonce: string
+  avoid_titles?: string[]
+  avoid_themes?: string[]
+}): Promise<string | null> {
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -462,6 +467,8 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string })
         tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-1',
+        avoid_titles: Array.isArray(args.avoid_titles) ? args.avoid_titles : undefined,
+        avoid_themes: Array.isArray(args.avoid_themes) ? args.avoid_themes : undefined,
         requestId: args.nonce,
         nonce: args.nonce,
       }),
@@ -1085,6 +1092,9 @@ export default function MeuFilhoClient() {
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
   const bloco1ReqSeq = useRef(0)
 
+  // ✅ anti-repetição estrita “nunca igual ao clique anterior”
+  const lastBloco1TextRef = useRef<string | null>(null)
+
   // Bloco 2
   const [bloco2, setBloco2] = useState<Bloco2State>({ status: 'idle' })
   const bloco2ReqSeq = useRef(0)
@@ -1131,6 +1141,9 @@ export default function MeuFilhoClient() {
     setBloco3({ status: 'idle' })
     setBloco4({ status: 'idle' })
 
+    // reset da memória local do último texto (garante consistência quando reentra no hub)
+    lastBloco1TextRef.current = null
+
     try {
       const snap = getProfileSnapshot()
       setProfileSource(snap.source)
@@ -1174,6 +1187,8 @@ export default function MeuFilhoClient() {
     setBloco2({ status: 'idle' })
     setBloco3({ status: 'idle' })
     setBloco4({ status: 'idle' })
+    // também reseta o último texto, porque mudou o contexto do “agora”
+    lastBloco1TextRef.current = null
   }
 
   function onSelectTime(next: TimeMode) {
@@ -1235,22 +1250,93 @@ export default function MeuFilhoClient() {
     setBloco4({ status: 'idle' })
   }
 
+  function bloco1FallbackVariants(): string[] {
+    const primary = clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time])
+
+    // Variante 2: reaproveita “ritmo” do kit, mas fecha com um fecho de conexão/encerramento.
+    // (Importante: sem “que tal” e sem template. Mantemos curto.)
+    const base = String(kit?.plan?.a?.how ?? '').trim()
+    const secondary = clampMeuFilhoBloco1Text(
+      base ? `${base} No final, guardem juntos e fechem com um abraço curto.` : BLOCO1_FALLBACK[age][time],
+    )
+
+    const uniq = Array.from(new Set([primary, secondary].map((s) => String(s ?? '').trim()).filter(Boolean)))
+    return uniq.length ? uniq : [primary]
+  }
+
   async function generateBloco1() {
     const seq = ++bloco1ReqSeq.current
     setBloco1({ status: 'loading' })
 
-    const tempoDisponivel = Number(time)
-    const themeSignature = `bloco1|age:${age}|time:${time}|tempo:${tempoDisponivel}`
+    resetAntiRepeatIfDayChanged()
 
-    const out = await withAntiRepeatText({
-      themeSignature,
-      run: async (nonce) => await fetchBloco1Plan({ tempoDisponivel, nonce }),
-      fallback: () => clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time]),
-      maxTries: 2,
-    })
+    const tempoDisponivel = Number(time)
+
+    // Evita repetir exatamente a última sugestão exibida (regra “nunca a mesma ideia da clicada anterior”)
+    const prevText = String(lastBloco1TextRef.current ?? '').trim()
+    const avoid_titles = prevText ? [prevText.slice(0, 60)] : undefined
+    const avoid_themes = prevText ? [makeThemeSignature(prevText)] : undefined
+
+    const tries = 3
+    for (let i = 0; i < tries; i++) {
+      const nonce = newNonce()
+
+      const candidate = await fetchBloco1Plan({
+        tempoDisponivel,
+        nonce,
+        avoid_titles,
+        avoid_themes,
+      })
+
+      if (seq !== bloco1ReqSeq.current) return
+
+      if (candidate) {
+        const normalized = String(candidate).trim()
+        if (prevText && normalized === prevText) {
+          continue
+        }
+
+        // Anti-repetição perceptiva mais forte: tema assinado pelo próprio texto (não só pelo filtro fixo)
+        const titleSig = makeTitleSignature(normalized.slice(0, 60))
+        const themeSig = makeThemeSignature(normalized)
+
+        const repeated = hasPerceptiveRepetition({
+          hub: HUB_AI,
+          title_signature: titleSig,
+          theme_signature: themeSig,
+        })
+
+        if (repeated) {
+          continue
+        }
+
+        recordAntiRepeat({
+          hub: HUB_AI,
+          title_signature: titleSig,
+          theme_signature: themeSig,
+          variation_axis: nonce,
+        })
+
+        setBloco1({ status: 'done', text: normalized, source: 'ai' })
+        lastBloco1TextRef.current = normalized
+        return
+      }
+    }
+
+    // Fallback: garante que não seja exatamente igual ao anterior
+    const variants = bloco1FallbackVariants()
+    const picked = variants.find((v) => String(v).trim() && String(v).trim() !== prevText) ?? variants[0]
+    const finalText = String(picked ?? '').trim()
+
+    try {
+      const titleSig = makeTitleSignature(finalText.slice(0, 60))
+      const themeSig = makeThemeSignature(finalText)
+      recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: 'fallback' })
+    } catch {}
 
     if (seq !== bloco1ReqSeq.current) return
-    setBloco1({ status: 'done', text: out.text, source: out.source })
+    setBloco1({ status: 'done', text: finalText, source: 'fallback' })
+    lastBloco1TextRef.current = finalText
   }
 
   async function generateBloco2() {
