@@ -287,7 +287,7 @@ export async function POST(req: Request) {
     }
 
     const sanitizedCount = Array.isArray(suggestions) ? suggestions.length : 0
-    const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
+    const isProd = process.env.VERCEL_ENV === 'production'
     const meta = (!isProd && body.tipoIdeia === 'meu-filho-bloco-2')
       ? {
           hasSuggestionsField,
