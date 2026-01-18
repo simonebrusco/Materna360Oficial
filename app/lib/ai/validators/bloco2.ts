@@ -68,6 +68,18 @@ function signatureKey(title: string, desc: string): string {
   return `${title.toLowerCase()}|${desc.toLowerCase()}`
 }
 
+function deriveTitleFromDescription(desc: string): string {
+  const clean = String(desc || '')
+    .replace(/[.!?]+/g, ' ')
+    .replace(/[:;]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!clean) return ''
+  const words = clean.split(' ').filter(Boolean)
+  const picked = words.slice(0, 5).join(' ')
+  return picked ? picked.charAt(0).toUpperCase() + picked.slice(1) : ''
+}
+
 /**
  * Valida e sanitiza cards do Bloco 2.
  * - 3–5 cards
@@ -91,24 +103,32 @@ export function sanitizeMeuFilhoBloco2Suggestions(
   const seen = new Set<string>()
 
   for (const item of raw) {
-    const title = normalizeText(item?.title)
+    const titleRaw = normalizeText(item?.title)
     const description = normalizeText(item?.description)
 
-    if (!title) return []
-    if (!description) return []
+    if (!description) {
+      // item inválido -> ignora
+      continue
+    }
 
-    if (EMOJI_RE.test(title) || EMOJI_RE.test(description)) return []
-    if (BANNED_RE.test(title) || BANNED_RE.test(description)) return []
-    if (looksLikeListyText(description)) return []
-    if (isGenericTitle(title)) return []
+    const title = titleRaw || deriveTitleFromDescription(description)
+    if (!title) {
+      // sem título aproveitável -> ignora
+      continue
+    }
+
+    if (EMOJI_RE.test(title) || EMOJI_RE.test(description)) continue
+    if (BANNED_RE.test(title) || BANNED_RE.test(description)) continue
+    if (looksLikeListyText(description)) continue
+    if (isGenericTitle(title)) continue
 
     const safeTitle = clampChars(title, MAX_TITLE_CHARS)
     const safeDesc = clampChars(description, MAX_DESC_CHARS)
 
-    if (!safeTitle) return []
-    if (!safeDesc) return []
-    if (safeDesc.length > MAX_DESC_CHARS) return []
-    if (safeDesc.length < 1) return []
+    if (!safeTitle) continue
+    if (!safeDesc) continue
+    if (safeDesc.length > MAX_DESC_CHARS) continue
+    if (safeDesc.length < 1) continue
 
     const key = signatureKey(safeTitle, safeDesc)
     if (seen.has(key)) {

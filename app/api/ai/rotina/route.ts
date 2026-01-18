@@ -266,7 +266,9 @@ export async function POST(req: Request) {
       personalization: body,
     })
 
-    let suggestions = ('suggestions' in aiResponse ? (aiResponse.suggestions ?? []) : [])
+    const hasSuggestionsField = (aiResponse as any) && typeof (aiResponse as any) === 'object' && 'suggestions' in (aiResponse as any)
+    let suggestions = (hasSuggestionsField ? (((aiResponse as any).suggestions ?? []) as any[]) : [])
+    const rawCount = Array.isArray(suggestions) ? suggestions.length : 0
 
     if (body.tipoIdeia === 'meu-filho-bloco-1') {
       suggestions = sanitizeMeuFilhoBloco1(suggestions, body.tempoDisponivel)
@@ -284,8 +286,21 @@ export async function POST(req: Request) {
       suggestions = sanitizeMeuFilhoBloco4(suggestions)
     }
 
+    const sanitizedCount = Array.isArray(suggestions) ? suggestions.length : 0
+    const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production'
+    const meta = (!isProd && body.tipoIdeia === 'meu-filho-bloco-2')
+      ? {
+          hasSuggestionsField,
+          rawCount,
+          sanitizedCount,
+          feature: body.feature ?? null,
+          tipoIdeia: body.tipoIdeia ?? null,
+          mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
+        }
+      : undefined
+
     return NextResponse.json(
-      { suggestions },
+      meta ? { suggestions, meta } : { suggestions },
       { status: 200, headers: NO_STORE_HEADERS },
     )
   } catch (err) {
