@@ -771,7 +771,7 @@ async function fetchBloco2Cards(args: {
 
           if (!res.ok) continue
           const data = await res.json().catch(() => null)
-          const picked = pick3DiverseSuggestions(data, avoidTitles, nonce)
+          const picked = pick3DiverseSuggestions(data, avoidTitles, makeNonce())
           if (!picked) continue
 
           const mk = (i: { title: string; description: string }): PlanItem | null => {
