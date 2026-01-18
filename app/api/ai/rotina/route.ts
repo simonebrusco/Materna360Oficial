@@ -97,11 +97,18 @@ function countSentences(t: string) {
 function normalizeBloco2SuggestionShape(raw: any): any[] {
   if (!Array.isArray(raw)) return []
   return raw.map((it) => {
+    // Se vier como string, tratamos como description
+    if (typeof it === 'string') {
+      const desc = String(it).trim()
+      return { title: '', description: desc }
+    }
+
     const obj = (it && typeof it === 'object') ? it : {}
-    const title = String(obj.title ?? obj.label ?? obj.name ?? obj.activity ?? '').trim()
+    const title = String((obj as any).title ?? (obj as any).label ?? (obj as any).name ?? (obj as any).activity ?? '').trim()
     const description = String(
-      obj.description ?? obj.text ?? obj.how ?? obj.output ?? obj.passos ?? obj.steps ?? ''
+      (obj as any).description ?? (obj as any).text ?? (obj as any).how ?? (obj as any).output ?? (obj as any).passos ?? (obj as any).steps ?? (obj as any).body ?? ''
     ).trim()
+
     return { ...obj, title, description }
   })
 }
@@ -281,6 +288,12 @@ export async function POST(req: Request) {
     const hasSuggestionsField = (aiResponse as any) && typeof (aiResponse as any) === 'object' && 'suggestions' in (aiResponse as any)
     let suggestions = (hasSuggestionsField ? (((aiResponse as any).suggestions ?? []) as any[]) : [])
     const rawCount = Array.isArray(suggestions) ? suggestions.length : 0
+    const rawSuggestions = Array.isArray(suggestions) ? suggestions.slice(0, 3) : []
+    const rawFirst = Array.isArray(suggestions) ? suggestions[0] : null
+    const rawFirstType = rawFirst === null ? 'null' : Array.isArray(rawFirst) ? 'array' : typeof rawFirst
+    const rawFirstKeys = (rawFirst && typeof rawFirst === 'object' && !Array.isArray(rawFirst))
+      ? Object.keys(rawFirst as any).slice(0, 12)
+      : []
 
     // Normalização defensiva do shape do Bloco 2 (sem mudar layout/fluxo)
     if (body.tipoIdeia === 'meu-filho-bloco-2') {
@@ -310,6 +323,14 @@ export async function POST(req: Request) {
           hasSuggestionsField,
           rawCount,
           sanitizedCount,
+          rawFirstType,
+          rawFirstKeys,
+          rawPreview: (Array.isArray(rawSuggestions) && rawSuggestions.length)
+            ? rawSuggestions.map((x) => {
+                if (typeof x === 'string') return x.slice(0, 160)
+                try { return JSON.stringify(x).slice(0, 220) } catch { return String(x).slice(0, 220) }
+              })
+            : null,
           feature: body.feature ?? null,
           tipoIdeia: body.tipoIdeia ?? null,
           mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
