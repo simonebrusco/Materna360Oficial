@@ -630,7 +630,33 @@ function safeBloco2How(raw: unknown): string | null {
     low.includes('primeiro') ||
     low.includes('então')
 
-  if (!hasStepsCue) return null
+  // Aceita também descrições curtas em modo imperativo (muitas respostas boas da IA vêm assim),
+  // sem exigir conectores do tipo "depois / por fim".
+  const hasActionVerb =
+    low.startsWith('dance ') ||
+    low.startsWith('prepare ') ||
+    low.startsWith('monte ') ||
+    low.startsWith('brinque ') ||
+    low.startsWith('coloque ') ||
+    low.startsWith('separe ') ||
+    low.startsWith('jogue ') ||
+    low.startsWith('cante ') ||
+    low.startsWith('desenhe ') ||
+    low.startsWith('construa ') ||
+    low.startsWith('crie ') ||
+    low.startsWith('convide ') ||
+    low.startsWith('sente ') ||
+    low.startsWith('pule ') ||
+    low.startsWith('corra ') ||
+    low.startsWith('role ') ||
+    low.startsWith('explore ') ||
+    low.startsWith('imite ') ||
+    low.startsWith('organize ') ||
+    low.startsWith('arrume ') ||
+    low.startsWith('façam ') ||
+    low.startsWith('faça ')
+
+  if (!hasStepsCue && !hasActionVerb) return null
   return t
 }
 
