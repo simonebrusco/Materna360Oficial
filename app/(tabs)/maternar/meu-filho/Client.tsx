@@ -703,20 +703,23 @@ function pick3DiverseSuggestions(data: unknown, avoidTitles: string[], seed: str
   if (pool.length < 3) return null
 
   const base = normAvoid.length ? pool.filter((p) => !normAvoid.includes(p.title.trim().toLowerCase())) : pool
-  if (base.length < 3) return null
+  // Se o filtro por avoidTitles deixar menos de 3 opções, não caímos em fallback fixo.
+  // Degradamos para o pool completo (ignorando avoid nessa tentativa) para manter variação.
+  const usable = base.length >= 3 ? base : pool
+
 
   // seed determinístico: soma ponderada de chars
   let h = 0
   const seedStr = String(seed || '')
   for (let k = 0; k < seedStr.length; k++) h = (h + seedStr.charCodeAt(k) * (k + 1)) % 2147483647
 
-  const startIdx = base.length ? h % base.length : 0
+  const startIdx = usable.length ? h % usable.length : 0
   const out: SuggestionPack[] = []
 
   // pega 3 itens “espaçados” para não cair sempre em [0,1,2]
-  for (let step = 0; step < base.length && out.length < 3; step++) {
-    const idx = (startIdx + step * 2) % base.length
-    const it = base[idx]
+  for (let step = 0; step < usable.length && out.length < 3; step++) {
+    const idx = (startIdx + step * 2) % usable.length
+    const it = usable[idx]
     if (!it) continue
     const sig = it.title.trim().toLowerCase()
     if (out.some((x) => x.title.trim().toLowerCase() === sig)) continue
