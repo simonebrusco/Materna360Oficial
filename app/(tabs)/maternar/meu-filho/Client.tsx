@@ -432,6 +432,13 @@ async function withAntiRepeatPack(args: {
       })
 
       if (!repeated) {
+        // Grava b2_* também aqui (mesmo caminho do Bloco 1: histórico local alimenta o avoid_titles)
+        try {
+          const titleComposite2 = `${items.a.title} | ${items.b.title} | ${items.c.title}`
+          pushRecentAvoid(MF_LS.b2_titles, titleComposite2.slice(0, 180), 2)
+          pushRecentAvoid(MF_LS.b2_themes, makeThemeSignature(`${args.themeSignature}|out:${titleComposite2}`), 2)
+        } catch {}
+
         recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
         return { items, source: 'ai' as const }
       }
@@ -449,6 +456,12 @@ async function withAntiRepeatPack(args: {
       theme_signature: makeThemeSignature(args.themeSignature),
       variation_axis: 'fallback',
     })
+  } catch {}
+
+  try {
+    const titleComposite2 = `${fb.a.title} | ${fb.b.title} | ${fb.c.title}`
+    pushRecentAvoid(MF_LS.b2_titles, titleComposite2.slice(0, 180), 2)
+    pushRecentAvoid(MF_LS.b2_themes, makeThemeSignature(`${args.themeSignature}|out:${titleComposite2}`), 2)
   } catch {}
 
   return { items: fb, source: 'fallback' as const }
@@ -635,6 +648,58 @@ function pick3Suggestions(data: unknown): SuggestionPack[] | null {
   return pack
 }
 
+
+function pick3DiverseSuggestions(data: unknown, avoidTitles: string[], seed: string): SuggestionPack[] | null {
+  const d = data as { suggestions?: unknown }
+  const arr = Array.isArray(d?.suggestions) ? (d?.suggestions as any[]) : null
+  if (!arr || arr.length < 3) return null
+
+  // avoidTitles pode vir como:
+  // - títulos simples
+  // - titleComposite "A | B | C"
+  // então normalizamos para uma lista de títulos "atômicos".
+  const normAvoid = (avoidTitles || [])
+    .flatMap((t) =>
+      String(t || '')
+        .split('|')
+        .map((x) => x.trim().toLowerCase())
+        .filter(Boolean),
+    )
+    .filter(Boolean)
+
+  const pool: SuggestionPack[] = arr
+    .map((s) => ({
+      title: String(s?.title ?? '').trim(),
+      description: String(s?.description ?? '').trim(),
+    }))
+    .filter((p) => p.title && p.description)
+
+  if (pool.length < 3) return null
+
+  const base = normAvoid.length ? pool.filter((p) => !normAvoid.includes(p.title.trim().toLowerCase())) : pool
+  if (base.length < 3) return null
+
+  // seed determinístico: soma ponderada de chars
+  let h = 0
+  const seedStr = String(seed || '')
+  for (let k = 0; k < seedStr.length; k++) h = (h + seedStr.charCodeAt(k) * (k + 1)) % 2147483647
+
+  const startIdx = base.length ? h % base.length : 0
+  const out: SuggestionPack[] = []
+
+  // pega 3 itens “espaçados” para não cair sempre em [0,1,2]
+  for (let step = 0; step < base.length && out.length < 3; step++) {
+    const idx = (startIdx + step * 2) % base.length
+    const it = base[idx]
+    if (!it) continue
+    const sig = it.title.trim().toLowerCase()
+    if (out.some((x) => x.title.trim().toLowerCase() === sig)) continue
+    out.push(it)
+  }
+
+  return out.length === 3 ? out : null
+}
+
 async function fetchBloco2Cards(args: {
   tempoDisponivel: number
   age: AgeBand
@@ -677,7 +742,7 @@ async function fetchBloco2Cards(args: {
 
           if (!res.ok) continue
           const data = await res.json().catch(() => null)
-          const picked = pick3Suggestions(data)
+          const picked = pick3DiverseSuggestions(data, avoidTitles, nonce)
           if (!picked) continue
 
           const mk = (i: { title: string; description: string }): PlanItem | null => {
@@ -693,7 +758,7 @@ async function fetchBloco2Cards(args: {
           if (!a || !b || !c) continue
 
           const titleComposite = `${a.title} | ${b.title} | ${c.title}`
-          pushRecentAvoid(MF_LS.b2_titles, makeTitleSignature(titleComposite), 2)
+          pushRecentAvoid(MF_LS.b2_titles, titleComposite.slice(0, 180), 2)
           pushRecentAvoid(
             MF_LS.b2_themes,
             makeThemeSignature(`b2|t:${args.tempoDisponivel}|age:${args.age}|local:${args.playLocation}|skill:${args.skill}|axis:${axis}|out:${titleComposite}`),
