@@ -94,6 +94,17 @@ function countSentences(t: string) {
     .map((s) => s.trim())
     .filter(Boolean).length
 }
+function normalizeBloco2SuggestionShape(raw: any): any[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((it) => {
+    const obj = (it && typeof it === 'object') ? it : {}
+    const title = String(obj.title ?? obj.label ?? obj.name ?? obj.activity ?? '').trim()
+    const description = String(
+      obj.description ?? obj.text ?? obj.how ?? obj.output ?? obj.passos ?? obj.steps ?? ''
+    ).trim()
+    return { ...obj, title, description }
+  })
+}
 
 /* =========================
    Bloco 1 — Guardrail
@@ -256,6 +267,7 @@ export async function POST(req: Request) {
 
     const aiResponse = await callMaternaAI({
       mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
+
       profile,
       child,
       context: {
@@ -269,6 +281,11 @@ export async function POST(req: Request) {
     const hasSuggestionsField = (aiResponse as any) && typeof (aiResponse as any) === 'object' && 'suggestions' in (aiResponse as any)
     let suggestions = (hasSuggestionsField ? (((aiResponse as any).suggestions ?? []) as any[]) : [])
     const rawCount = Array.isArray(suggestions) ? suggestions.length : 0
+
+    // Normalização defensiva do shape do Bloco 2 (sem mudar layout/fluxo)
+    if (body.tipoIdeia === 'meu-filho-bloco-2') {
+      suggestions = normalizeBloco2SuggestionShape(suggestions)
+    }
 
     if (body.tipoIdeia === 'meu-filho-bloco-1') {
       suggestions = sanitizeMeuFilhoBloco1(suggestions, body.tempoDisponivel)
@@ -296,6 +313,9 @@ export async function POST(req: Request) {
           feature: body.feature ?? null,
           tipoIdeia: body.tipoIdeia ?? null,
           mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
+          firstKeys: (Array.isArray(suggestions) && suggestions[0] && typeof suggestions[0] === 'object')
+            ? Object.keys(suggestions[0] as any).slice(0, 12)
+            : [],
         }
       : undefined
 
