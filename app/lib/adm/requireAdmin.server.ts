@@ -1,4 +1,3 @@
-// app/lib/adm/requireAdmin.server.ts
 import { redirect } from 'next/navigation'
 import { supabaseServer } from '@/app/lib/supabase'
 
@@ -9,7 +8,7 @@ export async function assertAdmin() {
   const email = userData?.user?.email
 
   if (userErr || !email) {
-    redirect('/')
+    redirect('/login')
   }
 
   const { data: adminRow, error: adminErr } = await supabase
