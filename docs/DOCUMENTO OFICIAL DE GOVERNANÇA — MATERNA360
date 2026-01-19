@@ -1,0 +1,179 @@
+Consolidação da Decisão Arquitetural da IA e Redirecionamento da Fase 2
+
+Projeto: Materna360
+Fase: Fase 2 — Conteúdo Vivo + IA
+Data de registro: (preencher)
+Status: ✅ Documento oficial de governança
+
+1️⃣ CONTEXTO GERAL
+
+Durante a execução das Ps relacionadas à IA (P34.11 → P34.17), o projeto Materna360 atingiu um limite estrutural claro:
+
+Apesar de melhorias técnicas relevantes (anti-repetição local, variação semântica, hardening de rotas, estabilização de ambiente), a qualidade percebida, variedade real e sensação de inteligência não se sustentam quando a IA atua como fonte primária de conteúdo, sem um universo curado versionável.
+
+Essa constatação não decorre de falha de execução, mas de maturidade arquitetural do projeto.
+
+2️⃣ DECISÃO OFICIAL — CONGELAMENTO DA P34.17
+🔒 P34.17 — Arquitetura Cognitiva da IA
+
+Branch: feature/P34.17-arquitetura-cognitiva-ia
+Status: CONGELADA (baseline estável)
+
+Motivo do congelamento
+
+A IA, mesmo com prompts avançados, colapsa semanticamente quando precisa inventar conteúdo do zero.
+
+Heurísticas adicionais de anti-repetição passam a gerar complexidade sem ganho estrutural.
+
+A diversidade percebida não é sustentável sem IDs estáveis e catálogo controlado.
+
+O que a P34.17 entregou (validado)
+
+Estabilização técnica do endpoint /api/ai/rotina
+
+Hardening de tipagem, compatibilidade e dependências
+
+Anti-repetição local paliativa
+
+Base cognitiva funcional para evolução futura
+
+➡️ A P34.17 não está cancelada, apenas congelada até que a nova fundação esteja pronta.
+
+3️⃣ MUDANÇA DE ARQUITETURA APROVADA (DECISÃO ESTRUTURAL)
+📌 Nova arquitetura oficial da IA no Materna360
+
+ANTES
+IA = criadora primária de conteúdo
+
+AGORA (aprovado)
+IA = orquestradora de conteúdo curado
+
+Função da IA passa a ser:
+
+selecionar
+
+adaptar
+
+personalizar
+
+contextualizar
+
+…conteúdos que já existem em uma Base Curada.
+
+Isso reduz:
+
+repetição
+
+aleatoriedade
+
+dependência excessiva de prompt
+
+custo cognitivo e técnico
+
+E aumenta:
+
+consistência
+
+qualidade percebida
+
+sensação de inteligência real
+
+governabilidade do produto
+
+4️⃣ PRÓXIMO PASSO APROVADO — P34.ADM.1
+🎯 P34.ADM.1 — Base Curada + Área Administrativa (MVP)
+
+Objetivo central:
+Criar a fonte de verdade do conteúdo do Materna360.
+
+Escopo aprovado (resumo)
+
+Supabase/Postgres como base
+
+Tabelas ADM mínimas:
+
+adm_ideas
+
+adm_editorial_texts
+
+adm_professionals
+
+adm_affiliate_products
+
+Importação inicial via CSV
+
+IDs estáveis (slug)
+
+UI interna mínima (/admin)
+
+Leitura pública apenas de conteúdo published
+
+Escrita restrita a admins
+
+Camada única de acesso a dados (adm.server.ts)
+
+5️⃣ PILOTO DE INTEGRAÇÃO APROVADO
+🎯 Primeiro hub a consumir a Base Curada
+
+Hub: Maternar → Meu Filho
+Bloco: Bloco 2 — Brincadeiras
+
+Mudança de comportamento
+
+Fonte primária: adm_ideas
+
+IA:
+
+recebe catálogo filtrado
+
+seleciona 3 IDs distintos
+
+adapta texto ao contexto
+
+Anti-repetição passa a ser por:
+
+avoid_ids_today
+
+Fallback garantido:
+
+se IA falhar → 3 ideias do catálogo (sem IA)
+
+📌 Critério de sucesso:
+
+A experiência deixa de parecer “gerada” e passa a parecer pensada.
+
+6️⃣ IMPLICAÇÕES PARA A FASE 2
+
+A Fase 2 NÃO está encerrada
+
+Ela entra agora em uma subfase estrutural:
+
+consolidação de conteúdo
+
+preparação real para monetização
+
+Monetização só será aberta após:
+
+Base Curada funcional
+
+Conteúdo consistente nos hubs
+
+IA estabilizada como orquestradora
+
+7️⃣ REGRA DE GOVERNANÇA (A PARTIR DESTE DOCUMENTO)
+
+❌ Não evoluir prompts da P34.17 sem ADM
+
+❌ Não abrir novas Ps de IA criativa sem Base Curada
+
+✅ Toda evolução de qualidade passa primeiro pelo ADM
+
+✅ IA só evolui em cima de catálogo versionável
+
+8️⃣ STATUS FINAL
+
+P34.17: CONGELADA (baseline válida)
+
+Próxima P autorizada: P34.ADM.1
+
+Direção do projeto: alinhada, sustentável e governável
