@@ -2,11 +2,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 
-import { requireAdmin } from '@/app/lib/adm/requireAdmin.server'
-
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin()
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b bg-white">
@@ -14,18 +10,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-neutral-900">Materna360 — Admin</span>
             <nav className="flex items-center gap-3 text-sm">
-              <Link className="text-neutral-700 hover:text-neutral-900" href="/admin/ideas">
-                Ideias
-              </Link>
-              <Link className="text-neutral-700 hover:text-neutral-900" href="/admin/insights">
-                Insights
-              </Link>
+              <Link href="/admin/ideas">Ideias</Link>
+              <Link href="/admin/insights">Insights</Link>
             </nav>
           </div>
-
-          <Link className="text-sm text-neutral-700 hover:text-neutral-900" href="/">
-            Voltar ao app
-          </Link>
+          <Link href="/">Voltar ao app</Link>
         </div>
       </header>
 
