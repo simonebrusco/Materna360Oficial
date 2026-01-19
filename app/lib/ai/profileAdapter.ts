@@ -21,7 +21,26 @@ export async function loadMaternaContextFromRequest(
   req: Request,
 ): Promise<MaternaContext> {
   try {
-    const url = new URL('/api/eu360/profile', req.url)
+    // Em dev (codespaces/port-forward), req.url pode vir como https,
+    // mas o next dev dentro do container responde em HTTP.
+    // Se construirmos URL absoluta com https e chamarmos o servidor HTTP,
+    // estoura ERR_SSL_PACKET_LENGTH_TOO_LONG. Por isso derivamos a origem por headers.
+    const host =
+      req.headers.get('x-forwarded-host') ??
+      req.headers.get('host') ??
+      'localhost:3001'
+
+    const forwardedProto = req.headers.get('x-forwarded-proto')
+    const isLocalHost =
+      host.includes('localhost') ||
+      host.includes('127.0.0.1') ||
+      host.includes('0.0.0.0')
+
+    // Força http para hosts locais (dev). Em prod, respeita x-forwarded-proto quando existir.
+    const proto = isLocalHost ? 'http' : forwardedProto ?? 'https'
+    const origin = `${proto}://${host}`
+
+    const url = new URL('/api/eu360/profile', origin)
 
     const res = await fetch(url.toString(), {
       method: 'GET',
@@ -32,19 +51,15 @@ export async function loadMaternaContextFromRequest(
       cache: 'no-store',
     })
 
-    if (!res.ok) {
-      return { profile: null, child: null }
-    }
+    if (!res.ok) return { profile: null, child: null }
 
     const data = await res.json().catch(() => null)
-
     return adaptEu360ProfileToMaterna(data)
   } catch (error) {
     console.debug(
       '[profileAdapter] Falha ao carregar Eu360, usando contexto neutro:',
       error,
     )
-
     return { profile: null, child: null }
   }
 }
