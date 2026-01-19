@@ -1,12 +1,10 @@
 // app/admin/layout.tsx
 import * as React from 'react'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 
 import { requireAdmin } from '@/app/lib/adm/requireAdmin.server'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Gate de admin: se não for admin, redireciona
   await requireAdmin()
 
   return (
@@ -24,6 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </Link>
             </nav>
           </div>
+
           <Link className="text-sm text-neutral-700 hover:text-neutral-900" href="/">
             Voltar ao app
           </Link>
