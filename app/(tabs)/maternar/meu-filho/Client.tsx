@@ -750,68 +750,103 @@ async function fetchBloco2Cards(args: {
   variation_axis?: VariationAxis
 }): Promise<Bloco2Items | null> {
   try {
-    const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
-    const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b2_titles, 2)
-    const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b2_themes, 2)
-    for (let attempt = 0; attempt < 2; attempt++) {
+    const HUB_AI = 'maternar/meu-filho/bloco-2'
+
+    const baseAvoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b2_titles, 2)
+    const baseAvoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b2_themes, 2)
+
+    const explodeTitles = (arr: string[]) =>
+      arr
+        .flatMap((t) => String(t || '').split('|').map((x) => x.trim()).filter(Boolean))
+        .filter(Boolean)
+        .slice(0, 6)
+
+    const avoidTitlesStrong = Array.from(new Set([...baseAvoidTitles, ...explodeTitles(baseAvoidTitles)])).slice(0, 6)
+    const avoidThemesStrong = Array.from(new Set(baseAvoidThemes)).slice(0, 6)
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const axis: VariationAxis = attempt === 0 ? (args.variation_axis ?? rotateVariationAxis()) : rotateVariationAxis()
       const nonce = attempt === 0 ? args.nonce : makeNonce()
-          const res = await fetch('/api/ai/rotina', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            cache: 'no-store',
-            body: JSON.stringify({
-              feature: 'quick-ideas',
-              origin: 'maternar/meu-filho',
-              tempoDisponivel: args.tempoDisponivel,
-              comQuem: 'eu-e-meu-filho',
-              tipoIdeia: 'meu-filho-bloco-2',
-              ageBand: args.age,
-              contexto: 'exploracao',
-              local: args.playLocation,
-              // API aceita array; aqui é single-select, então enviamos [skill]
-              habilidades: [args.skill],
-              avoid_titles: avoidTitles.length ? avoidTitles : undefined,
-              avoid_themes: avoidThemes.length ? avoidThemes : undefined,
-              variation_axis: axis,
-              requestId: nonce,
-              nonce: nonce,
-              variation: axis ? `${axis}:${nonce}` : nonce,
-            }),
-          })
 
-          if (!res.ok) continue
-          const data = await res.json().catch(() => null)
-          const picked = pick3DiverseSuggestions(data, avoidTitles, makeNonce())
-          if (!picked) continue
+      const res = await fetch('/api/ai/rotina', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({
+          feature: 'quick-ideas',
+          origin: 'maternar/meu-filho',
+          tempoDisponivel: args.tempoDisponivel,
+          comQuem: 'eu-e-meu-filho',
+          tipoIdeia: 'meu-filho-bloco-2',
+          ageBand: args.age,
+          contexto: 'exploracao',
+          local: args.playLocation,
+          habilidades: [args.skill],
 
-          const mk = (i: { title: string; description: string }): PlanItem | null => {
-            const title = safeBloco2Title(i.title)
-            const how = safeBloco2How(i.description)
-            if (!title || !how) return null
-            return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
-          }
+          avoid_titles: avoidTitlesStrong.length ? avoidTitlesStrong : undefined,
+          avoid_themes: avoidThemesStrong.length ? avoidThemesStrong : undefined,
 
-          const a = mk(picked[0])
-          const b = mk(picked[1])
-          const c = mk(picked[2])
-          if (!a || !b || !c) continue
+          variation_axis: axis,
+          requestId: nonce,
+          nonce,
+          variation: axis ? `${axis}:${nonce}` : nonce,
+        }),
+      })
 
-          const titleComposite = `${a.title} | ${b.title} | ${c.title}`
-          pushRecentAvoid(MF_LS.b2_titles, titleComposite.slice(0, 180), 2)
-          pushRecentAvoid(
-            MF_LS.b2_themes,
-            makeThemeSignature(`b2|t:${args.tempoDisponivel}|age:${args.age}|local:${args.playLocation}|skill:${args.skill}|axis:${axis}|out:${titleComposite}`),
-            2,
-          )
-          return { a, b, c }
+      if (!res.ok) continue
+      const data = await res.json().catch(() => null)
+
+      const picked = pick3DiverseSuggestions(data, avoidTitlesStrong, makeNonce())
+      if (!picked) continue
+
+      const mk = (i: { title: string; description: string }): PlanItem | null => {
+        const title = safeBloco2Title(i.title)
+        const how = safeBloco2How(i.description)
+        if (!title || !how) return null
+        return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
+      }
+
+      const a = mk(picked[0])
+      const b = mk(picked[1])
+      const c = mk(picked[2])
+      if (!a || !b || !c) continue
+
+      const titleComposite = `${a.title} | ${b.title} | ${c.title}`
+
+      const titleSig = makeTitleSignature(titleComposite.slice(0, 180))
+      const themeSig = makeThemeSignature(
+        `b2|t:${args.tempoDisponivel}|age:${args.age}|local:${args.playLocation}|skill:${args.skill}|axis:${axis}|out:${titleComposite}`,
+      )
+
+      const repeated = hasPerceptiveRepetition({
+        hub: HUB_AI,
+        title_signature: titleSig,
+        theme_signature: themeSig,
+      } as any)
+
+      if (repeated) {
+        recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+        continue
+      }
+
+      recordAntiRepeat({ hub: HUB_AI, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+
+      pushRecentAvoid(MF_LS.b2_titles, titleComposite.slice(0, 180), 2)
+      pushRecentAvoid(MF_LS.b2_themes, themeSig, 2)
+
+      return { a, b, c }
     }
+
     return null
   } catch {
     return null
   }
+
+
 }
 
 /* =========================
+
    BLOCO 3 — ROTINAS / CONEXÃO
 ========================= */
 
