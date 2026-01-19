@@ -91,9 +91,16 @@ export async function middleware(request: NextRequest) {
   let hasSession = false
   let hasSeenWelcome = false
 
+  // Novo: vamos guardar e-mail para checagem de admin quando necessário
+  let userEmail: string | null = null
+
+  // Importante: manter referência do client para consultas adicionais (ex: adm_admins)
+  let supabase: ReturnType<typeof createMiddlewareClient> | null = null
+
   if (canAuth) {
     try {
-      const supabase = createMiddlewareClient({ req: request, res: response })
+      supabase = createMiddlewareClient({ req: request, res: response })
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -101,6 +108,8 @@ export async function middleware(request: NextRequest) {
       hasSession = Boolean(session)
 
       if (hasSession) {
+        userEmail = session?.user?.email ?? null
+
         try {
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
         } catch {
@@ -110,6 +119,8 @@ export async function middleware(request: NextRequest) {
     } catch {
       hasSession = false
       hasSeenWelcome = false
+      userEmail = null
+      supabase = null
     }
   }
 
@@ -141,6 +152,28 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirectTo', redirectToValue)
     return redirectWithResponse(request, response, loginUrl)
+  }
+
+  // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
+  if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
+    // Se por algum motivo não temos e-mail, tratamos como não autorizado
+    if (!userEmail || !supabase) {
+      return redirectWithResponse(request, response, '/meu-dia')
+    }
+
+    try {
+      const { data: adminRow, error: adminErr } = await supabase
+        .from('adm_admins')
+        .select('email')
+        .eq('email', userEmail)
+        .maybeSingle()
+
+      if (adminErr || !adminRow) {
+        return redirectWithResponse(request, response, '/meu-dia')
+      }
+    } catch {
+      return redirectWithResponse(request, response, '/meu-dia')
+    }
   }
 
   // Rotas públicas seguem
