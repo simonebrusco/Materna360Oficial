@@ -307,6 +307,10 @@ const MF_LS = {
   b1_themes: 'maternar/meu-filho/anti/b1/avoid_themes',
   b2_titles: 'maternar/meu-filho/anti/b2/avoid_titles',
   b2_themes: 'maternar/meu-filho/anti/b2/avoid_themes',
+  b3_titles: 'anti/b3/avoid_titles',
+  b3_themes: 'anti/b3/avoid_themes',
+  b4_titles: 'anti/b4/avoid_titles',
+  b4_themes: 'anti/b4/avoid_themes',
   variation_axis: 'maternar/meu-filho/pref/variation_axis',
 } as const
 
@@ -900,7 +904,87 @@ async function fetchBloco3Suggestion(args: {
   contexto: 'continuidade'
   tema: RotinaTema | ConexaoTema
   nonce: string
+  avoid_titles?: string[]
+  avoid_themes?: string[]
+  variation_axis?: VariationAxis
 }): Promise<string | null> {
+  try {
+    const HUB_AI_B3 = 'maternar/meu-filho/bloco-3'
+
+    const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
+    const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b3_titles, 2)
+    const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b3_themes, 2)
+
+    // Até 2 tentativas (nonce diferente) para ajudar variação + evitar repetição.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const nonce = attempt === 0 ? args.nonce : makeNonce()
+
+      const res = await fetch('/api/ai/rotina', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({
+          feature: 'micro-ritmos',
+          origin: 'maternar/meu-filho',
+          tipoIdeia: 'meu-filho-bloco-3',
+          idade: args.faixa_etaria,
+          faixa_etaria: args.faixa_etaria,
+          momento_do_dia: args.momento_do_dia,
+          tipo_experiencia: args.tipo_experiencia,
+          contexto: args.contexto,
+          tema: args.tema,
+
+          avoid_titles: avoidTitles.length ? avoidTitles : undefined,
+          avoid_themes: avoidThemes.length ? avoidThemes : undefined,
+          variation_axis: axis,
+
+          requestId: nonce,
+          nonce: nonce,
+          variation: axis ? `${axis}:${nonce}` : nonce,
+        }),
+      })
+
+      if (!res.ok) continue
+      const data = (await res.json().catch(() => null)) as any
+
+      const candidate =
+        data?.suggestion ??
+        data?.text ??
+        data?.output ??
+        data?.suggestions?.[0]?.description ??
+        data?.suggestions?.[0]?.text ??
+        null
+
+      const cleaned = clampBloco3Text(candidate)
+      if (!cleaned) continue
+
+      const titleSig = makeTitleSignature(cleaned.slice(0, 90))
+      const themeSig = makeThemeSignature(
+        `b3|age:${args.faixa_etaria}|mom:${args.momento_do_dia}|kind:${args.tipo_experiencia}|tema:${String(args.tema)}|axis:${axis}|out:${cleaned}`,
+      )
+
+      const repeated = hasPerceptiveRepetition({
+        hub: HUB_AI_B3,
+        title_signature: titleSig,
+        theme_signature: themeSig,
+      } as any)
+
+      if (repeated) {
+        recordAntiRepeat({ hub: HUB_AI_B3, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+        continue
+      }
+
+      recordAntiRepeat({ hub: HUB_AI_B3, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+      pushRecentAvoid(MF_LS.b3_titles, titleSig, 2)
+      pushRecentAvoid(MF_LS.b3_themes, themeSig, 2)
+
+      return cleaned
+    }
+
+    return null
+  } catch {
+    return null
+  }
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
@@ -1005,7 +1089,86 @@ async function fetchBloco4Suggestion(args: {
   contexto: 'fase'
   foco: FaseFoco
   nonce: string
+  avoid_titles?: string[]
+  avoid_themes?: string[]
+  variation_axis?: VariationAxis
 }): Promise<string | null> {
+  try {
+    const HUB_AI_B4 = 'maternar/meu-filho/bloco-4'
+
+    const axis: VariationAxis = args.variation_axis ?? rotateVariationAxis()
+    const avoidTitles = Array.isArray(args.avoid_titles) ? args.avoid_titles : getRecentAvoid(MF_LS.b4_titles, 2)
+    const avoidThemes = Array.isArray(args.avoid_themes) ? args.avoid_themes : getRecentAvoid(MF_LS.b4_themes, 2)
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const nonce = attempt === 0 ? args.nonce : makeNonce()
+
+      const res = await fetch('/api/ai/rotina', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({
+          feature: 'fase-contexto',
+          origin: 'maternar/meu-filho',
+          tipoIdeia: 'meu-filho-bloco-4',
+          idade: args.faixa_etaria,
+          faixa_etaria: args.faixa_etaria,
+          momento_desenvolvimento: args.momento_desenvolvimento,
+          contexto: args.contexto,
+          foco: args.foco,
+
+          avoid_titles: avoidTitles.length ? avoidTitles : undefined,
+          avoid_themes: avoidThemes.length ? avoidThemes : undefined,
+          variation_axis: axis,
+
+          requestId: nonce,
+          nonce: nonce,
+          variation: axis ? `${axis}:${nonce}` : nonce,
+        }),
+      })
+
+      if (!res.ok) continue
+      const data = (await res.json().catch(() => null)) as any
+
+      const candidate =
+        data?.text ??
+        data?.suggestion ??
+        data?.output ??
+        data?.phrase ??
+        data?.suggestions?.[0]?.text ??
+        data?.suggestions?.[0]?.description ??
+        null
+
+      const cleaned = clampBloco4Text(candidate)
+      if (!cleaned) continue
+
+      const titleSig = makeTitleSignature(cleaned.slice(0, 90))
+      const themeSig = makeThemeSignature(
+        `b4|age:${args.faixa_etaria}|mom:${args.momento_desenvolvimento ?? 'na'}|foco:${args.foco}|axis:${axis}|out:${cleaned}`,
+      )
+
+      const repeated = hasPerceptiveRepetition({
+        hub: HUB_AI_B4,
+        title_signature: titleSig,
+        theme_signature: themeSig,
+      } as any)
+
+      if (repeated) {
+        recordAntiRepeat({ hub: HUB_AI_B4, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+        continue
+      }
+
+      recordAntiRepeat({ hub: HUB_AI_B4, title_signature: titleSig, theme_signature: themeSig, variation_axis: nonce })
+      pushRecentAvoid(MF_LS.b4_titles, titleSig, 2)
+      pushRecentAvoid(MF_LS.b4_themes, themeSig, 2)
+
+      return cleaned
+    }
+
+    return null
+  } catch {
+    return null
+  }
   try {
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
