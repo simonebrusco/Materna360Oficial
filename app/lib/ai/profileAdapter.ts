@@ -1,3 +1,5 @@
+// app/lib/ai/profileAdapter.ts
+
 import {
   type MaternaProfile,
   type MaternaChildProfile,
@@ -9,21 +11,26 @@ export type MaternaContext = {
   child: MaternaChildProfile | null
 }
 
-function buildInternalOrigin(req: Request): string {
-  const host = req.headers.get('host') ?? 'localhost:3001'
+function getBaseUrlFromRequest(req: Request): string {
+  const h = req.headers
 
-  const isLocal =
-    host.includes('localhost') ||
-    host.includes('127.0.0.1') ||
-    host.includes('0.0.0.0')
+  const xfProto = h.get('x-forwarded-proto')
+  const xfHost = h.get('x-forwarded-host')
+  const host = xfHost ?? h.get('host')
 
-  // Em dev local, o Next está em HTTP (ex.: http://localhost:3001).
-  // Em ambientes com proxy, req.url pode vir como https://..., mas o listener local continua HTTP.
-  if (isLocal) return `http://${host}`
+  // Preferir headers de proxy (Vercel/Codespaces)
+  if (host) {
+    const proto = xfProto ?? (host.includes('localhost') ? 'http' : 'https')
+    return `${proto}://${host}`
+  }
 
-  // Em prod/proxy, respeita o proto encaminhado.
-  const proto = req.headers.get('x-forwarded-proto') ?? 'https'
-  return `${proto}://${host}`
+  // Fallback: tentar derivar do req.url
+  try {
+    const u = new URL(req.url)
+    return `${u.protocol}//${u.host}`
+  } catch {
+    return 'http://localhost:3001'
+  }
 }
 
 /**
@@ -36,8 +43,8 @@ export async function loadMaternaContextFromRequest(
   req: Request,
 ): Promise<MaternaContext> {
   try {
-    const origin = buildInternalOrigin(req)
-    const url = new URL('/api/eu360/profile', origin)
+    const baseUrl = getBaseUrlFromRequest(req)
+    const url = new URL('/api/eu360/profile', baseUrl)
 
     const res = await fetch(url.toString(), {
       method: 'GET',
