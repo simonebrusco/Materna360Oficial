@@ -94,19 +94,32 @@ function countSentences(t: string) {
     .map((s) => s.trim())
     .filter(Boolean).length
 }
+
 function normalizeBloco2SuggestionShape(raw: any): any[] {
   if (!Array.isArray(raw)) return []
   return raw.map((it) => {
-    // Se vier como string, tratamos como description
     if (typeof it === 'string') {
       const desc = String(it).trim()
       return { title: '', description: desc }
     }
 
-    const obj = (it && typeof it === 'object') ? it : {}
-    const title = String((obj as any).title ?? (obj as any).label ?? (obj as any).name ?? (obj as any).activity ?? '').trim()
+    const obj = it && typeof it === 'object' ? it : {}
+    const title = String(
+      (obj as any).title ??
+        (obj as any).label ??
+        (obj as any).name ??
+        (obj as any).activity ??
+        '',
+    ).trim()
     const description = String(
-      (obj as any).description ?? (obj as any).text ?? (obj as any).how ?? (obj as any).output ?? (obj as any).passos ?? (obj as any).steps ?? (obj as any).body ?? ''
+      (obj as any).description ??
+        (obj as any).text ??
+        (obj as any).how ??
+        (obj as any).output ??
+        (obj as any).passos ??
+        (obj as any).steps ??
+        (obj as any).body ??
+        '',
     ).trim()
 
     return { ...obj, title, description }
@@ -157,10 +170,7 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   if (!first) return []
 
   const candidate =
-    (first as any).description ??
-    (first as any).text ??
-    (first as any).output ??
-    ''
+    (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
 
   const text = clampText(candidate, 240)
   if (!text) return []
@@ -193,6 +203,48 @@ function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
   ]
 }
 
+/**
+ * Fallback garantido para Bloco 3:
+ * se o sanitizer zerar por formato, a gente “conserta” o texto em vez de retornar [].
+ */
+function fallbackMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  const candidate =
+    first && typeof first === 'object'
+      ? (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
+      : typeof first === 'string'
+        ? first
+        : ''
+
+  let text = clampText(candidate, 240)
+  if (!text) return []
+
+  // Remove quebras / bullets (o clamp já tira muita coisa, mas garantimos)
+  text = stripEmojiAndBullets(text)
+
+  // Garante até 3 frases (se vier maior, corta)
+  const parts = text
+    .split(/[.!?]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (parts.length > 3) {
+    text = parts.slice(0, 3).join('. ') + '.'
+    text = clampText(text, 240)
+  }
+
+  // Última proteção: evita ficar vazio
+  if (!text) return []
+
+  return [
+    {
+      title: '',
+      description: text,
+      withChild: true,
+      estimatedMinutes: 0,
+    },
+  ]
+}
+
 /* =========================
    Bloco 4 — Fases / Contexto
 ========================= */
@@ -202,10 +254,7 @@ function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
   if (!first) return []
 
   const candidate =
-    (first as any).description ??
-    (first as any).text ??
-    (first as any).output ??
-    ''
+    (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
 
   const text = clampText(candidate, 140)
   if (!text) return []
@@ -227,6 +276,54 @@ function sanitizeMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
   return [
     {
       ...first,
+      title: '',
+      description: text,
+      withChild: true,
+      estimatedMinutes: 0,
+    },
+  ]
+}
+
+/**
+ * Fallback garantido para Bloco 4:
+ * transforma qualquer resposta em 1 frase curta e segura.
+ */
+function fallbackMeuFilhoBloco4(raw: any): RotinaQuickSuggestion[] {
+  const first = Array.isArray(raw) ? raw[0] : null
+  const candidate =
+    first && typeof first === 'object'
+      ? (first as any).description ?? (first as any).text ?? (first as any).output ?? ''
+      : typeof first === 'string'
+        ? first
+        : ''
+
+  let text = clampText(candidate, 160)
+  if (!text) return []
+
+  text = stripEmojiAndBullets(text)
+
+  // Mantém somente a primeira frase
+  const parts = text
+    .split(/[.!?]+/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  if (parts.length >= 1) {
+    text = parts[0]
+  }
+
+  text = clampText(text, 140)
+
+  if (!text) return []
+
+  // Proteção extra contra termos proibidos do B4
+  const banned = ['diagnóstico', 'tdah', 'autismo']
+  if (banned.some((b) => text.toLowerCase().includes(b))) {
+    return []
+  }
+
+  return [
+    {
       title: '',
       description: text,
       withChild: true,
@@ -268,13 +365,13 @@ export async function POST(req: Request) {
 
     const body = (await req.json()) as RotinaRequestBody
 
+    // Contexto Eu360 (se falhar, adapter já cai em neutro sem quebrar request)
     const ctx = await loadMaternaContextFromRequest(req)
     const profile: MaternaProfile | null = ctx.profile ?? null
     const child: MaternaChildProfile | null = ctx.child ?? null
 
     const aiResponse = await callMaternaAI({
       mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
-
       profile,
       child,
       context: {
@@ -285,15 +382,17 @@ export async function POST(req: Request) {
       personalization: body,
     })
 
-    const hasSuggestionsField = (aiResponse as any) && typeof (aiResponse as any) === 'object' && 'suggestions' in (aiResponse as any)
-    let suggestions = (hasSuggestionsField ? (((aiResponse as any).suggestions ?? []) as any[]) : [])
-    const rawCount = Array.isArray(suggestions) ? suggestions.length : 0
-    const rawSuggestions = Array.isArray(suggestions) ? suggestions.slice(0, 3) : []
-    const rawFirst = Array.isArray(suggestions) ? suggestions[0] : null
-    const rawFirstType = rawFirst === null ? 'null' : Array.isArray(rawFirst) ? 'array' : typeof rawFirst
-    const rawFirstKeys = (rawFirst && typeof rawFirst === 'object' && !Array.isArray(rawFirst))
-      ? Object.keys(rawFirst as any).slice(0, 12)
+    const hasSuggestionsField =
+      (aiResponse as any) &&
+      typeof (aiResponse as any) === 'object' &&
+      'suggestions' in (aiResponse as any)
+
+    let suggestions = hasSuggestionsField
+      ? (((aiResponse as any).suggestions ?? []) as any[])
       : []
+
+    // Guarda RAW (antes de qualquer sanitizer) para fallback garantido
+    const rawBefore = Array.isArray(suggestions) ? suggestions.slice(0, 3) : suggestions
 
     // Normalização defensiva do shape do Bloco 2 (sem mudar layout/fluxo)
     if (body.tipoIdeia === 'meu-filho-bloco-2') {
@@ -309,41 +408,43 @@ export async function POST(req: Request) {
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-3') {
-      suggestions = sanitizeMeuFilhoBloco3(suggestions)
+      const sanitized = sanitizeMeuFilhoBloco3(suggestions)
+      suggestions = sanitized.length ? sanitized : fallbackMeuFilhoBloco3(rawBefore)
     }
 
     if (body.tipoIdeia === 'meu-filho-bloco-4') {
-      suggestions = sanitizeMeuFilhoBloco4(suggestions)
+      const sanitized = sanitizeMeuFilhoBloco4(suggestions)
+      suggestions = sanitized.length ? sanitized : fallbackMeuFilhoBloco4(rawBefore)
     }
 
-    const sanitizedCount = Array.isArray(suggestions) ? suggestions.length : 0
+    // Debug opcional (sem vazar em produção)
     const isProd = process.env.VERCEL_ENV === 'production'
-    const meta = (!isProd && body.tipoIdeia === 'meu-filho-bloco-2')
-      ? {
-          hasSuggestionsField,
-          rawCount,
-          sanitizedCount,
-          rawFirstType,
-          rawFirstKeys,
-          rawPreview: (Array.isArray(rawSuggestions) && rawSuggestions.length)
-            ? rawSuggestions.map((x) => {
-                if (typeof x === 'string') return x.slice(0, 160)
-                try { return JSON.stringify(x).slice(0, 220) } catch { return String(x).slice(0, 220) }
-              })
-            : null,
-          feature: body.feature ?? null,
-          tipoIdeia: body.tipoIdeia ?? null,
-          mode: body.feature === 'recipes' ? 'smart-recipes' : 'quick-ideas',
-          firstKeys: (Array.isArray(suggestions) && suggestions[0] && typeof suggestions[0] === 'object')
-            ? Object.keys(suggestions[0] as any).slice(0, 12)
-            : [],
-        }
-      : undefined
+    const meta =
+      !isProd && (body.tipoIdeia === 'meu-filho-bloco-3' || body.tipoIdeia === 'meu-filho-bloco-4')
+        ? {
+            tipoIdeia: body.tipoIdeia ?? null,
+            hasSuggestionsField,
+            rawCount: Array.isArray((aiResponse as any)?.suggestions)
+              ? ((aiResponse as any).suggestions as any[]).length
+              : 0,
+            sanitizedCount: Array.isArray(suggestions) ? suggestions.length : 0,
+            rawPreview: Array.isArray(rawBefore)
+              ? rawBefore.map((x) => {
+                  if (typeof x === 'string') return x.slice(0, 180)
+                  try {
+                    return JSON.stringify(x).slice(0, 260)
+                  } catch {
+                    return String(x).slice(0, 260)
+                  }
+                })
+              : null,
+          }
+        : undefined
 
-    return NextResponse.json(
-      meta ? { suggestions, meta } : { suggestions },
-      { status: 200, headers: NO_STORE_HEADERS },
-    )
+    return NextResponse.json(meta ? { suggestions, meta } : { suggestions }, {
+      status: 200,
+      headers: NO_STORE_HEADERS,
+    })
   } catch (err) {
     if (gate) {
       await releaseDailyAI(gate.actorId, gate.dateKey)
@@ -359,9 +460,7 @@ export async function POST(req: Request) {
     console.error('[API /api/ai/rotina] Erro:', err)
 
     return NextResponse.json(
-      {
-        error: 'Não consegui gerar sugestões agora, tente novamente em instantes.',
-      },
+      { error: 'Não consegui gerar sugestões agora, tente novamente em instantes.' },
       { status: 500, headers: NO_STORE_HEADERS },
     )
   }
