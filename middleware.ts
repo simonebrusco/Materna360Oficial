@@ -6,10 +6,6 @@ import { createServerClient } from '@supabase/ssr'
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
 
-/* =========================
-   Helpers de segurança
-========================= */
-
 function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
   const t = target.trim()
@@ -46,10 +42,6 @@ function isProtectedPath(pathname: string) {
   return false
 }
 
-/* =========================
-   Middleware
-========================= */
-
 export async function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname
@@ -66,7 +58,6 @@ export async function middleware(request: NextRequest) {
 
     const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-    // Response base (precisa ser mutável para cookies do SSR)
     let response = NextResponse.next()
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -77,7 +68,6 @@ export async function middleware(request: NextRequest) {
     let hasSeenWelcome = false
     let userEmail: string | null = null
 
-    // Cria client SSR (Edge-safe) somente se tiver env
     const supabase = canAuth
       ? createServerClient(supabaseUrl!, supabaseAnon!, {
           cookies: {
@@ -96,9 +86,7 @@ export async function middleware(request: NextRequest) {
 
     if (supabase) {
       try {
-        // getUser é o caminho mais estável no middleware (evita inconsistência de getSession no edge)
         const { data, error } = await supabase.auth.getUser()
-
         hasSession = !error && Boolean(data?.user)
         if (hasSession) {
           userEmail = data.user?.email ?? null
@@ -110,10 +98,6 @@ export async function middleware(request: NextRequest) {
         userEmail = null
       }
     }
-
-    /* =========================
-       Regras principais
-    ========================= */
 
     // Logada tentando acessar login/signup -> aplica entrada
     if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
@@ -146,7 +130,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
+    // Gate /admin exige ser admin
     if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
       if (!userEmail || !supabase) {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
@@ -182,7 +166,6 @@ export async function middleware(request: NextRequest) {
 
     return response
   } catch {
-    // Fail-open: nunca derrubar navegação por erro no middleware
     return NextResponse.next()
   }
 }
