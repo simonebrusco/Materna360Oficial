@@ -1,7 +1,7 @@
 // middleware.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
@@ -47,51 +47,6 @@ function isProtectedPath(pathname: string) {
 }
 
 /* =========================
-   Helpers de redirect com cookies
-========================= */
-
-function redirectWithResponse(request: NextRequest, response: NextResponse, to: string | URL) {
-  const url = typeof to === 'string' ? new URL(to, request.url) : to
-  const redirect = NextResponse.redirect(url)
-
-  // Copia headers/cookies setados no response base (inclui Set-Cookie do Supabase SSR)
-  response.headers.forEach((value, key) => {
-    redirect.headers.set(key, value)
-  })
-
-  // Também copia cookies explicitamente (garante em runtimes edge)
-  response.cookies.getAll().forEach(c => {
-    redirect.cookies.set(c.name, c.value, c)
-  })
-
-  return redirect
-}
-
-/* =========================
-   Supabase SSR (Edge-safe)
-========================= */
-
-function createSupabaseMiddlewareClient(request: NextRequest, response: NextResponse) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !anon) return null
-
-  return createServerClient(url, anon, {
-    cookies: {
-      get(name: string) {
-        return request.cookies.get(name)?.value
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        response.cookies.set({ name, value, ...options })
-      },
-      remove(name: string, options: CookieOptions) {
-        response.cookies.set({ name, value: '', ...options, maxAge: 0 })
-      },
-    },
-  })
-}
-
-/* =========================
    Middleware
 ========================= */
 
@@ -110,14 +65,33 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-  // Response base (permite set-cookie/refresh)
-  const response = NextResponse.next()
+  // Response base (precisa ser mutável para cookies do SSR)
+  let response = NextResponse.next()
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const canAuth = Boolean(supabaseUrl && supabaseAnon)
 
   let hasSession = false
   let hasSeenWelcome = false
   let userEmail: string | null = null
 
-  const supabase = createSupabaseMiddlewareClient(request, response)
+  // Cria client SSR (Edge-safe) somente se tiver env
+  const supabase = canAuth
+    ? createServerClient(supabaseUrl!, supabaseAnon!, {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+          },
+        },
+      })
+    : null
 
   if (supabase) {
     try {
@@ -144,40 +118,36 @@ export async function middleware(request: NextRequest) {
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
-      return redirectWithResponse(request, response, '/bem-vinda')
+      return NextResponse.redirect(new URL('/bem-vinda', request.url))
     }
 
     const rawNext = request.nextUrl.searchParams.get('redirectTo')
     const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-    return redirectWithResponse(request, response, nextDest)
+    return NextResponse.redirect(new URL(nextDest, request.url))
   }
 
   // "/" é público — mas se logada, aplica regra de entrada
   if (normalizedPath === '/' && hasSession) {
     if (!hasSeenWelcome) {
-      return redirectWithResponse(request, response, '/bem-vinda')
+      return NextResponse.redirect(new URL('/bem-vinda', request.url))
     }
-    return redirectWithResponse(request, response, '/meu-dia')
+    return NextResponse.redirect(new URL('/meu-dia', request.url))
   }
 
   // Rota protegida sem sessão -> login
   if (isProtectedPath(normalizedPath) && !hasSession) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirectTo', redirectToValue)
-    return redirectWithResponse(request, response, loginUrl)
+    return NextResponse.redirect(loginUrl)
   }
 
   // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
   if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-    // Sem e-mail = sem acesso
     if (!userEmail || !supabase) {
-      return redirectWithResponse(request, response, '/meu-dia')
+      return NextResponse.redirect(new URL('/meu-dia', request.url))
     }
 
     try {
-      // IMPORTANTE:
-      // isso roda com ANON + sessão do usuário (não service role).
-      // Se sua tabela tiver RLS, garanta policy para permitir leitura do próprio email.
       const { data: adminRow, error: adminErr } = await supabase
         .from('adm_admins')
         .select('email')
@@ -185,10 +155,10 @@ export async function middleware(request: NextRequest) {
         .maybeSingle()
 
       if (adminErr || !adminRow) {
-        return redirectWithResponse(request, response, '/meu-dia')
+        return NextResponse.redirect(new URL('/meu-dia', request.url))
       }
     } catch {
-      return redirectWithResponse(request, response, '/meu-dia')
+      return NextResponse.redirect(new URL('/meu-dia', request.url))
     }
   }
 
