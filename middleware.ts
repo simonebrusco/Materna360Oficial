@@ -1,11 +1,12 @@
+// middleware.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
 
-// MVP: allowlist admin (evita dependência de RLS no middleware)
+// MVP: allowlist fixa (fonte de verdade para admin agora)
 const ADMIN_EMAILS = ['simonebrusco@gmail.com']
 
 /* =========================
@@ -49,21 +50,16 @@ function isProtectedPath(pathname: string) {
 }
 
 /* =========================
-   Helpers de redirect com cookies
+   Helpers de redirect preservando cookies
 ========================= */
 
 function redirectWithResponse(request: NextRequest, response: NextResponse, to: string | URL) {
   const url = typeof to === 'string' ? new URL(to, request.url) : to
   const redirect = NextResponse.redirect(url)
 
-  // Copia headers/cookies do response base para o redirect
+  // garante que Set-Cookie/headers do supabase não se percam
   response.headers.forEach((value, key) => {
     redirect.headers.set(key, value)
-  })
-
-  // Copia cookies setados via response.cookies também (mais seguro)
-  response.cookies.getAll().forEach((c) => {
-    redirect.cookies.set(c)
   })
 
   return redirect
@@ -88,54 +84,51 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-  // Response base
+  // Response base (permite set-cookie/refresh)
   const response = NextResponse.next()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const canAuth = Boolean(supabaseUrl && supabaseAnon)
 
-  const isAdminPath = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/')
-  const isWelcomePath = normalizedPath === '/bem-vinda' || normalizedPath.startsWith('/bem-vinda/')
-
   let hasSession = false
   let hasSeenWelcome = false
   let userEmail: string | null = null
 
-  // ✅ Unificação com @supabase/ssr no middleware (corrige sessão ao trocar de aba)
   if (canAuth) {
-    const supabase = createServerClient(supabaseUrl!, supabaseAnon!, {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          response.cookies.set({ name, value: '', ...options, maxAge: 0 })
-        },
-      },
-    })
-
     try {
-      // getUser é melhor do que getSession em SSR/middleware para garantir validade do token
-      const { data, error } = await supabase.auth.getUser()
-      if (!error && data.user) {
-        hasSession = true
-        userEmail = data.user.email ?? null
+      const supabase = createServerClient(supabaseUrl!, supabaseAnon!, {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+          },
+        },
+      })
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      hasSession = Boolean(session)
+      userEmail = session?.user?.email ?? null
+
+      if (hasSession) {
+        try {
+          hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
+        } catch {
+          hasSeenWelcome = false
+        }
       }
     } catch {
       hasSession = false
+      hasSeenWelcome = false
       userEmail = null
-    }
-
-    if (hasSession) {
-      try {
-        hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
-      } catch {
-        hasSeenWelcome = false
-      }
     }
   }
 
@@ -146,14 +139,6 @@ export async function middleware(request: NextRequest) {
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
-      const rawNext = request.nextUrl.searchParams.get('redirectTo')
-      const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-
-      // ✅ se o destino é /admin, não prende no onboarding
-      if (nextDest.startsWith('/admin')) {
-        return redirectWithResponse(request, response, nextDest)
-      }
-
       return redirectWithResponse(request, response, '/bem-vinda')
     }
 
@@ -170,11 +155,6 @@ export async function middleware(request: NextRequest) {
     return redirectWithResponse(request, response, '/meu-dia')
   }
 
-  // ✅ Gate do /bem-vinda: só força quando NÃO for /admin
-  if (hasSession && !hasSeenWelcome && !isWelcomePath && !isAdminPath) {
-    return redirectWithResponse(request, response, '/bem-vinda')
-  }
-
   // Rota protegida sem sessão -> login
   if (isProtectedPath(normalizedPath) && !hasSession) {
     const loginUrl = new URL('/login', request.url)
@@ -183,11 +163,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
-  // MVP: allowlist (rápido e previsível). Mantém assertAdmin() como segurança final no server.
-  if (hasSession && isAdminPath) {
-    if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
-      return redirectWithResponse(request, response, '/meu-dia')
-    }
+  if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
+    if (!userEmail) return redirectWithResponse(request, response, '/meu-dia')
+    if (!ADMIN_EMAILS.includes(userEmail)) return redirectWithResponse(request, response, '/meu-dia')
   }
 
   // Rotas públicas seguem
