@@ -6,9 +6,6 @@ import { createServerClient } from '@supabase/ssr'
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
 
-// MVP: allowlist fixa (fonte de verdade para admin agora)
-const ADMIN_EMAILS = ['simonebrusco@gmail.com']
-
 /* =========================
    Helpers de segurança
 ========================= */
@@ -50,14 +47,15 @@ function isProtectedPath(pathname: string) {
 }
 
 /* =========================
-   Helpers de redirect preservando cookies
+   Helpers de redirect com cookies
 ========================= */
 
 function redirectWithResponse(request: NextRequest, response: NextResponse, to: string | URL) {
   const url = typeof to === 'string' ? new URL(to, request.url) : to
   const redirect = NextResponse.redirect(url)
 
-  // garante que Set-Cookie/headers do supabase não se percam
+  // Garante que qualquer atualização de cookies/headers feita pelo Supabase
+  // não seja perdida quando retornamos um redirect.
   response.headers.forEach((value, key) => {
     redirect.headers.set(key, value)
   })
@@ -95,17 +93,24 @@ export async function middleware(request: NextRequest) {
   let hasSeenWelcome = false
   let userEmail: string | null = null
 
+  // Supabase client alinhado com @supabase/ssr (mesma família do app/lib/supabase.ts)
+  let supabase:
+    | ReturnType<typeof createServerClient>
+    | null = null
+
   if (canAuth) {
     try {
-      const supabase = createServerClient(supabaseUrl!, supabaseAnon!, {
+      supabase = createServerClient(supabaseUrl!, supabaseAnon!, {
         cookies: {
           get(name: string) {
             return request.cookies.get(name)?.value
           },
           set(name: string, value: string, options: any) {
+            // Middleware: precisa escrever no response para persistir
             response.cookies.set({ name, value, ...options })
           },
           remove(name: string, options: any) {
+            // Remove cookie (maxAge 0)
             response.cookies.set({ name, value: '', ...options, maxAge: 0 })
           },
         },
@@ -115,10 +120,9 @@ export async function middleware(request: NextRequest) {
         data: { session },
       } = await supabase.auth.getSession()
 
-      hasSession = Boolean(session)
-      userEmail = session?.user?.email ?? null
-
+      hasSession = Boolean(session?.user)
       if (hasSession) {
+        userEmail = session?.user?.email ?? null
         try {
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
         } catch {
@@ -129,6 +133,7 @@ export async function middleware(request: NextRequest) {
       hasSession = false
       hasSeenWelcome = false
       userEmail = null
+      supabase = null
     }
   }
 
@@ -164,8 +169,23 @@ export async function middleware(request: NextRequest) {
 
   // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
   if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-    if (!userEmail) return redirectWithResponse(request, response, '/meu-dia')
-    if (!ADMIN_EMAILS.includes(userEmail)) return redirectWithResponse(request, response, '/meu-dia')
+    if (!userEmail || !supabase) {
+      return redirectWithResponse(request, response, '/meu-dia')
+    }
+
+    try {
+      const { data: adminRow, error: adminErr } = await supabase
+        .from('adm_admins')
+        .select('email')
+        .eq('email', userEmail)
+        .maybeSingle()
+
+      if (adminErr || !adminRow) {
+        return redirectWithResponse(request, response, '/meu-dia')
+      }
+    } catch {
+      return redirectWithResponse(request, response, '/meu-dia')
+    }
   }
 
   // Rotas públicas seguem
