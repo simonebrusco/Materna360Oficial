@@ -3,24 +3,18 @@
 
 import { supabaseBrowser } from '@/app/lib/supabase'
 
-/**
- * Regra oficial:
- * - Cliente NUNCA decide admin por hardcode.
- * - A fonte de verdade é a tabela `adm_admins` no Supabase.
- * - Este helper apenas consulta se o usuário logado consta como admin.
- */
 export async function isAdminClient(): Promise<boolean> {
   const supabase = supabaseBrowser()
 
-  // 1) garante usuário autenticado no client
   const {
     data: { user },
-    error: userError,
+    error: userErr,
   } = await supabase.auth.getUser()
 
-  if (userError || !user?.email) return false
+  if (userErr) return false
+  if (!user?.email) return false
 
-  // 2) consulta tabela de admins
+  // Regra: admin = existe registro em adm_admins
   const { data, error } = await supabase
     .from('adm_admins')
     .select('email')
@@ -28,6 +22,5 @@ export async function isAdminClient(): Promise<boolean> {
     .maybeSingle()
 
   if (error) return false
-
-  return Boolean(data)
+  return Boolean(data?.email)
 }
