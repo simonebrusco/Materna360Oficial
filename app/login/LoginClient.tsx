@@ -80,7 +80,7 @@ export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // IMPORTANT: padronizar no mesmo client do resto do app (SSR-compatible)
+  // padronizado com o resto do app
   const supabase = useMemo(() => supabaseBrowser(), [])
 
   const redirectToRaw = searchParams.get('redirectTo')
@@ -104,14 +104,11 @@ export default function LoginClient() {
         if (!data.session) return
 
         const seen = hasSeenWelcomeCookie()
-        if (!seen) {
-          router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
-        } else {
-          router.replace(redirectTo)
-        }
+        if (!seen) router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
+        else router.replace(redirectTo)
       })
       .catch(() => {
-        // silêncio: se falhar, fica na tela
+        // se falhar, fica na tela
       })
 
     return () => {
@@ -139,9 +136,7 @@ export default function LoginClient() {
       return
     }
 
-    // Após login: decisão pelo cookie (middleware + BemVindaClient)
     const seen = hasSeenWelcomeCookie()
-
     if (!seen) {
       router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
       return
