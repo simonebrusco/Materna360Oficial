@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/app/lib/supabase'
+import { supabaseServer } from '@/app/lib/supabase.server'
 import { assertAdmin } from '@/app/lib/adm/requireAdmin.server'
 
 export type AdmIdeaStatus = 'draft' | 'published'
