@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { supabaseServer } from '@/app/lib/supabase'
+import { supabaseServer } from '@/app/lib/supabase.server'
 
 export async function assertAdmin() {
   const supabase = supabaseServer()
