@@ -1,17 +1,20 @@
+'use client'
+
 // app/lib/adm/isAdmin.client.ts
-import { supabaseClient } from '@/app/lib/supabase'
+import { supabaseBrowser } from '@/app/lib/supabase'
+
+const ADMINS = ['simonebrusco@gmail.com']
 
 export async function isAdminClient(): Promise<boolean> {
-  const supabase = supabaseClient()
+  const supabase = supabaseBrowser()
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
 
+  if (error) return false
   if (!user?.email) return false
-
-  // MVP: lista fixa de emails admin
-  const ADMINS = ['simonebrusco@gmail.com']
 
   return ADMINS.includes(user.email)
 }
