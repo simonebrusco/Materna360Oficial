@@ -1,73 +1,81 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import AppIcon, { type KnownIconName } from '@/components/ui/AppIcon';
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import AppIcon from '@/components/ui/AppIcon'
 
-type Tab = {
-  href: string;
-  label: string;
-  icon: KnownIconName;
-};
+type NavItem = {
+  href: string
+  label: string
+  icon: string
+}
 
-const TABS: Tab[] = [
+const NAV_ITEMS: NavItem[] = [
   { href: '/meu-dia', label: 'Meu Dia', icon: 'calendar' },
   { href: '/maternar', label: 'Maternar', icon: 'hand-heart' },
+  { href: '/cuidar', label: 'Cuidar', icon: 'sparkles' },
+  { href: '/descobrir', label: 'Descobrir', icon: 'compass' },
   { href: '/eu360', label: 'Eu360', icon: 'user' },
-];
+]
+
+function isActivePath(pathname: string, href: string) {
+  if (!pathname) return false
+  if (href === '/') return pathname === '/'
+  if (pathname === href) return true
+  // ativa também em subrotas, ex: /maternar/meu-filho
+  return pathname.startsWith(href + '/')
+}
 
 export default function BottomNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() || ''
 
   return (
-    <nav className="fixed inset-x-0 bottom-4 z-50 flex justify-center md:bottom-6 pointer-events-none">
-      <div
-        className="
-        pointer-events-auto w-[92%] max-w-xl rounded-full
-        border border-white/70 
-        bg-white/85 
-        backdrop-blur-2xl 
-        shadow-[0_18px_40px_rgba(0,0,0,0.15)]
-        px-3 py-2 flex items-center justify-between
+    <nav
+      className="
+        fixed bottom-0 left-0 right-0 z-50
+        border-t border-white/60
+        bg-white/80 backdrop-blur-xl
+        shadow-[0_-10px_30px_rgba(0,0,0,0.10)]
       "
-      >
-        {TABS.map(tab => {
-          const isActive =
-            pathname === tab.href ||
-            pathname.startsWith(`${tab.href}/`);
+      aria-label="Navegação principal"
+    >
+      <div className="mx-auto flex max-w-xl items-center justify-between px-3 py-2">
+        {NAV_ITEMS.map((item) => {
+          const active = isActivePath(pathname, item.href)
 
           return (
             <Link
-              key={tab.href}
-              href={tab.href}
-              className="flex-1 flex justify-center"
+              key={item.href}
+              href={item.href}
+              prefetch={false}
+              className="
+                flex flex-1 flex-col items-center justify-center
+                gap-1 rounded-2xl px-2 py-2
+                transition
+              "
+              aria-current={active ? 'page' : undefined}
             >
-              <div
-                className={`
-                  flex items-center gap-1.5 rounded-full px-4 py-2
-                  text-xs md:text-sm font-semibold transition-all duration-200
-
-                  ${
-                    isActive
-                      ? 'bg-[var(--color-brand)] text-white shadow-[0_8px_22px_rgba(255,20,117,0.45)] scale-[1.02]'
-                      : 'text-[#2F3A56] hover:bg-white/95'
-                  }
-                `}
+              <span
+                className={[
+                  'inline-flex h-9 w-9 items-center justify-center rounded-2xl transition',
+                  active ? 'bg-[#ffd8e6] text-[#ff005e]' : 'bg-white/0 text-[#2f3a56]',
+                ].join(' ')}
               >
-                <AppIcon
-                  name={tab.icon}
-                  className={`
-                    h-4 w-4 md:h-5 md:w-5 
-                    ${isActive ? 'text-white' : 'text-[var(--color-brand)]'}
-                  `}
-                />
+                <AppIcon name={item.icon as any} size={20} />
+              </span>
 
-                <span>{tab.label}</span>
-              </div>
+              <span
+                className={[
+                  'text-[11px] font-semibold transition',
+                  active ? 'text-[#ff005e]' : 'text-[#2f3a56]',
+                ].join(' ')}
+              >
+                {item.label}
+              </span>
             </Link>
-          );
+          )
         })}
       </div>
     </nav>
-  );
+  )
 }
