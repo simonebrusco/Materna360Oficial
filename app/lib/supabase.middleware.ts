@@ -1,6 +1,6 @@
 // app/lib/supabase.middleware.ts
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
+import type { NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -18,11 +18,18 @@ export function createMiddlewareSupabaseClient(req: NextRequest, res: NextRespon
         return req.cookies.get(name)?.value
       },
       set(name: string, value: string, options: CookieOptions) {
-        // Middleware: escrevemos no response
+        // Middleware: escreve no response (Edge-safe)
         res.cookies.set({ name, value, ...options })
       },
       remove(name: string, options: CookieOptions) {
-        res.cookies.set({ name, value: '', ...options, maxAge: 0 })
+        // Mais robusto do que só maxAge=0 em alguns ambientes
+        res.cookies.set({
+          name,
+          value: '',
+          ...options,
+          maxAge: 0,
+          expires: new Date(0),
+        })
       },
     },
   })
