@@ -51,129 +51,140 @@ function isProtectedPath(pathname: string) {
 ========================= */
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  try {
+    const pathname = request.nextUrl.pathname
 
-  // Builder / preview sempre passa
-  if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
-    return NextResponse.next()
-  }
-
-  // Normalização /(tabs)
-  const normalizedPath = TABS_PREFIX_PATTERN.test(pathname)
-    ? pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
-    : pathname
-
-  const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
-
-  // Response base (precisa ser mutável para cookies do SSR)
-  let response = NextResponse.next()
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  const canAuth = Boolean(supabaseUrl && supabaseAnon)
-
-  let hasSession = false
-  let hasSeenWelcome = false
-  let userEmail: string | null = null
-
-  // Cria client SSR (Edge-safe) somente se tiver env
-  const supabase = canAuth
-    ? createServerClient(supabaseUrl!, supabaseAnon!, {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            response.cookies.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            response.cookies.set({ name, value: '', ...options, maxAge: 0 })
-          },
-        },
-      })
-    : null
-
-  if (supabase) {
-    try {
-      const { data, error } = await supabase.auth.getUser()
-
-hasSession = !error && Boolean(data?.user)
-if (hasSession) {
-  userEmail = data.user?.email ?? null
-  hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
-}
-    } catch {
-      hasSession = false
-      hasSeenWelcome = false
-      userEmail = null
-    }
-  }
-
-  /* =========================
-     Regras principais
-  ========================= */
-
-  // Logada tentando acessar login/signup -> aplica entrada
-  if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
-    if (!hasSeenWelcome) {
-      return NextResponse.redirect(new URL('/bem-vinda', request.url))
+    // Builder / preview sempre passa
+    if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
+      return NextResponse.next()
     }
 
-    const rawNext = request.nextUrl.searchParams.get('redirectTo')
-    const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-    return NextResponse.redirect(new URL(nextDest, request.url))
-  }
+    // Normalização /(tabs)
+    const normalizedPath = TABS_PREFIX_PATTERN.test(pathname)
+      ? pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
+      : pathname
 
-  // "/" é público — mas se logada, aplica regra de entrada
-  if (normalizedPath === '/' && hasSession) {
-    if (!hasSeenWelcome) {
-      return NextResponse.redirect(new URL('/bem-vinda', request.url))
+    const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
+
+    // Response base (precisa ser mutável para cookies do SSR)
+    let response = NextResponse.next()
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const canAuth = Boolean(supabaseUrl && supabaseAnon)
+
+    let hasSession = false
+    let hasSeenWelcome = false
+    let userEmail: string | null = null
+
+    // Cria client SSR (Edge-safe) somente se tiver env
+    const supabase = canAuth
+      ? createServerClient(supabaseUrl!, supabaseAnon!, {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              response.cookies.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+            },
+          },
+        })
+      : null
+
+    if (supabase) {
+      try {
+        // getUser é o caminho mais estável no middleware (evita inconsistência de getSession no edge)
+        const { data, error } = await supabase.auth.getUser()
+
+        hasSession = !error && Boolean(data?.user)
+        if (hasSession) {
+          userEmail = data.user?.email ?? null
+          hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
+        }
+      } catch {
+        hasSession = false
+        hasSeenWelcome = false
+        userEmail = null
+      }
     }
-    return NextResponse.redirect(new URL('/meu-dia', request.url))
-  }
 
-  // Rota protegida sem sessão -> login
-  if (isProtectedPath(normalizedPath) && !hasSession) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirectTo', redirectToValue)
-    return NextResponse.redirect(loginUrl)
-  }
+    /* =========================
+       Regras principais
+    ========================= */
 
-  // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
-  if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-    if (!userEmail || !supabase) {
+    // Logada tentando acessar login/signup -> aplica entrada
+    if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
+      const rawNext = request.nextUrl.searchParams.get('redirectTo')
+      const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
+
+      if (!hasSeenWelcome) {
+        const url = new URL('/bem-vinda', request.url)
+        url.searchParams.set('next', nextDest)
+        return NextResponse.redirect(url)
+      }
+
+      return NextResponse.redirect(new URL(nextDest, request.url))
+    }
+
+    // "/" é público — mas se logada, aplica regra de entrada
+    if (normalizedPath === '/' && hasSession) {
+      if (!hasSeenWelcome) {
+        const url = new URL('/bem-vinda', request.url)
+        url.searchParams.set('next', '/meu-dia')
+        return NextResponse.redirect(url)
+      }
       return NextResponse.redirect(new URL('/meu-dia', request.url))
     }
 
-    try {
-      const { data: adminRow, error: adminErr } = await supabase
-        .from('adm_admins')
-        .select('email')
-        .eq('email', userEmail)
-        .maybeSingle()
+    // Rota protegida sem sessão -> login
+    if (isProtectedPath(normalizedPath) && !hasSession) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirectTo', redirectToValue)
+      return NextResponse.redirect(loginUrl)
+    }
 
-      if (adminErr || !adminRow) {
+    // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
+    if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
+      if (!userEmail || !supabase) {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
       }
-    } catch {
-      return NextResponse.redirect(new URL('/meu-dia', request.url))
-    }
-  }
 
-  // Rotas públicas seguem
-  if (isPublicPath(normalizedPath)) {
+      try {
+        const { data: adminRow, error: adminErr } = await supabase
+          .from('adm_admins')
+          .select('email')
+          .eq('email', userEmail)
+          .maybeSingle()
+
+        if (adminErr || !adminRow) {
+          return NextResponse.redirect(new URL('/meu-dia', request.url))
+        }
+      } catch {
+        return NextResponse.redirect(new URL('/meu-dia', request.url))
+      }
+    }
+
+    // Rotas públicas seguem
+    if (isPublicPath(normalizedPath)) {
+      if (TABS_PREFIX_PATTERN.test(pathname)) {
+        return NextResponse.rewrite(new URL(normalizedPath, request.url))
+      }
+      return response
+    }
+
+    // Rewrite padrão /(tabs)
     if (TABS_PREFIX_PATTERN.test(pathname)) {
       return NextResponse.rewrite(new URL(normalizedPath, request.url))
     }
+
     return response
+  } catch {
+    // Fail-open: nunca derrubar navegação por erro no middleware
+    return NextResponse.next()
   }
-
-  // Rewrite padrão /(tabs)
-  if (TABS_PREFIX_PATTERN.test(pathname)) {
-    return NextResponse.rewrite(new URL(normalizedPath, request.url))
-  }
-
-  return response
 }
 
 export const config = {
