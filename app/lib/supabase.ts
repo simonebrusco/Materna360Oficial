@@ -1,10 +1,9 @@
 // app/lib/supabase.ts
+import 'server-only'
+
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { createBrowserClient } from '@supabase/ssr'
 
 export type Client = SupabaseClient
-
-let _browser: Client | null = null
 
 function requireEnv(name: string, value: string | undefined) {
   if (!value) throw new Error(`[supabase] Missing env: ${name}`)
@@ -12,31 +11,11 @@ function requireEnv(name: string, value: string | undefined) {
 }
 
 /**
- * Browser client (client-side only)
- */
-export function supabaseBrowser(): Client {
-  if (typeof window === 'undefined') {
-    throw new Error('[supabaseBrowser] called on server')
-  }
-
-  const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL)
-  const anon = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
-  if (_browser) return _browser
-  _browser = createBrowserClient(url, anon)
-  return _browser
-}
-
-/**
- * Server client (server-side only)
- * - Prefere SUPABASE_SERVICE_ROLE_KEY (ADM/cron/server trusted)
- * - Cai para anon em último caso (não recomendado para ADM)
+ * Server client (server-side)
+ * - Usa SERVICE_ROLE quando disponível (ADM / operações confiáveis)
+ * - Fallback para anon (somente se SERVICE_ROLE não existir)
  */
 export function supabaseServer(): Client {
-  // garante que isso não vá parar em bundle client
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('server-only')
-
   const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL)
 
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -56,4 +35,16 @@ export function supabaseServer(): Client {
       detectSessionInUrl: false,
     },
   })
+}
+
+/**
+ * Legacy helper esperado por módulos antigos (ex.: app/lib/baby.ts)
+ * - Nunca lança erro: retorna null se não conseguir criar
+ */
+export function tryCreateServerSupabase(): Client | null {
+  try {
+    return supabaseServer()
+  } catch {
+    return null
+  }
 }
