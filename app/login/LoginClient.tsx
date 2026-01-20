@@ -76,6 +76,26 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
   }
 }
 
+async function persistSessionCookie(session: any) {
+  // A sessão do supabase/auth-helpers fica no client, mas o middleware Edge precisa de cookie.
+  // Este endpoint server grava Set-Cookie via supabase.auth.setSession().
+  const access_token = session?.access_token
+  const refresh_token = session?.refresh_token
+  if (!access_token || !refresh_token) return
+
+  const r = await fetch('/api/auth/set-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ access_token, refresh_token }),
+  })
+
+  const j = await r.json().catch(() => null)
+  if (!r.ok || !j?.ok) {
+    throw new Error(j?.error || 'Falha ao fixar sessão em cookie')
+  }
+}
+
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -93,8 +113,15 @@ export default function LoginClient() {
   const [resendMsg, setResendMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) return
+
+      // IMPORTANT: garante cookie para o middleware (Edge)
+      try {
+        await persistSessionCookie(data.session)
+      } catch {
+        // se falhar, não bloqueia aqui; o submit vai mostrar erro caso ocorra novamente
+      }
 
       // Regra oficial (P28/P28.5): decisão pelo cookie
       const seen = hasSeenWelcomeCookie()
@@ -115,17 +142,34 @@ export default function LoginClient() {
 
     const cleanEmail = email.trim()
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
     })
 
-    setLoading(false)
-
     if (error) {
+      setLoading(false)
       setUiError(mapAuthErrorToUi(error.message))
       return
     }
+
+    try {
+      // CRÍTICO: grava cookie de sessão para o middleware reconhecer login nas abas
+      await persistSessionCookie(data.session)
+    } catch (e) {
+      setLoading(false)
+      const msg = e instanceof Error ? e.message : String(e)
+      setUiError({
+        title: 'Consegui entrar, mas não consegui manter a sessão',
+        message:
+          `${msg}. ` +
+          'Tente novamente. Se persistir, é sinal de configuração de cookies/sessão no server.',
+        kind: 'generic',
+      })
+      return
+    }
+
+    setLoading(false)
 
     // Após login: decisão pelo cookie (middleware + BemVindaClient)
     const seen = hasSeenWelcomeCookie()
@@ -230,14 +274,20 @@ export default function LoginClient() {
       </form>
 
       <div className="mt-4 text-xs text-[#545454]">
-        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}>
+        <a
+          className="underline decoration-[#F5D7E5] underline-offset-4"
+          href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
           Esqueci minha senha
         </a>
       </div>
 
       <div className="mt-4 text-xs text-[#545454]">
         Ainda não tem conta?{' '}
-        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>
+        <a
+          className="underline decoration-[#F5D7E5] underline-offset-4"
+          href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
           Criar agora
         </a>
       </div>
