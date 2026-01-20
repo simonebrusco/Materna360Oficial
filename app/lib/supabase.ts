@@ -1,22 +1,59 @@
 // app/lib/supabase.ts
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
-let _browserClient: SupabaseClient | null = null
+export type Client = SupabaseClient
 
-export function supabaseBrowser(): SupabaseClient {
-  if (_browserClient) return _browserClient
+let _browser: Client | null = null
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+function requireEnv(name: string, value: string | undefined) {
+  if (!value) throw new Error(`[supabase] Missing env: ${name}`)
+  return value
+}
 
-  if (!url || !anon) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
+/**
+ * Browser client (client-side only)
+ */
+export function supabaseBrowser(): Client {
+  if (typeof window === 'undefined') {
+    throw new Error('[supabaseBrowser] called on server')
   }
 
-  // IMPORTANT:
-  // - createBrowserClient(@supabase/ssr) persiste sessão em cookies (document.cookie)
-  // - isso permite o middleware (Edge) enxergar a sessão
-  _browserClient = createBrowserClient(url, anon)
-  return _browserClient
+  const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const anon = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+  if (_browser) return _browser
+  _browser = createBrowserClient(url, anon)
+  return _browser
+}
+
+/**
+ * Server client (server-side only)
+ * - Prefere SUPABASE_SERVICE_ROLE_KEY (ADM/cron/server trusted)
+ * - Cai para anon em último caso (não recomendado para ADM)
+ */
+export function supabaseServer(): Client {
+  // garante que isso não vá parar em bundle client
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('server-only')
+
+  const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL)
+
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const key = service || anon
+
+  if (!key) {
+    throw new Error(
+      '[supabaseServer] Missing env: SUPABASE_SERVICE_ROLE_KEY (preferred) or NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    )
+  }
+
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  })
 }
