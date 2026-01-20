@@ -9,21 +9,41 @@ import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
 /**
- * Global translucent header that appears on all tabs
- * - Left: Materna360 logo (branco)
- * - Right: "Olá, Nome" + (admin-only) link para /admin/ideas
+ * GlobalHeader
+ *
+ * Regras de ouro:
+ * - Nunca bloqueia navegação
+ * - Nunca decide acesso
+ * - Admin aqui é apenas affordance visual
  */
 export function GlobalHeader() {
   const { name, isLoading } = useProfile()
   const firstName = (name || '').trim().split(' ')[0] || ''
 
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminChecked, setAdminChecked] = useState(false)
 
   useEffect(() => {
+    // Só verifica admin quando o profile terminou de carregar
+    if (isLoading) return
+
+    let alive = true
+
     isAdminClient()
-      .then(setIsAdmin)
-      .catch(() => setIsAdmin(false))
-  }, [])
+      .then((result) => {
+        if (alive) setIsAdmin(result)
+      })
+      .catch(() => {
+        if (alive) setIsAdmin(false)
+      })
+      .finally(() => {
+        if (alive) setAdminChecked(true)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [isLoading])
 
   return (
     <header
@@ -44,7 +64,7 @@ export function GlobalHeader() {
                 {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
               </p>
 
-              {isAdmin ? (
+              {adminChecked && isAdmin ? (
                 <Link
                   href="/admin/ideas"
                   className="text-[12px] md:text-[13px] font-semibold text-white/90 underline underline-offset-4 hover:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
