@@ -95,15 +95,13 @@ export async function middleware(request: NextRequest) {
 
   if (supabase) {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { data, error } = await supabase.auth.getUser()
 
-      hasSession = Boolean(session)
-      if (hasSession) {
-        userEmail = session?.user?.email ?? null
-        hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
-      }
+hasSession = !error && Boolean(data?.user)
+if (hasSession) {
+  userEmail = data.user?.email ?? null
+  hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
+}
     } catch {
       hasSession = false
       hasSeenWelcome = false
