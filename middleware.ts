@@ -1,9 +1,12 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
+
+// MVP: allowlist admin (evita dependência de RLS no middleware)
+const ADMIN_EMAILS = ['simonebrusco@gmail.com']
 
 /* =========================
    Helpers de segurança
@@ -53,10 +56,14 @@ function redirectWithResponse(request: NextRequest, response: NextResponse, to: 
   const url = typeof to === 'string' ? new URL(to, request.url) : to
   const redirect = NextResponse.redirect(url)
 
-  // Garante que qualquer atualização de cookies/headers feita pelo Supabase
-  // não seja perdida quando retornamos um redirect.
+  // Copia headers/cookies do response base para o redirect
   response.headers.forEach((value, key) => {
     redirect.headers.set(key, value)
+  })
+
+  // Copia cookies setados via response.cookies também (mais seguro)
+  response.cookies.getAll().forEach((c) => {
+    redirect.cookies.set(c)
   })
 
   return redirect
@@ -81,46 +88,54 @@ export async function middleware(request: NextRequest) {
 
   const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-  // Response base (permite set-cookie/refresh)
+  // Response base
   const response = NextResponse.next()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const canAuth = Boolean(supabaseUrl && supabaseAnon)
 
+  const isAdminPath = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/')
+  const isWelcomePath = normalizedPath === '/bem-vinda' || normalizedPath.startsWith('/bem-vinda/')
+
   let hasSession = false
   let hasSeenWelcome = false
-
-  // Novo: vamos guardar e-mail para checagem de admin quando necessário
   let userEmail: string | null = null
 
-  // Importante: manter referência do client para consultas adicionais (ex: adm_admins)
-  let supabase: ReturnType<typeof createMiddlewareClient> | null = null
-
+  // ✅ Unificação com @supabase/ssr no middleware (corrige sessão ao trocar de aba)
   if (canAuth) {
+    const supabase = createServerClient(supabaseUrl!, supabaseAnon!, {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+        },
+      },
+    })
+
     try {
-      supabase = createMiddlewareClient({ req: request, res: response })
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      hasSession = Boolean(session)
-
-      if (hasSession) {
-        userEmail = session?.user?.email ?? null
-
-        try {
-          hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
-        } catch {
-          hasSeenWelcome = false
-        }
+      // getUser é melhor do que getSession em SSR/middleware para garantir validade do token
+      const { data, error } = await supabase.auth.getUser()
+      if (!error && data.user) {
+        hasSession = true
+        userEmail = data.user.email ?? null
       }
     } catch {
       hasSession = false
-      hasSeenWelcome = false
       userEmail = null
-      supabase = null
+    }
+
+    if (hasSession) {
+      try {
+        hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
+      } catch {
+        hasSeenWelcome = false
+      }
     }
   }
 
@@ -128,26 +143,17 @@ export async function middleware(request: NextRequest) {
      Regras principais
   ========================= */
 
-  /**
-   * ✅ FIX P34.ADM.1:
-   * O gate de onboarding (/bem-vinda) NÃO deve bloquear o acesso ao ADM.
-   * - Usuário logado e admin precisa conseguir acessar /admin/ideas mesmo sem ter visto o welcome.
-   * - A proteção real do ADM segue sendo feita por:
-   *   (1) sessão obrigatória (regra abaixo)
-   *   (2) checagem de admin via adm_admins (regra específica /admin)
-   */
-  const isAdminPath = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/')
-  const isWelcomePath = normalizedPath === '/bem-vinda' || normalizedPath.startsWith('/bem-vinda/')
-
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
-      // ✅ se o redirectTo for /admin, não bloqueia no /bem-vinda
       const rawNext = request.nextUrl.searchParams.get('redirectTo')
       const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
+
+      // ✅ se o destino é /admin, não prende no onboarding
       if (nextDest.startsWith('/admin')) {
         return redirectWithResponse(request, response, nextDest)
       }
+
       return redirectWithResponse(request, response, '/bem-vinda')
     }
 
@@ -159,19 +165,12 @@ export async function middleware(request: NextRequest) {
   // "/" é público — mas se logada, aplica regra de entrada
   if (normalizedPath === '/' && hasSession) {
     if (!hasSeenWelcome) {
-      // ✅ se estiver indo para /admin via navegação direta, não força /bem-vinda
-      if (isAdminPath) {
-        return redirectWithResponse(request, response, '/admin/ideas')
-      }
       return redirectWithResponse(request, response, '/bem-vinda')
     }
     return redirectWithResponse(request, response, '/meu-dia')
   }
 
   // ✅ Gate do /bem-vinda: só força quando NÃO for /admin
-  // Se logada e ainda não viu welcome:
-  // - deixa /admin passar (será validado por adm_admins abaixo)
-  // - continua forçando welcome para o restante do app
   if (hasSession && !hasSeenWelcome && !isWelcomePath && !isAdminPath) {
     return redirectWithResponse(request, response, '/bem-vinda')
   }
@@ -184,23 +183,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
+  // MVP: allowlist (rápido e previsível). Mantém assertAdmin() como segurança final no server.
   if (hasSession && isAdminPath) {
-    // Se por algum motivo não temos e-mail, tratamos como não autorizado
-    if (!userEmail || !supabase) {
-      return redirectWithResponse(request, response, '/meu-dia')
-    }
-
-    try {
-      const { data: adminRow, error: adminErr } = await supabase
-        .from('adm_admins')
-        .select('email')
-        .eq('email', userEmail)
-        .maybeSingle()
-
-      if (adminErr || !adminRow) {
-        return redirectWithResponse(request, response, '/meu-dia')
-      }
-    } catch {
+    if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
       return redirectWithResponse(request, response, '/meu-dia')
     }
   }
