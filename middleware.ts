@@ -128,9 +128,26 @@ export async function middleware(request: NextRequest) {
      Regras principais
   ========================= */
 
+  /**
+   * ✅ FIX P34.ADM.1:
+   * O gate de onboarding (/bem-vinda) NÃO deve bloquear o acesso ao ADM.
+   * - Usuário logado e admin precisa conseguir acessar /admin/ideas mesmo sem ter visto o welcome.
+   * - A proteção real do ADM segue sendo feita por:
+   *   (1) sessão obrigatória (regra abaixo)
+   *   (2) checagem de admin via adm_admins (regra específica /admin)
+   */
+  const isAdminPath = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/')
+  const isWelcomePath = normalizedPath === '/bem-vinda' || normalizedPath.startsWith('/bem-vinda/')
+
   // Logada tentando acessar login/signup -> aplica entrada
   if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
     if (!hasSeenWelcome) {
+      // ✅ se o redirectTo for /admin, não bloqueia no /bem-vinda
+      const rawNext = request.nextUrl.searchParams.get('redirectTo')
+      const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
+      if (nextDest.startsWith('/admin')) {
+        return redirectWithResponse(request, response, nextDest)
+      }
       return redirectWithResponse(request, response, '/bem-vinda')
     }
 
@@ -142,9 +159,21 @@ export async function middleware(request: NextRequest) {
   // "/" é público — mas se logada, aplica regra de entrada
   if (normalizedPath === '/' && hasSession) {
     if (!hasSeenWelcome) {
+      // ✅ se estiver indo para /admin via navegação direta, não força /bem-vinda
+      if (isAdminPath) {
+        return redirectWithResponse(request, response, '/admin/ideas')
+      }
       return redirectWithResponse(request, response, '/bem-vinda')
     }
     return redirectWithResponse(request, response, '/meu-dia')
+  }
+
+  // ✅ Gate do /bem-vinda: só força quando NÃO for /admin
+  // Se logada e ainda não viu welcome:
+  // - deixa /admin passar (será validado por adm_admins abaixo)
+  // - continua forçando welcome para o restante do app
+  if (hasSession && !hasSeenWelcome && !isWelcomePath && !isAdminPath) {
+    return redirectWithResponse(request, response, '/bem-vinda')
   }
 
   // Rota protegida sem sessão -> login
@@ -155,7 +184,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
-  if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
+  if (hasSession && isAdminPath) {
     // Se por algum motivo não temos e-mail, tratamos como não autorizado
     if (!userEmail || !supabase) {
       return redirectWithResponse(request, response, '/meu-dia')
