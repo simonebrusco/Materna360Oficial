@@ -1,7 +1,7 @@
+// middleware.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-
-import { createMiddlewareSupabaseClient } from '@/app/lib/supabase.middleware'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
@@ -54,17 +54,41 @@ function redirectWithResponse(request: NextRequest, response: NextResponse, to: 
   const url = typeof to === 'string' ? new URL(to, request.url) : to
   const redirect = NextResponse.redirect(url)
 
-  // Mantém headers/cookies já aplicados no response (importante para Supabase)
+  // Copia headers/cookies setados no response base (inclui Set-Cookie do Supabase SSR)
   response.headers.forEach((value, key) => {
     redirect.headers.set(key, value)
   })
 
-  // Mantém cookies setados no response
-  response.cookies.getAll().forEach((c) => {
-    redirect.cookies.set(c)
+  // Também copia cookies explicitamente (garante em runtimes edge)
+  response.cookies.getAll().forEach(c => {
+    redirect.cookies.set(c.name, c.value, c)
   })
 
   return redirect
+}
+
+/* =========================
+   Supabase SSR (Edge-safe)
+========================= */
+
+function createSupabaseMiddlewareClient(request: NextRequest, response: NextResponse) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !anon) return null
+
+  return createServerClient(url, anon, {
+    cookies: {
+      get(name: string) {
+        return request.cookies.get(name)?.value
+      },
+      set(name: string, value: string, options: CookieOptions) {
+        response.cookies.set({ name, value, ...options })
+      },
+      remove(name: string, options: CookieOptions) {
+        response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+      },
+    },
+  })
 }
 
 /* =========================
@@ -89,13 +113,11 @@ export async function middleware(request: NextRequest) {
   // Response base (permite set-cookie/refresh)
   const response = NextResponse.next()
 
-  const canAuth = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
   let hasSession = false
   let hasSeenWelcome = false
   let userEmail: string | null = null
 
-  const supabase = canAuth ? createMiddlewareSupabaseClient(request, response) : null
+  const supabase = createSupabaseMiddlewareClient(request, response)
 
   if (supabase) {
     try {
@@ -104,14 +126,9 @@ export async function middleware(request: NextRequest) {
       } = await supabase.auth.getSession()
 
       hasSession = Boolean(session)
-
       if (hasSession) {
         userEmail = session?.user?.email ?? null
-        try {
-          hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
-        } catch {
-          hasSeenWelcome = false
-        }
+        hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
       }
     } catch {
       hasSession = false
@@ -152,11 +169,15 @@ export async function middleware(request: NextRequest) {
 
   // 🔒 Gate adicional: /admin exige ser admin (além de estar logada)
   if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
+    // Sem e-mail = sem acesso
     if (!userEmail || !supabase) {
       return redirectWithResponse(request, response, '/meu-dia')
     }
 
     try {
+      // IMPORTANTE:
+      // isso roda com ANON + sessão do usuário (não service role).
+      // Se sua tabela tiver RLS, garanta policy para permitir leitura do próprio email.
       const { data: adminRow, error: adminErr } = await supabase
         .from('adm_admins')
         .select('email')
