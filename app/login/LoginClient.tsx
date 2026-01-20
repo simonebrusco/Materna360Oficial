@@ -3,7 +3,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+import { supabaseBrowser } from '@/app/lib/supabase'
 
 type UiError = {
   title: string
@@ -26,7 +27,6 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
 function hasSeenWelcomeCookie(): boolean {
   try {
     if (typeof document === 'undefined') return false
-    // leitura simples e segura: middleware decide pelo cookie
     return document.cookie.split(';').some((c) => c.trim().startsWith(`${SEEN_KEY}=1`))
   } catch {
     return false
@@ -76,30 +76,12 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
   }
 }
 
-async function persistSessionCookie(session: any) {
-  // A sessão do supabase/auth-helpers fica no client, mas o middleware Edge precisa de cookie.
-  // Este endpoint server grava Set-Cookie via supabase.auth.setSession().
-  const access_token = session?.access_token
-  const refresh_token = session?.refresh_token
-  if (!access_token || !refresh_token) return
-
-  const r = await fetch('/api/auth/set-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    cache: 'no-store',
-    body: JSON.stringify({ access_token, refresh_token }),
-  })
-
-  const j = await r.json().catch(() => null)
-  if (!r.ok || !j?.ok) {
-    throw new Error(j?.error || 'Falha ao fixar sessão em cookie')
-  }
-}
-
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = useMemo(() => createClientComponentClient(), [])
+
+  // IMPORTANT: padronizar no mesmo client do resto do app (SSR-compatible)
+  const supabase = useMemo(() => supabaseBrowser(), [])
 
   const redirectToRaw = searchParams.get('redirectTo')
   const redirectTo = safeInternalRedirect(redirectToRaw, '/meu-dia')
@@ -113,25 +95,28 @@ export default function LoginClient() {
   const [resendMsg, setResendMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) return
+    let alive = true
 
-      // IMPORTANT: garante cookie para o middleware (Edge)
-      try {
-        await persistSessionCookie(data.session)
-      } catch {
-        // se falhar, não bloqueia aqui; o submit vai mostrar erro caso ocorra novamente
-      }
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!alive) return
+        if (!data.session) return
 
-      // Regra oficial (P28/P28.5): decisão pelo cookie
-      const seen = hasSeenWelcomeCookie()
+        const seen = hasSeenWelcomeCookie()
+        if (!seen) {
+          router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
+        } else {
+          router.replace(redirectTo)
+        }
+      })
+      .catch(() => {
+        // silêncio: se falhar, fica na tela
+      })
 
-      if (!seen) {
-        router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
-      } else {
-        router.replace(redirectTo)
-      }
-    })
+    return () => {
+      alive = false
+    }
   }, [supabase, router, redirectTo])
 
   async function onSubmit(e: React.FormEvent) {
@@ -142,34 +127,17 @@ export default function LoginClient() {
 
     const cleanEmail = email.trim()
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
     })
 
+    setLoading(false)
+
     if (error) {
-      setLoading(false)
       setUiError(mapAuthErrorToUi(error.message))
       return
     }
-
-    try {
-      // CRÍTICO: grava cookie de sessão para o middleware reconhecer login nas abas
-      await persistSessionCookie(data.session)
-    } catch (e) {
-      setLoading(false)
-      const msg = e instanceof Error ? e.message : String(e)
-      setUiError({
-        title: 'Consegui entrar, mas não consegui manter a sessão',
-        message:
-          `${msg}. ` +
-          'Tente novamente. Se persistir, é sinal de configuração de cookies/sessão no server.',
-        kind: 'generic',
-      })
-      return
-    }
-
-    setLoading(false)
 
     // Após login: decisão pelo cookie (middleware + BemVindaClient)
     const seen = hasSeenWelcomeCookie()
