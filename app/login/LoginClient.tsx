@@ -80,7 +80,6 @@ export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // padronizado com o resto do app
   const supabase = useMemo(() => supabaseBrowser(), [])
 
   const redirectToRaw = searchParams.get('redirectTo')
@@ -94,6 +93,7 @@ export default function LoginClient() {
   const [resendLoading, setResendLoading] = useState(false)
   const [resendMsg, setResendMsg] = useState<string | null>(null)
 
+  // Se já estiver logada, não fica presa na tela de login
   useEffect(() => {
     let alive = true
 
@@ -108,7 +108,7 @@ export default function LoginClient() {
         else router.replace(redirectTo)
       })
       .catch(() => {
-        // se falhar, fica na tela
+        // sem ruído
       })
 
     return () => {
@@ -247,10 +247,7 @@ export default function LoginClient() {
 
       <div className="mt-4 text-xs text-[#545454]">
         Ainda não tem conta?{' '}
-        <a
-          className="underline decoration-[#F5D7E5] underline-offset-4"
-          href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}
-        >
+        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>
           Criar agora
         </a>
       </div>
