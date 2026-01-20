@@ -1,7 +1,7 @@
-// middleware.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+
+import { createMiddlewareSupabaseClient } from '@/app/lib/supabase.middleware'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
@@ -54,10 +54,14 @@ function redirectWithResponse(request: NextRequest, response: NextResponse, to: 
   const url = typeof to === 'string' ? new URL(to, request.url) : to
   const redirect = NextResponse.redirect(url)
 
-  // Garante que qualquer atualização de cookies/headers feita pelo Supabase
-  // não seja perdida quando retornamos um redirect.
+  // Mantém headers/cookies já aplicados no response (importante para Supabase)
   response.headers.forEach((value, key) => {
     redirect.headers.set(key, value)
+  })
+
+  // Mantém cookies setados no response
+  response.cookies.getAll().forEach((c) => {
+    redirect.cookies.set(c)
   })
 
   return redirect
@@ -85,42 +89,22 @@ export async function middleware(request: NextRequest) {
   // Response base (permite set-cookie/refresh)
   const response = NextResponse.next()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  const canAuth = Boolean(supabaseUrl && supabaseAnon)
+  const canAuth = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
   let hasSession = false
   let hasSeenWelcome = false
   let userEmail: string | null = null
 
-  // Supabase client alinhado com @supabase/ssr (mesma família do app/lib/supabase.ts)
-  let supabase:
-    | ReturnType<typeof createServerClient>
-    | null = null
+  const supabase = canAuth ? createMiddlewareSupabaseClient(request, response) : null
 
-  if (canAuth) {
+  if (supabase) {
     try {
-      supabase = createServerClient(supabaseUrl!, supabaseAnon!, {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            // Middleware: precisa escrever no response para persistir
-            response.cookies.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            // Remove cookie (maxAge 0)
-            response.cookies.set({ name, value: '', ...options, maxAge: 0 })
-          },
-        },
-      })
-
       const {
         data: { session },
       } = await supabase.auth.getSession()
 
-      hasSession = Boolean(session?.user)
+      hasSession = Boolean(session)
+
       if (hasSession) {
         userEmail = session?.user?.email ?? null
         try {
@@ -133,7 +117,6 @@ export async function middleware(request: NextRequest) {
       hasSession = false
       hasSeenWelcome = false
       userEmail = null
-      supabase = null
     }
   }
 
