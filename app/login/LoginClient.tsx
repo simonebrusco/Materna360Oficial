@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-import { supabaseBrowser } from '@/app/lib/supabase'
+import { supabaseBrowser } from '@/app/lib/supabase.client'
 
 type UiError = {
   title: string
@@ -93,7 +93,6 @@ export default function LoginClient() {
   const [resendLoading, setResendLoading] = useState(false)
   const [resendMsg, setResendMsg] = useState<string | null>(null)
 
-  // Se já estiver logada, não fica presa na tela de login
   useEffect(() => {
     let alive = true
 
@@ -107,9 +106,7 @@ export default function LoginClient() {
         if (!seen) router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
         else router.replace(redirectTo)
       })
-      .catch(() => {
-        // sem ruído
-      })
+      .catch(() => {})
 
     return () => {
       alive = false
@@ -247,7 +244,10 @@ export default function LoginClient() {
 
       <div className="mt-4 text-xs text-[#545454]">
         Ainda não tem conta?{' '}
-        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>
+        <a
+          className="underline decoration-[#F5D7E5] underline-offset-4"
+          href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
           Criar agora
         </a>
       </div>
