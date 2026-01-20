@@ -1,81 +1,22 @@
-import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr'
+// app/lib/supabase.ts
+import { createBrowserClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-type Client = SupabaseClient
+let _browserClient: SupabaseClient | null = null
 
-export function createBrowserSupabase(): Client | null {
+export function supabaseBrowser(): SupabaseClient {
+  if (_browserClient) return _browserClient
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!url || !anonKey) {
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.')
-    }
-    return null
+  if (!url || !anon) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
   }
 
-  return createBrowserClient(url, anonKey)
-}
-
-export function createServerSupabase(serviceKey?: string): Client {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = serviceKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!url || !key) {
-    throw new Error('Supabase environment variables are not configured.')
-  }
-
-  // Import cookies from next/headers here to avoid module-level server-only imports
-  // that would break client component compatibility
-  const { cookies } = require('next/headers')
-  const cookieStore = cookies()
-
-  return createServerClient(url, key, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        try {
-          cookieStore.set({ name, value, ...options })
-        } catch {
-          // setting cookies can fail in some render contexts (e.g. server components). swallow silently.
-        }
-      },
-      remove(name: string, _options: CookieOptions) {
-        try {
-          cookieStore.delete(name)
-        } catch {
-          // ignore removal failures in read-only contexts
-        }
-      },
-    },
-    auth: {
-      persistSession: false,
-    },
-  })
-}
-
-export function supabaseBrowser(): Client {
-  const client = createBrowserSupabase()
-  if (!client) {
-    throw new Error('Supabase environment variables are not configured.')
-  }
-  return client
-}
-
-export const supabaseServer = createServerSupabase
-
-export function tryCreateServerSupabase(serviceKey?: string): Client | null {
-  try {
-    return createServerSupabase(serviceKey)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    if (process.env.NODE_ENV === 'production') {
-      console.error('[Supabase] Server client unavailable:', message)
-    } else {
-      console.warn('[Supabase] Server client unavailable:', message)
-    }
-    return null
-  }
+  // IMPORTANT:
+  // - createBrowserClient(@supabase/ssr) persiste sessão em cookies (document.cookie)
+  // - isso permite o middleware (Edge) enxergar a sessão
+  _browserClient = createBrowserClient(url, anon)
+  return _browserClient
 }
