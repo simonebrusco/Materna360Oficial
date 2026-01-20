@@ -1,18 +1,29 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
+
 import { useProfile } from '@/app/hooks/useProfile'
+import { isAdminClient } from '@/app/lib/adm/isAdmin.client'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
 /**
  * Global translucent header that appears on all tabs
  * - Left: Materna360 logo (branco)
- * - Right: "Olá, Nome"
+ * - Right: "Olá, Nome" + (admin-only) link para /admin/ideas
  */
 export function GlobalHeader() {
   const { name, isLoading } = useProfile()
   const firstName = (name || '').trim().split(' ')[0] || ''
+
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    isAdminClient()
+      .then(setIsAdmin)
+      .catch(() => setIsAdmin(false))
+  }, [])
 
   return (
     <header
@@ -28,9 +39,20 @@ export function GlobalHeader() {
 
         <div className="flex items-center">
           <ClientOnly>
-            <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
-              {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
+              </p>
+
+              {isAdmin ? (
+                <Link
+                  href="/admin/ideas"
+                  className="text-[12px] md:text-[13px] font-semibold text-white/90 underline underline-offset-4 hover:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                >
+                  Área ADM
+                </Link>
+              ) : null}
+            </div>
           </ClientOnly>
         </div>
       </div>
