@@ -1,6 +1,7 @@
 // app/lib/adm/adm.server.ts
-import { supabaseServer } from '@/app/lib/supabase.server'
 import { randomUUID } from 'crypto'
+
+import { supabaseServer } from '@/app/lib/supabase.server'
 import { assertAdmin } from '@/app/lib/adm/requireAdmin.server'
 
 export type AdmIdeaStatus = 'draft' | 'published'
@@ -16,6 +17,8 @@ export type AdmIdeaRow = {
   age_band: string | null
   environment: string | null
   tags: string
+
+  // Recomendado (e esperado pela UI /admin):
   status: AdmIdeaStatus
   created_at: string
   updated_at: string
@@ -23,27 +26,8 @@ export type AdmIdeaRow = {
 
 export type CreateIdeaInput = Omit<AdmIdeaRow, 'id' | 'created_at' | 'updated_at'>
 
-const IDEA_SELECT = `
-  id,
-  hub,
-  title,
-  short_description,
-  steps,
-  duration_minutes,
-  age_band,
-  environment,
-  tags,
-  status,
-  created_at,
-  updated_at
-`.trim()
-
-function clampLimit(n: number) {
-  return Math.min(Math.max(n, 1), 200)
-}
-
-function clampOffset(n: number) {
-  return Math.max(n, 0)
+function nowIso() {
+  return new Date().toISOString()
 }
 
 /**
@@ -56,16 +40,16 @@ export async function listIdeas(args: {
   q?: string
   limit?: number
   offset?: number
-}) {
+}): Promise<AdmIdeaRow[]> {
   await assertAdmin()
   const supabase = supabaseServer()
 
-  const limit = clampLimit(args.limit ?? 50)
-  const offset = clampOffset(args.offset ?? 0)
+  const limit = Math.min(Math.max(args.limit ?? 50, 1), 200)
+  const offset = Math.max(args.offset ?? 0, 0)
 
   let query = supabase
     .from('adm_ideas')
-    .select(IDEA_SELECT)
+    .select('*')
     .order('updated_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -75,6 +59,7 @@ export async function listIdeas(args: {
 
   const { data, error } = await query
   if (error) throw new Error(`listIdeas: ${error.message}`)
+
   return (data ?? []) as AdmIdeaRow[]
 }
 
@@ -83,13 +68,16 @@ export async function listIdeas(args: {
  * Regra: leitura pública NÃO exige admin.
  * Este é o caminho que os hubs vão consumir depois (sem IA como fonte primária).
  */
-export async function listPublishedIdeasForHub(args: { hub: AdmIdeaHub; limit?: number }) {
+export async function listPublishedIdeasForHub(args: {
+  hub: AdmIdeaHub
+  limit?: number
+}): Promise<AdmIdeaRow[]> {
   const supabase = supabaseServer()
-  const limit = clampLimit(args.limit ?? 50)
+  const limit = Math.min(Math.max(args.limit ?? 50, 1), 200)
 
   const { data, error } = await supabase
     .from('adm_ideas')
-    .select(IDEA_SELECT)
+    .select('*')
     .eq('hub', args.hub)
     .eq('status', 'published')
     .order('updated_at', { ascending: false })
@@ -109,7 +97,7 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
 
   const { data, error } = await supabase
     .from('adm_ideas')
-    .select(IDEA_SELECT)
+    .select('*')
     .eq('id', id)
     .maybeSingle()
 
@@ -121,16 +109,25 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
  * ADMIN — Cria uma ideia (id imutável).
  * Retorna o registro criado.
  */
-export async function createIdea(input: CreateIdeaInput) {
+export async function createIdea(input: CreateIdeaInput): Promise<AdmIdeaRow> {
   await assertAdmin()
   const supabase = supabaseServer()
 
   const id = randomUUID()
+  const ts = nowIso()
+
+  const payload = {
+    id,
+    ...input,
+    status: input.status ?? 'draft',
+    created_at: ts,
+    updated_at: ts,
+  }
 
   const { data, error } = await supabase
     .from('adm_ideas')
-    .insert({ id, ...input })
-    .select(IDEA_SELECT)
+    .insert(payload)
+    .select('*')
     .single()
 
   if (error) throw new Error(`createIdea: ${error.message}`)
@@ -139,20 +136,25 @@ export async function createIdea(input: CreateIdeaInput) {
 
 /**
  * ADMIN — Atualiza campos (id imutável).
- * Retorna o registro atualizado (ou null se não existir).
+ * Retorna o registro atualizado (ou null se id não existir).
  */
 export async function updateIdea(
   id: string,
   patch: Partial<Omit<AdmIdeaRow, 'id' | 'created_at' | 'updated_at'>>
-) {
+): Promise<AdmIdeaRow | null> {
   await assertAdmin()
   const supabase = supabaseServer()
 
+  const payload = {
+    ...patch,
+    updated_at: nowIso(),
+  }
+
   const { data, error } = await supabase
     .from('adm_ideas')
-    .update(patch)
+    .update(payload)
     .eq('id', id)
-    .select(IDEA_SELECT)
+    .select('*')
     .maybeSingle()
 
   if (error) throw new Error(`updateIdea: ${error.message}`)
@@ -169,10 +171,11 @@ export async function setIdeaStatus(id: string, status: AdmIdeaStatus) {
 /**
  * ADMIN — Delete (CRUD completo do MVP)
  */
-export async function deleteIdea(id: string) {
+export async function deleteIdea(id: string): Promise<{ ok: true }> {
   await assertAdmin()
   const supabase = supabaseServer()
 
   const { error } = await supabase.from('adm_ideas').delete().eq('id', id)
   if (error) throw new Error(`deleteIdea: ${error.message}`)
+  return { ok: true }
 }
