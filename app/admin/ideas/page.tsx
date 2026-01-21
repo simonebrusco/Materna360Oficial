@@ -1,11 +1,12 @@
+// app/admin/ideas/page.tsx
 import Link from 'next/link'
 
 import { listIdeas, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
 
 type SearchParams = {
-  hub?: string
-  status?: string
-  q?: string
+  hub?: string | string[]
+  status?: string | string[]
+  q?: string | string[]
 }
 
 const HUB_OPTIONS: { value: AdmIdeaHub; label: string }[] = [
@@ -17,16 +18,29 @@ const HUB_OPTIONS: { value: AdmIdeaHub; label: string }[] = [
 const STATUS_OPTIONS: { value: AdmIdeaStatus; label: string }[] = [
   { value: 'published', label: 'Publicado' },
   { value: 'draft', label: 'Rascunho' },
+  { value: 'archived', label: 'Arquivado' },
 ]
 
-function safeHub(v?: string): AdmIdeaHub | undefined {
+function pickFirst(v?: string | string[]) {
   if (!v) return undefined
-  return HUB_OPTIONS.some(x => x.value === v) ? (v as AdmIdeaHub) : undefined
+  return Array.isArray(v) ? v[0] : v
 }
 
-function safeStatus(v?: string): AdmIdeaStatus | undefined {
-  if (!v) return undefined
-  return STATUS_OPTIONS.some(x => x.value === v) ? (v as AdmIdeaStatus) : undefined
+function safeHub(v?: string | string[]): AdmIdeaHub | undefined {
+  const s = (pickFirst(v) ?? '').trim()
+  if (!s) return undefined
+  return HUB_OPTIONS.some(x => x.value === s) ? (s as AdmIdeaHub) : undefined
+}
+
+function safeStatus(v?: string | string[]): AdmIdeaStatus | undefined {
+  const s = (pickFirst(v) ?? '').trim()
+  if (!s) return undefined
+  return STATUS_OPTIONS.some(x => x.value === s) ? (s as AdmIdeaStatus) : undefined
+}
+
+function safeQuery(v?: string | string[]) {
+  const s = (pickFirst(v) ?? '').trim()
+  return s ? s : undefined
 }
 
 function buildQueryString(params: Record<string, string | undefined>) {
@@ -45,7 +59,7 @@ export default async function AdminIdeasPage({
 }) {
   const hub = safeHub(searchParams?.hub)
   const status = safeStatus(searchParams?.status)
-  const q = (searchParams?.q ?? '').trim() || undefined
+  const q = safeQuery(searchParams?.q)
 
   const ideas = await listIdeas({ hub, status, q })
 
@@ -174,10 +188,16 @@ export default async function AdminIdeasPage({
                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                         row.status === 'published'
                           ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-amber-50 text-amber-700'
+                          : row.status === 'archived'
+                            ? 'bg-neutral-100 text-neutral-700'
+                            : 'bg-amber-50 text-amber-700'
                       }`}
                     >
-                      {row.status === 'published' ? 'Publicado' : 'Rascunho'}
+                      {row.status === 'published'
+                        ? 'Publicado'
+                        : row.status === 'archived'
+                          ? 'Arquivado'
+                          : 'Rascunho'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
