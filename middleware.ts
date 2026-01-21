@@ -66,7 +66,6 @@ export async function middleware(request: NextRequest) {
 
     let hasSession = false
     let hasSeenWelcome = false
-    let userEmail: string | null = null
 
     const supabase = canAuth
       ? createServerClient(supabaseUrl!, supabaseAnon!, {
@@ -84,22 +83,24 @@ export async function middleware(request: NextRequest) {
         })
       : null
 
+    let userId: string | null = null
+
     if (supabase) {
       try {
         const { data, error } = await supabase.auth.getUser()
         hasSession = !error && Boolean(data?.user)
         if (hasSession) {
-          userEmail = data.user?.email ?? null
+          userId = data.user?.id ?? null
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
         }
       } catch {
         hasSession = false
         hasSeenWelcome = false
-        userEmail = null
+        userId = null
       }
     }
 
-    // >>> HOTFIX: se já está logada e caiu em /bem-vinda com next=/admin,
+    // HOTFIX: se já está logada e caiu em /bem-vinda com next=/admin,
     // não deixa a bem-vinda engolir o fluxo; tenta ir direto pro admin.
     if (hasSession && normalizedPath === '/bem-vinda') {
       const rawNext = request.nextUrl.searchParams.get('next')
@@ -141,20 +142,21 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Gate /admin exige ser admin
+    // Gate /admin exige ser admin (UNIFICADO COM app/admin/layout.tsx)
     if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-      if (!userEmail || !supabase) {
+      if (!supabase || !userId) {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
       }
 
       try {
-        const { data: adminRow, error: adminErr } = await supabase
-          .from('adm_admins')
-          .select('email')
-          .eq('email', userEmail)
+        // Mesma fonte de verdade do AdminLayout: profiles.role
+        const { data: profile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', userId)
           .maybeSingle()
 
-        if (adminErr || !adminRow) {
+        if (profileErr || !profile || profile.role !== 'admin') {
           return NextResponse.redirect(new URL('/meu-dia', request.url))
         }
       } catch {
