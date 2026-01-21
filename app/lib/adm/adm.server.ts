@@ -60,7 +60,9 @@ export async function listIdeas(args: {
   const { data, error } = await query
   if (error) throw new Error(`listIdeas: ${error.message}`)
 
-  return (data ?? []) as AdmIdeaRow[]
+  // Importante: seu wrapper tipa `data` como GenericStringError[] em alguns cenários.
+  // TS recomenda o cast via unknown.
+  return (data ?? []) as unknown as AdmIdeaRow[]
 }
 
 /**
@@ -84,7 +86,7 @@ export async function listPublishedIdeasForHub(args: {
     .limit(limit)
 
   if (error) throw new Error(`listPublishedIdeasForHub: ${error.message}`)
-  return (data ?? []) as AdmIdeaRow[]
+  return (data ?? []) as unknown as AdmIdeaRow[]
 }
 
 /**
@@ -102,7 +104,7 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
     .maybeSingle()
 
   if (error) throw new Error(`getIdea: ${error.message}`)
-  return (data ?? null) as AdmIdeaRow | null
+  return (data ?? null) as unknown as AdmIdeaRow | null
 }
 
 /**
@@ -119,7 +121,7 @@ export async function createIdea(input: CreateIdeaInput): Promise<AdmIdeaRow> {
   const payload = {
     id,
     ...input,
-    status: input.status ?? 'draft',
+    status: (input.status ?? 'draft') as AdmIdeaStatus,
     created_at: ts,
     updated_at: ts,
   }
@@ -131,7 +133,7 @@ export async function createIdea(input: CreateIdeaInput): Promise<AdmIdeaRow> {
     .single()
 
   if (error) throw new Error(`createIdea: ${error.message}`)
-  return data as AdmIdeaRow
+  return data as unknown as AdmIdeaRow
 }
 
 /**
@@ -158,7 +160,7 @@ export async function updateIdea(
     .maybeSingle()
 
   if (error) throw new Error(`updateIdea: ${error.message}`)
-  return (data ?? null) as AdmIdeaRow | null
+  return (data ?? null) as unknown as AdmIdeaRow | null
 }
 
 /**
