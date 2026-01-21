@@ -1,4 +1,5 @@
 import { supabaseServer } from '@/app/lib/supabase.server'
+import { randomUUID } from 'crypto'
 import { assertAdmin } from '@/app/lib/adm/requireAdmin.server'
 
 export type AdmIdeaStatus = 'draft' | 'published'
@@ -18,6 +19,8 @@ export type AdmIdeaRow = {
   created_at: string
   updated_at: string
 }
+
+export type CreateIdeaInput = Omit<AdmIdeaRow, 'id' | 'created_at' | 'updated_at'>
 
 /**
  * ADMIN — Lista ideias com filtros.
@@ -79,7 +82,7 @@ export async function listPublishedIdeasForHub(args: {
  * ADMIN — Busca uma ideia por id.
  * Retorna null se não existir.
  */
-export async function getIdea(id: string) {
+export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
   await assertAdmin()
   const supabase = supabaseServer()
 
@@ -97,13 +100,15 @@ export async function getIdea(id: string) {
  * ADMIN — Cria uma ideia (id imutável).
  * Retorna o registro criado.
  */
-export async function createIdea(input: Omit<AdmIdeaRow, 'created_at' | 'updated_at'>) {
+export async function createIdea(input: CreateIdeaInput) {
+  const id = randomUUID()
+
   await assertAdmin()
   const supabase = supabaseServer()
 
   const { data, error } = await supabase
     .from('adm_ideas')
-    .insert(input)
+    .insert({ id, ...input })
     .select('*')
     .single()
 

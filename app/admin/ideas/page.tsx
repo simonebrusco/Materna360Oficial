@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { listIdeas, type AdmIdeaHub, type AdmIdeaStatus } from '../../lib/adm/adm.server'
+import { listIdeas, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
 
 type SearchParams = {
   hub?: string
