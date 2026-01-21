@@ -62,7 +62,6 @@ export default async function AdminIdeaEditPage({
   const idea = await getIdea(id)
   if (!idea) return notFound()
 
-  // Capture only primitives outside the action (safe for TS + server action)
   const durationPrev = Number.isFinite(idea.duration_minutes) ? idea.duration_minutes : 10
 
   async function action(formData: FormData) {
@@ -112,7 +111,6 @@ export default async function AdminIdeaEditPage({
       </div>
 
       <form action={action} className="space-y-4 rounded-lg border bg-white p-4">
-        {/* Do NOT reference `idea` inside action; keep fallback in hidden input */}
         <input type="hidden" name="duration_minutes_prev" value={String(durationPrev)} />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
