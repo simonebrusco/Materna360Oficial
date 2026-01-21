@@ -1,4 +1,3 @@
-// middleware.ts
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
@@ -66,6 +65,8 @@ export async function middleware(request: NextRequest) {
 
     let hasSession = false
     let hasSeenWelcome = false
+    let userId: string | null = null
+    let userEmail: string | null = null
 
     const supabase = canAuth
       ? createServerClient(supabaseUrl!, supabaseAnon!, {
@@ -83,31 +84,20 @@ export async function middleware(request: NextRequest) {
         })
       : null
 
-    let userId: string | null = null
-
     if (supabase) {
       try {
         const { data, error } = await supabase.auth.getUser()
         hasSession = !error && Boolean(data?.user)
         if (hasSession) {
           userId = data.user?.id ?? null
+          userEmail = data.user?.email ?? null
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
         }
       } catch {
         hasSession = false
         hasSeenWelcome = false
         userId = null
-      }
-    }
-
-    // HOTFIX: se já está logada e caiu em /bem-vinda com next=/admin,
-    // não deixa a bem-vinda engolir o fluxo; tenta ir direto pro admin.
-    if (hasSession && normalizedPath === '/bem-vinda') {
-      const rawNext = request.nextUrl.searchParams.get('next')
-      const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-
-      if (nextDest === '/admin' || nextDest.startsWith('/admin/')) {
-        return NextResponse.redirect(new URL(nextDest, request.url))
+        userEmail = null
       }
     }
 
@@ -142,22 +132,40 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Gate /admin exige ser admin (UNIFICADO COM app/admin/layout.tsx)
+    /**
+     * Gate /admin (ALINHADO com app/admin/layout.tsx):
+     * - Fonte primária: profiles.role por user_id
+     * - Fallback compat: adm_admins por email (se existir)
+     */
     if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-      if (!supabase || !userId) {
+      if (!userId || !supabase) {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
       }
 
       try {
-        // Mesma fonte de verdade do AdminLayout: profiles.role
-        const { data: profile, error: profileErr } = await supabase
+        // 1) Fonte primária: profiles.role
+        const { data: profile, error: profErr } = await supabase
           .from('profiles')
           .select('role')
           .eq('user_id', userId)
           .maybeSingle()
 
-        if (profileErr || !profile || profile.role !== 'admin') {
-          return NextResponse.redirect(new URL('/meu-dia', request.url))
+        const isAdminByProfile = !profErr && profile?.role === 'admin'
+        if (isAdminByProfile) {
+          // ok
+        } else {
+          // 2) Fallback: adm_admins por email (opcional / legado)
+          if (!userEmail) return NextResponse.redirect(new URL('/meu-dia', request.url))
+
+          const { data: adminRow, error: adminErr } = await supabase
+            .from('adm_admins')
+            .select('email')
+            .eq('email', userEmail)
+            .maybeSingle()
+
+          if (adminErr || !adminRow) {
+            return NextResponse.redirect(new URL('/meu-dia', request.url))
+          }
         }
       } catch {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
