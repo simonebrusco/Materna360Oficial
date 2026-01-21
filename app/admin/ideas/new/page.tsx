@@ -1,8 +1,8 @@
-// app/admin/ideas/[id]/page.tsx
+// app/admin/ideas/new/page.tsx
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
-import { getIdea, updateIdea, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
+import { createIdea, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
 
 type SearchParams = {
   hub?: string
@@ -44,23 +44,12 @@ function safeInt(v: unknown, fallback: number) {
   return Math.trunc(n)
 }
 
-export default async function AdminIdeaEditPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string }
-  searchParams?: SearchParams
-}) {
-  const id = params.id
-
+export default function AdminIdeaNewPage({ searchParams }: { searchParams?: SearchParams }) {
   const qsKeep = buildQueryString({
     hub: searchParams?.hub ?? '',
     status: searchParams?.status ?? '',
     q: searchParams?.q ?? '',
   })
-
-  const idea = await getIdea(id)
-  if (!idea) return notFound()
 
   async function action(formData: FormData) {
     'use server'
@@ -70,32 +59,35 @@ export default async function AdminIdeaEditPage({
     const title = String(formData.get('title') ?? '').trim()
     const short_description = String(formData.get('short_description') ?? '').trim()
 
-    const prev = safeInt(formData.get('duration_minutes_prev'), idea.duration_minutes ?? 10)
-    const nextRaw = safeInt(formData.get('duration_minutes'), prev)
+    const nextRaw = safeInt(formData.get('duration_minutes'), 10)
     const duration_minutes = Math.min(Math.max(nextRaw, 1), 60)
 
     if (!title) {
-      redirect(`/admin/ideas/${id}${qsKeep}`)
+      redirect(`/admin/ideas/new${qsKeep}`)
     }
 
-    await updateIdea(id, {
+    const created = await createIdea({
       hub,
       status,
       title,
-      short_description,
+      short_description, // NOT NULL no banco (string vazia ainda é ok)
       duration_minutes,
+      // MVP: campos avançados entram depois (mantidos como strings para não quebrar NOT NULL)
+      steps: '',
+      tags: '',
+      environment: null,
+      age_band: null,
     })
 
-    redirect(`/admin/ideas/${id}${qsKeep}`)
+    redirect(`/admin/ideas/${created.id}${qsKeep}`)
   }
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Editar ideia</h1>
-          <p className="mt-1 text-sm text-neutral-600">ID é estável e não deve ser alterado após publicação.</p>
-          <div className="mt-2 font-mono text-xs text-neutral-600">{idea.id}</div>
+          <h1 className="text-xl font-semibold text-neutral-900">Nova ideia</h1>
+          <p className="mt-1 text-sm text-neutral-600">Criar ideia curada (MVP). ID é gerado automaticamente.</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -109,14 +101,12 @@ export default async function AdminIdeaEditPage({
       </div>
 
       <form action={action} className="space-y-4 rounded-lg border bg-white p-4">
-        <input type="hidden" name="duration_minutes_prev" value={String(idea.duration_minutes ?? 10)} />
-
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="block text-xs font-medium text-neutral-700">Hub</label>
             <select
               name="hub"
-              defaultValue={idea.hub}
+              defaultValue={safeHub(searchParams?.hub)}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             >
               {HUB_OPTIONS.map(opt => (
@@ -131,7 +121,7 @@ export default async function AdminIdeaEditPage({
             <label className="block text-xs font-medium text-neutral-700">Status</label>
             <select
               name="status"
-              defaultValue={idea.status}
+              defaultValue={safeStatus(searchParams?.status)}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             >
               {STATUS_OPTIONS.map(opt => (
@@ -147,7 +137,7 @@ export default async function AdminIdeaEditPage({
           <label className="block text-xs font-medium text-neutral-700">Título</label>
           <input
             name="title"
-            defaultValue={idea.title}
+            placeholder="Ex: Caça às cores pela casa"
             className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             required
           />
@@ -157,10 +147,13 @@ export default async function AdminIdeaEditPage({
           <label className="block text-xs font-medium text-neutral-700">Descrição curta</label>
           <textarea
             name="short_description"
-            defaultValue={idea.short_description ?? ''}
+            placeholder="Uma frase prática e acolhedora."
             className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             rows={4}
           />
+          <div className="mt-1 text-xs text-neutral-500">
+            Dica: inclua “o que fazer” + “tom acolhedor”.
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -171,7 +164,7 @@ export default async function AdminIdeaEditPage({
               type="number"
               min={1}
               max={60}
-              defaultValue={idea.duration_minutes ?? 10}
+              defaultValue={10}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             />
           </div>
@@ -182,10 +175,10 @@ export default async function AdminIdeaEditPage({
             type="submit"
             className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800"
           >
-            Salvar
+            Criar
           </button>
 
-          <span className="text-xs text-neutral-500">Salva e recarrega a página (server-first).</span>
+          <span className="text-xs text-neutral-500">Após criar, você será redirecionada para a tela de edição.</span>
         </div>
       </form>
     </div>
