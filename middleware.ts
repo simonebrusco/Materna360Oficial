@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
 
     let hasSession = false
     let hasSeenWelcome = false
-    let userId: string | null = null
+    let userEmail: string | null = null
 
     const supabase = canAuth
       ? createServerClient(supabaseUrl!, supabaseAnon!, {
@@ -89,13 +89,24 @@ export async function middleware(request: NextRequest) {
         const { data, error } = await supabase.auth.getUser()
         hasSession = !error && Boolean(data?.user)
         if (hasSession) {
-          userId = data.user?.id ?? null
+          userEmail = data.user?.email ?? null
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
         }
       } catch {
         hasSession = false
         hasSeenWelcome = false
-        userId = null
+        userEmail = null
+      }
+    }
+
+    // >>> HOTFIX: se já está logada e caiu em /bem-vinda com next=/admin,
+    // não deixa a bem-vinda engolir o fluxo; tenta ir direto pro admin.
+    if (hasSession && normalizedPath === '/bem-vinda') {
+      const rawNext = request.nextUrl.searchParams.get('next')
+      const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
+
+      if (nextDest === '/admin' || nextDest.startsWith('/admin/')) {
+        return NextResponse.redirect(new URL(nextDest, request.url))
       }
     }
 
@@ -103,11 +114,6 @@ export async function middleware(request: NextRequest) {
     if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
       const rawNext = request.nextUrl.searchParams.get('redirectTo')
       const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-
-      // >>> FIX 1: se o destino é /admin*, NÃO passa pela bem-vinda
-      if (nextDest === '/admin' || nextDest.startsWith('/admin/')) {
-        return NextResponse.redirect(new URL(nextDest, request.url))
-      }
 
       if (!hasSeenWelcome) {
         const url = new URL('/bem-vinda', request.url)
@@ -135,20 +141,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // >>> FIX 2: Gate /admin exige ser admin via profiles.role (alinha com app/admin/layout.tsx)
+    // Gate /admin exige ser admin
     if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-      if (!userId || !supabase) {
+      if (!userEmail || !supabase) {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
       }
 
       try {
-        const { data: profile, error: profErr } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', userId)
+        const { data: adminRow, error: adminErr } = await supabase
+          .from('adm_admins')
+          .select('email')
+          .eq('email', userEmail)
           .maybeSingle()
 
-        if (profErr || !profile || profile.role !== 'admin') {
+        if (adminErr || !adminRow) {
           return NextResponse.redirect(new URL('/meu-dia', request.url))
         }
       } catch {
