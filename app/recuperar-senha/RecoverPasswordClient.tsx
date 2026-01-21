@@ -69,10 +69,8 @@ export default function RecoverPasswordClient() {
 
     try {
       // O link de recovery deve voltar para uma rota pública nossa
-      const redirectUrl =
-        typeof window !== 'undefined'
-          ? `${window.location.origin}/auth/reset?redirectTo=${encodeURIComponent(redirectTo)}`
-          : `/auth/reset?redirectTo=${encodeURIComponent(redirectTo)}`
+     const siteUrl = getSiteUrl()
+const redirectUrl = `${siteUrl}/auth/reset?redirectTo=${encodeURIComponent(redirectTo)}`
 
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectUrl,
