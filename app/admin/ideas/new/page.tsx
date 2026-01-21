@@ -1,8 +1,8 @@
-// app/admin/ideas/new/page.tsx
+// app/admin/ideas/[id]/page.tsx
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
-import { createIdea, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
+import { getIdea, updateIdea, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
 
 type SearchParams = {
   hub?: string
@@ -44,12 +44,23 @@ function safeInt(v: unknown, fallback: number) {
   return Math.trunc(n)
 }
 
-export default function AdminIdeaNewPage({ searchParams }: { searchParams?: SearchParams }) {
+export default async function AdminIdeaEditPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string }
+  searchParams?: SearchParams
+}) {
+  const id = params.id
+
   const qsKeep = buildQueryString({
     hub: searchParams?.hub ?? '',
     status: searchParams?.status ?? '',
     q: searchParams?.q ?? '',
   })
+
+  const idea = await getIdea(id)
+  if (!idea) return notFound()
 
   async function action(formData: FormData) {
     'use server'
@@ -58,35 +69,33 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
     const status = safeStatus(String(formData.get('status') ?? ''))
     const title = String(formData.get('title') ?? '').trim()
     const short_description = String(formData.get('short_description') ?? '').trim()
-    const duration_minutes_raw = safeInt(formData.get('duration_minutes'), 10)
-    const duration_minutes = Math.min(Math.max(duration_minutes_raw, 1), 60)
+
+    const prev = safeInt(formData.get('duration_minutes_prev'), idea.duration_minutes ?? 10)
+    const nextRaw = safeInt(formData.get('duration_minutes'), prev)
+    const duration_minutes = Math.min(Math.max(nextRaw, 1), 60)
 
     if (!title) {
-      redirect(`/admin/ideas/new${qsKeep}`)
+      redirect(`/admin/ideas/${id}${qsKeep}`)
     }
 
-    const created = await createIdea({
+    await updateIdea(id, {
       hub,
       status,
       title,
-      short_description, // NOT NULL no banco (string vazia ainda é ok)
+      short_description,
       duration_minutes,
-      // MVP: campos avançados entram depois (mantidos como strings para não quebrar NOT NULL)
-      steps: '',
-      tags: '',
-      environment: null,
-      age_band: null,
     })
 
-    redirect(`/admin/ideas/${created.id}${qsKeep}`)
+    redirect(`/admin/ideas/${id}${qsKeep}`)
   }
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Nova ideia</h1>
-          <p className="mt-1 text-sm text-neutral-600">Criar ideia curada (MVP). ID é gerado automaticamente.</p>
+          <h1 className="text-xl font-semibold text-neutral-900">Editar ideia</h1>
+          <p className="mt-1 text-sm text-neutral-600">ID é estável e não deve ser alterado após publicação.</p>
+          <div className="mt-2 font-mono text-xs text-neutral-600">{idea.id}</div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -100,12 +109,14 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
       </div>
 
       <form action={action} className="space-y-4 rounded-lg border bg-white p-4">
+        <input type="hidden" name="duration_minutes_prev" value={String(idea.duration_minutes ?? 10)} />
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="block text-xs font-medium text-neutral-700">Hub</label>
             <select
               name="hub"
-              defaultValue={safeHub(searchParams?.hub)}
+              defaultValue={idea.hub}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             >
               {HUB_OPTIONS.map(opt => (
@@ -120,7 +131,7 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
             <label className="block text-xs font-medium text-neutral-700">Status</label>
             <select
               name="status"
-              defaultValue={safeStatus(searchParams?.status)}
+              defaultValue={idea.status}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             >
               {STATUS_OPTIONS.map(opt => (
@@ -136,7 +147,7 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
           <label className="block text-xs font-medium text-neutral-700">Título</label>
           <input
             name="title"
-            placeholder="Ex: Caça às cores pela casa"
+            defaultValue={idea.title}
             className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             required
           />
@@ -146,13 +157,10 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
           <label className="block text-xs font-medium text-neutral-700">Descrição curta</label>
           <textarea
             name="short_description"
-            placeholder="Uma frase prática e acolhedora."
+            defaultValue={idea.short_description ?? ''}
             className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             rows={4}
           />
-          <div className="mt-1 text-xs text-neutral-500">
-            Dica: mesmo curta, tente incluir “o que fazer” + “tom acolhedor”.
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -163,7 +171,7 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
               type="number"
               min={1}
               max={60}
-              defaultValue={10}
+              defaultValue={idea.duration_minutes ?? 10}
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             />
           </div>
@@ -174,10 +182,10 @@ export default function AdminIdeaNewPage({ searchParams }: { searchParams?: Sear
             type="submit"
             className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800"
           >
-            Criar
+            Salvar
           </button>
 
-          <span className="text-xs text-neutral-500">Após criar, você será redirecionada para a tela de edição.</span>
+          <span className="text-xs text-neutral-500">Salva e recarrega a página (server-first).</span>
         </div>
       </form>
     </div>
