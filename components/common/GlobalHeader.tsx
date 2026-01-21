@@ -1,3 +1,4 @@
+// components/common/GlobalHeader.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -24,14 +25,13 @@ export function GlobalHeader() {
   const [adminChecked, setAdminChecked] = useState(false)
 
   useEffect(() => {
-    // Só verifica admin quando o profile terminou de carregar
     if (isLoading) return
 
     let alive = true
 
     isAdminClient()
-      .then((result) => {
-        if (alive) setIsAdmin(result)
+      .then(result => {
+        if (alive) setIsAdmin(Boolean(result))
       })
       .catch(() => {
         if (alive) setIsAdmin(false)
@@ -66,7 +66,8 @@ export function GlobalHeader() {
 
               {adminChecked && isAdmin ? (
                 <Link
-                  href="/admin/ideas"
+                  href="/admin"
+                  prefetch={false}
                   className="text-[12px] md:text-[13px] font-semibold text-white/90 underline underline-offset-4 hover:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
                 >
                   Área ADM
