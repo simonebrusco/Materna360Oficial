@@ -1,5 +1,7 @@
-import { supabaseServer } from '@/app/lib/supabase.server'
+// app/lib/adm/adm.server.ts
 import { randomUUID } from 'crypto'
+
+import { supabaseServer } from '@/app/lib/supabase.server'
 import { assertAdmin } from '@/app/lib/adm/requireAdmin.server'
 
 export type AdmIdeaStatus = 'draft' | 'published'
@@ -59,10 +61,7 @@ export async function listIdeas(args: {
  * Regra: leitura pública NÃO exige admin.
  * Este é o caminho que os hubs vão consumir depois (sem IA como fonte primária).
  */
-export async function listPublishedIdeasForHub(args: {
-  hub: AdmIdeaHub
-  limit?: number
-}) {
+export async function listPublishedIdeasForHub(args: { hub: AdmIdeaHub; limit?: number }) {
   const supabase = supabaseServer()
   const limit = Math.min(Math.max(args.limit ?? 50, 1), 200)
 
@@ -86,11 +85,7 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
   await assertAdmin()
   const supabase = supabaseServer()
 
-  const { data, error } = await supabase
-    .from('adm_ideas')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { data, error } = await supabase.from('adm_ideas').select('*').eq('id', id).maybeSingle()
 
   if (error) throw new Error(`getIdea: ${error.message}`)
   return (data ?? null) as AdmIdeaRow | null
@@ -99,6 +94,9 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
 /**
  * ADMIN — Cria uma ideia (id imutável).
  * Retorna o registro criado.
+ *
+ * Ajuste MVP: se status não vier, defaulta para 'draft'.
+ * (Evita erro quando o form /admin/ideas/new ainda não envia status explicitamente.)
  */
 export async function createIdea(input: CreateIdeaInput) {
   const id = randomUUID()
@@ -106,11 +104,13 @@ export async function createIdea(input: CreateIdeaInput) {
   await assertAdmin()
   const supabase = supabaseServer()
 
-  const { data, error } = await supabase
-    .from('adm_ideas')
-    .insert({ id, ...input })
-    .select('*')
-    .single()
+  const payload: CreateIdeaInput & { id: string } = {
+    id,
+    ...input,
+    status: input.status ?? 'draft',
+  }
+
+  const { data, error } = await supabase.from('adm_ideas').insert(payload).select('*').single()
 
   if (error) throw new Error(`createIdea: ${error.message}`)
   return data as AdmIdeaRow
