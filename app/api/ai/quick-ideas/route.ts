@@ -154,10 +154,10 @@ function chooseWithSoftMemory(opts: {
       signal === 'heavy'
         ? new Set(['md-5', 'md-2'])
         : signal === 'tired'
-        ? new Set(['md-1', 'md-4'])
-        : signal === 'overwhelmed'
-        ? new Set(['md-2', 'md-3'])
-        : new Set<string>()
+          ? new Set(['md-1', 'md-4'])
+          : signal === 'overwhelmed'
+            ? new Set(['md-2', 'md-3'])
+            : new Set<string>()
 
     if (preferredIds.size) {
       const preferred = pool.filter((s) => preferredIds.has(s.id))
@@ -170,15 +170,14 @@ function chooseWithSoftMemory(opts: {
   return { one, excludedCount, memoryUsed: hasMemory, signal }
 }
 
-
 async function getLightSuggestionsFromADM(hub: 'my_day' | 'cuidar_de_mim') {
   const admHub: AdmIdeaHub = hub === 'my_day' ? 'meu-dia-leve' : 'cuidar-de-mim'
 
   try {
     const rows = await listPublishedIdeasForHub({ hub: admHub, limit: 80 })
     const suggestions = (rows ?? [])
-      .filter(r => r && typeof r.id === 'string' && r.id.trim() && typeof r.title === 'string' && r.title.trim())
-      .map(r => ({
+      .filter((r) => r && typeof r.id === 'string' && r.id.trim() && typeof r.title === 'string' && r.title.trim())
+      .map((r) => ({
         id: r.id,
         title: r.title,
         description: (r.short_description ?? '').trim() || undefined,
@@ -193,7 +192,6 @@ async function getLightSuggestionsFromADM(hub: 'my_day' | 'cuidar_de_mim') {
 
   return { suggestions: myDaySuggestions(), source: 'seed' as const, admHub }
 }
-
 
 export async function POST(req: Request) {
   try {
