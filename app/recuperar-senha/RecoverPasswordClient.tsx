@@ -1,11 +1,10 @@
 // app/recuperar-senha/RecoverPasswordClient.tsx
 'use client'
 
-import * as React from 'react'
-import { useMemo, useState, type FormEvent } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 
-import { createBrowserSupabaseClient } from '@/app/lib/supabase.client'
 import { toast } from '@/app/lib/toast'
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
@@ -19,25 +18,31 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/ma
 }
 
 /**
- * getSiteUrl
- * - Preferência: env pública em produção (Vercel) -> NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_APP_URL
- * - Fallback: window.location.origin no client
- * - Normaliza: remove trailing slash, garante protocolo https:// quando necessário
+ * getSiteUrl()
+ * Prioridade:
+ * 1) NEXT_PUBLIC_SITE_URL (ideal para Vercel + domínio)
+ * 2) window.location.origin (cliente)
+ * Fallback defensivo: https://materna360.com.br
  */
 function getSiteUrl() {
-  const envUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.APP_URL ||
-    process.env.SITE_URL
+  const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim()
+  const fromEnv = envUrl ? envUrl.replace(/\/+$/, '') : ''
 
-  const raw = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : envUrl || ''
+  if (fromEnv) return fromEnv
 
-  const cleaned = String(raw || '').trim().replace(/\/+$/, '')
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin.replace(/\/+$/, '')
+  }
 
-  if (cleaned && !/^https?:\/\//i.test(cleaned)) return `https://${cleaned}`
+  return 'https://materna360.com.br'
+}
 
-  return cleaned
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !anon) return null
+  return createBrowserClient(url, anon)
 }
 
 export default function RecoverPasswordClient() {
@@ -47,13 +52,12 @@ export default function RecoverPasswordClient() {
   const redirectTo = useMemo(() => safeInternalRedirect(redirectToRaw, '/maternar'), [redirectToRaw])
 
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [sent, setSent] = useState(false)
 
-  const supabase = useMemo(() => createBrowserSupabaseClient(), [])
-
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (loading) return
+    if (isSending) return
 
     const cleanEmail = String(email || '').trim().toLowerCase()
     if (!cleanEmail || !cleanEmail.includes('@')) {
@@ -61,7 +65,15 @@ export default function RecoverPasswordClient() {
       return
     }
 
-    setLoading(true)
+    const supabase = getSupabaseClient()
+    if (!supabase) {
+      toast.error('Configuração do Supabase ausente. Verifique as variáveis de ambiente.')
+      return
+    }
+
+    setIsSending(true)
+    setSent(false)
+
     try {
       // O link de recovery deve voltar para uma rota pública nossa
       const siteUrl = getSiteUrl()
@@ -72,54 +84,55 @@ export default function RecoverPasswordClient() {
       })
 
       if (error) {
-        toast.error('Não conseguimos enviar o e-mail de recuperação. Tente novamente.')
+        toast.error(error.message || 'Não foi possível enviar o e-mail de recuperação.')
         return
       }
 
-      toast.success('Enviamos um link de recuperação para o seu e-mail.')
-      setEmail('')
+      setSent(true)
+      toast.success('Enviamos um link de recuperação. Verifique seu e-mail.')
     } catch {
-      toast.error('Erro inesperado. Tente novamente.')
+      toast.error('Erro inesperado ao enviar o e-mail de recuperação.')
     } finally {
-      setLoading(false)
+      setIsSending(false)
     }
   }
 
   return (
-    <div className="w-full max-w-md">
+    <div className="mt-6">
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <label className="text-sm font-semibold text-neutral-800" htmlFor="email">
-            E-mail
-          </label>
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-neutral-800">E-mail</label>
           <input
-            id="email"
-            type="email"
-            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
             placeholder="seuemail@exemplo.com"
-            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none focus:border-neutral-400"
+            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
           />
           <p className="text-xs text-neutral-500">
-            Você vai receber um e-mail com um link para criar uma nova senha.
+            Você receberá um link para definir uma nova senha.
           </p>
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
+          disabled={isSending}
+          className="w-full rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {loading ? 'Enviando...' : 'Enviar link de recuperação'}
+          {isSending ? 'Enviando…' : 'Enviar link de recuperação'}
         </button>
 
-        <div className="pt-2">
-          <a
-            className="text-sm font-semibold text-neutral-900 underline underline-offset-4"
-            href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
-          >
-            Voltar para Entrar
+        {sent ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            Link enviado. Se não aparecer na caixa de entrada, confira o spam.
+          </div>
+        ) : null}
+
+        <div className="pt-2 text-center text-sm">
+          <a className="underline" href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}>
+            Voltar para o login
           </a>
         </div>
       </form>
