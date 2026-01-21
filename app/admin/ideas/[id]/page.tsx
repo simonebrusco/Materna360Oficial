@@ -1,12 +1,8 @@
+// app/admin/ideas/[id]/page.tsx
 import Link from 'next/link'
-import { redirect, notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
-import {
-  getIdea,
-  updateIdea,
-  type AdmIdeaHub,
-  type AdmIdeaStatus,
-} from '@/app/lib/adm/adm.server'
+import { getIdea, updateIdea, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
 
 type SearchParams = {
   hub?: string
@@ -42,6 +38,12 @@ function safeStatus(v?: string): AdmIdeaStatus {
   return STATUS_OPTIONS.some(x => x.value === v) ? (v as AdmIdeaStatus) : 'draft'
 }
 
+function safeInt(v: unknown, fallback: number) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return fallback
+  return Math.trunc(n)
+}
+
 export default async function AdminIdeaEditPage({
   params,
   searchParams,
@@ -50,14 +52,18 @@ export default async function AdminIdeaEditPage({
   searchParams?: SearchParams
 }) {
   const id = params.id
+
   const qsKeep = buildQueryString({
     hub: searchParams?.hub ?? '',
     status: searchParams?.status ?? '',
     q: searchParams?.q ?? '',
   })
 
-  const idea = (await getIdea(id)) as (import('@/app/lib/adm/adm.server').AdmIdeaRow | null)
+  const idea = await getIdea(id)
   if (!idea) return notFound()
+
+  // Capture only primitives outside the action (safe for TS + server action)
+  const durationPrev = Number.isFinite(idea.duration_minutes) ? idea.duration_minutes : 10
 
   async function action(formData: FormData) {
     'use server'
@@ -66,14 +72,21 @@ export default async function AdminIdeaEditPage({
     const status = safeStatus(String(formData.get('status') ?? ''))
     const title = String(formData.get('title') ?? '').trim()
     const short_description = String(formData.get('short_description') ?? '').trim()
-    const duration_minutes = Number(formData.get('duration_minutes') ?? formData.get('duration_minutes_prev') ?? 10)
+
+    const prev = safeInt(formData.get('duration_minutes_prev'), 10)
+    const nextRaw = safeInt(formData.get('duration_minutes'), prev)
+    const duration_minutes = Math.min(Math.max(nextRaw, 1), 60)
+
+    if (!title) {
+      redirect(`/admin/ideas/${id}${qsKeep}`)
+    }
 
     await updateIdea(id, {
       hub,
       status,
       title,
       short_description,
-      duration_minutes: Number.isFinite(duration_minutes) ? duration_minutes : Number(formData.get('duration_minutes_prev') ?? 10),
+      duration_minutes,
     })
 
     redirect(`/admin/ideas/${id}${qsKeep}`)
@@ -84,9 +97,7 @@ export default async function AdminIdeaEditPage({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Editar ideia</h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            ID é estável e não deve ser alterado após publicação.
-          </p>
+          <p className="mt-1 text-sm text-neutral-600">ID é estável e não deve ser alterado após publicação.</p>
           <div className="mt-2 font-mono text-xs text-neutral-600">{idea.id}</div>
         </div>
 
@@ -100,8 +111,9 @@ export default async function AdminIdeaEditPage({
         </div>
       </div>
 
-      <form action={action} className="rounded-lg border bg-white p-4 space-y-4">
-        <input type="hidden" name="duration_minutes_prev" value={String(idea.duration_minutes ?? 10)} />
+      <form action={action} className="space-y-4 rounded-lg border bg-white p-4">
+        {/* Do NOT reference `idea` inside action; keep fallback in hidden input */}
+        <input type="hidden" name="duration_minutes_prev" value={String(durationPrev)} />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
@@ -177,9 +189,7 @@ export default async function AdminIdeaEditPage({
             Salvar
           </button>
 
-          <span className="text-xs text-neutral-500">
-            Salva e recarrega a página (server-first).
-          </span>
+          <span className="text-xs text-neutral-500">Salva e recarrega a página (server-first).</span>
         </div>
       </form>
     </div>
