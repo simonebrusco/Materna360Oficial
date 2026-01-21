@@ -1,4 +1,3 @@
-// components/common/GlobalHeader.tsx
 'use client'
 
 import React, { useEffect, useState } from 'react'
@@ -30,7 +29,7 @@ export function GlobalHeader() {
     let alive = true
 
     isAdminClient()
-      .then(result => {
+      .then((result) => {
         if (alive) setIsAdmin(Boolean(result))
       })
       .catch(() => {
@@ -67,7 +66,6 @@ export function GlobalHeader() {
               {adminChecked && isAdmin ? (
                 <Link
                   href="/admin"
-                  prefetch={false}
                   className="text-[12px] md:text-[13px] font-semibold text-white/90 underline underline-offset-4 hover:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
                 >
                   Área ADM
