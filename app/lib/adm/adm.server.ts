@@ -1,7 +1,5 @@
-// app/lib/adm/adm.server.ts
-import { randomUUID } from 'crypto'
-
 import { supabaseServer } from '@/app/lib/supabase.server'
+import { randomUUID } from 'crypto'
 import { assertAdmin } from '@/app/lib/adm/requireAdmin.server'
 
 export type AdmIdeaStatus = 'draft' | 'published'
@@ -17,18 +15,12 @@ export type AdmIdeaRow = {
   age_band: string | null
   environment: string | null
   tags: string
-
-  // Recomendado (e esperado pela UI /admin):
   status: AdmIdeaStatus
   created_at: string
   updated_at: string
 }
 
 export type CreateIdeaInput = Omit<AdmIdeaRow, 'id' | 'created_at' | 'updated_at'>
-
-function nowIso() {
-  return new Date().toISOString()
-}
 
 /**
  * ADMIN — Lista ideias com filtros.
@@ -40,7 +32,7 @@ export async function listIdeas(args: {
   q?: string
   limit?: number
   offset?: number
-}): Promise<AdmIdeaRow[]> {
+}) {
   await assertAdmin()
   const supabase = supabaseServer()
 
@@ -60,8 +52,7 @@ export async function listIdeas(args: {
   const { data, error } = await query
   if (error) throw new Error(`listIdeas: ${error.message}`)
 
-  // Importante: seu wrapper tipa `data` como GenericStringError[] em alguns cenários.
-  // TS recomenda o cast via unknown.
+  // TS fix: supabase types podem inferir "GenericStringError[]"; convertemos via unknown.
   return (data ?? []) as unknown as AdmIdeaRow[]
 }
 
@@ -70,10 +61,7 @@ export async function listIdeas(args: {
  * Regra: leitura pública NÃO exige admin.
  * Este é o caminho que os hubs vão consumir depois (sem IA como fonte primária).
  */
-export async function listPublishedIdeasForHub(args: {
-  hub: AdmIdeaHub
-  limit?: number
-}): Promise<AdmIdeaRow[]> {
+export async function listPublishedIdeasForHub(args: { hub: AdmIdeaHub; limit?: number }) {
   const supabase = supabaseServer()
   const limit = Math.min(Math.max(args.limit ?? 50, 1), 200)
 
@@ -97,11 +85,7 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
   await assertAdmin()
   const supabase = supabaseServer()
 
-  const { data, error } = await supabase
-    .from('adm_ideas')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const { data, error } = await supabase.from('adm_ideas').select('*').eq('id', id).maybeSingle()
 
   if (error) throw new Error(`getIdea: ${error.message}`)
   return (data ?? null) as unknown as AdmIdeaRow | null
@@ -111,26 +95,13 @@ export async function getIdea(id: string): Promise<AdmIdeaRow | null> {
  * ADMIN — Cria uma ideia (id imutável).
  * Retorna o registro criado.
  */
-export async function createIdea(input: CreateIdeaInput): Promise<AdmIdeaRow> {
+export async function createIdea(input: CreateIdeaInput) {
+  const id = randomUUID()
+
   await assertAdmin()
   const supabase = supabaseServer()
 
-  const id = randomUUID()
-  const ts = nowIso()
-
-  const payload = {
-    id,
-    ...input,
-    status: (input.status ?? 'draft') as AdmIdeaStatus,
-    created_at: ts,
-    updated_at: ts,
-  }
-
-  const { data, error } = await supabase
-    .from('adm_ideas')
-    .insert(payload)
-    .select('*')
-    .single()
+  const { data, error } = await supabase.from('adm_ideas').insert({ id, ...input }).select('*').single()
 
   if (error) throw new Error(`createIdea: ${error.message}`)
   return data as unknown as AdmIdeaRow
@@ -138,23 +109,18 @@ export async function createIdea(input: CreateIdeaInput): Promise<AdmIdeaRow> {
 
 /**
  * ADMIN — Atualiza campos (id imutável).
- * Retorna o registro atualizado (ou null se id não existir).
+ * Retorna o registro atualizado.
  */
 export async function updateIdea(
   id: string,
   patch: Partial<Omit<AdmIdeaRow, 'id' | 'created_at' | 'updated_at'>>
-): Promise<AdmIdeaRow | null> {
+) {
   await assertAdmin()
   const supabase = supabaseServer()
 
-  const payload = {
-    ...patch,
-    updated_at: nowIso(),
-  }
-
   const { data, error } = await supabase
     .from('adm_ideas')
-    .update(payload)
+    .update(patch)
     .eq('id', id)
     .select('*')
     .maybeSingle()
@@ -173,11 +139,10 @@ export async function setIdeaStatus(id: string, status: AdmIdeaStatus) {
 /**
  * ADMIN — Delete (CRUD completo do MVP)
  */
-export async function deleteIdea(id: string): Promise<{ ok: true }> {
+export async function deleteIdea(id: string) {
   await assertAdmin()
   const supabase = supabaseServer()
 
   const { error } = await supabase.from('adm_ideas').delete().eq('id', id)
   if (error) throw new Error(`deleteIdea: ${error.message}`)
-  return { ok: true }
 }
