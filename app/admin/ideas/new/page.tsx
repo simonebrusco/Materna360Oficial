@@ -1,11 +1,8 @@
+// app/admin/ideas/new/page.tsx
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-import {
-  createIdea,
-  type AdmIdeaHub,
-  type AdmIdeaStatus,
-} from '@/app/lib/adm/adm.server'
+import { createIdea, type AdmIdeaHub, type AdmIdeaStatus } from '@/app/lib/adm/adm.server'
 
 type SearchParams = {
   hub?: string
@@ -41,11 +38,13 @@ function safeStatus(v?: string): AdmIdeaStatus {
   return STATUS_OPTIONS.some(x => x.value === v) ? (v as AdmIdeaStatus) : 'draft'
 }
 
-export default function AdminIdeaNewPage({
-  searchParams,
-}: {
-  searchParams?: SearchParams
-}) {
+function safeInt(v: unknown, fallback: number) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return fallback
+  return Math.trunc(n)
+}
+
+export default function AdminIdeaNewPage({ searchParams }: { searchParams?: SearchParams }) {
   const qsKeep = buildQueryString({
     hub: searchParams?.hub ?? '',
     status: searchParams?.status ?? '',
@@ -59,7 +58,8 @@ export default function AdminIdeaNewPage({
     const status = safeStatus(String(formData.get('status') ?? ''))
     const title = String(formData.get('title') ?? '').trim()
     const short_description = String(formData.get('short_description') ?? '').trim()
-    const duration_minutes = Number(formData.get('duration_minutes') ?? 10)
+    const duration_minutes_raw = safeInt(formData.get('duration_minutes'), 10)
+    const duration_minutes = Math.min(Math.max(duration_minutes_raw, 1), 60)
 
     if (!title) {
       redirect(`/admin/ideas/new${qsKeep}`)
@@ -69,9 +69,9 @@ export default function AdminIdeaNewPage({
       hub,
       status,
       title,
-      short_description,
-      duration_minutes: Number.isFinite(duration_minutes) ? duration_minutes : 10,
-      // MVP: campos avançados podem ser adicionados depois
+      short_description, // NOT NULL no banco (string vazia ainda é ok)
+      duration_minutes,
+      // MVP: campos avançados entram depois (mantidos como strings para não quebrar NOT NULL)
       steps: '',
       tags: '',
       environment: null,
@@ -86,9 +86,7 @@ export default function AdminIdeaNewPage({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Nova ideia</h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Criar ideia curada (MVP). ID é gerado automaticamente.
-          </p>
+          <p className="mt-1 text-sm text-neutral-600">Criar ideia curada (MVP). ID é gerado automaticamente.</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -101,7 +99,7 @@ export default function AdminIdeaNewPage({
         </div>
       </div>
 
-      <form action={action} className="rounded-lg border bg-white p-4 space-y-4">
+      <form action={action} className="space-y-4 rounded-lg border bg-white p-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="block text-xs font-medium text-neutral-700">Hub</label>
@@ -152,6 +150,9 @@ export default function AdminIdeaNewPage({
             className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-neutral-200"
             rows={4}
           />
+          <div className="mt-1 text-xs text-neutral-500">
+            Dica: mesmo curta, tente incluir “o que fazer” + “tom acolhedor”.
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -176,9 +177,7 @@ export default function AdminIdeaNewPage({
             Criar
           </button>
 
-          <span className="text-xs text-neutral-500">
-            Após criar, você será redirecionada para a tela de edição.
-          </span>
+          <span className="text-xs text-neutral-500">Após criar, você será redirecionada para a tela de edição.</span>
         </div>
       </form>
     </div>
