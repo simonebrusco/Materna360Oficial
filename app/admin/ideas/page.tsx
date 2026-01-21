@@ -18,7 +18,6 @@ const HUB_OPTIONS: { value: AdmIdeaHub; label: string }[] = [
 const STATUS_OPTIONS: { value: AdmIdeaStatus; label: string }[] = [
   { value: 'published', label: 'Publicado' },
   { value: 'draft', label: 'Rascunho' },
-  { value: 'archived', label: 'Arquivado' },
 ]
 
 function pickFirst(v?: string | string[]) {
@@ -64,8 +63,8 @@ export default async function AdminIdeasPage({
   const ideas = await listIdeas({ hub, status, q })
 
   const qsKeep = buildQueryString({
-    hub: hub,
-    status: status,
+    hub,
+    status,
     q: q ?? '',
   })
 
@@ -188,16 +187,10 @@ export default async function AdminIdeasPage({
                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                         row.status === 'published'
                           ? 'bg-emerald-50 text-emerald-700'
-                          : row.status === 'archived'
-                            ? 'bg-neutral-100 text-neutral-700'
-                            : 'bg-amber-50 text-amber-700'
+                          : 'bg-amber-50 text-amber-700'
                       }`}
                     >
-                      {row.status === 'published'
-                        ? 'Publicado'
-                        : row.status === 'archived'
-                          ? 'Arquivado'
-                          : 'Rascunho'}
+                      {row.status === 'published' ? 'Publicado' : 'Rascunho'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
