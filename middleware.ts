@@ -67,6 +67,7 @@ export async function middleware(request: NextRequest) {
     let hasSession = false
     let hasSeenWelcome = false
     let userEmail: string | null = null
+    let userId: string | null = null
 
     const supabase = canAuth
       ? createServerClient(supabaseUrl!, supabaseAnon!, {
@@ -90,12 +91,14 @@ export async function middleware(request: NextRequest) {
         hasSession = !error && Boolean(data?.user)
         if (hasSession) {
           userEmail = data.user?.email ?? null
+          userId = data.user?.id ?? null
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
         }
       } catch {
         hasSession = false
         hasSeenWelcome = false
         userEmail = null
+        userId = null
       }
     }
 
@@ -130,20 +133,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Gate /admin exige ser admin
+    // Gate /admin exige ser admin (FONTE DE VERDADE: profiles.role por user_id)
     if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
-      if (!userEmail || !supabase) {
+      if (!supabase || !userId) {
         return NextResponse.redirect(new URL('/meu-dia', request.url))
       }
 
       try {
-        const { data: adminRow, error: adminErr } = await supabase
-          .from('adm_admins')
-          .select('email')
-          .eq('email', userEmail)
+        const { data: profile, error: profileErr } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', userId)
           .maybeSingle()
 
-        if (adminErr || !adminRow) {
+        if (profileErr || !profile || profile.role !== 'admin') {
           return NextResponse.redirect(new URL('/meu-dia', request.url))
         }
       } catch {
