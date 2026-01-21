@@ -304,7 +304,6 @@ async function withAntiRepeatText(args: {
       continue
     }
   }
-
   const fb = args.fallback()
   try {
     const titleSig = makeTitleSignature(fb.slice(0, 60))
@@ -490,22 +489,40 @@ function safeBloco2Title(raw: unknown): string | null {
 }
 
 function safeBloco2How(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 320)
+  // Bloco 2: description curta (1 frase), sem lista, sem template, sem blog.
+  const t = clampText(String(raw ?? ''), 240)
   if (!t) return null
+
   const low = t.toLowerCase()
-  if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
 
-  const hasStepsCue =
-    low.includes('faça') ||
-    low.includes('combine') ||
-    low.includes('depois') ||
-    low.includes('no final') ||
-    low.includes('em seguida') ||
-    low.includes('por fim') ||
-    low.includes('primeiro') ||
-    low.includes('então')
+  // banlist (sem template / sem convite / sem didatismo)
+  const banned = [
+    'que tal',
+    'talvez',
+    'se quiser',
+    'uma boa ideia',
+    'uma ideia',
+    'você pode',
+    'voce pode',
+    'atividade educativa',
+    'educativa',
+    'pinterest',
+    'lista',
+    'diversas opções',
+    'várias opções',
+  ]
+  if (banned.some((b) => low.includes(b))) return null
 
-  if (!hasStepsCue) return null
+  // sem lista/bullets/quebras
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+
+  // 1 a 2 frases no máximo (curto, direto)
+  const sentences = t
+    .split(/[.!?]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+  if (sentences.length < 1 || sentences.length > 2) return null
+
   return t
 }
 
@@ -573,6 +590,88 @@ async function fetchBloco2Cards(args: {
     return null
   }
 }
+
+
+/**
+ * BLOCO 2 — Fallback variável por clique (seed = nonce)
+ * ----------------------------------------------------
+ * Objetivo: quando cair em fallback (IA inválida/erro), ainda assim variar as 3 opções
+ * a cada clique no botão "Gerar novas 3 opções", sem depender de IA.
+ *
+ * Regras:
+ * - NÃO mexe em layout.
+ * - Retorna sempre 3 opções (a,b,c).
+ * - Usa seed (nonce) para variar deterministicamente.
+ */
+function buildBloco2FallbackSeeded(args: {
+  tempoDisponivel: number
+  age: AgeBand
+  playLocation: PlayLocation
+  skills: SkillId[]
+  seed: string
+}): Bloco2Items {
+  const time = String(args.tempoDisponivel) as TimeMode
+
+  // hash determinístico simples (FNV-1a)
+  const hash = (str: string) => {
+    let h = 2166136261
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i)
+      h = Math.imul(h, 16777619)
+    }
+    return h >>> 0
+  }
+
+  const poolBase: PlanItem[] = [
+    { title: 'Caça às cores', how: 'Escolham uma cor e encontrem 5 coisas. No fim, guardem 1 item juntos.', time, tag: 'local' },
+    { title: 'Pista no chão', how: 'Façam um caminho curto com fita/linha. Andem nele com passos diferentes e depois tirem juntos.', time, tag: 'local' },
+    { title: 'Estátua musical', how: 'Música: dança e pausa. Quando parar, “estátua” por 3 segundos. Repitam 5x.', time, tag: 'local' },
+    { title: 'Torre e derruba suave', how: 'Montem uma torre com potes/caixas. Alternem: um empilha, outro derruba com toque leve.', time, tag: 'local' },
+    { title: 'Missão do som', how: 'Silêncio por 10s para “caçar” 3 sons. Depois imitem os sons juntos por 1 minuto.', time, tag: 'local' },
+    { title: 'Mini circuito', how: 'Três etapas: pular 5x, passar por baixo, empurrar uma almofada. Repitam 2x.', time, tag: 'local' },
+    { title: 'Guarda-relâmpago', how: 'Escolham 6 coisas fora do lugar. Guardem em dupla em 2 minutos. Final: “toca aqui”.', time, tag: 'local' },
+    { title: 'Desenho de 1 minuto', how: 'Cada um desenha por 60s. Troquem o papel e completem por mais 60s.', time, tag: 'local' },
+    { title: 'Sombras na parede', how: 'Com uma luz, façam sombras com as mãos e inventem 1 personagem rapidinho.', time, tag: 'local' },
+    { title: 'Bola de papel', how: 'Amassem 6 bolinhas. Façam “arremesso no cesto” por 2 minutos. Depois recolham.', time, tag: 'local' },
+  ]
+
+  const poolOutdoor: PlanItem[] = [
+    { title: 'Caça às formas', how: 'Encontrem 5 coisas redondas e 5 quadradas. No fim, escolham 1 favorita e contem por quê.', time, tag: 'local' },
+    { title: 'Circuito de passos', how: 'Escolham 3 tipos de passos por 1 minuto: grande, pequeno, de lado. Alternem quem lidera.', time, tag: 'local' },
+    { title: 'Desafio do equilíbrio', how: 'Andem na “linha” da calçada por 30s. Depois inventem uma regra nova por mais 30s.', time, tag: 'local' },
+  ]
+
+  const poolMove: PlanItem[] = [
+    { title: 'Imita e troca', how: 'Você faz 1 movimento por 10s, a criança imita. Troquem. Repitam 6 vezes.', time, tag: 'local' },
+    { title: 'Congela e respira', how: 'Movimento por 15s, congela 3s e 1 respiração profunda. Repitam 6 vezes.', time, tag: 'local' },
+  ]
+
+  const poolTravel: PlanItem[] = [
+    { title: 'Jogo do “eu vejo”', how: 'No caminho, cada um escolhe 3 coisas para “achar”. Final: descrevam 1 delas juntos.', time, tag: 'local' },
+    { title: 'Detetive de detalhes', how: 'Escolham 1 objeto e a criança diz 2 detalhes. Você diz 2. Troquem de objeto.', time, tag: 'local' },
+  ]
+
+  const loc = String(args.playLocation)
+
+  let pool = poolBase
+  if (loc === 'ar-livre') pool = [...poolBase, ...poolOutdoor]
+  if (loc === 'deslocamento') pool = poolTravel
+  const skillsStr = (args.skills || []).map((x) => String(x))
+  if (skillsStr.includes('coordenacao')) pool = [...pool, ...poolMove]
+  const seed = `${args.seed}|${args.age}|${args.playLocation}|${(args.skills || []).join(',')}|${args.tempoDisponivel}`
+  const base = hash(seed)
+
+  const pickIdx = (offset: number) => (base + offset) % pool.length
+  let i1 = pickIdx(0)
+  let i2 = pickIdx(3 + (base % 5))
+  if (i2 === i1) i2 = (i2 + 1) % pool.length
+  let i3 = pickIdx(7 + (base % 11))
+  if (i3 === i1 || i3 === i2) i3 = (i3 + 2) % pool.length
+  if (i3 === i1 || i3 === i2) i3 = (i3 + 3) % pool.length
+
+  return { a: pool[i1], b: pool[i2], c: pool[i3] }
+}
+
 
 /* =========================
    BLOCO 3 — ROTINAS / CONEXÃO
@@ -1246,7 +1345,7 @@ export default function MeuFilhoClient() {
     const out = await withAntiRepeatPack({
       themeSignature,
       run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
-      fallback: () => kit.plan,
+      fallback: () => buildBloco2FallbackSeeded({ tempoDisponivel, age, playLocation, skills, seed: newNonce() }),
       maxTries: 2,
     })
 
