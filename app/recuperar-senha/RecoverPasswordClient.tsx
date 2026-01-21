@@ -1,16 +1,12 @@
+// app/recuperar-senha/RecoverPasswordClient.tsx
 'use client'
 
-import { useMemo, useState } from 'react'
+import * as React from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-type UiMsgKind = 'info' | 'error' | 'success'
-
-type UiMsg = {
-  kind: UiMsgKind
-  title?: string
-  message: string
-}
+import { createBrowserSupabaseClient } from '@/app/lib/supabase.client'
+import { toast } from '@/app/lib/toast'
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/maternar') {
   if (!target) return fallback
@@ -22,126 +18,111 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/ma
   return t
 }
 
-function mapRecoverErrorToUi(message: string): UiMsg {
-  const msg = (message || '').toLowerCase()
+/**
+ * getSiteUrl
+ * - Preferência: env pública em produção (Vercel) -> NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_APP_URL
+ * - Fallback: window.location.origin no client
+ * - Normaliza: remove trailing slash, garante protocolo https:// quando necessário
+ */
+function getSiteUrl() {
+  const envUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    process.env.SITE_URL
 
-  if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('fetch')) {
-    return {
-      kind: 'error',
-      title: 'A conexão parece ter oscilado',
-      message: 'Tente novamente em instantes. Às vezes é só um momento de instabilidade.',
-    }
-  }
+  const raw = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : envUrl || ''
 
-  if (msg.includes('rate') || msg.includes('too many') || msg.includes('limit')) {
-    return {
-      kind: 'info',
-      title: 'Um instante',
-      message: 'Eu já enviei há pouco. Aguarde alguns minutos e tente novamente.',
-    }
-  }
+  const cleaned = String(raw || '').trim().replace(/\/+$/, '')
 
-  // Não expor “user not found” etc. (por segurança e UX)
-  return {
-    kind: 'info',
-    title: 'Se esse e-mail existir, eu vou te ajudar',
-    message: 'Enviei um link para você criar uma nova senha. Veja também spam e promoções.',
-  }
+  if (cleaned && !/^https?:\/\//i.test(cleaned)) return `https://${cleaned}`
+
+  return cleaned
 }
 
 export default function RecoverPasswordClient() {
   const searchParams = useSearchParams()
-  const supabase = useMemo(() => createClientComponentClient(), [])
 
   const redirectToRaw = searchParams.get('redirectTo')
-  const redirectTo = safeInternalRedirect(redirectToRaw, '/maternar')
+  const redirectTo = useMemo(() => safeInternalRedirect(redirectToRaw, '/maternar'), [redirectToRaw])
 
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [uiMsg, setUiMsg] = useState<UiMsg | null>(null)
 
-  async function onSubmit(e: React.FormEvent) {
+  const supabase = useMemo(() => createBrowserSupabaseClient(), [])
+
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (loading) return
+
+    const cleanEmail = String(email || '').trim().toLowerCase()
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      toast.error('Digite um e-mail válido.')
+      return
+    }
+
     setLoading(true)
-    setUiMsg(null)
-
-    const cleanEmail = email.trim()
-
     try {
       // O link de recovery deve voltar para uma rota pública nossa
-     const siteUrl = getSiteUrl()
-const redirectUrl = `${siteUrl}/auth/reset?redirectTo=${encodeURIComponent(redirectTo)}`
+      const siteUrl = getSiteUrl()
+      const redirectUrl = `${siteUrl}/auth/reset?redirectTo=${encodeURIComponent(redirectTo)}`
 
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectUrl,
       })
 
-      setLoading(false)
-
       if (error) {
-        setUiMsg(mapRecoverErrorToUi(error.message))
+        toast.error('Não conseguimos enviar o e-mail de recuperação. Tente novamente.')
         return
       }
 
-      setUiMsg({
-        kind: 'success',
-        title: 'Pronto',
-        message: 'Enviei um link para você criar uma nova senha. Veja também spam e promoções.',
-      })
+      toast.success('Enviamos um link de recuperação para o seu e-mail.')
+      setEmail('')
     } catch {
+      toast.error('Erro inesperado. Tente novamente.')
+    } finally {
       setLoading(false)
-      setUiMsg({
-        kind: 'error',
-        title: 'Não consegui agora',
-        message: 'Tente novamente em instantes. Se continuar, a gente resolve com calma.',
-      })
     }
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center px-4">
-      <div className="w-full max-w-[420px] rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-[var(--color-text-main)]">Recuperar senha</h1>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          Me diga seu e-mail e eu te envio um link para criar uma nova senha.
-        </p>
+    <div className="w-full max-w-md">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-1">
+          <label className="text-sm font-semibold text-neutral-800" htmlFor="email">
+            E-mail
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="seuemail@exemplo.com"
+            className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none focus:border-neutral-400"
+          />
+          <p className="text-xs text-neutral-500">
+            Você vai receber um e-mail com um link para criar uma nova senha.
+          </p>
+        </div>
 
-        <form className="mt-5 space-y-3" onSubmit={onSubmit}>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--color-text-main)]">Email</label>
-            <input
-              className="w-full rounded-xl border border-black/10 px-3 py-2 text-sm outline-none"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-              disabled={loading}
-            />
-          </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
+        >
+          {loading ? 'Enviando...' : 'Enviar link de recuperação'}
+        </button>
 
-          {uiMsg ? (
-            <div className="rounded-xl border border-black/10 bg-black/5 px-3 py-2 text-xs text-[var(--color-text-main)]">
-              {uiMsg.title ? <div className="font-semibold">{uiMsg.title}</div> : null}
-              <div className={uiMsg.title ? 'mt-1 text-[var(--color-text-muted)]' : ''}>{uiMsg.message}</div>
-            </div>
-          ) : null}
-
-          <button
-            className="w-full rounded-xl bg-[var(--color-brand)] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            type="submit"
-            disabled={loading}
+        <div className="pt-2">
+          <a
+            className="text-sm font-semibold text-neutral-900 underline underline-offset-4"
+            href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
           >
-            {loading ? 'Enviando…' : 'Enviar link'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-xs text-[var(--color-text-muted)]">
-          <a className="underline" href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}>
-            Voltar para entrar
+            Voltar para Entrar
           </a>
         </div>
-      </div>
+      </form>
     </div>
   )
 }
