@@ -1,10 +1,9 @@
+// components/common/GlobalHeader.tsx
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
+import React from 'react'
 
 import { useProfile } from '@/app/hooks/useProfile'
-import { isAdminClient } from '@/app/lib/adm/isAdmin.client'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
@@ -14,35 +13,11 @@ import { AppLogo } from '@/components/ui/AppLogo'
  * Regras de ouro:
  * - Nunca bloqueia navegação
  * - Nunca decide acesso
- * - Admin aqui é apenas affordance visual
+ * - Não expõe affordance de ADM na UI do app
  */
 export function GlobalHeader() {
   const { name, isLoading } = useProfile()
   const firstName = (name || '').trim().split(' ')[0] || ''
-
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [adminChecked, setAdminChecked] = useState(false)
-
-  useEffect(() => {
-    if (isLoading) return
-
-    let alive = true
-
-    isAdminClient()
-      .then((result) => {
-        if (alive) setIsAdmin(Boolean(result))
-      })
-      .catch(() => {
-        if (alive) setIsAdmin(false)
-      })
-      .finally(() => {
-        if (alive) setAdminChecked(true)
-      })
-
-    return () => {
-      alive = false
-    }
-  }, [isLoading])
 
   return (
     <header
@@ -62,15 +37,6 @@ export function GlobalHeader() {
               <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
                 {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
               </p>
-
-              {adminChecked && isAdmin ? (
-                <Link
-                  href="/admin"
-                  className="text-[12px] md:text-[13px] font-semibold text-white/90 underline underline-offset-4 hover:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-                >
-                  Área ADM
-                </Link>
-              ) : null}
             </div>
           </ClientOnly>
         </div>
