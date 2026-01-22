@@ -1297,14 +1297,11 @@ export default function MeuFilhoClient() {
   }
 
   // ✅ FIX typing (SkillId[] garantido)
-  function toggleSkill(id: SkillId) {
-    setSkills((prev): SkillId[] => {
-      const has = prev.includes(id)
-      const next: SkillId[] = has ? prev.filter((x) => x !== id) : [...prev, id]
-      const safe: SkillId[] = next.length ? next : (['emocional'] as SkillId[])
-
-      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(safe))
-      return safe
+  function selectSkill(id: SkillId) {
+    setSkills((): SkillId[] => {
+      const next: SkillId[] = [id]
+      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(next))
+      return next
     })
 
     setBloco2({ status: 'idle' })
@@ -1660,13 +1657,13 @@ export default function MeuFilhoClient() {
                         <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
                           <div className="text-[13px] font-semibold text-[#2f3a56]">Que habilidades você quer estimular?</div>
                           <div className="text-[12px] text-[#545454] mt-1">
-                            Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
+Você escolhe 1 por vez. Para trocar, toque em outra. Se deixar vazio, volta para &quot;Emoções&quot;.
                           </div>
 
                           <div className="mt-3 flex flex-wrap gap-2">
                             {SKILLS.map((s) => {
                               const active = skills.includes(s.id)
-                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
+                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => selectSkill(s.id)} />
                             })}
                           </div>
                         </div>
