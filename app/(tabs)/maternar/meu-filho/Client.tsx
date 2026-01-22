@@ -844,7 +844,7 @@ async function fetchBloco4Suggestion(args: {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
       body: JSON.stringify({
-        feature: 'fase-contexto',
+        feature: 'fase',
         origin: 'maternar/meu-filho',
         tipoIdeia: 'meu-filho-bloco-4',
         idade: args.faixa_etaria,
