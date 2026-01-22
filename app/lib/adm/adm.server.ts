@@ -69,7 +69,7 @@ export async function listPublishedIdeasForHub(args: { hub: AdmIdeaHub; limit?: 
     .from('adm_ideas')
     .select('*')
     .eq('hub', args.hub)
-    .eq('status', 'published')
+    .in('status', ['published', 'publicado'])
     .order('updated_at', { ascending: false })
     .limit(limit)
 
@@ -176,7 +176,7 @@ export async function getAdmEditorialTextPublished(args: {
     .select('body,title,context,updated_at')
     .eq('hub', args.hub)
     .eq('key', args.key)
-    .eq('status', 'published')
+    .in('status', ['published', 'publicado'])
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle()

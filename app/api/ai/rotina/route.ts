@@ -29,7 +29,7 @@ type Bloco3Tipo = 'rotina' | 'conexao'
 type MomentoDesenvolvimento = 'exploracao' | 'afirmacao' | 'imitacao' | 'autonomia'
 
 type RotinaRequestBody = {
-  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase'
+  feature?: 'recipes' | 'quick-ideas' | 'micro-ritmos' | 'fase' | 'fase-contexto'
   origin?: string
 
   // Receitas
@@ -272,6 +272,9 @@ export async function POST(req: Request) {
 
     const body = (await req.json()) as RotinaRequestBody
 
+
+      const rawFeature = String((body as any)?.feature ?? '')
+      const feature = rawFeature === 'fase-contexto' ? 'fase' : rawFeature
     const { profile, child } = (await loadMaternaContextFromRequest(req)) as {
       profile: MaternaProfile | null
       child: MaternaChildProfile | null
@@ -324,7 +327,7 @@ export async function POST(req: Request) {
       // ✅ Meu Filho — Bloco 1
       if (body.tipoIdeia === 'meu-filho-bloco-1') {
         const sanitized = sanitizeMeuFilhoBloco1(result.suggestions, body.tempoDisponivel ?? null)
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+        return NextResponse.json({ suggestions: sanitized, ...(((result as any)?.meta) ? { meta: (result as any).meta } : {}) }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
       // ✅ Meu Filho — Bloco 2
@@ -333,20 +336,73 @@ export async function POST(req: Request) {
           result.suggestions ?? [],
           body.tempoDisponivel ?? null,
         )
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+        return NextResponse.json({ suggestions: sanitized, ...(((result as any)?.meta) ? { meta: (result as any).meta } : {}) }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
       // ✅ Meu Filho — Bloco 3 (Rotinas / Conexão)
       if (body.tipoIdeia === 'meu-filho-bloco-3') {
         const sanitized = sanitizeMeuFilhoBloco3(result.suggestions ?? [])
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+        return NextResponse.json({ suggestions: sanitized, ...(((result as any)?.meta) ? { meta: (result as any).meta } : {}) }, { status: 200, headers: NO_STORE_HEADERS })
       }
 
       // ✅ Meu Filho — Bloco 4 (Fases / Contexto)
       if (body.tipoIdeia === 'meu-filho-bloco-4') {
-        const sanitized = sanitizeMeuFilhoBloco4(result.suggestions ?? [])
-        return NextResponse.json({ suggestions: sanitized }, { status: 200, headers: NO_STORE_HEADERS })
+        // ADM-first (Base Curada) — Bloco 4 (Fases / Contexto)
+        // Key determinístico: bloco-4|<faixa>|<foco>
+        const admHub = 'meu-filho'
+        const faixa = String(body.faixa_etaria ?? body.idade ?? '').trim()
+        const foco = String((body as any).foco ?? '').trim()
+        const admKey = `bloco-4|${faixa || 'geral'}|${foco || 'geral'}`
+        const metaBase = { admHub: 'meu-filho', admKey }
+
+        const meta = { source: 'adm', admHub: 'meu-filho', admKey }
+
+
+        const admText = await getAdmEditorialTextPublished({ hub: admHub, key: admKey }).catch(() => null)
+
+        if (admText?.body) {
+          const text = clampText(admText.body, 140)
+
+          // Regra do Bloco 4: 1 frase, sem lista/quebra e sem normativo
+          if (
+            text &&
+            countSentences(text) === 1 &&
+            !text.includes('\n') &&
+            !text.includes('•') &&
+            !text.includes('- ')
+          ) {
+            const suggestion: RotinaQuickSuggestion = {
+              id: `mf_b4_${faixa || 'geral'}_${foco || 'geral'}`.replace(/[^a-zA-Z0-9_]/g, '_'),
+              category: 'ideia-rapida',
+              title: '',
+              description: text,
+              estimatedMinutes: 0,
+              withChild: true,
+              moodImpact: 'aproxima',
+            }
+
+            return NextResponse.json(
+              {
+                suggestions: [suggestion],
+                meta: { source: 'adm', admHub, admKey },
+              },
+              { status: 200, headers: NO_STORE_HEADERS },
+            )
+          }
+        }
+
+        // Fallback: segue fluxo normal (IA / heurística) do endpoint
+          // ✅ MVP: ainda assim devolvemos meta para rastrear se veio do ADM ou fallback
+          return NextResponse.json(
+            {
+              suggestions: result.suggestions ?? [],
+              meta: { source: 'fallback', ...metaBase },
+            },
+            { status: 200, headers: NO_STORE_HEADERS },
+          )
+
       }
+
 
       // default: contrato original
       return NextResponse.json(
