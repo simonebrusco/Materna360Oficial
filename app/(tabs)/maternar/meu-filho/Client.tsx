@@ -1163,6 +1163,8 @@ export default function MeuFilhoClient() {
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
   const lastBloco1SigRef = useRef<string | null>(null)
     const lastBloco4SigRef = useRef<string | null>(null)
+    const lastBloco3RotinaSigRef = useRef<string | null>(null)
+    const lastBloco3ConexaoSigRef = useRef<string | null>(null)
   const bloco1Sig = (s: string) => String(s ?? "").trim().replace(/\s+/g, " ").slice(0, 220)
 
   const bloco1ReqSeq = useRef(0)
@@ -1434,39 +1436,69 @@ export default function MeuFilhoClient() {
     }
 
     async function generateBloco3(kind: Bloco3Type) {
-    const seq = ++bloco3ReqSeq.current
+      const seq = ++bloco3ReqSeq.current
 
-    const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
-    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
-    if (!tema) {
-      toast.info('Escolha um tema antes de gerar.')
-      return
+      const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
+      const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+      if (!tema) {
+        toast.info('Escolha um tema antes de gerar.')
+        return
+      }
+
+      setBloco3({ status: 'loading', kind })
+
+      const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
+
+      const out = await withAntiRepeatText({
+        themeSignature,
+        run: async (nonce) =>
+          await fetchBloco3Suggestion({
+            faixa_etaria: age,
+            momento_do_dia: momento,
+            tipo_experiencia: kind,
+            contexto: 'continuidade',
+            tema,
+            nonce,
+          }),
+        fallback: () => BLOCO3_FALLBACK[kind][age],
+        maxTries: 2,
+      })
+
+      if (seq !== bloco3ReqSeq.current) return
+
+      // anti-repeat minimal per session: avoid identical consecutive text in ROTINA/CONEXÃO (Bloco 3)
+      let finalOut = out
+      try {
+        const ref = kind === 'rotina' ? lastBloco3RotinaSigRef : lastBloco3ConexaoSigRef
+        const prevSig = ref.current
+        const curSig = String(out?.text ?? '').trim().toLowerCase()
+        if (prevSig && curSig && curSig === prevSig) {
+          const retry = await withAntiRepeatText({
+            themeSignature: themeSignature + '|retry1',
+            run: async (nonce) =>
+              await fetchBloco3Suggestion({
+                faixa_etaria: age,
+                momento_do_dia: momento,
+                tipo_experiencia: kind,
+                contexto: 'continuidade',
+                tema,
+                nonce,
+              }),
+            fallback: () => BLOCO3_FALLBACK[kind][age],
+            maxTries: 1,
+          })
+          const retrySig = String(retry?.text ?? '').trim().toLowerCase()
+          if (!prevSig || !retrySig || retrySig !== prevSig) {
+            finalOut = retry
+          }
+        }
+        ref.current = String(finalOut?.text ?? '').trim().toLowerCase() || null
+      } catch {}
+
+      setBloco3({ status: 'done', kind, text: finalOut.text, source: finalOut.source, momento })
     }
 
-    setBloco3({ status: 'loading', kind })
-
-    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
-
-    const out = await withAntiRepeatText({
-      themeSignature,
-      run: async (nonce) =>
-        await fetchBloco3Suggestion({
-          faixa_etaria: age,
-          momento_do_dia: momento,
-          tipo_experiencia: kind,
-          contexto: 'continuidade',
-          tema,
-          nonce,
-        }),
-      fallback: () => BLOCO3_FALLBACK[kind][age],
-      maxTries: 2,
-    })
-
-    if (seq !== bloco3ReqSeq.current) return
-    setBloco3({ status: 'done', kind, text: out.text, source: out.source, momento })
-  }
-
-  function saveSelectedToMyDay(title: string) {
+    function saveSelectedToMyDay(title: string) {
     const ORIGIN = 'family' as const
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
 
