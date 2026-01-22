@@ -1,0 +1,31 @@
+id,hub,bloco,title,short_description,steps,duration_minutes,age_band,environment,tags,status,ordem,meta_json
+mf_plan_now_0001,meu_filho,plan_now,Aterrissar juntas em 2 minutos,Um começo bem simples para vocês saírem do modo pressa e entrarem no modo presença.,"Sente ao lado do seu filho.
+Diga: ""vamos fazer uma respiração juntinhos?""
+Inspire pelo nariz contando 3.
+Solte o ar contando 4.
+Repita 3 vezes.
+Pergunte: ""o que você quer fazer agora: desenhar, montar ou brincar?""",5,,casa,"conexao,acalmar,transicao,energia-baixa",published,10,"{""energy"":""baixa"",""goal"":""conexao"",""phase"":""inicio""}"
+mf_plan_now_0002,meu_filho,plan_now,Mini missão do olhar atento,Um jogo rápido para estimular curiosidade e foco sem cobrança.,"Escolha um cômodo.
+Diga: ""vamos achar 5 coisas da cor X"".
+Deixe ele escolher a cor.
+A cada item encontrado, nomeie junto (ex.: ""uma almofada rosa"").
+No final: ""qual foi o mais legal de achar?""",10,3-6,casa,"foco,brincadeira,curiosidade,energia-media",published,20,"{""energy"":""media"",""goal"":""foco"",""phase"":""meio""}"
+mf_plan_now_0003,meu_filho,plan_now,Construção com 3 peças,"Brincadeira curta de montar, com começo e fim claros (sem bagunça infinita).","Separe 3 peças (blocos, copos, potes).
+Desafio 1: torre mais alta.
+Desafio 2: ponte para passar um carrinho.
+Desafio 3: casinha para um boneco.
+Feche dizendo: ""agora vamos guardar juntos em 1 minuto"".",12,3-7,casa,"motor,construcao,limite-saudavel,energia-media",published,30,"{""energy"":""media"",""goal"":""motor"",""phase"":""meio""}"
+mf_plan_now_0004,meu_filho,plan_now,História em 3 frases,Uma narrativa rápida que aumenta vínculo e linguagem sem virar tarefa.,"Você começa: ""Era uma vez..."" (1 frase).
+Seu filho continua (1 frase).
+Você fecha (1 frase).
+Pergunte: ""quer dar um título?"".
+Se quiser, desenhem a cena em 2 minutos.",10,4-8,casa,"linguagem,criatividade,conexao,energia-baixa",published,40,"{""energy"":""baixa"",""goal"":""linguagem"",""phase"":""meio""}"
+mf_plan_now_0005,meu_filho,plan_now,Fechamento gentil do momento,Uma forma leve de encerrar e transicionar sem briga.,"Diga: ""vamos escolher uma última coisa para fazer"".
+Faça um timer de 2 minutos.
+Quando tocar: ""obrigada por brincar comigo"".
+Pergunte: ""quer um abraço ou um toque de mão?"".
+Transição: água + banheiro ou guardar juntos.",6,,casa,"transicao,limites,conexao,energia-baixa",published,50,"{""energy"":""baixa"",""goal"":""transicao"",""phase"":""fim""}"
+mf_plan_now_0006,meu_filho,plan_now,Plano de 15 minutos (combo),"Um roteiro completo: aterrissar + brincar + fechar, sem pressa e sem excesso.","1) Aterrissar (2 min): respirem juntas 3 vezes.
+2) Escolha (1 min): você escolhe entre 2 opções (montar ou história).
+3) Brincar (10 min): execute a opção.
+4) Fechar (2 min): agradeça, abrace e faça a transição.",15,3-8,casa,"plano,rotina-curta,conexao,energia-media",published,60,"{""energy"":""media"",""goal"":""plano"",""phase"":""combo""}"
