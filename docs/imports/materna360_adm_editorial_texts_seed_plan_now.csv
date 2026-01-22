@@ -1,0 +1,15 @@
+id,hub,context,title,body,status
+mf_plan_now_open_v1,meu_filho,plan_now_open,Um plano leve para agora,"Respira comigo um segundo. A ideia aqui não é fazer perfeito — é só encontrar um próximo passo que caiba hoje.
+
+Eu vou te sugerir um plano curto (10–15 min), com começo, meio e fim. Se não fizer sentido, você pode gerar outro sem culpa.",published
+mf_plan_now_close_v1,meu_filho,plan_now_close,Fechamento sem cobrança,"Se você fez uma parte, já valeu. Se não deu, tudo bem também.
+
+Se quiser, salve no Meu Dia para lembrar depois. Se preferir, apenas feche aqui — sem pendência.",published
+mf_plan_now_fallback_v1,meu_filho,fallback_plan_now,Quando não der para gerar agora,"Hoje eu não consegui montar um plano completo por aqui, mas você não precisa resolver nada.
+
+Escolha uma opção simples:
+• 2 minutos de respiração juntinhos
+• um abraço + água
+• uma brincadeira curtinha de olhar (achar 3 coisas da mesma cor)
+
+Se quiser, tente gerar novamente quando fizer sentido.",published
