@@ -439,8 +439,10 @@ async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string })
         tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-1',
-        requestId: args.nonce,
         nonce: args.nonce,
+        requestId: args.nonce,
+        variation: args.nonce,
+        
       }),
     })
 
@@ -1156,6 +1158,9 @@ export default function MeuFilhoClient() {
 
   // Bloco 1
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
+  const lastBloco1SigRef = useRef<string | null>(null)
+  const bloco1Sig = (s: string) => String(s ?? "").trim().replace(/\s+/g, " ").slice(0, 220)
+
   const bloco1ReqSeq = useRef(0)
 
   // Bloco 2
@@ -1332,7 +1337,27 @@ export default function MeuFilhoClient() {
     })
 
     if (seq !== bloco1ReqSeq.current) return
-    setBloco1({ status: 'done', text: out.text, source: out.source })
+    // anti-repeat minimal per session: avoid identical consecutive text
+    let finalOut = out
+    try {
+      const prevSig = lastBloco1SigRef.current
+      const curSig = bloco1Sig(out?.text)
+      if (prevSig && curSig && curSig === prevSig) {
+        const retry = await withAntiRepeatText({
+          themeSignature: themeSignature + "|retry1",
+          run: async (nonce) => await fetchBloco1Plan({ tempoDisponivel, nonce }),
+          fallback: () => clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time]),
+          maxTries: 1,
+        })
+        const retrySig = bloco1Sig(retry?.text)
+        if (!prevSig || !retrySig || retrySig !== prevSig) {
+          finalOut = retry
+        }
+      }
+      lastBloco1SigRef.current = bloco1Sig(finalOut?.text)
+    } catch {}
+
+    setBloco1({ status: 'done', text: finalOut.text, source: finalOut.source })
   }
 
   async function generateBloco2() {
@@ -1343,11 +1368,11 @@ export default function MeuFilhoClient() {
     const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}`
 
     const out = await withAntiRepeatPack({
-      themeSignature,
-      run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
-      fallback: () => buildBloco2FallbackSeeded({ tempoDisponivel, age, playLocation, skills, seed: newNonce() }),
-      maxTries: 2,
-    })
+        themeSignature,
+        run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
+        fallback: () => buildBloco2FallbackSeeded({ tempoDisponivel, age, playLocation, skills, seed: newNonce() }),
+        maxTries: 2,
+      })
 
     if (seq !== bloco2ReqSeq.current) return
     setBloco2({ status: 'done', items: out.items, source: out.source })
