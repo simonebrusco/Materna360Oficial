@@ -146,3 +146,48 @@ export async function deleteIdea(id: string) {
   const { error } = await supabase.from('adm_ideas').delete().eq('id', id)
   if (error) throw new Error(`deleteIdea: ${error.message}`)
 }
+
+export type AdmEditorialStatus = 'draft' | 'published'
+
+export type AdmEditorialTextRow = {
+  id: string
+  hub: string
+  key: string | null
+  context: string | null
+  title: string
+  body: string
+  status: AdmEditorialStatus
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * PUBLIC READ PATH — Texto editorial publicado por hub/key (Base Curada).
+ * Regra: leitura pública NÃO exige admin.
+ */
+export async function getAdmEditorialTextPublished(args: {
+  hub: string
+  key: string
+}): Promise<Pick<AdmEditorialTextRow, 'body' | 'title' | 'context' | 'updated_at'> | null> {
+  const supabase = supabaseServer()
+
+  const { data, error } = await supabase
+    .from('adm_editorial_texts')
+    .select('body,title,context,updated_at')
+    .eq('hub', args.hub)
+    .eq('key', args.key)
+    .eq('status', 'published')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(`getAdmEditorialTextPublished: ${error.message}`)
+  if (!data?.body) return null
+
+  return {
+    body: data.body,
+    title: data.title ?? null,
+    context: data.context ?? null,
+    updated_at: data.updated_at ?? null,
+  }
+}

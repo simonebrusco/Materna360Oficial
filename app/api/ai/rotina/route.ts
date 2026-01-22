@@ -1,3 +1,4 @@
+import { getAdmEditorialTextPublished } from '@/app/lib/adm/adm.server'
 // app/api/ai/rotina/route.ts
 
 import { NextResponse } from 'next/server'
@@ -301,6 +302,16 @@ export async function POST(req: Request) {
 
         // bloco 4
         momento_desenvolvimento: body.momento_desenvolvimento ?? null,
+      }
+
+
+      // ADM (Base Curada) — Plano editorial do Bloco 1 (Meu Filho)
+      if (body.tipoIdeia === 'meu-filho-bloco-1') {
+        const plan = await getAdmEditorialTextPublished({ hub: 'meu-filho', key: 'bloco-1-plan' }).catch(() => null)
+        if (plan?.body) {
+          ctx.admPlanBody = plan.body
+          ctx.__adm = { hub: 'meu-filho', key: 'bloco-1-plan', updated_at: plan.updated_at ?? null }
+        }
       }
 
       const result = await callMaternaAI({
