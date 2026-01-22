@@ -1,6 +1,7 @@
 import { supabaseServer } from '@/app/lib/supabase.server'
 import { randomUUID } from 'crypto'
 import { assertAdmin } from '@/app/lib/adm/requireAdmin.server'
+import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 
 export type AdmIdeaStatus = 'draft' | 'published'
 export type AdmIdeaHub = 'meu-filho' | 'cuidar-de-mim' | 'meu-dia-leve'
@@ -169,7 +170,7 @@ export async function getAdmEditorialTextPublished(args: {
   hub: string
   key: string
 }): Promise<Pick<AdmEditorialTextRow, 'body' | 'title' | 'context' | 'updated_at'> | null> {
-  const supabase = supabaseServer()
+  const supabase = supabaseAdmin()
 
   const { data, error } = await supabase
     .from('adm_editorial_texts')
