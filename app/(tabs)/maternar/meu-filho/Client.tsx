@@ -754,6 +754,9 @@ async function fetchBloco3Suggestion(args: {
     if (!res.ok) return null
     const data = (await res.json().catch(() => null)) as any
 
+      const metaSource = data?.meta?.source ?? data?.source ?? null
+      if (metaSource !== 'adm') return null
+
     const candidate =
       data?.suggestion ??
       data?.text ??
@@ -1159,6 +1162,7 @@ export default function MeuFilhoClient() {
   // Bloco 1
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
   const lastBloco1SigRef = useRef<string | null>(null)
+    const lastBloco4SigRef = useRef<string | null>(null)
   const bloco1Sig = (s: string) => String(s ?? "").trim().replace(/\s+/g, " ").slice(0, 220)
 
   const bloco1ReqSeq = useRef(0)
@@ -1377,31 +1381,59 @@ export default function MeuFilhoClient() {
   }
 
   async function generateBloco4() {
-    const seq = ++bloco4ReqSeq.current
-    setBloco4({ status: 'loading' })
+      const seq = ++bloco4ReqSeq.current
+      setBloco4({ status: 'loading' })
 
-    const momento = inferMomentoDesenvolvimento(age)
-    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
+      const momento = inferMomentoDesenvolvimento(age)
+      const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
 
-    const out = await withAntiRepeatText({
-      themeSignature,
-      run: async (nonce) =>
-        await fetchBloco4Suggestion({
-          faixa_etaria: age,
-          momento_desenvolvimento: momento,
-          contexto: 'fase',
-          foco: faseFoco,
-          nonce,
-        }),
-      fallback: () => BLOCO4_FALLBACK[age],
-      maxTries: 2,
-    })
+      const out = await withAntiRepeatText({
+        themeSignature,
+        run: async (nonce) =>
+          await fetchBloco4Suggestion({
+            faixa_etaria: age,
+            momento_desenvolvimento: momento,
+            contexto: 'fase',
+            foco: faseFoco,
+            nonce,
+          }),
+        fallback: () => BLOCO4_FALLBACK[age],
+        maxTries: 2,
+      })
 
-    if (seq !== bloco4ReqSeq.current) return
-    setBloco4({ status: 'done', text: out.text, source: out.source, momento })
-  }
+      if (seq !== bloco4ReqSeq.current) return
 
-  async function generateBloco3(kind: Bloco3Type) {
+      // anti-repeat minimal per session: avoid identical consecutive text in FASE (Bloco 4)
+      let finalOut = out
+      try {
+        const prevSig = lastBloco4SigRef.current
+        const curSig = String(out?.text ?? '').trim().toLowerCase()
+        if (prevSig && curSig && curSig === prevSig) {
+          const retry = await withAntiRepeatText({
+            themeSignature: themeSignature + '|retry1',
+            run: async (nonce) =>
+              await fetchBloco4Suggestion({
+                faixa_etaria: age,
+                momento_desenvolvimento: momento,
+                contexto: 'fase',
+                foco: faseFoco,
+                nonce,
+              }),
+            fallback: () => BLOCO4_FALLBACK[age],
+            maxTries: 1,
+          })
+          const retrySig = String(retry?.text ?? '').trim().toLowerCase()
+          if (!prevSig || !retrySig || retrySig !== prevSig) {
+            finalOut = retry
+          }
+        }
+        lastBloco4SigRef.current = String(finalOut?.text ?? '').trim().toLowerCase() || null
+      } catch {}
+
+      setBloco4({ status: 'done', text: finalOut.text, source: finalOut.source, momento })
+    }
+
+    async function generateBloco3(kind: Bloco3Type) {
     const seq = ++bloco3ReqSeq.current
 
     const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
