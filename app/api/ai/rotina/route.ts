@@ -2,6 +2,7 @@ import { getAdmEditorialTextPublished } from '@/app/lib/adm/adm.server'
 // app/api/ai/rotina/route.ts
 
 import { NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 import {
   callMaternaAI,
   type MaternaProfile,
@@ -358,40 +359,34 @@ export async function POST(req: Request) {
         const meta = { source: 'adm', admHub: 'meu-filho', admKey }
 
 
-        const admText = await getAdmEditorialTextPublished({ hub: admHub, key: admKey }).catch(() => null)
-
-        if (admText?.body) {
-          const text = clampText(admText.body, 140)
-
-          // Regra do Bloco 4: 1 frase, sem lista/quebra e sem normativo
-          if (
-            text &&
-            countSentences(text) === 1 &&
-            !text.includes('\n') &&
-            !text.includes('•') &&
-            !text.includes('- ')
-          ) {
-            const suggestion: RotinaQuickSuggestion = {
-              id: `mf_b4_${faixa || 'geral'}_${foco || 'geral'}`.replace(/[^a-zA-Z0-9_]/g, '_'),
-              category: 'ideia-rapida',
-              title: '',
-              description: text,
-              estimatedMinutes: 0,
-              withChild: true,
-              moodImpact: 'aproxima',
-            }
-
-            return NextResponse.json(
-              {
-                suggestions: [suggestion],
-                meta: { source: 'adm', admHub, admKey },
-              },
-              { status: 200, headers: NO_STORE_HEADERS },
-            )
+          // ADM-first — Bloco 4 (Fases / Contexto) com VARIANTS
+          const { data: variants, error } = await supabaseAdmin().rpc(
+          'adm_get_editorial_variants_published',
+          {
+          p_hub: admHub,
+          p_key: admKey,
+          p_limit: 3,
           }
-        }
-
-        // Fallback: segue fluxo normal (IA / heurística) do endpoint
+          )
+          if (!error && variants?.length) {
+          const suggestions: RotinaQuickSuggestion[] = variants.map((v: any, idx: number) => ({
+          id: `mf_b4_${faixa || 'geral'}_${foco || 'geral'}_${String((v?.variant_index ?? idx) as any)}`.replace(/[^a-zA-Z0-9_]/g, '_'),
+          category: 'ideia-rapida',
+          title: '',
+          description: String(v?.body ?? ''),
+          estimatedMinutes: 0,
+          withChild: true,
+          moodImpact: 'aproxima',
+          }))
+          return NextResponse.json(
+          {
+          suggestions,
+          meta: { source: 'adm', admHub, admKey, variantCount: variants.length },
+          },
+          { status: 200, headers: NO_STORE_HEADERS },
+          )
+          }
+          // Fallback: segue fluxo normal (IA / heurística) do endpoint
           // ✅ MVP: ainda assim devolvemos meta para rastrear se veio do ADM ou fallback
           return NextResponse.json(
             {
