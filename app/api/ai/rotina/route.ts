@@ -237,6 +237,147 @@ export async function POST(req: Request) {
 
     const body = (await req.json()) as RotinaRequestBody
 
+    // ✅ EARLY RETURN — ROTINA (ADM-FIRST) — Meu Filho
+    // (não depende de feature; evita cair em IA/fallback)
+    const tipo = String((body as any)?.tipoIdeia ?? "")
+    if (String((body as any)?.tipoIdeia ?? '') === 'meu-filho-rotina') {
+      const rawEnv = String((body as any)?.environment ?? (body as any)?.tema ?? '')
+      const rawAge = String((body as any)?.ageBand ?? (body as any)?.faixa_etaria ?? (body as any)?.idade ?? '')
+      const tempo = Number((body as any)?.tempoDisponivel ?? (body as any)?.duration_minutes ?? 0)
+      const avoidIds = (((body as any)?.avoidIds ?? []) as string[]).map((x) => String(x))
+
+      const envLow = rawEnv
+        .trim()
+        .toLowerCase()
+        .replace(/[ãáâ]/g, 'a')
+        .replace(/ç/g, 'c')
+        .replace(/[íì]/g, 'i')
+        .replace(/[õóô]/g, 'o')
+
+      const envNorm =
+        envLow.includes('manha') ? 'manha'
+        : envLow.includes('trans') ? 'transicao'
+        : envLow.includes('banh') ? 'banho'
+        : envLow.includes('jant') ? 'jantar'
+        : envLow.includes('sono') ? 'sono'
+        : envLow || 'any'
+
+      const ageNorm = rawAge.trim().replace(/–/g, '-')
+
+      const seed = String((body as any)?.nonce ?? (body as any)?.requestId ?? '')
+      const hash = (str: string) => {
+        let h = 2166136261
+        for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619)
+        return h >>> 0
+      }
+
+      const sb = supabaseAdmin()
+        const base = sb
+          .from('adm_ideas')
+          .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub')
+          .eq('hub', 'meu-filho')
+          .eq('status', 'published')
+          .eq('environment', envNorm)
+          .eq('age_band', ageNorm)
+          .eq('duration_minutes', tempo)
+
+        // IMPORTANTE: não filtrar avoidIds no SQL.
+        // Precisamos do universo (allIdeas) para reiniciar ciclo quando avoidIds esgotar tudo.
+        const { data: allIdeas, error } = await base.limit(24)
+        const ideas = allIdeas
+
+
+      
+        if (!error && ideas?.length) {
+          const sorted = [...ideas].sort((a, b) => {
+            const ha = hash(seed + '|' + String(a.id))
+            const hb = hash(seed + '|' + String(b.id))
+            return ha - hb
+          })
+
+          // 1) remove avoidIds localmente (segurança extra; query já tentou filtrar)
+          const remaining = avoidIds?.length ? sorted.filter((x) => !avoidIds.includes(String(x.id))) : sorted
+
+            // Se avoidIds cobriu todo o pool, não reinicia automaticamente.
+            // O client decide quando "resetar o ciclo".
+            if (avoidIds.length > 0 && remaining.length === 0) {
+              return Response.json({
+                suggestions: [],
+                meta: {
+                  source: 'adm',
+                  admHub: 'meu-filho',
+                  tipoIdeia: 'meu-filho-rotina',
+                  env: envNorm,
+                  age: ageNorm,
+                  tempo,
+                  avoidCount: avoidIds.length,
+                  exhausted: true,
+                  returnedCount: 0,
+                  poolSize: sorted.length,
+                },
+              })
+            }
+
+            // Seleção: pega até 3 do remaining, com ordem determinística por seed.
+            const pool = remaining
+            const startIdx = pool.length ? (hash(seed) % pool.length) : 0
+            const picks: any[] = []
+            const pickedIds = new Set<string>()
+            for (let i = 0; i < 3 && pool.length; i++) {
+              const it = pool[(startIdx + i) % pool.length]
+              const id = String(it?.id ?? '')
+              if (!id || pickedIds.has(id)) continue
+              pickedIds.add(id)
+              picks.push(it)
+            }
+
+const exhaustedFlag = remaining.length === 0 && avoidIds.length > 0
+
+          return Response.json({
+            suggestions: picks.map((pick: any) => ({
+              id: pick.id,
+              category: 'rotina',
+              title: pick.title,
+              description: pick.short_description,
+              estimatedMinutes: pick.duration_minutes,
+              withChild: true,
+              steps: pick.steps,
+            })),
+            meta: {
+              source: 'adm',
+              admHub: 'meu-filho',
+              tipoIdeia: 'meu-filho-rotina',
+              env: envNorm,
+              age: ageNorm,
+              tempo,
+              avoidCount: avoidIds.length,
+              exhausted: exhaustedFlag,
+              returnedCount: picks.length,
+              poolSize: pool.length,
+            },
+          })
+        }
+
+
+        // Se não achou nada no ADM para este recorte, não cai na IA.
+        return Response.json({
+          suggestions: [],
+          meta: {
+            source: 'adm',
+            admHub: 'meu-filho',
+            tipoIdeia: 'meu-filho-rotina',
+            env: envNorm,
+            age: ageNorm,
+            tempo,
+            avoidCount: avoidIds.length,
+            exhausted: false,
+            returnedCount: 0,
+            poolSize: 0,
+            reason: 'no_rows_for_filter',
+          },
+        })
+    }
+
 
 
     // =========================

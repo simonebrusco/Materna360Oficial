@@ -429,20 +429,22 @@ type Bloco1State = { status: 'idle' } | { status: 'loading' } | { status: 'done'
 
 async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string }): Promise<string | null> {
   try {
+    const k = mfRotinaKey(args)
+    const avoidIds = MF_ROTINA_AVOID[k] ?? []
+
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
-      body: JSON.stringify({
+
+    body: JSON.stringify({
         feature: 'quick-ideas',
         origin: 'maternar/meu-filho',
-        tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-1',
         nonce: args.nonce,
         requestId: args.nonce,
         variation: args.nonce,
-        
       }),
     })
 
@@ -543,7 +545,6 @@ function pick3Suggestions(data: unknown): SuggestionPack[] | null {
 }
 
 async function fetchBloco2Cards(args: {
-  tempoDisponivel: number
   age: AgeBand
   playLocation: PlayLocation
   skills: SkillId[]
@@ -557,7 +558,6 @@ async function fetchBloco2Cards(args: {
       body: JSON.stringify({
         feature: 'quick-ideas',
         origin: 'maternar/meu-filho',
-        tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-2',
         ageBand: args.age,
@@ -579,7 +579,7 @@ async function fetchBloco2Cards(args: {
       const title = safeBloco2Title(i.title)
       const how = safeBloco2How(i.description)
       if (!title || !how) return null
-      return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
+      return { title, how, time: '10' as TimeMode, tag: 'curado' }
     }
 
     const a = mk(picked[0])
@@ -606,13 +606,12 @@ async function fetchBloco2Cards(args: {
  * - Usa seed (nonce) para variar deterministicamente.
  */
 function buildBloco2FallbackSeeded(args: {
-  tempoDisponivel: number
   age: AgeBand
   playLocation: PlayLocation
   skills: SkillId[]
   seed: string
 }): Bloco2Items {
-  const time = String(args.tempoDisponivel) as TimeMode
+  const time = '10' as TimeMode
 
   // hash determinístico simples (FNV-1a)
   const hash = (str: string) => {
@@ -660,7 +659,7 @@ function buildBloco2FallbackSeeded(args: {
   if (loc === 'deslocamento') pool = poolTravel
   const skillsStr = (args.skills || []).map((x) => String(x))
   if (skillsStr.includes('coordenacao')) pool = [...pool, ...poolMove]
-  const seed = `${args.seed}|${args.age}|${args.playLocation}|${(args.skills || []).join(',')}|${args.tempoDisponivel}`
+  const seed = `${args.seed}|${args.age}|${args.playLocation}|${(args.skills || []).join(',')}`
   const base = hash(seed)
 
   const pickIdx = (offset: number) => (base + offset) % pool.length
@@ -720,6 +719,14 @@ const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
     '5-6': 'Use uma frase curta e específica no final: “eu gostei de brincar com você”. Depois siga para o próximo passo do dia. Presença curta já conta.',
     '6+': 'Faça um check-in rápido: uma pergunta e escuta sem corrigir. Depois encerre com “valeu por fazer junto”. Conexão curta, sem estender.',
   },
+}
+
+const MF_ROTINA_AVOID: Record<string, string[]> = {}
+function mfRotinaKey(args: any) {
+  const age = String((args as any)?.faixa_etaria ?? (args as any)?.ageBand ?? '')
+  const tema = String((args as any)?.tema ?? (args as any)?.environment ?? '')
+  const nonce = String((args as any)?.nonce ?? '')
+  return [age, tema, nonce].join('|')
 }
 
 async function fetchBloco3Suggestion(args: {
@@ -1372,8 +1379,8 @@ export default function MeuFilhoClient() {
 
     const out = await withAntiRepeatPack({
         themeSignature,
-        run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
-        fallback: () => buildBloco2FallbackSeeded({ tempoDisponivel, age, playLocation, skills, seed: newNonce() }),
+        run: async (nonce) => await fetchBloco2Cards({ age, playLocation, skills, nonce }),
+        fallback: () => buildBloco2FallbackSeeded({ age, playLocation, skills, seed: newNonce() }),
         maxTries: 2,
       })
 
