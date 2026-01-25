@@ -3,6 +3,22 @@
 import { useState } from 'react'
 import type { RotinaComQuem, RotinaTipoIdeia } from '@/app/lib/ai/maternaCore'
 
+// Cache local de avoidIds por combinação (tipoIdeia|tempo|comQuem)
+const ROTINA_AVOID: Record<string, string[]> = {}
+
+const rotinaKey = (p: any) =>
+  `${String(p?.tipoIdeia ?? '')}|${String(p?.availableMinutes ?? '')}|${String(p?.comQuem ?? '')}`
+
+const uniq = (arr: string[]) => Array.from(new Set(arr.filter(Boolean)))
+
+const newNonce = () => {
+  try {
+    const c: any = (globalThis as any)?.crypto
+    if (c?.randomUUID) return String(c.randomUUID())
+  } catch (e) {}
+  return String(Date.now())
+}
+
 type RotinaAISuggestion = {
   id: string
   title: string
@@ -12,6 +28,10 @@ type RotinaAISuggestion = {
 }
 
 type RequestPayload = {
+    // Controle de variação (opcional; se não vier, geramos localmente)
+    nonce?: string
+    // Evita repetição (opcional; se não vier, usamos cache local)
+    avoidIds?: string[]
   mood?: string
   energy?: 'baixa' | 'media' | 'alta'
   timeOfDay?: string
@@ -38,6 +58,12 @@ export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
     setError(null)
 
     try {
+        const k = rotinaKey(payload)
+        const nonce = String(payload?.nonce ?? newNonce())
+        const avoidIds = Array.isArray(payload?.avoidIds)
+          ? payload.avoidIds.map((x) => String(x))
+          : (ROTINA_AVOID[k] ?? [])
+
       const res = await fetch('/api/ai/rotina', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,6 +74,8 @@ export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
           tempoDisponivel: payload.availableMinutes ?? null,
           comQuem: payload.comQuem ?? null,
           tipoIdeia: payload.tipoIdeia ?? null,
+            nonce,
+            avoidIds,
         }),
       })
 
@@ -57,8 +85,29 @@ export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
 
       const data = await res.json()
       const raw = Array.isArray(data?.suggestions) ? data.suggestions : null
+      const exhausted = Boolean(data?.meta?.exhausted)
 
-      if (!raw || raw.length === 0) {
+        // Exhausted tem prioridade absoluta: nunca cair em fallback quando o pool acabou
+        if (exhausted && (!raw || raw.length === 0)) {
+          setSuggestions([])
+          setError('Você já viu todas as opções disponíveis para este recorte. Mude o filtro para ver novas ideias.')
+          return
+        }
+
+        const meta = (data as any)?.meta
+        const isAdm = String(meta?.source ?? '') === 'adm'
+        // exhausted já calculado acima (no data.meta)
+        // ADM-first: se não há sugestões, respeitar vazio (não usar fallback genérico)
+        if (isAdm && (!raw || raw.length === 0)) {
+          setSuggestions([])
+          if (exhausted) {
+            setError('Você já viu todas as opções disponíveis para este recorte. Mude o filtro para ver novas ideias.')
+          } else {
+            setError('Ainda não há opções publicadas para este recorte. Tente outro filtro.')
+          }
+          return
+        }
+      if (!isAdm && (!raw || raw.length === 0)) {
         // Fallback se a IA não devolver nada
         setSuggestions([
           {
@@ -82,6 +131,14 @@ export function useRotinaAISuggestions(): UseRotinaAISuggestionsResult {
       }
 
       setSuggestions(raw)
+
+      try {
+
+        const rawIds = raw.map((x: any) => String(x?.id ?? '')).filter(Boolean)
+
+        ROTINA_AVOID[k] = uniq([...(avoidIds ?? []), ...rawIds])
+
+      } catch (e) {}
     } catch (err) {
       console.error('[useRotinaAISuggestions] Erro ao buscar ideias rápidas:', err)
       setError('Não consegui trazer ideias agora, tente de novo em alguns instantes.')
