@@ -233,14 +233,24 @@ export async function POST(req: Request) {
   let gate: { actorId: string; dateKey: string } | null = null
 
   try {
-    assertRateLimit(req, 'ai-rotina', {
+
+
+    const body = (await req.json()) as RotinaRequestBody
+
+
+    const isBloco4 = typeof (body as any)?.tipoIdeia === 'string' && String((body as any).tipoIdeia).includes('bloco-4');
+
+    if (!isBloco4) {
+
+      assertRateLimit(req, 'ai-rotina', {
       limit: 20,
       windowMs: 5 * 60_000,
     })
 
-    // Limite diário global (ética) — backend como fonte de verdade
-    const g = await tryConsumeDailyAI(DAILY_LIMIT)
-    gate = { actorId: g.actorId, dateKey: g.dateKey }
+    }
+// Limite diário global (ética) — backend como fonte de verdade
+    const g = isBloco4 ? (({ allowed: true } as any)) : await tryConsumeDailyAI(DAILY_LIMIT)
+gate = { actorId: g.actorId, dateKey: g.dateKey }
 
     if (!g.allowed) {
       const res = NextResponse.json(
@@ -270,11 +280,7 @@ export async function POST(req: Request) {
 
       return res
     }
-
-    const body = (await req.json()) as RotinaRequestBody
-
-
-      const rawFeature = String((body as any)?.feature ?? '')
+const rawFeature = String((body as any)?.feature ?? '')
       const feature = rawFeature === 'fase-contexto' ? 'fase' : rawFeature
     const { profile, child } = (await loadMaternaContextFromRequest(req)) as {
       profile: MaternaProfile | null
