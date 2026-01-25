@@ -238,6 +238,83 @@ export async function POST(req: Request) {
     const body = (await req.json()) as RotinaRequestBody
 
 
+
+    // =========================
+    // ADM-first fast path (não consome rate/daily)
+    // =========================
+    const tipoIdeia = String((body as any)?.tipoIdeia ?? '')
+    const isMeuFilhoBloco4 = tipoIdeia === 'meu-filho-bloco-4'
+    const isMeuFilhoBloco3 = tipoIdeia === 'meu-filho-bloco-3'
+
+    if (isMeuFilhoBloco4 || isMeuFilhoBloco3) {
+      const admHub = 'meu-filho'
+
+      // ✅ Bloco 4 — key: bloco-4|<faixa>|<foco>
+      if (isMeuFilhoBloco4) {
+        const faixa = String((body as any)?.faixa_etaria ?? '').trim()
+        const foco = String((body as any)?.foco ?? '').trim()
+        const admKey = `bloco-4|${faixa || 'geral'}|${foco || 'geral'}`
+
+        const { data: variants, error } = await supabaseAdmin().rpc('adm_get_editorial_variants_published', {
+          p_hub: admHub,
+          p_key: admKey,
+          p_limit: 3,
+        })
+
+        if (!error && variants?.length) {
+          const suggestions: RotinaQuickSuggestion[] = (variants as any[]).map((v: any, idx: number) => ({
+            id: `mf_b4_${faixa || 'geral'}_${foco || 'geral'}_${String(v?.variant_index ?? idx)}`.replace(/[^a-zA-Z0-9_]/g, '_'),
+            category: 'ideia-rapida',
+            title: '',
+            description: String(v?.body ?? ''),
+            estimatedMinutes: 0,
+            withChild: true,
+            moodImpact: 'aproxima',
+          }))
+
+          return NextResponse.json(
+            { suggestions, meta: { source: 'adm', admHub, admKey, variantCount: variants.length } },
+            { status: 200, headers: NO_STORE_HEADERS },
+          )
+        }
+      }
+
+      // ✅ Bloco 3 — key: bloco-3|<tipo>|<tema>|<momento>|<faixa>
+      if (isMeuFilhoBloco3) {
+        const tipo = String((body as any)?.tipo_experiencia ?? '').trim()
+        const tema = String((body as any)?.tema ?? '').trim()
+        const momento = String((body as any)?.momento_do_dia ?? '').trim()
+        const faixa = String((body as any)?.faixa_etaria ?? '').trim()
+
+        const admKey = `bloco-3|${tipo || 'geral'}|${tema || 'geral'}|${momento || 'geral'}|${faixa || 'geral'}`
+
+        const { data: variants, error } = await supabaseAdmin().rpc('adm_get_editorial_variants_published', {
+          p_hub: admHub,
+          p_key: admKey,
+          p_limit: 3,
+        })
+
+        if (!error && variants?.length) {
+          const suggestions: RotinaQuickSuggestion[] = (variants as any[]).map((v: any, idx: number) => ({
+            id: `mf_b3_${tipo || 'geral'}_${tema || 'geral'}_${momento || 'geral'}_${faixa || 'geral'}_${String(v?.variant_index ?? idx)}`.replace(/[^a-zA-Z0-9_]/g, '_'),
+            category: 'ideia-rapida',
+            title: '',
+            description: String(v?.body ?? ''),
+            estimatedMinutes: 0,
+            withChild: true,
+            moodImpact: 'aproxima',
+          }))
+
+          return NextResponse.json(
+            { suggestions, meta: { source: 'adm', admHub, admKey, variantCount: variants.length } },
+            { status: 200, headers: NO_STORE_HEADERS },
+          )
+        }
+      }
+
+      // se não achou no ADM, cai para o fluxo normal abaixo
+    }
+
     const isBloco4 = typeof (body as any)?.tipoIdeia === 'string' && String((body as any).tipoIdeia).includes('bloco-4');
 
     if (!isBloco4) {
