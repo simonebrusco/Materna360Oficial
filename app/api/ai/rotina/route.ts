@@ -492,23 +492,45 @@ export async function POST(req: Request) {
       }
 
       const sb = supabaseAdmin()
+
+      // ✅ Query robusta (sem .or): evita sobrescrever filtros OR no supabase-js
+      // Estratégia:
+      // 1) filtra por hub/status + env (envDb ou 'any') + age (múltiplas formas) + tempo (tempo ou 0)
+      // 2) filtra tags/tema localmente (funciona para tags string OU array/json)
       let base: any = sb
         .from('adm_ideas')
         .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub, tags')
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
-        .or(`environment.ilike.%${envDb}%,environment.ilike.%${envNorm}%,environment.ilike.%any%`)
-        .or(`age_band.eq.${ageNorm},age_band.eq.${ageNorm.replace('-', '–')},age_band.eq.${ageDb}`)
-        .ilike('tags', '%conexao%')
+        .in('environment', [envDb, 'any'])
+        .in('age_band', [ageDb, ageNorm, ageNorm.replace('-', '–')])
 
-      if (temaNorm) {
-        const temaAlt = temaNorm.replace(/[- ]/g, '')
-        base = base.or(`tags.ilike.%${temaNorm}%,tags.ilike.%${temaAlt}%`)
+      if (Number.isFinite(tempo) && tempo > 0) {
+        base = base.in('duration_minutes', [tempo, 0])
       }
-      if (Number.isFinite(tempo) && tempo > 0) base = base.in('duration_minutes', [tempo, 0])
 
-      const { data: allIdeas, error } = await base.limit(24)
-      const ideas = allIdeas as any[] | null
+      const { data: allIdeas, error } = await base.limit(50)
+
+      const ideas = Array.isArray(allIdeas)
+        ? (allIdeas as any[]).filter((row: any) => {
+            const tagsRaw = (row as any)?.tags
+            const tagsStr = Array.isArray(tagsRaw)
+              ? tagsRaw.map((x: any) => String(x ?? '')).join(' ')
+              : String(tagsRaw ?? '')
+            const low = tagsStr.toLowerCase()
+
+            // precisa conter "conexao"
+            if (!low.includes('conexao')) return false
+
+            // se tema existe, precisa conter tema ou variação (check-in/checkin/check in)
+            if (temaNorm) {
+              const temaAlt = temaNorm.replace(/[- ]/g, '')
+              if (!(low.includes(temaNorm) || low.includes(temaAlt))) return false
+            }
+
+            return true
+          })
+        : null
 
       if (!error && ideas?.length) {
         const sorted = [...ideas].sort((a, b) => {
