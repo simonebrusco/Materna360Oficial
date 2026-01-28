@@ -461,6 +461,28 @@ export async function POST(req: Request) {
 
       const temaNorm = normLow(rawTema) // ex: check-in | carinho | conversa | calmaria
       const ageNorm = normLow(rawAge)
+      // ✅ Compat com CSV/Supabase (valores humanos)
+      const envDb =
+        envNorm === 'manha'
+          ? 'Manhã'
+          : envNorm === 'transicao'
+            ? 'Transição'
+            : envNorm === 'banho'
+              ? 'Banho'
+              : envNorm === 'jantar'
+                ? 'Jantar'
+                : envNorm === 'sono'
+                  ? 'Sono'
+                  : envNorm
+
+      const ageDb =
+        ageNorm === '0-2'
+          ? '0–2'
+          : ageNorm === '3-4'
+            ? '3–4'
+            : ageNorm === '5-6'
+              ? '5–6'
+              : ageNorm
 
       const seed = String((body as any)?.nonce ?? (body as any)?.requestId ?? '')
       const hash = (str: string) => {
@@ -475,8 +497,8 @@ export async function POST(req: Request) {
         .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub, tags')
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
-        .eq('environment', envNorm)
-        .or(`age_band.eq.${ageNorm},age_band.eq.${ageNorm.replace('-', '–')}`)
+        .or(`environment.ilike.%${envDb}%,environment.ilike.%${envNorm}%,environment.ilike.%any%`)
+        .or(`age_band.eq.${ageNorm},age_band.eq.${ageNorm.replace('-', '–')},age_band.eq.${ageDb}`)
         .ilike('tags', '%conexao%')
 
       if (temaNorm) {
