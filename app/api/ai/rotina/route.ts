@@ -476,7 +476,7 @@ export async function POST(req: Request) {
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
         .eq('environment', envNorm)
-        .eq('age_band', ageNorm)
+        .or(`age_band.eq.${ageNorm},age_band.eq.${ageNorm.replace('-', '–')}`)
         .ilike('tags', '%conexao%')
 
       if (temaNorm) {
