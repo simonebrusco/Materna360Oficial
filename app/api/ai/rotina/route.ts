@@ -435,14 +435,15 @@ export async function POST(req: Request) {
     if (String((body as any)?.tipoIdeia ?? '') === 'meu-filho-conexao') {
       const rawEnv = String((body as any)?.momento_do_dia ?? (body as any)?.environment ?? (body as any)?.momento ?? '')
       const rawTema = String((body as any)?.tema ?? '').trim()
-      const rawAge = String((body as any)?.faixa_etaria ?? '').trim()
-    const ageVariants = normalizeAgeBandVariants(rawAge)
+      const rawAge = String((body as any)?.faixa_etaria ?? (body as any)?.ageBand ?? (body as any)?.idade ?? '').trim()
 
-    // ENV (momento_do_dia) — Conexão: usar ambiente real + fallback 'any'
-    const envVariants = normalizeEnvVariants(String((body as any)?.momento_do_dia ?? ''))
-    const envCandidates = envVariants.length
-      ? Array.from(new Set([...envVariants, 'any']))
-      : ['any']
+      const ageVariants = normalizeAgeBandVariants(rawAge)
+
+      // ENV (momento_do_dia) — Conexão: usar ambiente real + fallback 'any'
+      const envVariants = normalizeEnvVariants(String(rawEnv ?? ''))
+      const envCandidates = envVariants.length
+        ? Array.from(new Set([...envVariants, 'any']))
+        : ['any']
       const tempo = Number((body as any)?.tempoDisponivel ?? (body as any)?.duration_minutes ?? (body as any)?.durationMinutes ?? 0)
       const avoidIds = (((body as any)?.avoidIds ?? []) as string[]).map((x) => String(x))
 
@@ -510,7 +511,7 @@ export async function POST(req: Request) {
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
         .or(`environment.ilike.%${envDb}%,environment.ilike.%any%`)
-        .in('age_band', [ageDb, ageNorm, ageNorm.replace('-', '–')])
+        .in('age_band', (ageVariants.length ? ageVariants : [ageDb, ageNorm, ageNorm.replace('-', '–')]))
         .in('environment', envCandidates)
 
 
