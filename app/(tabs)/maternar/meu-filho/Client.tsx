@@ -764,7 +764,7 @@ async function fetchBloco3Suggestion(args: {
     const data = (await res.json().catch(() => null)) as any
 
       const metaSource = data?.meta?.source ?? data?.source ?? null
-      if (metaSource !== 'adm') return null
+      if (metaSource && metaSource !== 'adm') return null
 
     const candidate =
       data?.suggestion ??
