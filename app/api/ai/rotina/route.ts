@@ -330,7 +330,7 @@ export async function POST(req: Request) {
         .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub')
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
-        .in('environment', [envNorm, 'any'])
+        .or(`environment.ilike.%${envNorm}%,environment.ilike.%any%`)
         .eq('age_band', ageNorm)
         .eq('duration_minutes', tempo)
 
