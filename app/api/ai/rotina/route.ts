@@ -502,7 +502,7 @@ export async function POST(req: Request) {
         .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub, tags')
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
-        .in('environment', [envDb, 'any'])
+        .or(`environment.ilike.%${envDb}%,environment.ilike.%any%`)
         .in('age_band', [ageDb, ageNorm, ageNorm.replace('-', '–')])
 
       if (Number.isFinite(tempo) && tempo > 0) {
