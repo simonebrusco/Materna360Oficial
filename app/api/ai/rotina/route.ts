@@ -330,7 +330,7 @@ export async function POST(req: Request) {
         .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub')
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
-        .eq('environment', envNorm)
+        .in('environment', [envNorm, 'any'])
         .eq('age_band', ageNorm)
         .eq('duration_minutes', tempo)
 
@@ -479,8 +479,11 @@ export async function POST(req: Request) {
         .eq('age_band', ageNorm)
         .ilike('tags', '%conexao%')
 
-      if (temaNorm) base = base.ilike('tags', `%${temaNorm}%`)
-      if (Number.isFinite(tempo) && tempo > 0) base = base.eq('duration_minutes', tempo)
+      if (temaNorm) {
+        const temaAlt = temaNorm.replace(/[- ]/g, '')
+        base = base.or(`tags.ilike.%${temaNorm}%,tags.ilike.%${temaAlt}%`)
+      }
+      if (Number.isFinite(tempo) && tempo > 0) base = base.in('duration_minutes', [tempo, 0])
 
       const { data: allIdeas, error } = await base.limit(24)
       const ideas = allIdeas as any[] | null
