@@ -722,12 +722,14 @@ const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
 }
 
 const MF_ROTINA_AVOID: Record<string, string[]> = {}
-function mfRotinaKey(args: any) {
-  const age = String((args as any)?.faixa_etaria ?? (args as any)?.ageBand ?? '')
-  const tema = String((args as any)?.tema ?? (args as any)?.environment ?? '')
-  const nonce = String((args as any)?.nonce ?? '')
-  return [age, tema, nonce].join('|')
-}
+  function mfRotinaKey(args: any) {
+    // key ESTÁVEL: não pode depender de nonce (senão o avoidIds nunca acumula)
+    const age = String((args as any)?.faixa_etaria ?? (args as any)?.ageBand ?? '')
+    const tema = String((args as any)?.tema ?? (args as any)?.environment ?? '')
+    const tipo = String((args as any)?.tipo_experiencia ?? (args as any)?.kind ?? '')
+    const momento = String((args as any)?.momento_do_dia ?? (args as any)?.momento ?? '')
+    return [age, tema, tipo, momento].join('|')
+  }
 
 async function fetchBloco3Suggestion(args: {
   faixa_etaria: AgeBand
