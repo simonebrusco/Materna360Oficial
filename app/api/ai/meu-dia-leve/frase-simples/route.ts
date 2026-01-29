@@ -1,8 +1,7 @@
-// app/api/ai/meu-dia-leve/plano-pronto/route.ts
+// app/api/ai/meu-dia-leve/frase-simples/route.ts
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 
-import { randomInt } from 'crypto'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +12,7 @@ type Body = {
   slot?: Slot
   focus?: Focus
   avoidIds?: string[]
+  count?: number // opcional (default 1)
 }
 
 type ApiResponse =
@@ -31,18 +31,14 @@ function isFocus(v: any): v is Focus {
   return v === 'filho' || v === 'casa' || v === 'comida' || v === 'voce'
 }
 
-
-function shuffleCopy<T>(arr: T[]): T[] {
-  const a = arr.slice()
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1) // 0..i
-    const tmp = a[i]
-    a[i] = a[j]
-    a[j] = tmp
+// Fisher–Yates (in-place)
+function shuffle<T>(arr: T[]) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
-  return a
+  return arr
 }
-
 
 export async function POST(req: Request) {
   try {
@@ -50,6 +46,9 @@ export async function POST(req: Request) {
     const slot = String(body?.slot ?? '') as Slot
     const focus = String(body?.focus ?? '') as Focus
     const avoidIds = (Array.isArray(body?.avoidIds) ? body.avoidIds : []).map((x) => String(x))
+
+    const countRaw = Number(body?.count ?? 1)
+    const count = Number.isFinite(countRaw) ? Math.max(1, Math.min(5, Math.floor(countRaw))) : 1
 
     if (!isSlot(slot) || !isFocus(focus)) {
       return NextResponse.json({ ok: false, error: 'bad_request' } satisfies ApiResponse, { status: 400 })
@@ -64,9 +63,9 @@ export async function POST(req: Request) {
       .eq('status', 'published')
       .eq('environment', focus)
       .eq('duration_minutes', Number(slot))
-      .ilike('tags', '%plano_pronto%')
+      .ilike('tags', '%frase_simples%')
       .ilike('tags', '%para_agora%')
-      .limit(50)
+      .limit(200)
 
     if (error) {
       return NextResponse.json({ ok: false, error: `supabase:${error.message}` } satisfies ApiResponse, { status: 200 })
@@ -82,26 +81,18 @@ export async function POST(req: Request) {
       }))
       .filter((x) => x.id && x.title && x.how)
 
-    
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+    const poolSize = allItems.length
 
-const poolSize = allItems.length
-      const remaining = avoidIds.length ? allItems.filter((x) => !avoidIds.includes(String(x.id))) : allItems
-      const exhausted = avoidIds.length > 0 && remaining.length === 0
-      const items = shuffleCopy(remaining)
+    const remaining = avoidIds.length ? allItems.filter((x) => !avoidIds.includes(String(x.id))) : allItems
+    const exhausted = avoidIds.length > 0 && remaining.length === 0
+
+    const picked = shuffle([...remaining]).slice(0, count)
 
     return NextResponse.json(
       {
         ok: true,
-        meta: { source: 'adm', poolSize, returnedCount: items.length, exhausted, avoidCount: avoidIds.length },
-        items,
+        meta: { source: 'adm', poolSize, returnedCount: picked.length, exhausted, avoidCount: avoidIds.length },
+        items: picked,
       } satisfies ApiResponse,
       { status: 200 },
     )
