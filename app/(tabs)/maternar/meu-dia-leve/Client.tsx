@@ -58,6 +58,7 @@ const GEN_KEYS = {
 
 const DAILY_KEYS = {
   inspiracao: (dateKey: string) => `maternar/meu-dia-leve/daily/inspiracao/${dateKey}`,
+  paraHoje: (dateKey: string) => `maternar/meu-dia-leve/daily/para-hoje/${dateKey}`,
 } as const
 
 function safeGetLS(key: string): string | null {
@@ -529,6 +530,10 @@ export default function MeuDiaLeveClient() {
   const [fraseSimplesError, setFraseSimplesError] = useState<string>('')
   const [fraseAvoidIds, setFraseAvoidIds] = useState<string[]>([])
 
+  const [paraHojeText, setParaHojeText] = useState<string>('')
+  const [paraHojeLoading, setParaHojeLoading] = useState<boolean>(false)
+  const [paraHojeError, setParaHojeError] = useState<string>('')
+
   const [planParaAgora, setPlanParaAgora] = useState<PlanItem | null>(null)
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planPicked, setPlanPicked] = useState<number>(0)
@@ -536,6 +541,52 @@ export default function MeuDiaLeveClient() {
   const [planSource, setPlanSource] = useState<'adm' | 'fallback' | 'error'>('fallback')
 
   const todayKey = getBrazilDateKey(new Date())
+
+  async function fetchParaHoje() {
+    try {
+      setParaHojeLoading(true)
+      setParaHojeError('')
+
+      // daily-lock (Brasil): 1 mensagem por dia
+      const dailyKey = DAILY_KEYS.paraHoje(todayKey)
+      try {
+        const cachedRaw = safeGetLS(dailyKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          const cachedText = String(cached?.text ?? '').trim()
+          if (cachedText) {
+            setParaHojeText(cachedText)
+            return
+          }
+        }
+      } catch {}
+
+      const res = await fetch('/api/ai/meu-dia-leve/para-hoje', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      })
+
+      const data = await res.json().catch(() => null)
+      if (!data?.ok || !data?.item) {
+        setParaHojeText('')
+        setParaHojeError(String(data?.error ?? 'bad_response'))
+        return
+      }
+
+      const txt = String(data?.item?.body ?? '').trim()
+      setParaHojeText(txt)
+
+      try {
+        safeSetLS(dailyKey, JSON.stringify({ id: data?.item?.id ? String(data.item.id) : null, text: txt }))
+      } catch {}
+    } catch (e: any) {
+      setParaHojeText('')
+      setParaHojeError(String(e?.message ?? 'fetch_error'))
+    } finally {
+      setParaHojeLoading(false)
+    }
+  }
+
 
   async function fetchFraseSimples(input: { slot: string; focus: string; avoidIds: string[] }) {
     try {
@@ -1410,6 +1461,22 @@ useEffect(() => {
               </div>
 
               <div className="mt-6 border-t border-[#f5d7e5]" />
+
+              
+              {/* PARA HOJE (editorial diário — ADM-first) */}
+              <div className="mt-6 rounded-3xl border border-[#f5d7e5] bg-white p-5">
+                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para hoje</div>
+
+                {paraHojeLoading ? (
+                  <div className="mt-2 text-[13px] text-[#6a6a6a]">Carregando…</div>
+                ) : paraHojeText ? (
+                  <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">{paraHojeText}</div>
+                ) : (
+                  <div className="mt-2 text-[13px] text-[#6a6a6a]">
+                    {paraHojeError ? 'Não deu agora. Tente novamente.' : 'Sem mensagem para hoje.'}
+                  </div>
+                )}
+              </div>
 
               {/* Conteúdo original (passos 1–4) */}
               <div className="mt-6">
