@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
-
-import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog'
-import { track } from '@/app/lib/telemetry'
+import { NextResponse } from 'next/server';
+import { listPublishedIdeasForHub, type AdmIdeaHub } from '@/app/lib/adm/adm.server';
+import { consolidateMaterials, youngestBucket } from '@/app/lib/quickIdeasCatalog';
+import { track } from '@/app/lib/telemetry';
 import type {
   QuickIdea,
   QuickIdeasAgeBucket,
@@ -9,9 +9,9 @@ import type {
   QuickIdeasLocation,
   QuickIdeasEnergy,
   QuickIdeasTimeWindow,
-} from '@/app/types/quickIdeas'
+} from '@/app/types/quickIdeas';
 
-export const runtime = 'edge'
+export const runtime = 'nodejs';
 
 /**
  * Payload legado (catálogo por criança / contexto).
@@ -48,6 +48,7 @@ type QuickIdeasLightMemory = {
  */
 type QuickIdeasRequestLight = {
   intent: 'quick_idea'
+  hub: 'my_day' | 'cuidar_de_mim'
   nonce?: number
   locale?: 'pt-BR'
   memory?: QuickIdeasLightMemory
@@ -153,10 +154,10 @@ function chooseWithSoftMemory(opts: {
       signal === 'heavy'
         ? new Set(['md-5', 'md-2'])
         : signal === 'tired'
-        ? new Set(['md-1', 'md-4'])
-        : signal === 'overwhelmed'
-        ? new Set(['md-2', 'md-3'])
-        : new Set<string>()
+          ? new Set(['md-1', 'md-4'])
+          : signal === 'overwhelmed'
+            ? new Set(['md-2', 'md-3'])
+            : new Set<string>()
 
     if (preferredIds.size) {
       const preferred = pool.filter((s) => preferredIds.has(s.id))
@@ -167,6 +168,29 @@ function chooseWithSoftMemory(opts: {
 
   const one = chooseOne(opts.seed, pool)
   return { one, excludedCount, memoryUsed: hasMemory, signal }
+}
+
+async function getLightSuggestionsFromADM(hub: 'my_day' | 'cuidar_de_mim') {
+  const admHub: AdmIdeaHub = hub === 'my_day' ? 'meu-dia-leve' : 'cuidar-de-mim'
+
+  try {
+    const rows = await listPublishedIdeasForHub({ hub: admHub, limit: 80 })
+    const suggestions = (rows ?? [])
+      .filter((r) => r && typeof r.id === 'string' && r.id.trim() && typeof r.title === 'string' && r.title.trim())
+      .map((r) => ({
+        id: r.id,
+        title: r.title,
+        description: (r.short_description ?? '').trim() || undefined,
+      }))
+
+    if (suggestions.length) {
+      return { suggestions, source: 'adm' as const, admHub }
+    }
+  } catch {
+    // Silent fail: do not break hubs.
+  }
+
+  return { suggestions: myDaySuggestions(), source: 'seed' as const, admHub }
 }
 
 export async function POST(req: Request) {
@@ -180,8 +204,7 @@ export async function POST(req: Request) {
      */
     if (isLightRequest(body)) {
       const seed = typeof body.nonce === 'number' ? body.nonce : Date.now()
-
-      const base = myDaySuggestions()
+      const { suggestions: base, source, admHub } = await getLightSuggestionsFromADM(body.hub)
       const { one, excludedCount, memoryUsed, signal } = chooseWithSoftMemory({
         seed,
         suggestions: base,
@@ -200,7 +223,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         suggestions: [one],
-        meta: { mode: 'my_day_light' as const },
+        meta: { mode: 'my_day_light' as const, source, admHub },
       })
     }
 

@@ -1,13 +1,9 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 
 const TABS_PREFIX_PATTERN = /^\/\(tabs\)(?=\/|$)/
 const SEEN_KEY = 'm360_seen_welcome_v1'
-
-/* =========================
-   Helpers de segurança
-========================= */
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
@@ -45,118 +41,154 @@ function isProtectedPath(pathname: string) {
   return false
 }
 
-/* =========================
-   Helpers de redirect com cookies
-========================= */
-
-function redirectWithResponse(request: NextRequest, response: NextResponse, to: string | URL) {
-  const url = typeof to === 'string' ? new URL(to, request.url) : to
-  const redirect = NextResponse.redirect(url)
-
-  // Garante que qualquer atualização de cookies/headers feita pelo Supabase
-  // não seja perdida quando retornamos um redirect.
-  response.headers.forEach((value, key) => {
-    redirect.headers.set(key, value)
-  })
-
-  return redirect
-}
-
-/* =========================
-   Middleware
-========================= */
-
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  try {
+    const pathname = request.nextUrl.pathname
 
-  // Builder / preview sempre passa
-  if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
-    return NextResponse.next()
-  }
+    // Builder / preview sempre passa
+    if (request.nextUrl.searchParams.has('builder.preview') || pathname.startsWith('/builder-embed')) {
+      return NextResponse.next()
+    }
 
-  // Normalização /(tabs)
-  const normalizedPath = TABS_PREFIX_PATTERN.test(pathname)
-    ? pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
-    : pathname
+    // Normalização /(tabs)
+    const normalizedPath = TABS_PREFIX_PATTERN.test(pathname)
+      ? pathname.replace(TABS_PREFIX_PATTERN, '') || '/'
+      : pathname
 
-  const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
+    const redirectToValue = `${normalizedPath}${request.nextUrl.search || ''}`
 
-  // Response base (permite set-cookie/refresh)
-  const response = NextResponse.next()
+    let response = NextResponse.next()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  const canAuth = Boolean(supabaseUrl && supabaseAnon)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const canAuth = Boolean(supabaseUrl && supabaseAnon)
 
-  let hasSession = false
-  let hasSeenWelcome = false
+    let hasSession = false
+    let hasSeenWelcome = false
+    let userId: string | null = null
+    let userEmail: string | null = null
 
-  if (canAuth) {
-    try {
-      const supabase = createMiddlewareClient({ req: request, res: response })
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+    const supabase = canAuth
+      ? createServerClient(supabaseUrl!, supabaseAnon!, {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value
+            },
+            set(name: string, value: string, options: any) {
+              response.cookies.set({ name, value, ...options })
+            },
+            remove(name: string, options: any) {
+              response.cookies.set({ name, value: '', ...options, maxAge: 0 })
+            },
+          },
+        })
+      : null
 
-      hasSession = Boolean(session)
-
-      if (hasSession) {
-        try {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.getUser()
+        hasSession = !error && Boolean(data?.user)
+        if (hasSession) {
+          userId = data.user?.id ?? null
+          userEmail = data.user?.email ?? null
           hasSeenWelcome = request.cookies.get(SEEN_KEY)?.value === '1'
-        } catch {
-          hasSeenWelcome = false
         }
+      } catch {
+        hasSession = false
+        hasSeenWelcome = false
+        userId = null
+        userEmail = null
       }
-    } catch {
-      hasSession = false
-      hasSeenWelcome = false
-    }
-  }
-
-  /* =========================
-     Regras principais
-  ========================= */
-
-  // Logada tentando acessar login/signup -> aplica entrada
-  if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
-    if (!hasSeenWelcome) {
-      return redirectWithResponse(request, response, '/bem-vinda')
     }
 
-    const rawNext = request.nextUrl.searchParams.get('redirectTo')
-    const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
-    return redirectWithResponse(request, response, nextDest)
-  }
+    // Logada tentando acessar login/signup -> aplica entrada
+    if (hasSession && (normalizedPath === '/login' || normalizedPath === '/signup')) {
+      const rawNext = request.nextUrl.searchParams.get('redirectTo')
+      const nextDest = safeInternalRedirect(rawNext, '/meu-dia')
 
-  // "/" é público — mas se logada, aplica regra de entrada
-  if (normalizedPath === '/' && hasSession) {
-    if (!hasSeenWelcome) {
-      return redirectWithResponse(request, response, '/bem-vinda')
+      if (!hasSeenWelcome) {
+        const url = new URL('/bem-vinda', request.url)
+        url.searchParams.set('next', nextDest)
+        return NextResponse.redirect(url)
+      }
+
+      return NextResponse.redirect(new URL(nextDest, request.url))
     }
-    return redirectWithResponse(request, response, '/meu-dia')
-  }
 
-  // Rota protegida sem sessão -> login
-  if (isProtectedPath(normalizedPath) && !hasSession) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirectTo', redirectToValue)
-    return redirectWithResponse(request, response, loginUrl)
-  }
+    // "/" é público — mas se logada, aplica regra de entrada
+    if (normalizedPath === '/' && hasSession) {
+      if (!hasSeenWelcome) {
+        const url = new URL('/bem-vinda', request.url)
+        url.searchParams.set('next', '/meu-dia')
+        return NextResponse.redirect(url)
+      }
+      return NextResponse.redirect(new URL('/meu-dia', request.url))
+    }
 
-  // Rotas públicas seguem
-  if (isPublicPath(normalizedPath)) {
+    // Rota protegida sem sessão -> login
+    if (isProtectedPath(normalizedPath) && !hasSession) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('redirectTo', redirectToValue)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    /**
+     * Gate /admin (ALINHADO com app/admin/layout.tsx):
+     * - Fonte primária: profiles.role por user_id
+     * - Fallback compat: adm_admins por email (se existir)
+     */
+    if (hasSession && (normalizedPath === '/admin' || normalizedPath.startsWith('/admin/'))) {
+      if (!userId || !supabase) {
+        return NextResponse.redirect(new URL('/meu-dia', request.url))
+      }
+
+      try {
+        // 1) Fonte primária: profiles.role
+        const { data: profile, error: profErr } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle()
+
+        const isAdminByProfile = !profErr && profile?.role === 'admin'
+        if (isAdminByProfile) {
+          // ok
+        } else {
+          // 2) Fallback: adm_admins por email (opcional / legado)
+          if (!userEmail) return NextResponse.redirect(new URL('/meu-dia', request.url))
+
+          const { data: adminRow, error: adminErr } = await supabase
+            .from('adm_admins')
+            .select('email')
+            .eq('email', userEmail)
+            .maybeSingle()
+
+          if (adminErr || !adminRow) {
+            return NextResponse.redirect(new URL('/meu-dia', request.url))
+          }
+        }
+      } catch {
+        return NextResponse.redirect(new URL('/meu-dia', request.url))
+      }
+    }
+
+    // Rotas públicas seguem
+    if (isPublicPath(normalizedPath)) {
+      if (TABS_PREFIX_PATTERN.test(pathname)) {
+        return NextResponse.rewrite(new URL(normalizedPath, request.url))
+      }
+      return response
+    }
+
+    // Rewrite padrão /(tabs)
     if (TABS_PREFIX_PATTERN.test(pathname)) {
       return NextResponse.rewrite(new URL(normalizedPath, request.url))
     }
+
     return response
+  } catch {
+    return NextResponse.next()
   }
-
-  // Rewrite padrão /(tabs)
-  if (TABS_PREFIX_PATTERN.test(pathname)) {
-    return NextResponse.rewrite(new URL(normalizedPath, request.url))
-  }
-
-  return response
 }
 
 export const config = {

@@ -440,6 +440,59 @@ function buildPlanPool(input: { slot: Slot; focus: Focus }): PlanItem[] {
   return out
 }
 
+
+type AdmPlanResp =
+  | { ok: true; items: Array<{ id: string; title: string; how: string; slot: Slot; focus: Focus }> }
+  | { ok: false; error: string }
+
+async function fetchPlanPoolFromAdm(input: { slot: Slot; focus: Focus }): Promise<PlanItem[]> {
+  try {
+    const res = await fetch('/api/ai/meu-dia-leve/plano-pronto', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slot: input.slot, focus: input.focus }),
+    })
+
+    const data = (await res.json().catch(() => null)) as AdmPlanResp | null
+    if (!data || data.ok !== true || !Array.isArray(data.items)) return []
+
+    return data.items.map((it) => ({
+      kind: 'idea' as const,
+      tag: `${input.slot} min`,
+      title: it.title,
+      how: it.how,
+      slot: input.slot,
+      focus: input.focus,
+    }))
+  } catch {
+    return []
+  }
+}
+
+
+async function fetchPlanoProntoADM(input: { slot: Slot; focus: Focus }): Promise<PlanItem[]> {
+  const res = await fetch('/api/ai/meu-dia-leve/plano-pronto', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ slot: input.slot, focus: input.focus }),
+  })
+
+  const data = await res.json().catch(() => null)
+
+  if (!data?.ok || !Array.isArray(data.items)) return []
+
+  return data.items
+    .map((it: any) => ({
+      kind: 'idea' as const,
+      tag: `${input.slot} min`,
+      title: String(it.title ?? '').trim(),
+      how: String(it.how ?? '').trim(),
+      slot: input.slot,
+      focus: input.focus,
+    }))
+    .filter((x: any) => x.title && x.how)
+}
+
 function pickWithRotation<T>(arr: T[], offset: number): T[] {
   if (!arr.length) return []
   const start = Math.abs(offset) % arr.length
@@ -797,7 +850,7 @@ export default function MeuDiaLeveClient() {
 
   const slotHint = useMemo(() => slotHintLines(slot), [slot])
 
-  function onGeneratePlanParaAgora() {
+  async function onGeneratePlanParaAgora() {
     setPlanNote('')
 
     const counterKey = GEN_KEYS.paraAgora(todayKey)
@@ -811,26 +864,36 @@ export default function MeuDiaLeveClient() {
     }
 
     const count = bumpDailyCounter(counterKey)
-    const pool = buildPlanPool({ slot, focus })
 
-    if (!pool.length) {
+    try {
+      const pool = await fetchPlanoProntoADM({ slot, focus })
+
+      if (!pool.length) {
+        const title = toMyDayTitleFromInspiration({ mood, slot, focus })
+        const item: PlanItem = { kind: 'inspiration', tag: slotLabel(slot), title, how: moodTitle(mood), slot, focus }
+        setPlanParaAgora(item)
+        try {
+          track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback', slot, mood, focus, count })
+        } catch {}
+        return
+      }
+
+      const rotated = pickWithRotation(pool, count)
+      setPlanParaAgora(rotated[0])
+      try {
+        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'adm', slot, mood, focus, count })
+      } catch {}
+    } catch {
       const title = toMyDayTitleFromInspiration({ mood, slot, focus })
       const item: PlanItem = { kind: 'inspiration', tag: slotLabel(slot), title, how: moodTitle(mood), slot, focus }
       setPlanParaAgora(item)
       try {
-        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback', slot, mood, focus, count })
+        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback_error', slot, mood, focus, count })
       } catch {}
-      return
     }
-
-    const rotated = pickWithRotation(pool, count)
-    setPlanParaAgora(rotated[0])
-    try {
-      track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'local', slot, mood, focus, count })
-    } catch {}
   }
 
-  function onGeneratePlanTresOpcoes() {
+  async function onGeneratePlanTresOpcoes() {
     setPlanNote('')
 
     const counterKey = GEN_KEYS.tresOpcoes(todayKey)
@@ -844,26 +907,36 @@ export default function MeuDiaLeveClient() {
     }
 
     const count = bumpDailyCounter(counterKey)
-    const pool = buildPlanPool({ slot, focus })
 
-    if (!pool.length) {
+    try {
+      const pool = await fetchPlanoProntoADM({ slot, focus })
+
+      if (!pool.length) {
+        setPlanOptions([])
+        setPlanPicked(0)
+        setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
+        try {
+          track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'empty_pool', slot, mood, focus, count })
+        } catch {}
+        return
+      }
+
+      const rotated = pickWithRotation(pool, count)
+      const options = rotated.slice(0, 3)
+      setPlanOptions(options)
+      setPlanPicked(0)
+
+      try {
+        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'adm', slot, mood, focus, count })
+      } catch {}
+    } catch {
       setPlanOptions([])
       setPlanPicked(0)
       setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
       try {
-        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'empty_pool', slot, mood, focus, count })
+        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'error', slot, mood, focus, count })
       } catch {}
-      return
     }
-
-    const rotated = pickWithRotation(pool, count)
-    const options = rotated.slice(0, 3)
-    setPlanOptions(options)
-    setPlanPicked(0)
-
-    try {
-      track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'local', slot, mood, focus, count })
-    } catch {}
   }
 
   const selectedPlan = useMemo(() => {

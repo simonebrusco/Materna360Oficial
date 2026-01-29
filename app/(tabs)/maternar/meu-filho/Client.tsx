@@ -304,7 +304,6 @@ async function withAntiRepeatText(args: {
       continue
     }
   }
-
   const fb = args.fallback()
   try {
     const titleSig = makeTitleSignature(fb.slice(0, 60))
@@ -430,18 +429,22 @@ type Bloco1State = { status: 'idle' } | { status: 'loading' } | { status: 'done'
 
 async function fetchBloco1Plan(args: { tempoDisponivel: number; nonce: string }): Promise<string | null> {
   try {
+    const k = mfRotinaKey(args)
+    const avoidIds = MF_ROTINA_AVOID[k] ?? []
+
     const res = await fetch('/api/ai/rotina', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
-      body: JSON.stringify({
+
+    body: JSON.stringify({
         feature: 'quick-ideas',
         origin: 'maternar/meu-filho',
-        tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-1',
-        requestId: args.nonce,
         nonce: args.nonce,
+        requestId: args.nonce,
+        variation: args.nonce,
       }),
     })
 
@@ -490,22 +493,40 @@ function safeBloco2Title(raw: unknown): string | null {
 }
 
 function safeBloco2How(raw: unknown): string | null {
-  const t = clampText(String(raw ?? ''), 320)
+  // Bloco 2: description curta (1 frase), sem lista, sem template, sem blog.
+  const t = clampText(String(raw ?? ''), 240)
   if (!t) return null
+
   const low = t.toLowerCase()
-  if (low.startsWith('que tal') || low.startsWith('uma boa ideia')) return null
 
-  const hasStepsCue =
-    low.includes('faça') ||
-    low.includes('combine') ||
-    low.includes('depois') ||
-    low.includes('no final') ||
-    low.includes('em seguida') ||
-    low.includes('por fim') ||
-    low.includes('primeiro') ||
-    low.includes('então')
+  // banlist (sem template / sem convite / sem didatismo)
+  const banned = [
+    'que tal',
+    'talvez',
+    'se quiser',
+    'uma boa ideia',
+    'uma ideia',
+    'você pode',
+    'voce pode',
+    'atividade educativa',
+    'educativa',
+    'pinterest',
+    'lista',
+    'diversas opções',
+    'várias opções',
+  ]
+  if (banned.some((b) => low.includes(b))) return null
 
-  if (!hasStepsCue) return null
+  // sem lista/bullets/quebras
+  if (t.includes('\n') || t.includes('•') || t.includes('- ')) return null
+
+  // 1 a 2 frases no máximo (curto, direto)
+  const sentences = t
+    .split(/[.!?]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+  if (sentences.length < 1 || sentences.length > 2) return null
+
   return t
 }
 
@@ -524,7 +545,6 @@ function pick3Suggestions(data: unknown): SuggestionPack[] | null {
 }
 
 async function fetchBloco2Cards(args: {
-  tempoDisponivel: number
   age: AgeBand
   playLocation: PlayLocation
   skills: SkillId[]
@@ -538,7 +558,6 @@ async function fetchBloco2Cards(args: {
       body: JSON.stringify({
         feature: 'quick-ideas',
         origin: 'maternar/meu-filho',
-        tempoDisponivel: args.tempoDisponivel,
         comQuem: 'eu-e-meu-filho',
         tipoIdeia: 'meu-filho-bloco-2',
         ageBand: args.age,
@@ -560,7 +579,7 @@ async function fetchBloco2Cards(args: {
       const title = safeBloco2Title(i.title)
       const how = safeBloco2How(i.description)
       if (!title || !how) return null
-      return { title, how, time: String(args.tempoDisponivel) as TimeMode, tag: 'curado' }
+      return { title, how, time: '10' as TimeMode, tag: 'curado' }
     }
 
     const a = mk(picked[0])
@@ -573,6 +592,87 @@ async function fetchBloco2Cards(args: {
     return null
   }
 }
+
+
+/**
+ * BLOCO 2 — Fallback variável por clique (seed = nonce)
+ * ----------------------------------------------------
+ * Objetivo: quando cair em fallback (IA inválida/erro), ainda assim variar as 3 opções
+ * a cada clique no botão "Gerar novas 3 opções", sem depender de IA.
+ *
+ * Regras:
+ * - NÃO mexe em layout.
+ * - Retorna sempre 3 opções (a,b,c).
+ * - Usa seed (nonce) para variar deterministicamente.
+ */
+function buildBloco2FallbackSeeded(args: {
+  age: AgeBand
+  playLocation: PlayLocation
+  skills: SkillId[]
+  seed: string
+}): Bloco2Items {
+  const time = '10' as TimeMode
+
+  // hash determinístico simples (FNV-1a)
+  const hash = (str: string) => {
+    let h = 2166136261
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i)
+      h = Math.imul(h, 16777619)
+    }
+    return h >>> 0
+  }
+
+  const poolBase: PlanItem[] = [
+    { title: 'Caça às cores', how: 'Escolham uma cor e encontrem 5 coisas. No fim, guardem 1 item juntos.', time, tag: 'local' },
+    { title: 'Pista no chão', how: 'Façam um caminho curto com fita/linha. Andem nele com passos diferentes e depois tirem juntos.', time, tag: 'local' },
+    { title: 'Estátua musical', how: 'Música: dança e pausa. Quando parar, “estátua” por 3 segundos. Repitam 5x.', time, tag: 'local' },
+    { title: 'Torre e derruba suave', how: 'Montem uma torre com potes/caixas. Alternem: um empilha, outro derruba com toque leve.', time, tag: 'local' },
+    { title: 'Missão do som', how: 'Silêncio por 10s para “caçar” 3 sons. Depois imitem os sons juntos por 1 minuto.', time, tag: 'local' },
+    { title: 'Mini circuito', how: 'Três etapas: pular 5x, passar por baixo, empurrar uma almofada. Repitam 2x.', time, tag: 'local' },
+    { title: 'Guarda-relâmpago', how: 'Escolham 6 coisas fora do lugar. Guardem em dupla em 2 minutos. Final: “toca aqui”.', time, tag: 'local' },
+    { title: 'Desenho de 1 minuto', how: 'Cada um desenha por 60s. Troquem o papel e completem por mais 60s.', time, tag: 'local' },
+    { title: 'Sombras na parede', how: 'Com uma luz, façam sombras com as mãos e inventem 1 personagem rapidinho.', time, tag: 'local' },
+    { title: 'Bola de papel', how: 'Amassem 6 bolinhas. Façam “arremesso no cesto” por 2 minutos. Depois recolham.', time, tag: 'local' },
+  ]
+
+  const poolOutdoor: PlanItem[] = [
+    { title: 'Caça às formas', how: 'Encontrem 5 coisas redondas e 5 quadradas. No fim, escolham 1 favorita e contem por quê.', time, tag: 'local' },
+    { title: 'Circuito de passos', how: 'Escolham 3 tipos de passos por 1 minuto: grande, pequeno, de lado. Alternem quem lidera.', time, tag: 'local' },
+    { title: 'Desafio do equilíbrio', how: 'Andem na “linha” da calçada por 30s. Depois inventem uma regra nova por mais 30s.', time, tag: 'local' },
+  ]
+
+  const poolMove: PlanItem[] = [
+    { title: 'Imita e troca', how: 'Você faz 1 movimento por 10s, a criança imita. Troquem. Repitam 6 vezes.', time, tag: 'local' },
+    { title: 'Congela e respira', how: 'Movimento por 15s, congela 3s e 1 respiração profunda. Repitam 6 vezes.', time, tag: 'local' },
+  ]
+
+  const poolTravel: PlanItem[] = [
+    { title: 'Jogo do “eu vejo”', how: 'No caminho, cada um escolhe 3 coisas para “achar”. Final: descrevam 1 delas juntos.', time, tag: 'local' },
+    { title: 'Detetive de detalhes', how: 'Escolham 1 objeto e a criança diz 2 detalhes. Você diz 2. Troquem de objeto.', time, tag: 'local' },
+  ]
+
+  const loc = String(args.playLocation)
+
+  let pool = poolBase
+  if (loc === 'ar-livre') pool = [...poolBase, ...poolOutdoor]
+  if (loc === 'deslocamento') pool = poolTravel
+  const skillsStr = (args.skills || []).map((x) => String(x))
+  if (skillsStr.includes('coordenacao')) pool = [...pool, ...poolMove]
+  const seed = `${args.seed}|${args.age}|${args.playLocation}|${(args.skills || []).join(',')}`
+  const base = hash(seed)
+
+  const pickIdx = (offset: number) => (base + offset) % pool.length
+  let i1 = pickIdx(0)
+  let i2 = pickIdx(3 + (base % 5))
+  if (i2 === i1) i2 = (i2 + 1) % pool.length
+  let i3 = pickIdx(7 + (base % 11))
+  if (i3 === i1 || i3 === i2) i3 = (i3 + 2) % pool.length
+  if (i3 === i1 || i3 === i2) i3 = (i3 + 3) % pool.length
+
+  return { a: pool[i1], b: pool[i2], c: pool[i3] }
+}
+
 
 /* =========================
    BLOCO 3 — ROTINAS / CONEXÃO
@@ -621,6 +721,16 @@ const BLOCO3_FALLBACK: Record<Bloco3Type, Record<AgeBand, string>> = {
   },
 }
 
+const MF_ROTINA_AVOID: Record<string, string[]> = {}
+  function mfRotinaKey(args: any) {
+    // key ESTÁVEL: não pode depender de nonce (senão o avoidIds nunca acumula)
+    const age = String((args as any)?.faixa_etaria ?? (args as any)?.ageBand ?? '')
+    const tema = String((args as any)?.tema ?? (args as any)?.environment ?? '')
+    const tipo = String((args as any)?.tipo_experiencia ?? (args as any)?.kind ?? '')
+    const momento = String((args as any)?.momento_do_dia ?? (args as any)?.momento ?? '')
+    return [age, tema, tipo, momento].join('|')
+  }
+
 async function fetchBloco3Suggestion(args: {
   faixa_etaria: AgeBand
   momento_do_dia: MomentoDoDia
@@ -652,6 +762,9 @@ async function fetchBloco3Suggestion(args: {
 
     if (!res.ok) return null
     const data = (await res.json().catch(() => null)) as any
+
+      const metaSource = data?.meta?.source ?? data?.source ?? null
+      if (metaSource && metaSource !== 'adm') return null
 
     const candidate =
       data?.suggestion ??
@@ -740,7 +853,7 @@ async function fetchBloco4Suggestion(args: {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
       body: JSON.stringify({
-        feature: 'fase-contexto',
+        feature: 'fase',
         origin: 'maternar/meu-filho',
         tipoIdeia: 'meu-filho-bloco-4',
         idade: args.faixa_etaria,
@@ -1057,6 +1170,12 @@ export default function MeuFilhoClient() {
 
   // Bloco 1
   const [bloco1, setBloco1] = useState<Bloco1State>({ status: 'idle' })
+  const lastBloco1SigRef = useRef<string | null>(null)
+    const lastBloco4SigRef = useRef<string | null>(null)
+    const lastBloco3RotinaSigRef = useRef<string | null>(null)
+    const lastBloco3ConexaoSigRef = useRef<string | null>(null)
+  const bloco1Sig = (s: string) => String(s ?? "").trim().replace(/\s+/g, " ").slice(0, 220)
+
   const bloco1ReqSeq = useRef(0)
 
   // Bloco 2
@@ -1193,14 +1312,11 @@ export default function MeuFilhoClient() {
   }
 
   // ✅ FIX typing (SkillId[] garantido)
-  function toggleSkill(id: SkillId) {
-    setSkills((prev): SkillId[] => {
-      const has = prev.includes(id)
-      const next: SkillId[] = has ? prev.filter((x) => x !== id) : [...prev, id]
-      const safe: SkillId[] = next.length ? next : (['emocional'] as SkillId[])
-
-      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(safe))
-      return safe
+  function selectSkill(id: SkillId) {
+    setSkills((): SkillId[] => {
+      const next: SkillId[] = [id]
+      safeSetLS(HUB_PREF_FILTERS.skills, JSON.stringify(next))
+      return next
     })
 
     setBloco2({ status: 'idle' })
@@ -1233,7 +1349,27 @@ export default function MeuFilhoClient() {
     })
 
     if (seq !== bloco1ReqSeq.current) return
-    setBloco1({ status: 'done', text: out.text, source: out.source })
+    // anti-repeat minimal per session: avoid identical consecutive text
+    let finalOut = out
+    try {
+      const prevSig = lastBloco1SigRef.current
+      const curSig = bloco1Sig(out?.text)
+      if (prevSig && curSig && curSig === prevSig) {
+        const retry = await withAntiRepeatText({
+          themeSignature: themeSignature + "|retry1",
+          run: async (nonce) => await fetchBloco1Plan({ tempoDisponivel, nonce }),
+          fallback: () => clampMeuFilhoBloco1Text(BLOCO1_FALLBACK[age][time]),
+          maxTries: 1,
+        })
+        const retrySig = bloco1Sig(retry?.text)
+        if (!prevSig || !retrySig || retrySig !== prevSig) {
+          finalOut = retry
+        }
+      }
+      lastBloco1SigRef.current = bloco1Sig(finalOut?.text)
+    } catch {}
+
+    setBloco1({ status: 'done', text: finalOut.text, source: finalOut.source })
   }
 
   async function generateBloco2() {
@@ -1244,11 +1380,11 @@ export default function MeuFilhoClient() {
     const themeSignature = `bloco2|age:${age}|time:${time}|tempo:${tempoDisponivel}|loc:${playLocation}|skills:${skills.join(',')}`
 
     const out = await withAntiRepeatPack({
-      themeSignature,
-      run: async (nonce) => await fetchBloco2Cards({ tempoDisponivel, age, playLocation, skills, nonce }),
-      fallback: () => kit.plan,
-      maxTries: 2,
-    })
+        themeSignature,
+        run: async (nonce) => await fetchBloco2Cards({ age, playLocation, skills, nonce }),
+        fallback: () => buildBloco2FallbackSeeded({ age, playLocation, skills, seed: newNonce() }),
+        maxTries: 2,
+      })
 
     if (seq !== bloco2ReqSeq.current) return
     setBloco2({ status: 'done', items: out.items, source: out.source })
@@ -1256,64 +1392,122 @@ export default function MeuFilhoClient() {
   }
 
   async function generateBloco4() {
-    const seq = ++bloco4ReqSeq.current
-    setBloco4({ status: 'loading' })
+      const seq = ++bloco4ReqSeq.current
+      setBloco4({ status: 'loading' })
 
-    const momento = inferMomentoDesenvolvimento(age)
-    const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
+      const momento = inferMomentoDesenvolvimento(age)
+      const themeSignature = `bloco4|age:${age}|foco:${faseFoco}|momento:${momento ?? 'na'}`
 
-    const out = await withAntiRepeatText({
-      themeSignature,
-      run: async (nonce) =>
-        await fetchBloco4Suggestion({
-          faixa_etaria: age,
-          momento_desenvolvimento: momento,
-          contexto: 'fase',
-          foco: faseFoco,
-          nonce,
-        }),
-      fallback: () => BLOCO4_FALLBACK[age],
-      maxTries: 2,
-    })
+      const out = await withAntiRepeatText({
+        themeSignature,
+        run: async (nonce) =>
+          await fetchBloco4Suggestion({
+            faixa_etaria: age,
+            momento_desenvolvimento: momento,
+            contexto: 'fase',
+            foco: faseFoco,
+            nonce,
+          }),
+        fallback: () => BLOCO4_FALLBACK[age],
+        maxTries: 2,
+      })
 
-    if (seq !== bloco4ReqSeq.current) return
-    setBloco4({ status: 'done', text: out.text, source: out.source, momento })
-  }
+      if (seq !== bloco4ReqSeq.current) return
 
-  async function generateBloco3(kind: Bloco3Type) {
-    const seq = ++bloco3ReqSeq.current
+      // anti-repeat minimal per session: avoid identical consecutive text in FASE (Bloco 4)
+      let finalOut = out
+      try {
+        const prevSig = lastBloco4SigRef.current
+        const curSig = String(out?.text ?? '').trim().toLowerCase()
+        if (prevSig && curSig && curSig === prevSig) {
+          const retry = await withAntiRepeatText({
+            themeSignature: themeSignature + '|retry1',
+            run: async (nonce) =>
+              await fetchBloco4Suggestion({
+                faixa_etaria: age,
+                momento_desenvolvimento: momento,
+                contexto: 'fase',
+                foco: faseFoco,
+                nonce,
+              }),
+            fallback: () => BLOCO4_FALLBACK[age],
+            maxTries: 1,
+          })
+          const retrySig = String(retry?.text ?? '').trim().toLowerCase()
+          if (!prevSig || !retrySig || retrySig !== prevSig) {
+            finalOut = retry
+          }
+        }
+        lastBloco4SigRef.current = String(finalOut?.text ?? '').trim().toLowerCase() || null
+      } catch {}
 
-    const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
-    const tema = kind === 'rotina' ? rotinaTema : conexaoTema
-    if (!tema) {
-      toast.info('Escolha um tema antes de gerar.')
-      return
+      setBloco4({ status: 'done', text: finalOut.text, source: finalOut.source, momento })
     }
 
-    setBloco3({ status: 'loading', kind })
+    async function generateBloco3(kind: Bloco3Type) {
+      const seq = ++bloco3ReqSeq.current
 
-    const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
+      const momento: MomentoDoDia = kind === 'rotina' ? 'transicao' : 'noite'
+      const tema = kind === 'rotina' ? rotinaTema : conexaoTema
+      if (!tema) {
+        toast.info('Escolha um tema antes de gerar.')
+        return
+      }
 
-    const out = await withAntiRepeatText({
-      themeSignature,
-      run: async (nonce) =>
-        await fetchBloco3Suggestion({
-          faixa_etaria: age,
-          momento_do_dia: momento,
-          tipo_experiencia: kind,
-          contexto: 'continuidade',
-          tema,
-          nonce,
-        }),
-      fallback: () => BLOCO3_FALLBACK[kind][age],
-      maxTries: 2,
-    })
+      setBloco3({ status: 'loading', kind })
 
-    if (seq !== bloco3ReqSeq.current) return
-    setBloco3({ status: 'done', kind, text: out.text, source: out.source, momento })
-  }
+      const themeSignature = `bloco3|kind:${kind}|age:${age}|momento:${momento}|tema:${String(tema)}`
 
-  function saveSelectedToMyDay(title: string) {
+      const out = await withAntiRepeatText({
+        themeSignature,
+        run: async (nonce) =>
+          await fetchBloco3Suggestion({
+            faixa_etaria: age,
+            momento_do_dia: momento,
+            tipo_experiencia: kind,
+            contexto: 'continuidade',
+            tema,
+            nonce,
+          }),
+        fallback: () => BLOCO3_FALLBACK[kind][age],
+        maxTries: 2,
+      })
+
+      if (seq !== bloco3ReqSeq.current) return
+
+      // anti-repeat minimal per session: avoid identical consecutive text in ROTINA/CONEXÃO (Bloco 3)
+      let finalOut = out
+      try {
+        const ref = kind === 'rotina' ? lastBloco3RotinaSigRef : lastBloco3ConexaoSigRef
+        const prevSig = ref.current
+        const curSig = String(out?.text ?? '').trim().toLowerCase()
+        if (prevSig && curSig && curSig === prevSig) {
+          const retry = await withAntiRepeatText({
+            themeSignature: themeSignature + '|retry1',
+            run: async (nonce) =>
+              await fetchBloco3Suggestion({
+                faixa_etaria: age,
+                momento_do_dia: momento,
+                tipo_experiencia: kind,
+                contexto: 'continuidade',
+                tema,
+                nonce,
+              }),
+            fallback: () => BLOCO3_FALLBACK[kind][age],
+            maxTries: 1,
+          })
+          const retrySig = String(retry?.text ?? '').trim().toLowerCase()
+          if (!prevSig || !retrySig || retrySig !== prevSig) {
+            finalOut = retry
+          }
+        }
+        ref.current = String(finalOut?.text ?? '').trim().toLowerCase() || null
+      } catch {}
+
+      setBloco3({ status: 'done', kind, text: finalOut.text, source: finalOut.source, momento })
+    }
+
+    function saveSelectedToMyDay(title: string) {
     const ORIGIN = 'family' as const
     const SOURCE = MY_DAY_SOURCES.MATERNAR_MEU_FILHO
 
@@ -1536,13 +1730,13 @@ export default function MeuFilhoClient() {
                         <div className="rounded-2xl bg-white border border-[#ffd1e6] p-4">
                           <div className="text-[13px] font-semibold text-[#2f3a56]">Que habilidades você quer estimular?</div>
                           <div className="text-[12px] text-[#545454] mt-1">
-                            Você pode marcar mais de uma. Se deixar tudo vazio, volta para “Emoções”.
+Você escolhe 1 por vez. Para trocar, toque em outra. Se deixar vazio, volta para &quot;Emoções&quot;.
                           </div>
 
                           <div className="mt-3 flex flex-wrap gap-2">
                             {SKILLS.map((s) => {
                               const active = skills.includes(s.id)
-                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => toggleSkill(s.id)} />
+                              return <SubChip key={s.id} label={s.label} active={active} onClick={() => selectSkill(s.id)} />
                             })}
                           </div>
                         </div>

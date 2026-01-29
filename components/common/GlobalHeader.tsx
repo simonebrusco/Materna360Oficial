@@ -1,14 +1,19 @@
+// components/common/GlobalHeader.tsx
 'use client'
 
 import React from 'react'
+
 import { useProfile } from '@/app/hooks/useProfile'
 import { ClientOnly } from '@/components/common/ClientOnly'
 import { AppLogo } from '@/components/ui/AppLogo'
 
 /**
- * Global translucent header that appears on all tabs
- * - Left: Materna360 logo (branco)
- * - Right: "Olá, Nome"
+ * GlobalHeader
+ *
+ * Regras de ouro:
+ * - Nunca bloqueia navegação
+ * - Nunca decide acesso
+ * - Não expõe affordance de ADM na UI do app
  */
 export function GlobalHeader() {
   const { name, isLoading } = useProfile()
@@ -28,9 +33,11 @@ export function GlobalHeader() {
 
         <div className="flex items-center">
           <ClientOnly>
-            <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
-              {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-[12px] md:text-[13px] font-semibold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                {isLoading ? 'Olá' : `Olá${firstName ? `, ${firstName}` : ''}`}
+              </p>
+            </div>
           </ClientOnly>
         </div>
       </div>

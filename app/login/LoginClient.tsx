@@ -3,7 +3,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
+import { supabaseBrowser } from '@/app/lib/supabase.client'
 
 type UiError = {
   title: string
@@ -26,7 +27,6 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
 function hasSeenWelcomeCookie(): boolean {
   try {
     if (typeof document === 'undefined') return false
-    // leitura simples e segura: middleware decide pelo cookie
     return document.cookie.split(';').some((c) => c.trim().startsWith(`${SEEN_KEY}=1`))
   } catch {
     return false
@@ -79,7 +79,8 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
 export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = useMemo(() => createClientComponentClient(), [])
+
+  const supabase = useMemo(() => supabaseBrowser(), [])
 
   const redirectToRaw = searchParams.get('redirectTo')
   const redirectTo = safeInternalRedirect(redirectToRaw, '/meu-dia')
@@ -93,18 +94,23 @@ export default function LoginClient() {
   const [resendMsg, setResendMsg] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) return
+    let alive = true
 
-      // Regra oficial (P28/P28.5): decisão pelo cookie
-      const seen = hasSeenWelcomeCookie()
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!alive) return
+        if (!data.session) return
 
-      if (!seen) {
-        router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
-      } else {
-        router.replace(redirectTo)
-      }
-    })
+        const seen = hasSeenWelcomeCookie()
+        if (!seen) router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
+        else router.replace(redirectTo)
+      })
+      .catch(() => {})
+
+    return () => {
+      alive = false
+    }
   }, [supabase, router, redirectTo])
 
   async function onSubmit(e: React.FormEvent) {
@@ -127,9 +133,7 @@ export default function LoginClient() {
       return
     }
 
-    // Após login: decisão pelo cookie (middleware + BemVindaClient)
     const seen = hasSeenWelcomeCookie()
-
     if (!seen) {
       router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
       return
@@ -230,14 +234,20 @@ export default function LoginClient() {
       </form>
 
       <div className="mt-4 text-xs text-[#545454]">
-        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}>
+        <a
+          className="underline decoration-[#F5D7E5] underline-offset-4"
+          href={`/recuperar-senha?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
           Esqueci minha senha
         </a>
       </div>
 
       <div className="mt-4 text-xs text-[#545454]">
         Ainda não tem conta?{' '}
-        <a className="underline decoration-[#F5D7E5] underline-offset-4" href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}>
+        <a
+          className="underline decoration-[#F5D7E5] underline-offset-4"
+          href={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}
+        >
           Criar agora
         </a>
       </div>
