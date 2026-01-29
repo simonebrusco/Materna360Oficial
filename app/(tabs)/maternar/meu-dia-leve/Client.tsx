@@ -928,10 +928,100 @@ useEffect(() => {
     }
   }
 
+  
+  // Fallback local (mínimo) — usado APENAS para completar 3 opções quando ADM retornar < 3.
+  // Mantém ADM-first: ADM é fonte primária; fallback é “rede de segurança”.
+  function getFallbackPlanPool(input: { slot: Slot; focus: Focus; mood: Mood }): PlanItem[] {
+    const { slot, focus } = input
+
+    const mk = (title: string, how: string): PlanItem => ({
+      kind: 'inspiration',
+      tag: slotLabel(slot),
+      title,
+      how,
+      slot,
+      focus,
+    })
+
+    // pool local pequeno, por foco + slot
+    const base: Record<Focus, Record<Slot, PlanItem[]>> = {
+      filho: {
+        '3': [
+          mk('Nomear o próximo passo', 'Chegue perto e diga apenas o próximo passo em uma frase. Espere começar.'),
+          mk('Pausa de 3 ciclos', 'Respire 3 vezes com seu filho, sem discutir o motivo agora.'),
+        ],
+        '5': [
+          mk('Sentar perto em silêncio', 'Sente ao lado por cinco minutos. Só presença, sem orientar.'),
+          mk('Um combinado pequeno', 'Faça 1 combinado simples e imediato (“primeiro isso, depois aquilo”).'),
+        ],
+        '10': [
+          mk('Presença guiada', 'Fique 10 minutos perto e descreva o que ele faz (“você está…”), sem corrigir.'),
+          mk('Transição suave', 'Avise em 2 minutos, depois em 1 minuto, e conduza para o próximo passo.'),
+        ],
+      },
+      casa: {
+        '3': [
+          mk('Uma micro-tarefa só', 'Escolha 1 coisa visível (ex.: pia) e faça só isso por 3 minutos.'),
+          mk('Ponto de ordem', 'Junte itens em 1 cesto por 3 minutos. Sem guardar tudo agora.'),
+        ],
+        '5': [
+          mk('5 minutos de reset', 'Lixo + louça visível por 5 minutos. Parou, acabou.'),
+          mk('Cesto-relâmpago', 'Recolha itens fora do lugar em um cesto por 5 minutos.'),
+        ],
+        '10': [
+          mk('10 minutos por zona', 'Escolha 1 zona (mesa/pia) e organize só ali por 10 minutos.'),
+          mk('Rotina mínima', 'Lixo + pia + roupas em um lugar por 10 minutos.'),
+        ],
+      },
+      comida: {
+        '3': [
+          mk('Lanche simples', 'Escolha 1 fruta + 1 carbo simples. Sem montar prato perfeito.'),
+          mk('Água primeiro', 'Beba água e ofereça água. Depois pense no que dá pra comer.'),
+        ],
+        '5': [
+          mk('Montagem rápida', 'Monte algo com 2 itens do que já tem. Sem receita.'),
+          mk('Plano do mínimo', 'Defina só “o que resolve agora” (ex.: ovo + pão).'),
+        ],
+        '10': [
+          mk('Pré-preparo curto', 'Separe 2 coisas para facilitar a próxima refeição. Só isso.'),
+          mk('Refeição base', 'Faça uma base simples (arroz/ovo) e complemente com o que houver.'),
+        ],
+      },
+      voce: {
+        '3': [
+          mk('Respirar e soltar', 'Três respirações longas. Solte ombros e mandíbula.'),
+          mk('Copinho de água', 'Beba um copo de água devagar, sem celular.'),
+        ],
+        '5': [
+          mk('Pausa sem culpa', 'Sente por 5 minutos. Só para baixar a pressão do corpo.'),
+          mk('Voltar pro corpo', 'Mãos no peito e barriga, respire por 5 minutos.'),
+        ],
+        '10': [
+          mk('Reset de 10', 'Banho rápido OU alongamento leve por 10 minutos.'),
+          mk('Silêncio guiado', '10 minutos sem estímulo: sem tela, só respiração e presença.'),
+        ],
+      },
+    }
+
+    return base[focus]?.[slot] ?? []
+  }
+
+  function pickNonDuplicateFallback(pool: PlanItem[], existing: PlanItem[], needed: number): PlanItem[] {
+    if (needed <= 0) return []
+    const exists = new Set(existing.map((x) => `${x.title}__${x.how}`))
+    const out: PlanItem[] = []
+    for (const it of pool) {
+      if (out.length >= needed) break
+      const k = `${it.title}__${it.how}`
+      if (exists.has(k)) continue
+      exists.add(k)
+      out.push(it)
+    }
+    return out
+  }
+
   async function onGeneratePlanTresOpcoes() {
     setPlanNote('')
-      setPlanSource('fallback')
-
     const counterKey = GEN_KEYS.tresOpcoes(todayKey)
     const allowed = canGenerate(counterKey, GEN_LIMITS.tresOpcoes)
     if (!allowed.ok) {
@@ -959,7 +1049,17 @@ useEffect(() => {
       }
 
       const rotated = pickWithRotation(pool, count)
-      const options = rotated.slice(0, 3)
+      let options = rotated.slice(0, 3)
+
+      if (options.length < 3) {
+        const fallbackPool = getFallbackPlanPool({ slot, focus, mood })
+        const needed = 3 - options.length
+        const extra = pickNonDuplicateFallback(fallbackPool, options, needed)
+        options = [...options, ...extra]
+        setPlanSource('fallback')
+      } else {
+        setPlanSource('adm')
+      }
       setPlanOptions(options)
       setPlanPicked(0)
 
@@ -1267,7 +1367,7 @@ useEffect(() => {
                                 {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                               </div>
 
-                              <div className="mt-3 text-[11px] text-[#6a6a6a]">{planSource === 'adm' ? 'ADM.' : 'opções locais (fallback).'}</div>
+                              <div className="mt-3 text-[11px] text-[#6a6a6a]">Fonte: {planSource === 'adm' ? 'ADM.' : 'opções locais (fallback).'}</div>
                             </div>
                           ) : null}
                         </div>
