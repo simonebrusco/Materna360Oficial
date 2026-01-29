@@ -6,35 +6,38 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 type ApiResponse =
-  | {
-      ok: true
-      meta?: { source: 'adm' }
-      item: { id: string; title: string; body: string }
-    }
+  | { ok: true; meta?: { source: 'adm' }; item: { title: string | null; body: string } }
   | { ok: false; error: string }
+
+function supabaseRef() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const m = url.match(/https:\/\/([^.]+)\.supabase\.co/)
+  return m?.[1] || 'no_url'
+}
 
 export async function POST() {
   try {
-    // chave editorial diária do Meu Dia Leve (curada, sem IA livre)
-    const it = await getAdmEditorialTextPublished({ hub: 'meu-dia-leve', key: 'para_hoje' }).catch(() => null)
+    const it = await getAdmEditorialTextPublished({ hub: 'meu-dia-leve', key: 'para_hoje' })
 
-    if (!it) {
-      return NextResponse.json({ ok: false, error: 'not_found' } satisfies ApiResponse, { status: 200 })
+    if (!it?.body) {
+      return NextResponse.json({ ok: false, error: `not_found@${supabaseRef()}` } satisfies ApiResponse, { status: 200 })
     }
 
-    const id = String((it as any)?.id ?? '').trim()
-    const title = String((it as any)?.title ?? '').trim()
-    const body = String((it as any)?.body ?? '').trim()
+    const title = it.title ? String(it.title).trim() : null
+    const body = String(it.body).trim()
 
-    if (!id || !body) {
-      return NextResponse.json({ ok: false, error: 'bad_item' } satisfies ApiResponse, { status: 200 })
+    if (!body) {
+      return NextResponse.json({ ok: false, error: `bad_item@${supabaseRef()}` } satisfies ApiResponse, { status: 200 })
     }
 
     return NextResponse.json(
-      { ok: true, meta: { source: 'adm' }, item: { id, title, body } } satisfies ApiResponse,
-      { status: 200 },
+      { ok: true, meta: { source: 'adm' }, item: { title, body } } satisfies ApiResponse,
+      { status: 200 }
     )
   } catch (e: any) {
-    return NextResponse.json({ ok: false, error: String(e?.message ?? 'server_error') } satisfies ApiResponse, { status: 200 })
+    return NextResponse.json(
+      { ok: false, error: `adm_read_error@${supabaseRef()}:${String(e?.message ?? e ?? 'server_error')}` } satisfies ApiResponse,
+      { status: 200 }
+    )
   }
 }
