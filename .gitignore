@@ -26,3 +26,6 @@ tsconfig.tsbuildinfo
 
 # local backups
 *.bak.*
+
+# local vercel env
+.env.vercel
