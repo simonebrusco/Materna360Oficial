@@ -56,6 +56,10 @@ const GEN_KEYS = {
   lastSelected: (dateKey: string) => `maternar/meu-dia-leve/gen/last-selected/${dateKey}`,
 } as const
 
+const DAILY_KEYS = {
+  inspiracao: (dateKey: string) => `maternar/meu-dia-leve/daily/inspiracao/${dateKey}`,
+} as const
+
 function safeGetLS(key: string): string | null {
   try {
     if (typeof window === 'undefined') return null
@@ -529,12 +533,28 @@ export default function MeuDiaLeveClient() {
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planPicked, setPlanPicked] = useState<number>(0)
   const [planNote, setPlanNote] = useState<string>('')
-    const [planSource, setPlanSource] = useState<'adm' | 'fallback' | 'error'>('fallback')
+  const [planSource, setPlanSource] = useState<'adm' | 'fallback' | 'error'>('fallback')
 
-  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+  const todayKey = getBrazilDateKey(new Date())
 
   async function fetchFraseSimples(input: { slot: string; focus: string; avoidIds: string[] }) {
     try {
+      // daily-lock (Brasil): 1 inspiração por dia (não varia por reload)
+      const dailyKey = DAILY_KEYS.inspiracao(todayKey)
+      try {
+        const cachedRaw = safeGetLS(dailyKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          const cachedText = String(cached?.text ?? '').trim()
+          const cachedId = cached?.id ? String(cached.id) : ''
+          if (cachedText) {
+            setFraseSimples(cachedText)
+            if (cachedId) setFraseAvoidIds([cachedId])
+            return
+          }
+        }
+      } catch {}
+
       setFraseSimplesLoading(true)
       setFraseSimplesError('')
 
@@ -569,6 +589,10 @@ export default function MeuDiaLeveClient() {
           const item2 = data2?.ok && Array.isArray(data2.items) ? data2.items?.[0] : null
           const txt2 = String(item2?.title ?? item2?.how ?? '').trim()
           setFraseSimples(txt2)
+          try {
+            const dailyKey = DAILY_KEYS.inspiracao(todayKey)
+            safeSetLS(dailyKey, JSON.stringify({ id: item2?.id ? String(item2.id) : null, text: txt2 }))
+          } catch {}
           if (item2?.id) {
             setFraseAvoidIds([String(item2.id)])
           }
@@ -578,6 +602,11 @@ export default function MeuDiaLeveClient() {
 
       const txt = String(item?.title ?? item?.how ?? '').trim()
       setFraseSimples(txt)
+
+      try {
+        const dailyKey = DAILY_KEYS.inspiracao(todayKey)
+        safeSetLS(dailyKey, JSON.stringify({ id: item?.id ? String(item.id) : null, text: txt }))
+      } catch {}
 
       if (item?.id) {
         const id = String(item.id)
