@@ -1,8 +1,8 @@
 // app/api/ai/meu-dia-leve/plano-pronto/route.ts
 import { NextResponse } from 'next/server'
+import { randomInt } from 'crypto'
 import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 
-import { randomInt } from 'crypto'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +31,6 @@ function isFocus(v: any): v is Focus {
   return v === 'filho' || v === 'casa' || v === 'comida' || v === 'voce'
 }
 
-
 function shuffleCopy<T>(arr: T[]): T[] {
   const a = arr.slice()
   for (let i = a.length - 1; i > 0; i--) {
@@ -42,7 +41,6 @@ function shuffleCopy<T>(arr: T[]): T[] {
   }
   return a
 }
-
 
 export async function POST(req: Request) {
   try {
@@ -66,7 +64,7 @@ export async function POST(req: Request) {
       .eq('duration_minutes', Number(slot))
       .ilike('tags', '%plano_pronto%')
       .ilike('tags', '%para_agora%')
-      .limit(50)
+      .limit(200)
 
     if (error) {
       return NextResponse.json({ ok: false, error: `supabase:${error.message}` } satisfies ApiResponse, { status: 200 })
@@ -82,20 +80,11 @@ export async function POST(req: Request) {
       }))
       .filter((x) => x.id && x.title && x.how)
 
-    
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+    const poolSize = allItems.length
+    const remaining = avoidIds.length ? allItems.filter((x) => !avoidIds.includes(String(x.id))) : allItems
+    const exhausted = avoidIds.length > 0 && remaining.length === 0
 
-const poolSize = allItems.length
-      const remaining = avoidIds.length ? allItems.filter((x) => !avoidIds.includes(String(x.id))) : allItems
-      const exhausted = avoidIds.length > 0 && remaining.length === 0
-      const items = shuffleCopy(remaining)
+    const items = shuffleCopy(remaining)
 
     return NextResponse.json(
       {
