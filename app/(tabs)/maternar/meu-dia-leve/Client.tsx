@@ -1462,22 +1462,6 @@ useEffect(() => {
 
               <div className="mt-6 border-t border-[#f5d7e5]" />
 
-              
-              {/* PARA HOJE (editorial diário — ADM-first) */}
-              <div className="mt-6 rounded-3xl border border-[#f5d7e5] bg-white p-5">
-                <div className="text-[11px] font-semibold tracking-wide text-[#b8236b] uppercase">Para hoje</div>
-
-                {paraHojeLoading ? (
-                  <div className="mt-2 text-[13px] text-[#6a6a6a]">Carregando…</div>
-                ) : paraHojeText ? (
-                  <div className="mt-2 text-[15px] font-semibold text-[#2f3a56] leading-snug">{paraHojeText}</div>
-                ) : (
-                  <div className="mt-2 text-[13px] text-[#6a6a6a]">
-                    {paraHojeError ? 'Não deu agora. Tente novamente.' : 'Sem mensagem para hoje.'}
-                  </div>
-                )}
-              </div>
-
               {/* Conteúdo original (passos 1–4) */}
               <div className="mt-6">
                 <div className="flex items-start gap-3">
