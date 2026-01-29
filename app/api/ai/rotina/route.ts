@@ -327,7 +327,7 @@ export async function POST(req: Request) {
       const sb = supabaseAdmin()
       let base = sb
         .from('adm_ideas')
-        .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub')
+        .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub, tags')
         .eq('hub', 'meu-filho')
         .eq('status', 'published')
         .or(`environment.ilike.%${envNorm}%,environment.ilike.%any%`)
@@ -521,6 +521,25 @@ export async function POST(req: Request) {
 
       const { data: allIdeas, error } = await base.limit(50)
 
+
+      // 2) filtra tags/tema localmente (funciona para tags string OU array/json)
+      const temaNorm = normalizeTagToken(rawTema || '')
+      const filteredIdeas = (allIdeas ?? []).filter((row: any) => {
+        const tagsRaw = (row as any)?.tags
+        const tagsStr = Array.isArray(tagsRaw)
+          ? tagsRaw.map((x: any) => String(x ?? '')).join(' ')
+          : String(tagsRaw ?? '')
+
+        const low = normalizeTagToken(tagsStr)
+
+        // precisa conter "conexao"
+        if (!low.includes('conexao')) return false
+
+        // se veio tema, precisa bater também
+        if (temaNorm && !low.includes(temaNorm)) return false
+
+        return true
+      })
       const ideas = Array.isArray(allIdeas)
         ? (allIdeas as any[]).filter((row: any) => {
             const tagsRaw = (row as any)?.tags
