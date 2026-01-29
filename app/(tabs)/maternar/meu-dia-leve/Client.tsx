@@ -520,46 +520,81 @@ export default function MeuDiaLeveClient() {
   const [aiRecipeError, setAiRecipeError] = useState<string>('')
   const [aiRecipeHint, setAiRecipeHint] = useState<string>('')
 
+  const [fraseSimples, setFraseSimples] = useState<string>('')
+  const [fraseSimplesLoading, setFraseSimplesLoading] = useState<boolean>(false)
+  const [fraseSimplesError, setFraseSimplesError] = useState<string>('')
+  const [fraseAvoidIds, setFraseAvoidIds] = useState<string[]>([])
+
   const [planParaAgora, setPlanParaAgora] = useState<PlanItem | null>(null)
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planPicked, setPlanPicked] = useState<number>(0)
   const [planNote, setPlanNote] = useState<string>('')
+    const [planSource, setPlanSource] = useState<'adm' | 'fallback' | 'error'>('fallback')
 
   const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
 
-  useEffect(() => {
+  async function fetchFraseSimples(input: { slot: string; focus: string; avoidIds: string[] }) {
     try {
-      track('nav.view', { tab: 'maternar', page: 'meu-dia-leve', timestamp: new Date().toISOString() })
-    } catch {}
-  }, [])
+      setFraseSimplesLoading(true)
+      setFraseSimplesError('')
 
-  useEffect(() => {
-    const inferred = inferContext()
-    setSlot(inferred.slot)
-    setMood(inferred.mood)
-    setFocus(inferred.focus)
-    setStep('inspiracao')
+      const res = await fetch('/api/ai/meu-dia-leve/frase-simples', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slot: input.slot, focus: input.focus, avoidIds: input.avoidIds, count: 1 }),
 
-    const snap = getProfileSnapshot()
-    setChildren(snap.children)
-
-    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
-    const active = getActiveChildOrNull(prefChildId)
-    setActiveChildId(active?.id ?? '')
-
-    try {
-      track('meu_dia_leve.open', {
-        slot: inferred.slot,
-        mood: inferred.mood,
-        focus: inferred.focus,
-        profileSource: snap.source,
-        kidsCount: snap.children.length,
-        kidsWithAge: snap.children.filter((k) => typeof k.ageMonths === 'number').length,
       })
-    } catch {}
-  }, [])
 
-  useEffect(() => {
+      const data = await res.json().catch(() => null)
+      if (!data?.ok || !Array.isArray(data.items)) {
+        setFraseSimples('')
+        setFraseSimplesError(String(data?.error ?? 'bad_response'))
+        return
+      }
+
+      const exhausted = Boolean(data?.meta?.exhausted)
+      const item = data.items?.[0]
+
+      // se esgotou o pool com avoidIds, reseta e tenta 1x novamente
+      if (exhausted) {
+        setFraseAvoidIds([])
+        // refetch sem avoid
+        try {
+          const res2 = await fetch('/api/ai/meu-dia-leve/frase-simples', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ slot: input.slot, focus: input.focus, avoidIds: [], count: 1 }),
+          })
+          const data2 = await res2.json().catch(() => null)
+          const item2 = data2?.ok && Array.isArray(data2.items) ? data2.items?.[0] : null
+          const txt2 = String(item2?.title ?? item2?.how ?? '').trim()
+          setFraseSimples(txt2)
+          if (item2?.id) {
+            setFraseAvoidIds([String(item2.id)])
+          }
+        } catch {}
+        return
+      }
+
+      const txt = String(item?.title ?? item?.how ?? '').trim()
+      setFraseSimples(txt)
+
+      if (item?.id) {
+        const id = String(item.id)
+        setFraseAvoidIds((prev) => {
+          if (prev.includes(id)) return prev
+          const next = [id, ...prev]
+          return next.slice(0, 40)
+        })
+      }
+    } catch (e: any) {
+      setFraseSimples('')
+      setFraseSimplesError(String(e?.message ?? 'fetch_error'))
+    } finally {
+      setFraseSimplesLoading(false)
+    }
+  }
+useEffect(() => {
     if (!children.length) return
     if (activeChildId) return
 
@@ -895,6 +930,7 @@ export default function MeuDiaLeveClient() {
 
   async function onGeneratePlanTresOpcoes() {
     setPlanNote('')
+      setPlanSource('fallback')
 
     const counterKey = GEN_KEYS.tresOpcoes(todayKey)
     const allowed = canGenerate(counterKey, GEN_LIMITS.tresOpcoes)
@@ -914,7 +950,8 @@ export default function MeuDiaLeveClient() {
       if (!pool.length) {
         setPlanOptions([])
         setPlanPicked(0)
-        setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
+          setPlanSource('fallback')
+          setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
         try {
           track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'empty_pool', slot, mood, focus, count })
         } catch {}
@@ -926,12 +963,15 @@ export default function MeuDiaLeveClient() {
       setPlanOptions(options)
       setPlanPicked(0)
 
+        setPlanSource('adm')
+
       try {
         track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'adm', slot, mood, focus, count })
       } catch {}
     } catch {
       setPlanOptions([])
       setPlanPicked(0)
+        setPlanSource('error')
       setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
       try {
         track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'error', slot, mood, focus, count })
@@ -968,10 +1008,16 @@ export default function MeuDiaLeveClient() {
             </h1>
 
             <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-              <span className="block md:inline">{headerCopyLines.l1}{' '}</span>
-              <span className="block md:inline">{headerCopyLines.l2}{' '}</span>
-              {headerCopyLines.l3 ? <span className="block md:inline">{headerCopyLines.l3}</span> : null}
-            </p>
+                {fraseSimples ? (
+                  <span className="block md:inline">{fraseSimples}</span>
+                ) : (
+                  <>
+                    <span className="block md:inline">{headerCopyLines.l1}{' '}</span>
+                    <span className="block md:inline">{headerCopyLines.l2}{' '}</span>
+                    {headerCopyLines.l3 ? <span className="block md:inline">{headerCopyLines.l3}</span> : null}
+                  </>
+                )}
+              </p>
           </div>
         </header>
 
@@ -1221,7 +1267,7 @@ export default function MeuDiaLeveClient() {
                                 {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                               </div>
 
-                              <div className="mt-3 text-[11px] text-[#6a6a6a]">Fonte: opções locais (fallback).</div>
+                              <div className="mt-3 text-[11px] text-[#6a6a6a]">{planSource === 'adm' ? 'ADM.' : 'opções locais (fallback).'}</div>
                             </div>
                           ) : null}
                         </div>

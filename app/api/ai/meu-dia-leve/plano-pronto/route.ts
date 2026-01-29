@@ -1,6 +1,5 @@
 // app/api/ai/meu-dia-leve/plano-pronto/route.ts
 import { NextResponse } from 'next/server'
-import { randomInt } from 'crypto'
 import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 
 export const runtime = 'nodejs'
@@ -13,6 +12,7 @@ type Body = {
   slot?: Slot
   focus?: Focus
   avoidIds?: string[]
+  count?: number // opcional: default 200 (pool)
 }
 
 type ApiResponse =
@@ -31,13 +31,12 @@ function isFocus(v: any): v is Focus {
   return v === 'filho' || v === 'casa' || v === 'comida' || v === 'voce'
 }
 
+// Fisher–Yates (cópia)
 function shuffleCopy<T>(arr: T[]): T[] {
   const a = arr.slice()
   for (let i = a.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1) // 0..i
-    const tmp = a[i]
-    a[i] = a[j]
-    a[j] = tmp
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
 }
@@ -48,6 +47,9 @@ export async function POST(req: Request) {
     const slot = String(body?.slot ?? '') as Slot
     const focus = String(body?.focus ?? '') as Focus
     const avoidIds = (Array.isArray(body?.avoidIds) ? body.avoidIds : []).map((x) => String(x))
+
+    const limitRaw = Number(body?.count ?? 200)
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 200
 
     if (!isSlot(slot) || !isFocus(focus)) {
       return NextResponse.json({ ok: false, error: 'bad_request' } satisfies ApiResponse, { status: 400 })
@@ -82,9 +84,10 @@ export async function POST(req: Request) {
 
     const poolSize = allItems.length
     const remaining = avoidIds.length ? allItems.filter((x) => !avoidIds.includes(String(x.id))) : allItems
-    const exhausted = avoidIds.length > 0 && remaining.length === 0
+    const exhausted = avoidIds.length > 0 && remaining.length == 0
 
-    const items = shuffleCopy(remaining)
+    const shuffled = shuffleCopy(remaining)
+    const items = shuffled.slice(0, limit)
 
     return NextResponse.json(
       {
