@@ -10,9 +10,9 @@ type ApiResponse =
   | { ok: false; error: string }
 
 function supabaseRef() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const m = url.match(/https:\/\/([^.]+)\.supabase\.co/)
-  return m?.[1] || 'no_url'
+  return m?.[1] || (url ? 'bad_url' : 'no_url')
 }
 
 export async function POST() {
