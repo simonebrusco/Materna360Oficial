@@ -523,7 +523,7 @@ export async function POST(req: Request) {
 
 
       // 2) filtra tags/tema localmente (funciona para tags string OU array/json)
-      const temaNorm = normalizeTagToken(rawTema || '')
+      const temaToken = normalizeTagToken(rawTema || '')
       const filteredIdeas = (allIdeas ?? []).filter((row: any) => {
         const tagsRaw = (row as any)?.tags
         const tagsStr = Array.isArray(tagsRaw)
@@ -536,30 +536,11 @@ export async function POST(req: Request) {
         if (!low.includes('conexao')) return false
 
         // se veio tema, precisa bater também
-        if (temaNorm && !low.includes(temaNorm)) return false
+        if (temaToken && !low.includes(temaToken)) return false
 
         return true
       })
-      const ideas = Array.isArray(allIdeas)
-        ? (allIdeas as any[]).filter((row: any) => {
-            const tagsRaw = (row as any)?.tags
-            const tagsStr = Array.isArray(tagsRaw)
-              ? tagsRaw.map((x: any) => String(x ?? '')).join(' ')
-              : String(tagsRaw ?? '')
-            const low = tagsStr.toLowerCase()
-
-            // precisa conter "conexao"
-            if (!low.includes('conexao')) return false
-
-            // se tema existe, precisa conter tema ou variação (check-in/checkin/check in)
-            if (temaNorm) {
-              const temaAlt = temaNorm.replace(/[- ]/g, '')
-              if (!(low.includes(temaNorm) || low.includes(temaAlt))) return false
-            }
-
-            return true
-          })
-        : null
+      const ideas = filteredIdeas
 
       if (!error && ideas?.length) {
         const sorted = [...ideas].sort((a, b) => {
