@@ -325,7 +325,7 @@ export async function POST(req: Request) {
       }
 
       const sb = supabaseAdmin()
-      const base = sb
+      let base = sb
         .from('adm_ideas')
         .select('id, title, short_description, steps, duration_minutes, age_band, environment, status, hub')
         .eq('hub', 'meu-filho')
