@@ -1367,7 +1367,6 @@ useEffect(() => {
                                 {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                               </div>
 
-                              <div className="mt-3 text-[11px] text-[#6a6a6a]">Fonte: {planSource === 'adm' ? 'ADM.' : 'opções locais (fallback).'}</div>
                             </div>
                           ) : null}
                         </div>
