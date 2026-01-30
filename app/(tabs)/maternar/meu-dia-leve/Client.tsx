@@ -543,49 +543,73 @@ export default function MeuDiaLeveClient() {
   const todayKey = getBrazilDateKey(new Date())
 
   async function fetchParaHoje() {
-    try {
-      setParaHojeLoading(true)
-      setParaHojeError('')
-
-      // daily-lock (Brasil): 1 mensagem por dia
-      const dailyKey = DAILY_KEYS.paraHoje(todayKey)
       try {
-        const cachedRaw = safeGetLS(dailyKey)
-        if (cachedRaw) {
-          const cached = JSON.parse(cachedRaw)
-          const cachedText = String(cached?.text ?? '').trim()
-          if (cachedText) {
-            setParaHojeText(cachedText)
-            return
+        setParaHojeLoading(true)
+        setParaHojeError('')
+
+        // daily-lock (Brasil): 1 mensagem por dia
+        const dailyKey = DAILY_KEYS.paraHoje(todayKey)
+        try {
+          const cachedRaw = safeGetLS(dailyKey)
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw)
+            const cachedText = String(cached?.text ?? '').trim()
+            if (cachedText) {
+              setParaHojeText(cachedText)
+              return
+            }
           }
+        } catch {}
+
+        const res = await fetch('/api/ai/meu-dia-leve/para-hoje', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+        })
+
+        // IMPORTANTE: não tentar json() em erro HTTP (pode vir HTML / vazio)
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '')
+          setParaHojeText('')
+          setParaHojeError(`http_${res.status}:${String(txt || res.statusText || 'http_error')}`)
+          return
         }
-      } catch {}
 
-      const res = await fetch('/api/ai/meu-dia-leve/para-hoje', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-      })
+        let data: any = null
+        try {
+          data = await res.json()
+        } catch (e: any) {
+          setParaHojeText('')
+          setParaHojeError(`bad_json:${String(e?.message ?? e ?? 'parse_error')}`)
+          return
+        }
 
-      const data = await res.json().catch(() => null)
-      if (!data?.ok || !data?.item) {
+        if (!data?.ok || !data?.item) {
+          setParaHojeText('')
+          setParaHojeError(String(data?.error ?? 'bad_response'))
+          return
+        }
+
+        const txt = String(data?.item?.body ?? '').trim()
+        if (!txt) {
+          setParaHojeText('')
+          setParaHojeError(String(data?.error ?? 'bad_item'))
+          return
+        }
+
+        setParaHojeText(txt)
+
+        // daily cache: salva texto + id do item do dia (meta.pickedId é a fonte)
+        try {
+          const pickedId = data?.meta?.pickedId ? String(data.meta.pickedId) : null
+          safeSetLS(dailyKey, JSON.stringify({ id: pickedId, text: txt }))
+        } catch {}
+      } catch (e: any) {
         setParaHojeText('')
-        setParaHojeError(String(data?.error ?? 'bad_response'))
-        return
+        setParaHojeError(String(e?.message ?? 'fetch_error'))
+      } finally {
+        setParaHojeLoading(false)
       }
-
-      const txt = String(data?.item?.body ?? '').trim()
-      setParaHojeText(txt)
-
-      try {
-        safeSetLS(dailyKey, JSON.stringify({ id: data?.item?.id ? String(data.item.id) : null, text: txt }))
-      } catch {}
-    } catch (e: any) {
-      setParaHojeText('')
-      setParaHojeError(String(e?.message ?? 'fetch_error'))
-    } finally {
-      setParaHojeLoading(false)
     }
-  }
 
 
   async function fetchFraseSimples(input: { slot: string; focus: string; avoidIds: string[] }) {
