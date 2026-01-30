@@ -529,6 +529,11 @@ export default function MeuDiaLeveClient() {
   const [fraseSimplesLoading, setFraseSimplesLoading] = useState<boolean>(false)
   const [fraseSimplesError, setFraseSimplesError] = useState<string>('')
   const [fraseAvoidIds, setFraseAvoidIds] = useState<string[]>([])
+  const [ideiasItems, setIdeiasItems] = useState<Array<{ id: string; title: string; how: string; tag: string }>>([])
+  const [ideiasLoading, setIdeiasLoading] = useState<boolean>(false)
+  const [ideiasError, setIdeiasError] = useState<string>('')
+  const [ideiasAvoidIds, setIdeiasAvoidIds] = useState<string[]>([])
+
 
   const [paraHojeText, setParaHojeText] = useState<string>('')
   const [paraHojeLoading, setParaHojeLoading] = useState<boolean>(false)
@@ -698,6 +703,95 @@ export default function MeuDiaLeveClient() {
       setFraseSimplesLoading(false)
     }
   }
+
+  async function fetchIdeiasRapidas(input: { slot: string; focus: string; avoidIds: string[]; count?: number }) {
+    try {
+      setIdeiasLoading(true)
+      setIdeiasError('')
+
+      const slot = String(input?.slot ?? '').trim()
+      const focus = String(input?.focus ?? '').trim()
+      const avoidIds = Array.isArray(input?.avoidIds) ? input.avoidIds.map((x) => String(x)) : []
+
+      const countRaw = Number(input?.count ?? 3)
+      const count = Number.isFinite(countRaw) ? Math.max(1, Math.min(10, Math.floor(countRaw))) : 3
+
+      const cacheKey = `mdl_ir_${todayKey}_${slot}_${focus}`
+
+      // cache: evita re-fetch em reload
+      try {
+        const cachedRaw = safeGetLS(cacheKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          const items = Array.isArray(cached?.items) ? cached.items : []
+          if (items.length) {
+            setIdeiasItems(items)
+            const ids = items.map((x: any) => String(x?.id ?? '')).filter(Boolean)
+            setIdeiasAvoidIds(ids)
+            return
+          }
+        }
+      } catch {}
+
+      const res = await fetch('/api/ai/meu-dia-leve/ideias-rapidas', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slot, focus, avoidIds, count }),
+      })
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        setIdeiasItems([])
+        setIdeiasError(`http_${res.status}:${String(txt || res.statusText || 'http_error')}`)
+        return
+      }
+
+      let data: any = null
+      try {
+        data = await res.json()
+      } catch (e: any) {
+        setIdeiasItems([])
+        setIdeiasError(`bad_json:${String(e?.message ?? e ?? 'parse_error')}`)
+        return
+      }
+
+      // gate tolerante
+      const metaSource = data?.meta?.source ?? data?.source ?? null
+      if (metaSource && metaSource !== 'adm') {
+        setIdeiasItems([])
+        setIdeiasError(`bad_source:${String(metaSource)}`)
+        return
+      }
+
+      const rawItems = Array.isArray(data?.items) ? data.items : []
+      const items = rawItems
+        .map((x: any) => ({
+          id: String(x?.id ?? '').trim(),
+          title: String(x?.title ?? '').trim(),
+          how: String(x?.how ?? '').trim(),
+            tag: 'ADM',
+        }))
+        .filter((x: any) => x.id && x.title && x.how)
+        .slice(0, count)
+
+      setIdeiasItems(items)
+
+      const ids = items.map((x: any) => String(x.id)).filter(Boolean)
+      setIdeiasAvoidIds(ids)
+
+      try {
+        safeSetLS(cacheKey, JSON.stringify({ items }))
+      } catch {}
+    } catch (e: any) {
+      setIdeiasItems([])
+      setIdeiasError(String(e?.message ?? 'fetch_error'))
+    } finally {
+      setIdeiasLoading(false)
+    }
+  }
+
+
+
 useEffect(() => {
     if (!children.length) return
     if (activeChildId) return
@@ -707,15 +801,26 @@ useEffect(() => {
     if (best?.id) setActiveChildId(best.id)
   }, [children.length, activeChildId])
 
+  // AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
+  useEffect(() => {
+    // evita refetch desnecessário: só busca se ainda não tem itens p/ esse filtro
+    void fetchIdeiasRapidas({ slot, focus, avoidIds: [], count: 3 })
+  }, [slot, focus])
+
+
   const inspiration = useMemo(() => INSPIRATIONS[mood], [mood])
 
   const ideasForNow = useMemo(() => {
-    const strict = IDEIAS.filter((i) => i.slot === slot && i.focus === focus)
-    if (strict.length >= 2) return strict.slice(0, 3)
-    const bySlot = IDEIAS.filter((i) => i.slot === slot)
-    if (bySlot.length >= 3) return bySlot.slice(0, 4)
-    return IDEIAS.slice(0, 4)
-  }, [slot, focus])
+      // ADM-first
+      if (Array.isArray(ideiasItems) && ideiasItems.length) return ideiasItems
+
+      // fallback local (mantém o comportamento original)
+      const strict = IDEIAS.filter((i) => i.slot === slot && i.focus === focus)
+      if (strict.length >= 2) return strict.slice(0, 3)
+      const bySlot = IDEIAS.filter((i) => i.slot === slot)
+      if (bySlot.length >= 3) return bySlot.slice(0, 4)
+      return IDEIAS.slice(0, 4)
+    }, [slot, focus, ideiasItems])
 
   const recipesForNow = useMemo(() => {
     const bySlot = RECEITAS.filter((r) => r.slot === slot)
