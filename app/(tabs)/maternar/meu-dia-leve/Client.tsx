@@ -181,8 +181,8 @@ function inferContext(): { slot: Slot; mood: Mood; focus: Focus } {
   return { slot, mood, focus }
 }
 
-type QuickIdea = { tag: string; title: string; how: string; slot: Slot; focus: Focus }
-type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
+type QuickIdea = { tag?: string; title: string; how: string; slot: Slot; focus: Focus }
+type QuickRecipe = { tag?: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line1: string; line2: string; action: string }> = {
@@ -260,7 +260,7 @@ function CardChoice({
 }: {
   title: string
   subtitle: string
-  tag: string
+  tag?: string
   active?: boolean
   onClick?: () => void
 }) {
@@ -274,7 +274,8 @@ function CardChoice({
       ].join(' ')}
     >
       <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-        {tag}
+
+        {tag ? tag : null}
       </div>
       <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{title}</div>
       <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{subtitle}</div>
@@ -383,7 +384,7 @@ function countActiveFromMeuDiaLeveToday(tasks: MyDayTaskItem[]) {
 ========================= */
 
 type PlanKind = 'idea' | 'passo' | 'recipe' | 'inspiration'
-type PlanItem = { kind: PlanKind; tag: string; title: string; how: string; slot: Slot; focus: Focus }
+type PlanItem = { kind: PlanKind; tag?: string; title: string; how: string; slot: Slot; focus: Focus }
 
 function buildPlanPool(input: { slot: Slot; focus: Focus }): PlanItem[] {
   const { slot, focus } = input
@@ -529,7 +530,7 @@ export default function MeuDiaLeveClient() {
   const [fraseSimplesLoading, setFraseSimplesLoading] = useState<boolean>(false)
   const [fraseSimplesError, setFraseSimplesError] = useState<string>('')
   const [fraseAvoidIds, setFraseAvoidIds] = useState<string[]>([])
-  const [ideiasItems, setIdeiasItems] = useState<Array<{ id: string; title: string; how: string; tag: string }>>([])
+  const [ideiasItems, setIdeiasItems] = useState<Array<{ id: string; title: string; how: string; tag?: string }>>([])
   const [ideiasLoading, setIdeiasLoading] = useState<boolean>(false)
   const [ideiasError, setIdeiasError] = useState<string>('')
   const [ideiasAvoidIds, setIdeiasAvoidIds] = useState<string[]>([])
@@ -802,6 +803,7 @@ useEffect(() => {
   }, [children.length, activeChildId])
 
   // AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // evita refetch desnecessário: só busca se ainda não tem itens p/ esse filtro
     void fetchIdeiasRapidas({ slot, focus, avoidIds: [], count: 3 })
@@ -1672,7 +1674,6 @@ useEffect(() => {
                             key={`${i.title}-${idx}`}
                             title={i.title}
                             subtitle={i.how}
-                            tag={i.tag}
                             active={pickedIdea === idx}
                             onClick={() => setPickedIdea(idx)}
                           />
