@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseAdmin";
 
 type ReqBody = {
-  slot?: string; // "manha" | "tarde" | "noite"
+  slot?: string; // slot do app (ex: '3'|'5'|'10') → mapeado para duration_minutes (5/10/15)
   focus?: string; // "rapido" | "nutritivo" | "leve"
   avoidIds?: string[];
   count?: number;
@@ -15,6 +15,21 @@ type ReqBody = {
 
 const DEFAULT_COUNT = 3;
 const HARD_LIMIT = 200;
+
+function mapSlotToMinutes(slotRaw: string): number | null {
+  const v = (slotRaw ?? "").trim();
+  // App usa 3/5/10. ADM usa 5/10/15.
+  if (v === "3") return 5;
+  if (v === "5") return 10;
+  if (v === "10") return 15;
+  // aceita se já vier em minutos
+  if (v === "15") return 15;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  if (n <= 4) return 5;
+  if (n <= 9) return 10;
+  return 15;
+}
 
 // Matching determinístico (sem IA) — evoluir por PR, não “no improviso”
 const INGREDIENT_MAP: Record<string, string[]> = {
@@ -167,8 +182,10 @@ export async function POST(req: Request) {
       q = q.ilike("tags", `%focus_${focus}%`);
     }
 
-    if (slot) {
-      q = q.ilike("tags", `%slot_${slot}%`);
+    // slot do app (3/5/10) → duration_minutes (5/10/15)
+    const minutes = slot ? mapSlotToMinutes(slot) : null;
+    if (minutes !== null) {
+      q = q.eq("duration_minutes", minutes);
     }
 
     if (ingredTags.length) {
