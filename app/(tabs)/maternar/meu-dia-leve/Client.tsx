@@ -311,7 +311,7 @@ function toMyDayTitleFromInspiration(input: { mood: Mood; slot: Slot; focus: Foc
   return 'Simplificar a refeição'
 }
 
-type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
+type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string; items?: Array<{ id: string; title: string; how: string }>; meta?: any }
 
 async function requestAIRecipe(input: {
   slot: Slot
@@ -321,16 +321,16 @@ async function requestAIRecipe(input: {
   childAgeYears?: number
   childAgeLabel?: string
 }): Promise<AIRecipeResponse> {
-  const res = await fetch('/api/ai/meu-dia-leve/receita', {
+  const res = await fetch('/api/ai/meu-dia-leve/receitas-rapidas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       slot: input.slot,
-      mood: input.mood,
-      pantry: input.pantry,
-      childAgeMonths: input.childAgeMonths,
-      childAgeYears: input.childAgeYears,
-      childAgeLabel: input.childAgeLabel,
+      // focus é opcional; se vazio, o endpoint retorna do pool geral do slot
+      focus: '',
+      ingredients: input.pantry,
+      count: 1,
+      avoidIds: [],
     }),
   })
 
@@ -338,7 +338,13 @@ async function requestAIRecipe(input: {
     return { ok: false, error: `http_${res.status}`, hint: 'Não deu certo agora. Se quiser, use uma opção pronta abaixo.' }
   }
 
-  return (await res.json()) as AIRecipeResponse
+  const data = (await res.json()) as AIRecipeResponse
+  if (data?.ok && Array.isArray((data as any).items) && (data as any).items.length) {
+    const it = (data as any).items[0]
+    return { ok: true, text: `${it.title}\n\n${it.how}` }
+  }
+  if (data?.ok) return { ok: true, hint: 'Não encontrei uma receita agora. Tente mudar os ingredientes.' }
+  return data
 }
 
 function plural(n: number, one: string, many: string) {
