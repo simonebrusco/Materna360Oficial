@@ -227,6 +227,18 @@ export async function POST(req: Request) {
 
       if (ingredTags.length) {
         ranked2.sort((a: any, b: any) => b._score - a._score);
+
+        // embaralha dentro de grupos de mesmo score (evita repetir sempre o "top 3")
+        const grouped2: any[] = [];
+        let i2 = 0;
+        while (i2 < ranked2.length) {
+          const s2 = ranked2[i2]._score;
+          let end2 = i2 + 1;
+          while (end2 < ranked2.length && ranked2[end2]._score === s2) end2++;
+          grouped2.push(...shuffle(ranked2.slice(i2, end2)));
+          i2 = end2;
+        }
+        ranked2 = grouped2;
       } else {
         ranked2 = shuffle(ranked2);
       }
