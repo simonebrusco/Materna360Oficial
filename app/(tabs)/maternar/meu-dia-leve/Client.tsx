@@ -29,6 +29,15 @@ const MIN_MONTHS_ALLOW_RECIPES = 12 // >= 12: libera receitas do app
 
 const LS_PREFIX = 'm360:'
 
+function isDebug() {
+  try {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('debug') === '1'
+  } catch {
+    return false
+  }
+}
+
 /**
  * Preferências “silenciosas” do hub Meu Dia Leve (P26)
  */
@@ -1008,6 +1017,30 @@ useEffect(() => {
 
     return { blocked: false, reason: 'ok' as const, title: '', message: '' }
   }, [children.length, activeChild, activeMonths])
+
+  const debugPanel = useMemo(() => {
+    if (!isDebug()) return null
+    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+    const snap = getProfileSnapshot()
+    return (
+      <pre className="mt-3 whitespace-pre-wrap rounded-2xl border border-white/25 bg-black/30 p-3 text-[11px] text-white/90">
+        {JSON.stringify(
+          {
+            snapSource: snap.source,
+            childrenCount: snap.children?.length ?? 0,
+            children: snap.children,
+            preferredChildId: prefChildId,
+            activeChildId,
+            activeChild,
+            activeMonths,
+            gate,
+          },
+          null,
+          2
+        )}
+      </pre>
+    )
+  }, [activeChildId, activeChild, activeMonths, gate])
 
   async function onGenerateAIRecipe() {
     setAiRecipeError('')
