@@ -151,15 +151,6 @@ function normalizeChildrenFromAny(obj: any): ChildSnapshot[] {
 
     const explicitMonths =
       coerceMonthsFromUnknown(
-
-    // Coerção defensiva: Eu360 pode salvar idade como string (ex: "24" ou "24 meses")
-    let explicitMonthsNum: number | null = null
-    if (typeof explicitMonths === 'number' && Number.isFinite(explicitMonths)) {
-      explicitMonthsNum = explicitMonths
-    } else if (typeof explicitMonths === 'string') {
-      const n = parseInt(explicitMonths.replace(/[^0-9]/g, ''), 10)
-      explicitMonthsNum = Number.isFinite(n) ? n : null
-    }
         c?.idadeMeses ?? c?.idade_meses ?? c?.ageMonths ?? c?.age_months ?? c?.months
       ) ?? coerceMonthsFromUnknown(c?.idade ?? c?.age)
 
@@ -176,7 +167,7 @@ function normalizeChildrenFromAny(obj: any): ChildSnapshot[] {
       return d ? clampMonths(monthsBetween(d, new Date())) : null
     })()
 
-    const ageMonths = (explicitMonthsNum ?? derivedFromBirth ?? null)
+    const ageMonths = explicitMonths ?? derivedFromBirth ?? null
 
     const key = `${id}::${label.toLowerCase()}::${ageMonths ?? 'null'}`
     if (seen.has(key)) continue

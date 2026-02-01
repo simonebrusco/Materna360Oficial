@@ -1785,7 +1785,7 @@ useEffect(() => {
                         }}
                         rows={3}
                         placeholder="o que tenho em casa…"
-                        disabled={false}
+                        disabled={gate.blocked}
                         className={[
                           'mt-3 w-full rounded-3xl border border-[#f5d7e5] bg-[#fff7fb] px-4 py-3 text-[13px] text-[#2f3a56] outline-none focus:ring-2 focus:ring-[#ffd8e6]',
                           gate.blocked ? 'opacity-70 cursor-not-allowed' : '',
