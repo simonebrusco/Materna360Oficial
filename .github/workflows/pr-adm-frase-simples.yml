@@ -27,11 +27,35 @@ jobs:
 
       - name: Start Next.js (background)
         run: |
-          PORT=3011 pnpm dev &
-          sleep 10
+          PORT=3011 pnpm dev > /tmp/next-dev.log 2>&1 &
+          echo $! > /tmp/next-dev.pid
+
+      - name: Wait for health (/api/ping)
+        env:
+          BASE_URL: http://127.0.0.1:3011
+        run: |
+          for i in $(seq 1 60); do
+            code="$(curl -sS -o /dev/null -w "%{http_code}" "$BASE_URL/api/ping" || true)"
+            if [ "$code" = "200" ]; then
+              echo "OK: /api/ping ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "FAIL: /api/ping not ready"
+          echo "---- next-dev.log ----"
+          tail -n 200 /tmp/next-dev.log || true
+          exit 1
 
       - name: Run ADM validation (frase-simples)
         env:
           BASE_URL: http://127.0.0.1:3011
         run: |
           bash scripts/check-frase-simples.sh
+
+      - name: Stop Next.js
+        if: always()
+        run: |
+          if [ -f /tmp/next-dev.pid ]; then
+            kill "$(cat /tmp/next-dev.pid)" || true
+          fi
