@@ -806,16 +806,11 @@ useEffect(() => {
     const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
     const best = getActiveChildOrNull(prefChildId)
     if (best?.id) setActiveChildId(best.id)
-  }, [children.length, activeChildId])
-
-  // AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    // evita refetch desnecessário: só busca se ainda não tem itens p/ esse filtro
-    void fetchIdeiasRapidas({ slot, focus, avoidIds: [], count: 3 })
-  }, [slot, focus])
-
-
+  }, [children.length, activeChildId])    // AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
+    useEffect(() => {
+      // evita refetch desnecessário: só busca se ainda não tem itens p/ esse filtro
+      void fetchIdeiasRapidas({ slot, focus, avoidIds: [], count: 3 })
+    }, [slot, focus]) // eslint-disable-line react-hooks/exhaustive-deps
   const inspiration = useMemo(() => INSPIRATIONS[mood], [mood])
 
   const ideasForNow = useMemo(() => {
