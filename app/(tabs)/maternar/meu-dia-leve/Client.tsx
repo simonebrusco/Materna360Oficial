@@ -535,6 +535,34 @@ export default function MeuDiaLeveClient() {
   const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
   const [activeChildId, setActiveChildId] = useState<string>('')
 
+    // ------------------------------------------------------------
+    // Sync children from profile snapshot (ADM-safe)
+    // Fonte primária: snapshot (API / Supabase)
+    // ------------------------------------------------------------
+    useEffect(() => {
+      try {
+        const snap = getProfileSnapshot()
+        if (!snap?.children || !Array.isArray(snap.children)) return
+
+        const normalized = snap.children
+          .map((c: any) => ({
+            id: String(c?.id ?? '').trim(),
+            label: String(c?.label ?? c?.name ?? 'Filho').trim(),
+            ageMonths:
+              typeof c?.ageMonths === 'number' && Number.isFinite(c.ageMonths)
+                ? Math.max(0, Math.floor(c.ageMonths))
+                : null,
+          }))
+          .filter((c: any) => c.id)
+
+        if (normalized.length) {
+          setChildren(normalized)
+        }
+      } catch {
+        // silencioso por contrato
+      }
+    }, [])
+
   const [pantry, setPantry] = useState<string>('')
   const [aiRecipeText, setAiRecipeText] = useState<string>('')
   const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
@@ -805,17 +833,7 @@ export default function MeuDiaLeveClient() {
       setIdeiasLoading(false)
     }
   }
-
-
-
-useEffect(() => {
-    if (!children.length) return
-    if (activeChildId) return
-
-    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
-    const best = getActiveChildOrNull(prefChildId)
-    if (best?.id) setActiveChildId(best.id)
-  }, [children.length, activeChildId])    // AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
+// AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
     useEffect(() => {
       // evita refetch desnecessário: só busca se ainda não tem itens p/ esse filtro
       void fetchIdeiasRapidas({ slot, focus, avoidIds: [], count: 3 })
@@ -959,11 +977,123 @@ useEffect(() => {
     } catch {}
   }
 
-  const activeChild = useMemo(() => {
-    if (!children.length) return null
-    const found = children.find((c) => c.id === activeChildId)
-    return found ?? children[0]
-  }, [children, activeChildId])
+  
+    // ------------------------------------------------------------
+    // Eu360 local fallback (refresh)
+    // Motivo: o usuário pode preencher idade no Eu360 depois que esta tela já montou.
+    // Se lermos o LS só 1 vez (useMemo []), o gate fica travado até reload.
+    // ------------------------------------------------------------
+    function readEu360LocalChildren(): Array<{ id: string; label: string; ageMonths: number | null }> {
+      try {
+        const raw = safeGetLS('eu360_profile_v1')
+        if (!raw) return []
+        const parsed = JSON.parse(raw || '{}') as any
+        const filhos = Array.isArray(parsed?.filhos) ? parsed.filhos : []
+
+        const coerceMonths = (v: any): number | null => {
+          const n = Number(v)
+          if (!Number.isFinite(n)) return null
+          return Math.max(0, Math.floor(n))
+        }
+
+        return filhos
+          .map((f: any) => {
+            const id = String(f?.id ?? f?.key ?? f?.uuid ?? f?.childId ?? f?.child_id ?? '').trim()
+            const label = String(f?.nome ?? f?.name ?? '').trim() || 'Filho'
+
+            const ageMonths =
+              coerceMonths(f?.idadeMeses ?? f?.idade_meses ?? f?.ageMonths ?? f?.age_months ?? f?.months) ??
+              coerceMonths(f?.idade ?? f?.age) ??
+              null
+
+            return { id, label, ageMonths }
+          })
+          .filter((c: any) => !!c.id)
+      } catch {
+        return []
+      }
+    })
+          .filter((c: any) => !!c.id)
+      } catch {
+        return []
+      }
+    }
+
+    const [eu360LocalChildren, setEu360LocalChildren] = useState<
+      Array<{ id: string; label: string; ageMonths: number | null }>
+    >(() => readEu360LocalChildren())
+
+    useEffect(() => {
+      const refresh = () => {
+        try {
+          setEu360LocalChildren(readEu360LocalChildren())
+        } catch {}
+      }
+
+      // 1) refresh imediato (caso LS já tenha sido preenchido antes do mount)
+      refresh()
+
+      // 2) quando volta pro app / troca de aba
+      window.addEventListener('focus', refresh)
+      document.addEventListener('visibilitychange', refresh)
+
+      // 3) quando localStorage muda (melhor esforço)
+      window.addEventListener('storage', refresh)
+
+      return () => {
+        window.removeEventListener('focus', refresh)
+        document.removeEventListener('visibilitychange', refresh)
+        window.removeEventListener('storage', refresh)
+      }
+    }, [])
+
+    const childrenForGate = useMemo(() => {
+      // se vier do snapshot/API com idade preenchida, usa normal
+      const hasAnyAge = Array.isArray(children) && children.some((c: any) => c && c.ageMonths !== null && c.ageMonths !== undefined)
+      if (children.length && hasAnyAge) return children
+
+      // senão, tenta localStorage (Eu360)
+      if (eu360LocalChildren.length) return eu360LocalChildren as any
+
+      // fallback final: mantém children
+      return children
+    }, [children, eu360LocalChildren])
+
+
+    // ------------------------------------------------------------
+    // Auto-select do filho ativo baseado em childrenForGate (snapshot/LS)
+    // Motivo: não travar o hub quando idade chega depois via Eu360.
+    // ------------------------------------------------------------
+    useEffect(() => {
+      try {
+        if (!childrenForGate.length) return
+
+        // se já tem um ativo válido, mantém
+        if (activeChildId && childrenForGate.some((c) => c.id === activeChildId)) return
+
+        const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+        const preferred = prefChildId ? childrenForGate.find((c) => c.id === prefChildId) : null
+
+        // regra: preferido > com idade (mais velho) > primeiro
+        const withAge = childrenForGate.filter((c: any) => typeof c?.ageMonths === 'number' && Number.isFinite(c.ageMonths))
+        let best = preferred
+
+        if (!best && withAge.length) {
+          best = [...withAge].sort((a: any, b: any) => (b.ageMonths ?? -1) - (a.ageMonths ?? -1))[0]
+        }
+
+        if (!best) best = childrenForGate[0] ?? null
+
+        if (best?.id) setActiveChildId(best.id)
+      } catch {
+        // silencioso por contrato
+      }
+    }, [childrenForGate, activeChildId])
+const activeChild = useMemo(() => {
+    if (!childrenForGate.length) return null
+    const found = childrenForGate.find((c) => c.id === activeChildId)
+    return found ?? childrenForGate[0]
+  }, [childrenForGate, activeChildId])
 
   const activeMonths = activeChild?.ageMonths ?? null
   const activeYears = useMemo(() => {
@@ -984,7 +1114,7 @@ useEffect(() => {
   }, [activeMonths])
 
   const gate = useMemo(() => {
-    if (!children.length) {
+    if (!childrenForGate.length) {
       return { blocked: true, reason: 'no_children' as const, title: 'Observação', message: 'Para sugerir com segurança, complete o cadastro do(s) filho(s) no Eu360.' }
     }
 
@@ -1016,7 +1146,7 @@ useEffect(() => {
     }
 
     return { blocked: false, reason: 'ok' as const, title: '', message: '' }
-  }, [children.length, activeChild, activeMonths])
+  }, [childrenForGate.length, activeChild, activeMonths])
 
   const debugPanel = useMemo(() => {
     if (!isDebug()) return null
