@@ -62,8 +62,8 @@ export async function POST(req: Request) {
 
   if (error) {
     return NextResponse.json(
-      { ok: false, meta: { source: "adm", focus, slot, error: error.message }, items: [] },
-      { status: 500 }
+      { ok: false, error: `supabase:${error.message}` },
+      { status: 200 }
     );
   }
 
@@ -80,10 +80,9 @@ export async function POST(req: Request) {
       slot,
       poolSize,
       returnedCount: picked.length,
-      exhausted: poolSize <= picked.length,
-      avoidIdsCount: avoidIds.length,
-      pickedIds: picked.map((x: any) => x.id),
-    },
+      exhausted: avoidIds.length > 0 && poolSize === 0,
+      avoidIdsCount: avoidIds.length
+},
     items: picked,
   });
 }
