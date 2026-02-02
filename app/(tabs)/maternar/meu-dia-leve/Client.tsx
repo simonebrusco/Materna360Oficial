@@ -983,41 +983,47 @@ export default function MeuDiaLeveClient() {
     // Motivo: o usuário pode preencher idade no Eu360 depois que esta tela já montou.
     // Se lermos o LS só 1 vez (useMemo []), o gate fica travado até reload.
     // ------------------------------------------------------------
-    function readEu360LocalChildren(): Array<{ id: string; label: string; ageMonths: number | null }> {
-      try {
-        const raw = safeGetLS('eu360_profile_v1')
-        if (!raw) return []
-        const parsed = JSON.parse(raw || '{}') as any
-        const filhos = Array.isArray(parsed?.filhos) ? parsed.filhos : []
 
-        const coerceMonths = (v: any): number | null => {
-          const n = Number(v)
-          if (!Number.isFinite(n)) return null
-          return Math.max(0, Math.floor(n))
+      function readEu360LocalChildren(): Array<{ id: string; label: string; ageMonths: number | null }> {
+        try {
+          const raw = safeGetLS('eu360_profile_v1')
+          if (!raw) return []
+          const parsed = JSON.parse(raw || '{}') as any
+          const filhos = Array.isArray(parsed?.filhos) ? parsed.filhos : []
+
+          const coerceMonths = (v: any): number | null => {
+            const n = Number(v)
+            if (!Number.isFinite(n)) return null
+            return Math.max(0, Math.floor(n))
+          }
+
+          return filhos
+            .map((f: any) => {
+              const id = String(
+                f?.id ?? f?.key ?? f?.uuid ?? f?.childId ?? f?.child_id ?? ''
+              ).trim()
+
+              const label = String(f?.nome ?? f?.name ?? '').trim() || 'Filho'
+
+              const ageMonths =
+                coerceMonths(
+                  f?.idadeMeses ??
+                    f?.idade_meses ??
+                    f?.ageMonths ??
+                    f?.age_months ??
+                    f?.months
+                ) ??
+                coerceMonths(f?.idade ?? f?.age) ??
+                null
+
+              return { id, label, ageMonths }
+            })
+            .filter((c: any) => !!c.id)
+        } catch {
+          return []
         }
-
-        return filhos
-          .map((f: any) => {
-            const id = String(f?.id ?? f?.key ?? f?.uuid ?? f?.childId ?? f?.child_id ?? '').trim()
-            const label = String(f?.nome ?? f?.name ?? '').trim() || 'Filho'
-
-            const ageMonths =
-              coerceMonths(f?.idadeMeses ?? f?.idade_meses ?? f?.ageMonths ?? f?.age_months ?? f?.months) ??
-              coerceMonths(f?.idade ?? f?.age) ??
-              null
-
-            return { id, label, ageMonths }
-          })
-          .filter((c: any) => !!c.id)
-      } catch {
-        return []
       }
-    })
-          .filter((c: any) => !!c.id)
-      } catch {
-        return []
-      }
-    }
+
 
     const [eu360LocalChildren, setEu360LocalChildren] = useState<
       Array<{ id: string; label: string; ageMonths: number | null }>
@@ -1069,10 +1075,10 @@ export default function MeuDiaLeveClient() {
         if (!childrenForGate.length) return
 
         // se já tem um ativo válido, mantém
-        if (activeChildId && childrenForGate.some((c) => c.id === activeChildId)) return
+        if (activeChildId && childrenForGate.some((c: any) => c.id === activeChildId)) return
 
         const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
-        const preferred = prefChildId ? childrenForGate.find((c) => c.id === prefChildId) : null
+        const preferred = prefChildId ? childrenForGate.find((c: any) => c.id === prefChildId) : null
 
         // regra: preferido > com idade (mais velho) > primeiro
         const withAge = childrenForGate.filter((c: any) => typeof c?.ageMonths === 'number' && Number.isFinite(c.ageMonths))
@@ -1091,7 +1097,7 @@ export default function MeuDiaLeveClient() {
     }, [childrenForGate, activeChildId])
 const activeChild = useMemo(() => {
     if (!childrenForGate.length) return null
-    const found = childrenForGate.find((c) => c.id === activeChildId)
+    const found = childrenForGate.find((c: any) => c.id === activeChildId)
     return found ?? childrenForGate[0]
   }, [childrenForGate, activeChildId])
 
