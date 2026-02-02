@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     const focus = String(body?.focus ?? '') as Focus
     const avoidIds = (Array.isArray(body?.avoidIds) ? body.avoidIds : []).map((x) => String(x))
 
-    const limitRaw = Number(body?.count ?? 200)
+    const limitRaw = Number(body?.count ?? 3)
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 200
 
     if (!isSlot(slot) || !isFocus(focus)) {
