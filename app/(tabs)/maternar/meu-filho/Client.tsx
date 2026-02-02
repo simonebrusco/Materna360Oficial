@@ -572,6 +572,11 @@ async function fetchBloco2Cards(args: {
 
     if (!res.ok) return null
     const data = await res.json().catch(() => null)
+
+    // ✅ ADM-FIRST (Bloco 2): só aceita conteúdo vindo do ADM
+    const metaSource = (data as any)?.meta?.source ?? (data as any)?.source ?? null
+    if (metaSource !== 'adm') return null
+
     const picked = pick3Suggestions(data)
     if (!picked) return null
 

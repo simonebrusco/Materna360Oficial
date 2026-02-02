@@ -790,6 +790,58 @@ export async function POST(req: Request) {
           ctx.__adm = { hub: 'meu-filho', key: 'bloco-1-plan', updated_at: plan.updated_at ?? null }
         }
       }
+      // ADM-first — Bloco 2 (Brincadeiras) com VARIANTS
+      // Key determinístico: bloco-2|<ageBand>|<local>|<skillsOrdenadas>
+      if ((body as any).tipoIdeia === 'meu-filho-bloco-2') {
+        const admHub = 'meu-filho'
+        const age = String((body as any).ageBand ?? (body as any).faixa_etaria ?? '').trim()
+        const local = String((body as any).local ?? '').trim() || 'any'
+        const skillsRaw = (body as any).habilidades
+        const skills = Array.isArray(skillsRaw) ? skillsRaw.map((x: any) => String(x).trim()).filter(Boolean) : []
+        const skillsKey = skills.length ? [...skills].sort().join(',') : 'any'
+
+        const admKey = `bloco-2|${age || 'geral'}|${local}|${skillsKey}`
+        const metaBase = { admHub, admKey }
+
+        // Busca 3 variantes publicadas do ADM (cada variant: "TITULO\nDESCRICAO")
+        const { data: variants, error } = await supabaseAdmin().rpc('adm_get_editorial_variants_published', {
+          p_hub: admHub,
+          p_key: admKey,
+          p_limit: 3,
+        })
+
+        const parseVariant = (raw: any) => {
+          const bodyText = String(raw?.body ?? '').trim()
+          if (!bodyText) return null
+          const parts = bodyText.split('\n').map((x) => x.trim()).filter(Boolean)
+          if (parts.length < 2) return null
+          const title = parts[0]
+          const description = parts.slice(1).join(' ')
+          if (!title || !description) return null
+          return { title, description }
+        }
+
+        if (!error && variants?.length) {
+          const parsed = (variants as any[]).map(parseVariant).filter(Boolean)
+          if (parsed.length >= 3) {
+            return NextResponse.json(
+              {
+                suggestions: parsed.slice(0, 3),
+                meta: { source: 'adm', ...metaBase, variantCount: parsed.length },
+              },
+              { status: 200, headers: NO_STORE_HEADERS },
+            )
+          }
+        }
+
+        // Sem ADM para esse recorte -> NÃO cai em IA (front vai usar fallback local seeded)
+        return NextResponse.json(
+          { suggestions: [], meta: { source: 'fallback', ...metaBase } },
+          { status: 200, headers: NO_STORE_HEADERS },
+        )
+      }
+
+
 
       const result = await callMaternaAI({
         mode: 'quick-ideas',
@@ -806,16 +858,22 @@ export async function POST(req: Request) {
           { status: 200, headers: NO_STORE_HEADERS },
         )
       }
-
-      // ✅ Meu Filho — Bloco 2
+      // ✅ Meu Filho — Bloco 2 (safeguard)
+      // Se este trecho rodar, NUNCA vaza IA (o caminho oficial é o early-return ADM acima).
       if ((body as any).tipoIdeia === 'meu-filho-bloco-2') {
-        const sanitized = sanitizeMeuFilhoBloco2Suggestions(result.suggestions ?? [], body.tempoDisponivel ?? null)
+        const admHub = 'meu-filho'
+        const age = String((body as any).ageBand ?? (body as any).faixa_etaria ?? '').trim()
+        const local = String((body as any).local ?? '').trim() || 'any'
+        const skillsRaw = (body as any).habilidades
+        const skills = Array.isArray(skillsRaw) ? skillsRaw.map((x: any) => String(x).trim()).filter(Boolean) : []
+        const skillsKey = skills.length ? [...skills].sort().join(',') : 'any'
+        const admKey = `bloco-2|${age || 'geral'}|${local}|${skillsKey}`
+
         return NextResponse.json(
-          { suggestions: sanitized, ...(((result as any)?.meta) ? { meta: (result as any).meta } : {}) },
+          { suggestions: [], meta: { source: 'fallback', admHub, admKey } },
           { status: 200, headers: NO_STORE_HEADERS },
         )
       }
-
       // ✅ Meu Filho — Bloco 3 (Rotinas / Conexão)
       if ((body as any).tipoIdeia === 'meu-filho-bloco-3') {
         const sanitized = sanitizeMeuFilhoBloco3(result.suggestions ?? [])
