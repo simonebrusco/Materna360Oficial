@@ -156,8 +156,8 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as ReqBody;
 
-    const slot = (body.slot ?? "").trim(); // "manha"|"tarde"|"noite"
-    const focus = (body.focus ?? "").trim(); // "rapido"|"nutritivo"|"leve"
+    const slot = String((body as any)?.slot ?? "").trim(); // "manha"|"tarde"|"noite"
+    const focus = String((body as any)?.focus ?? "").trim(); // "rapido"|"nutritivo"|"leve"
     const avoidIds = Array.isArray(body.avoidIds) ? body.avoidIds.filter(Boolean) : [];
     const count =
       Number.isFinite(body.count) && (body.count as number) > 0
