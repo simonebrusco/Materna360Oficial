@@ -770,6 +770,7 @@ export async function POST(req: Request) {
         // extras (podem ser usados pelo prompt do core, sem tipagem rígida aqui)
         ageBand: body.ageBand ?? null,
         contexto: body.contexto ?? null,
+        tema: (body as any).tema ?? null,
 
         // bloco 3
         idade: (body as any).idade ?? null,
