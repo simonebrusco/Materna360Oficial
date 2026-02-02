@@ -1,0 +1,241 @@
+hub,bloco,faixa_etaria,foco,key,body,status,nivel_texto,variant_index
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v01,"Entre 0 e 2 anos, o foco some rápido porque a curiosidade puxa mais forte que o controle interno.",published,ouro,1
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v02,"Nessa fase de 0 a 2, parecer não ouvir costuma ser mente ocupada, não desafio, e isso alivia a cobrança.",published,ouro,2
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v03,"No comecinho, de 0 a 2, distração aparece quando tem estímulo demais, como se tudo competisse pelo olhar.",published,ouro,3
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v04,"Com 0 a 2 anos, transições quebram a atenção porque mudar de cena exige um esforço que ainda está crescendo.",published,ouro,4
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v05,"Nessa idade 0-2, a atenção melhora quando há interesse, então o desinteresse pode parecer “desligamento”.",published,ouro,5
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v06,"Em 0-2, o cansaço derruba o foco porque o corpo gasta energia para se conter ao longo do dia.",published,ouro,6
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v07,"Em 0-2, perder o fio da conversa acontece quando a cabeça tenta segurar muita coisa ao mesmo tempo.",published,ouro,7
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v08,"Com 0-2, a atenção pode oscilar por ansiedade, como se a mente procurasse saída antes de começar.",published,ouro,8
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v09,"Na faixa 0-2, o foco varia mais perto da fome ou do sono, e isso não diz nada sobre esforço.",published,base,9
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v10,"Aos 0-2 anos, a atenção pode travar em um detalhe, como se fosse difícil mudar de assunto.",published,base,10
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v11,"Em 0-2, a concentração cai depois de muita novidade, porque o cérebro fica saturado de informação.",published,base,11
+meu-filho,bloco-4,0-2,Atenção,bloco-4|0-2|Atenção|v12,"Na fase 0-2, a atenção costuma ser seletiva, então responder só ao que interessa é parte do aprendizado.",published,base,12
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v01,"Entre 0 e 2 anos, a emoção vem grande porque sentir chega antes de conseguir organizar o que acontece por dentro.",published,ouro,1
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v02,"Nessa fase de 0 a 2, chorar forte pode ser descarga, não falta de limite, e isso tira culpa da cena.",published,ouro,2
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v03,"No comecinho, de 0 a 2, irritação aparece do nada quando o corpo está cheio, como se faltasse espaço interno.",published,ouro,3
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v04,"Com 0 a 2 anos, frustração pesa mais porque o desejo é maior que a tolerância para esperar.",published,ouro,4
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v05,"Em 0-2, depois do pico emocional a calma pode voltar rápido, pois a descarga passa e o corpo relaxa.",published,ouro,5
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v06,"Na faixa 0-2, mudanças pequenas viram tempestade porque previsibilidade ainda é o que dá segurança.",published,ouro,6
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v07,"Com 0-2, vergonha começa a aparecer e a criança pode se fechar para não se sentir exposta.",published,ouro,7
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v08,"Em 0-2, a reação parece exagerada quando o sentimento é maior do que as palavras disponíveis.",published,ouro,8
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v09,"Na fase 0-2, raiva pode ser proteção quando algo assusta por dentro e sai como grito.",published,base,9
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v10,"Aos 0-2 anos, o choro pode vir por acúmulo, como se o dia inteiro tivesse sido segurado.",published,base,10
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v11,"Em 0-2, o medo do erro aumenta e a emoção aperta porque agora ele entende quando “não deu certo”.",published,base,11
+meu-filho,bloco-4,0-2,Emoções,bloco-4|0-2|Emoções|v12,"Na idade 0-2, a sensibilidade cresce e qualquer “não” pode soar como perda, mesmo sem ser.",published,base,12
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v01,"Entre 0 e 2 anos, querer fazer do próprio jeito cresce porque ele começa a sentir que tem vontade própria.",published,ouro,1
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v02,"Nessa fase de 0 a 2, dizer “não” pode ser afirmação, não desrespeito, e isso muda a leitura do adulto.",published,ouro,2
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v03,"No comecinho, de 0 a 2, resistência aparece quando sente controle demais, como se precisasse recuperar espaço.",published,ouro,3
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v04,"Com 0 a 2 anos, adiar tarefas pode ser medo de errar, já que agora ele percebe comparação e cobrança.",published,ouro,4
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v05,"Em 0-2, insistir em escolher é busca de controle quando o mundo parece grande demais por dentro.",published,ouro,5
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v06,"Na fase 0-2, autonomia e insegurança andam juntas, então pedir ajuda e rejeitar ajuda podem alternar.",published,ouro,6
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v07,"Com 0-2, testar limites é forma de checar se o adulto continua firme e presente.",published,ouro,7
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v08,"Em 0-2, frustrar-se ao tentar sozinho é esperado quando a vontade chega antes da coordenação.",published,ouro,8
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v09,"Na faixa 0-2, “mandar” no próprio corpo vira tema, pois ele descobre que pode decidir.",published,base,9
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v10,"Aos 0-2 anos, a teimosia pode ser esforço de independência quando ele ainda não sabe negociar.",published,base,10
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v11,"Em 0-2, recusar ordens pode ser necessidade de ser ouvido, não vontade de brigar.",published,base,11
+meu-filho,bloco-4,0-2,Autonomia,bloco-4|0-2|Autonomia|v12,"Na idade 0-2, a autonomia cresce e a tolerância ao “não” ainda não acompanha no mesmo ritmo.",published,base,12
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v01,"Entre 0 e 2 anos, estranhar pessoas é proteção do vínculo, não problema, e isso costuma acalmar o adulto.",published,ouro,1
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v02,"Nessa fase de 0 a 2, brigas surgem porque ainda é difícil ceder sem sentir que perde o lugar.",published,ouro,2
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v03,"No comecinho, de 0 a 2, preferir observar antes de entrar no grupo é jeito de se sentir seguro no ambiente.",published,ouro,3
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v04,"Com 0 a 2 anos, exclusão pode doer muito porque pertencer vira parte da identidade nessa idade.",published,ouro,4
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v05,"Em 0-2, dividir é difícil porque o “meu” ainda parece parte do corpo e não só um objeto.",published,ouro,5
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v06,"Na fase 0-2, empurrões podem aparecer quando faltam palavras e o corpo fala primeiro.",published,ouro,6
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v07,"Com 0-2, amizades mudam rápido porque ele experimenta grupos e ainda aprende regras sociais.",published,ouro,7
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v08,"Em 0-2, dizer “ninguém gosta de mim” pode ser tradução de um conflito que ele não consegue explicar.",published,ouro,8
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v09,"Na faixa 0-2, a opinião dos colegas pesa mais e a criança pode se calar para não errar socialmente.",published,base,9
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v10,"Aos 0-2 anos, timidez cresce quando o lugar é novo, como se ele precisasse medir risco.",published,base,10
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v11,"Em 0-2, perder espaço no jogo irrita porque justiça e comparação ficam mais claras.",published,base,11
+meu-filho,bloco-4,0-2,Social,bloco-4|0-2|Social|v12,"Na idade 0-2, querer mandar na brincadeira é tentativa de garantir controle dentro do grupo.",published,base,12
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v01,"Entre 0 e 2 anos, entender muito e falar pouco faz sentido porque a cabeça vai na frente da boca.",published,ouro,1
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v02,"Nessa fase de 0 a 2, repetir perguntas pode ser busca de segurança, como se ele confirmasse que entendeu direito.",published,ouro,2
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v03,"No comecinho, de 0 a 2, trocar sons acontece porque a fala ainda está se ajustando ao que ele já pensa.",published,ouro,3
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v04,"Com 0 a 2 anos, travar para explicar pode ser excesso de pensamento, como se a ideia entalasse antes de sair.",published,ouro,4
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v05,"Em 0-2, falar atropelado pode aparecer quando a emoção corre mais rápido que as palavras.",published,ouro,5
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v06,"Na fase 0-2, silêncio em alguns dias pode ser sinal de foco em outras aquisições ao mesmo tempo.",published,ouro,6
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v07,"Com 0-2, contar histórias confunde quando ele não consegue organizar começo, meio e fim na cabeça.",published,ouro,7
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v08,"Em 0-2, responder curto pode ser defesa quando falar expõe sentimento que ele não sabe nomear.",published,ouro,8
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v09,"Na faixa 0-2, escrever com erros pode gerar vergonha porque o “certo” fica mais visível para ele.",published,base,9
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v10,"Aos 0-2 anos, gaguejar pode surgir quando a ideia é maior do que a fala consegue acompanhar.",published,base,10
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v11,"Em 0-2, as palavras somem na hora da leitura quando a ansiedade aperta por dentro.",published,base,11
+meu-filho,bloco-4,0-2,Linguagem,bloco-4|0-2|Linguagem|v12,"Na idade 0-2, discutir palavras e sentidos cresce porque ele percebe nuance e quer precisão.",published,base,12
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v01,"Entre 3 e 4 anos, o foco some rápido porque a curiosidade puxa mais forte que o controle interno.",published,ouro,1
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v02,"Por volta dos 3 a 4, parecer não ouvir costuma ser mente ocupada, não desafio, e isso alivia a cobrança.",published,ouro,2
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v03,"Na fase dos 3 aos 4, distração aparece quando tem estímulo demais, como se tudo competisse pelo olhar.",published,ouro,3
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v04,"Com 3 a 4 anos, transições quebram a atenção porque mudar de cena exige um esforço que ainda está crescendo.",published,ouro,4
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v05,"Nessa idade 3-4, a atenção melhora quando há interesse, então o desinteresse pode parecer “desligamento”.",published,ouro,5
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v06,"Em 3-4, o cansaço derruba o foco porque o corpo gasta energia para se conter ao longo do dia.",published,ouro,6
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v07,"Em 3-4, perder o fio da conversa acontece quando a cabeça tenta segurar muita coisa ao mesmo tempo.",published,ouro,7
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v08,"Com 3-4, a atenção pode oscilar por ansiedade, como se a mente procurasse saída antes de começar.",published,ouro,8
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v09,"Na faixa 3-4, o foco varia mais perto da fome ou do sono, e isso não diz nada sobre esforço.",published,base,9
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v10,"Aos 3-4 anos, a atenção pode travar em um detalhe, como se fosse difícil mudar de assunto.",published,base,10
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v11,"Em 3-4, a concentração cai depois de muita novidade, porque o cérebro fica saturado de informação.",published,base,11
+meu-filho,bloco-4,3-4,Atenção,bloco-4|3-4|Atenção|v12,"Na fase 3-4, a atenção costuma ser seletiva, então responder só ao que interessa é parte do aprendizado.",published,base,12
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v01,"Entre 3 e 4 anos, a emoção vem grande porque sentir chega antes de conseguir organizar o que acontece por dentro.",published,ouro,1
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v02,"Por volta dos 3 a 4, chorar forte pode ser descarga, não falta de limite, e isso tira culpa da cena.",published,ouro,2
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v03,"Na fase dos 3 aos 4, irritação aparece do nada quando o corpo está cheio, como se faltasse espaço interno.",published,ouro,3
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v04,"Com 3 a 4 anos, frustração pesa mais porque o desejo é maior que a tolerância para esperar.",published,ouro,4
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v05,"Em 3-4, depois do pico emocional a calma pode voltar rápido, pois a descarga passa e o corpo relaxa.",published,ouro,5
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v06,"Na faixa 3-4, mudanças pequenas viram tempestade porque previsibilidade ainda é o que dá segurança.",published,ouro,6
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v07,"Com 3-4, vergonha começa a aparecer e a criança pode se fechar para não se sentir exposta.",published,ouro,7
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v08,"Em 3-4, a reação parece exagerada quando o sentimento é maior do que as palavras disponíveis.",published,ouro,8
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v09,"Na fase 3-4, raiva pode ser proteção quando algo assusta por dentro e sai como grito.",published,base,9
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v10,"Aos 3-4 anos, o choro pode vir por acúmulo, como se o dia inteiro tivesse sido segurado.",published,base,10
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v11,"Em 3-4, o medo do erro aumenta e a emoção aperta porque agora ele entende quando “não deu certo”.",published,base,11
+meu-filho,bloco-4,3-4,Emoções,bloco-4|3-4|Emoções|v12,"Na idade 3-4, a sensibilidade cresce e qualquer “não” pode soar como perda, mesmo sem ser.",published,base,12
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v01,"Entre 3 e 4 anos, querer fazer do próprio jeito cresce porque ele começa a sentir que tem vontade própria.",published,ouro,1
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v02,"Por volta dos 3 a 4, dizer “não” pode ser afirmação, não desrespeito, e isso muda a leitura do adulto.",published,ouro,2
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v03,"Na fase dos 3 aos 4, resistência aparece quando sente controle demais, como se precisasse recuperar espaço.",published,ouro,3
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v04,"Com 3 a 4 anos, adiar tarefas pode ser medo de errar, já que agora ele percebe comparação e cobrança.",published,ouro,4
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v05,"Em 3-4, insistir em escolher é busca de controle quando o mundo parece grande demais por dentro.",published,ouro,5
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v06,"Na fase 3-4, autonomia e insegurança andam juntas, então pedir ajuda e rejeitar ajuda podem alternar.",published,ouro,6
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v07,"Com 3-4, testar limites é forma de checar se o adulto continua firme e presente.",published,ouro,7
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v08,"Em 3-4, frustrar-se ao tentar sozinho é esperado quando a vontade chega antes da coordenação.",published,ouro,8
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v09,"Na faixa 3-4, “mandar” no próprio corpo vira tema, pois ele descobre que pode decidir.",published,base,9
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v10,"Aos 3-4 anos, a teimosia pode ser esforço de independência quando ele ainda não sabe negociar.",published,base,10
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v11,"Em 3-4, recusar ordens pode ser necessidade de ser ouvido, não vontade de brigar.",published,base,11
+meu-filho,bloco-4,3-4,Autonomia,bloco-4|3-4|Autonomia|v12,"Na idade 3-4, a autonomia cresce e a tolerância ao “não” ainda não acompanha no mesmo ritmo.",published,base,12
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v01,"Entre 3 e 4 anos, estranhar pessoas é proteção do vínculo, não problema, e isso costuma acalmar o adulto.",published,ouro,1
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v02,"Por volta dos 3 a 4, brigas surgem porque ainda é difícil ceder sem sentir que perde o lugar.",published,ouro,2
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v03,"Na fase dos 3 aos 4, preferir observar antes de entrar no grupo é jeito de se sentir seguro no ambiente.",published,ouro,3
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v04,"Com 3 a 4 anos, exclusão pode doer muito porque pertencer vira parte da identidade nessa idade.",published,ouro,4
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v05,"Em 3-4, dividir é difícil porque o “meu” ainda parece parte do corpo e não só um objeto.",published,ouro,5
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v06,"Na fase 3-4, empurrões podem aparecer quando faltam palavras e o corpo fala primeiro.",published,ouro,6
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v07,"Com 3-4, amizades mudam rápido porque ele experimenta grupos e ainda aprende regras sociais.",published,ouro,7
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v08,"Em 3-4, dizer “ninguém gosta de mim” pode ser tradução de um conflito que ele não consegue explicar.",published,ouro,8
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v09,"Na faixa 3-4, a opinião dos colegas pesa mais e a criança pode se calar para não errar socialmente.",published,base,9
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v10,"Aos 3-4 anos, timidez cresce quando o lugar é novo, como se ele precisasse medir risco.",published,base,10
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v11,"Em 3-4, perder espaço no jogo irrita porque justiça e comparação ficam mais claras.",published,base,11
+meu-filho,bloco-4,3-4,Social,bloco-4|3-4|Social|v12,"Na idade 3-4, querer mandar na brincadeira é tentativa de garantir controle dentro do grupo.",published,base,12
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v01,"Entre 3 e 4 anos, entender muito e falar pouco faz sentido porque a cabeça vai na frente da boca.",published,ouro,1
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v02,"Por volta dos 3 a 4, repetir perguntas pode ser busca de segurança, como se ele confirmasse que entendeu direito.",published,ouro,2
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v03,"Na fase dos 3 aos 4, trocar sons acontece porque a fala ainda está se ajustando ao que ele já pensa.",published,ouro,3
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v04,"Com 3 a 4 anos, travar para explicar pode ser excesso de pensamento, como se a ideia entalasse antes de sair.",published,ouro,4
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v05,"Em 3-4, falar atropelado pode aparecer quando a emoção corre mais rápido que as palavras.",published,ouro,5
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v06,"Na fase 3-4, silêncio em alguns dias pode ser sinal de foco em outras aquisições ao mesmo tempo.",published,ouro,6
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v07,"Com 3-4, contar histórias confunde quando ele não consegue organizar começo, meio e fim na cabeça.",published,ouro,7
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v08,"Em 3-4, responder curto pode ser defesa quando falar expõe sentimento que ele não sabe nomear.",published,ouro,8
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v09,"Na faixa 3-4, escrever com erros pode gerar vergonha porque o “certo” fica mais visível para ele.",published,base,9
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v10,"Aos 3-4 anos, gaguejar pode surgir quando a ideia é maior do que a fala consegue acompanhar.",published,base,10
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v11,"Em 3-4, as palavras somem na hora da leitura quando a ansiedade aperta por dentro.",published,base,11
+meu-filho,bloco-4,3-4,Linguagem,bloco-4|3-4|Linguagem|v12,"Na idade 3-4, discutir palavras e sentidos cresce porque ele percebe nuance e quer precisão.",published,base,12
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v01,"Entre 5 e 6 anos, o foco some rápido porque a curiosidade puxa mais forte que o controle interno.",published,ouro,1
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v02,"Por volta dos 5 a 6, parecer não ouvir costuma ser mente ocupada, não desafio, e isso alivia a cobrança.",published,ouro,2
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v03,"Na fase dos 5 aos 6, distração aparece quando tem estímulo demais, como se tudo competisse pelo olhar.",published,ouro,3
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v04,"Com 5 a 6 anos, transições quebram a atenção porque mudar de cena exige um esforço que ainda está crescendo.",published,ouro,4
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v05,"Nessa idade 5-6, a atenção melhora quando há interesse, então o desinteresse pode parecer “desligamento”.",published,ouro,5
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v06,"Em 5-6, o cansaço derruba o foco porque o corpo gasta energia para se conter ao longo do dia.",published,ouro,6
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v07,"Em 5-6, perder o fio da conversa acontece quando a cabeça tenta segurar muita coisa ao mesmo tempo.",published,ouro,7
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v08,"Com 5-6, a atenção pode oscilar por ansiedade, como se a mente procurasse saída antes de começar.",published,ouro,8
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v09,"Na faixa 5-6, o foco varia mais perto da fome ou do sono, e isso não diz nada sobre esforço.",published,base,9
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v10,"Aos 5-6 anos, a atenção pode travar em um detalhe, como se fosse difícil mudar de assunto.",published,base,10
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v11,"Em 5-6, a concentração cai depois de muita novidade, porque o cérebro fica saturado de informação.",published,base,11
+meu-filho,bloco-4,5-6,Atenção,bloco-4|5-6|Atenção|v12,"Na fase 5-6, a atenção costuma ser seletiva, então responder só ao que interessa é parte do aprendizado.",published,base,12
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v01,"Entre 5 e 6 anos, a emoção vem grande porque sentir chega antes de conseguir organizar o que acontece por dentro.",published,ouro,1
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v02,"Por volta dos 5 a 6, chorar forte pode ser descarga, não falta de limite, e isso tira culpa da cena.",published,ouro,2
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v03,"Na fase dos 5 aos 6, irritação aparece do nada quando o corpo está cheio, como se faltasse espaço interno.",published,ouro,3
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v04,"Com 5 a 6 anos, frustração pesa mais porque o desejo é maior que a tolerância para esperar.",published,ouro,4
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v05,"Em 5-6, depois do pico emocional a calma pode voltar rápido, pois a descarga passa e o corpo relaxa.",published,ouro,5
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v06,"Na faixa 5-6, mudanças pequenas viram tempestade porque previsibilidade ainda é o que dá segurança.",published,ouro,6
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v07,"Com 5-6, vergonha começa a aparecer e a criança pode se fechar para não se sentir exposta.",published,ouro,7
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v08,"Em 5-6, a reação parece exagerada quando o sentimento é maior do que as palavras disponíveis.",published,ouro,8
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v09,"Na fase 5-6, raiva pode ser proteção quando algo assusta por dentro e sai como grito.",published,base,9
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v10,"Aos 5-6 anos, o choro pode vir por acúmulo, como se o dia inteiro tivesse sido segurado.",published,base,10
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v11,"Em 5-6, o medo do erro aumenta e a emoção aperta porque agora ele entende quando “não deu certo”.",published,base,11
+meu-filho,bloco-4,5-6,Emoções,bloco-4|5-6|Emoções|v12,"Na idade 5-6, a sensibilidade cresce e qualquer “não” pode soar como perda, mesmo sem ser.",published,base,12
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v01,"Entre 5 e 6 anos, querer fazer do próprio jeito cresce porque ele começa a sentir que tem vontade própria.",published,ouro,1
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v02,"Por volta dos 5 a 6, dizer “não” pode ser afirmação, não desrespeito, e isso muda a leitura do adulto.",published,ouro,2
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v03,"Na fase dos 5 aos 6, resistência aparece quando sente controle demais, como se precisasse recuperar espaço.",published,ouro,3
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v04,"Com 5 a 6 anos, adiar tarefas pode ser medo de errar, já que agora ele percebe comparação e cobrança.",published,ouro,4
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v05,"Em 5-6, insistir em escolher é busca de controle quando o mundo parece grande demais por dentro.",published,ouro,5
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v06,"Na fase 5-6, autonomia e insegurança andam juntas, então pedir ajuda e rejeitar ajuda podem alternar.",published,ouro,6
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v07,"Com 5-6, testar limites é forma de checar se o adulto continua firme e presente.",published,ouro,7
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v08,"Em 5-6, frustrar-se ao tentar sozinho é esperado quando a vontade chega antes da coordenação.",published,ouro,8
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v09,"Na faixa 5-6, “mandar” no próprio corpo vira tema, pois ele descobre que pode decidir.",published,base,9
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v10,"Aos 5-6 anos, a teimosia pode ser esforço de independência quando ele ainda não sabe negociar.",published,base,10
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v11,"Em 5-6, recusar ordens pode ser necessidade de ser ouvido, não vontade de brigar.",published,base,11
+meu-filho,bloco-4,5-6,Autonomia,bloco-4|5-6|Autonomia|v12,"Na idade 5-6, a autonomia cresce e a tolerância ao “não” ainda não acompanha no mesmo ritmo.",published,base,12
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v01,"Entre 5 e 6 anos, estranhar pessoas é proteção do vínculo, não problema, e isso costuma acalmar o adulto.",published,ouro,1
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v02,"Por volta dos 5 a 6, brigas surgem porque ainda é difícil ceder sem sentir que perde o lugar.",published,ouro,2
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v03,"Na fase dos 5 aos 6, preferir observar antes de entrar no grupo é jeito de se sentir seguro no ambiente.",published,ouro,3
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v04,"Com 5 a 6 anos, exclusão pode doer muito porque pertencer vira parte da identidade nessa idade.",published,ouro,4
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v05,"Em 5-6, dividir é difícil porque o “meu” ainda parece parte do corpo e não só um objeto.",published,ouro,5
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v06,"Na fase 5-6, empurrões podem aparecer quando faltam palavras e o corpo fala primeiro.",published,ouro,6
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v07,"Com 5-6, amizades mudam rápido porque ele experimenta grupos e ainda aprende regras sociais.",published,ouro,7
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v08,"Em 5-6, dizer “ninguém gosta de mim” pode ser tradução de um conflito que ele não consegue explicar.",published,ouro,8
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v09,"Na faixa 5-6, a opinião dos colegas pesa mais e a criança pode se calar para não errar socialmente.",published,base,9
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v10,"Aos 5-6 anos, timidez cresce quando o lugar é novo, como se ele precisasse medir risco.",published,base,10
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v11,"Em 5-6, perder espaço no jogo irrita porque justiça e comparação ficam mais claras.",published,base,11
+meu-filho,bloco-4,5-6,Social,bloco-4|5-6|Social|v12,"Na idade 5-6, querer mandar na brincadeira é tentativa de garantir controle dentro do grupo.",published,base,12
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v01,"Entre 5 e 6 anos, entender muito e falar pouco faz sentido porque a cabeça vai na frente da boca.",published,ouro,1
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v02,"Por volta dos 5 a 6, repetir perguntas pode ser busca de segurança, como se ele confirmasse que entendeu direito.",published,ouro,2
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v03,"Na fase dos 5 aos 6, trocar sons acontece porque a fala ainda está se ajustando ao que ele já pensa.",published,ouro,3
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v04,"Com 5 a 6 anos, travar para explicar pode ser excesso de pensamento, como se a ideia entalasse antes de sair.",published,ouro,4
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v05,"Em 5-6, falar atropelado pode aparecer quando a emoção corre mais rápido que as palavras.",published,ouro,5
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v06,"Na fase 5-6, silêncio em alguns dias pode ser sinal de foco em outras aquisições ao mesmo tempo.",published,ouro,6
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v07,"Com 5-6, contar histórias confunde quando ele não consegue organizar começo, meio e fim na cabeça.",published,ouro,7
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v08,"Em 5-6, responder curto pode ser defesa quando falar expõe sentimento que ele não sabe nomear.",published,ouro,8
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v09,"Na faixa 5-6, escrever com erros pode gerar vergonha porque o “certo” fica mais visível para ele.",published,base,9
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v10,"Aos 5-6 anos, gaguejar pode surgir quando a ideia é maior do que a fala consegue acompanhar.",published,base,10
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v11,"Em 5-6, as palavras somem na hora da leitura quando a ansiedade aperta por dentro.",published,base,11
+meu-filho,bloco-4,5-6,Linguagem,bloco-4|5-6|Linguagem|v12,"Na idade 5-6, discutir palavras e sentidos cresce porque ele percebe nuance e quer precisão.",published,base,12
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v01,"Entre 7 e 8 anos, o foco some rápido porque a curiosidade puxa mais forte que o controle interno.",published,ouro,1
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v02,"Por volta dos 7 a 8, parecer não ouvir costuma ser mente ocupada, não desafio, e isso alivia a cobrança.",published,ouro,2
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v03,"Na fase dos 7 aos 8, distração aparece quando tem estímulo demais, como se tudo competisse pelo olhar.",published,ouro,3
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v04,"Com 7 a 8 anos, transições quebram a atenção porque mudar de cena exige um esforço que ainda está crescendo.",published,ouro,4
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v05,"Nessa idade 7-8, a atenção melhora quando há interesse, então o desinteresse pode parecer “desligamento”.",published,ouro,5
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v06,"Em 7-8, o cansaço derruba o foco porque o corpo gasta energia para se conter ao longo do dia.",published,ouro,6
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v07,"Em 7-8, perder o fio da conversa acontece quando a cabeça tenta segurar muita coisa ao mesmo tempo.",published,ouro,7
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v08,"Com 7-8, a atenção pode oscilar por ansiedade, como se a mente procurasse saída antes de começar.",published,ouro,8
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v09,"Na faixa 7-8, o foco varia mais perto da fome ou do sono, e isso não diz nada sobre esforço.",published,base,9
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v10,"Aos 7-8 anos, a atenção pode travar em um detalhe, como se fosse difícil mudar de assunto.",published,base,10
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v11,"Em 7-8, a concentração cai depois de muita novidade, porque o cérebro fica saturado de informação.",published,base,11
+meu-filho,bloco-4,7-8,Atenção,bloco-4|7-8|Atenção|v12,"Na fase 7-8, a atenção costuma ser seletiva, então responder só ao que interessa é parte do aprendizado.",published,base,12
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v01,"Entre 7 e 8 anos, a emoção vem grande porque sentir chega antes de conseguir organizar o que acontece por dentro.",published,ouro,1
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v02,"Por volta dos 7 a 8, chorar forte pode ser descarga, não falta de limite, e isso tira culpa da cena.",published,ouro,2
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v03,"Na fase dos 7 aos 8, irritação aparece do nada quando o corpo está cheio, como se faltasse espaço interno.",published,ouro,3
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v04,"Com 7 a 8 anos, frustração pesa mais porque o desejo é maior que a tolerância para esperar.",published,ouro,4
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v05,"Em 7-8, depois do pico emocional a calma pode voltar rápido, pois a descarga passa e o corpo relaxa.",published,ouro,5
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v06,"Na faixa 7-8, mudanças pequenas viram tempestade porque previsibilidade ainda é o que dá segurança.",published,ouro,6
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v07,"Com 7-8, vergonha começa a aparecer e a criança pode se fechar para não se sentir exposta.",published,ouro,7
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v08,"Em 7-8, a reação parece exagerada quando o sentimento é maior do que as palavras disponíveis.",published,ouro,8
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v09,"Na fase 7-8, raiva pode ser proteção quando algo assusta por dentro e sai como grito.",published,base,9
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v10,"Aos 7-8 anos, o choro pode vir por acúmulo, como se o dia inteiro tivesse sido segurado.",published,base,10
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v11,"Em 7-8, o medo do erro aumenta e a emoção aperta porque agora ele entende quando “não deu certo”.",published,base,11
+meu-filho,bloco-4,7-8,Emoções,bloco-4|7-8|Emoções|v12,"Na idade 7-8, a sensibilidade cresce e qualquer “não” pode soar como perda, mesmo sem ser.",published,base,12
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v01,"Entre 7 e 8 anos, querer fazer do próprio jeito cresce porque ele começa a sentir que tem vontade própria.",published,ouro,1
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v02,"Por volta dos 7 a 8, dizer “não” pode ser afirmação, não desrespeito, e isso muda a leitura do adulto.",published,ouro,2
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v03,"Na fase dos 7 aos 8, resistência aparece quando sente controle demais, como se precisasse recuperar espaço.",published,ouro,3
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v04,"Com 7 a 8 anos, adiar tarefas pode ser medo de errar, já que agora ele percebe comparação e cobrança.",published,ouro,4
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v05,"Em 7-8, insistir em escolher é busca de controle quando o mundo parece grande demais por dentro.",published,ouro,5
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v06,"Na fase 7-8, autonomia e insegurança andam juntas, então pedir ajuda e rejeitar ajuda podem alternar.",published,ouro,6
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v07,"Com 7-8, testar limites é forma de checar se o adulto continua firme e presente.",published,ouro,7
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v08,"Em 7-8, frustrar-se ao tentar sozinho é esperado quando a vontade chega antes da coordenação.",published,ouro,8
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v09,"Na faixa 7-8, “mandar” no próprio corpo vira tema, pois ele descobre que pode decidir.",published,base,9
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v10,"Aos 7-8 anos, a teimosia pode ser esforço de independência quando ele ainda não sabe negociar.",published,base,10
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v11,"Em 7-8, recusar ordens pode ser necessidade de ser ouvido, não vontade de brigar.",published,base,11
+meu-filho,bloco-4,7-8,Autonomia,bloco-4|7-8|Autonomia|v12,"Na idade 7-8, a autonomia cresce e a tolerância ao “não” ainda não acompanha no mesmo ritmo.",published,base,12
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v01,"Entre 7 e 8 anos, estranhar pessoas é proteção do vínculo, não problema, e isso costuma acalmar o adulto.",published,ouro,1
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v02,"Por volta dos 7 a 8, brigas surgem porque ainda é difícil ceder sem sentir que perde o lugar.",published,ouro,2
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v03,"Na fase dos 7 aos 8, preferir observar antes de entrar no grupo é jeito de se sentir seguro no ambiente.",published,ouro,3
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v04,"Com 7 a 8 anos, exclusão pode doer muito porque pertencer vira parte da identidade nessa idade.",published,ouro,4
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v05,"Em 7-8, dividir é difícil porque o “meu” ainda parece parte do corpo e não só um objeto.",published,ouro,5
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v06,"Na fase 7-8, empurrões podem aparecer quando faltam palavras e o corpo fala primeiro.",published,ouro,6
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v07,"Com 7-8, amizades mudam rápido porque ele experimenta grupos e ainda aprende regras sociais.",published,ouro,7
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v08,"Em 7-8, dizer “ninguém gosta de mim” pode ser tradução de um conflito que ele não consegue explicar.",published,ouro,8
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v09,"Na faixa 7-8, a opinião dos colegas pesa mais e a criança pode se calar para não errar socialmente.",published,base,9
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v10,"Aos 7-8 anos, timidez cresce quando o lugar é novo, como se ele precisasse medir risco.",published,base,10
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v11,"Em 7-8, perder espaço no jogo irrita porque justiça e comparação ficam mais claras.",published,base,11
+meu-filho,bloco-4,7-8,Social,bloco-4|7-8|Social|v12,"Na idade 7-8, querer mandar na brincadeira é tentativa de garantir controle dentro do grupo.",published,base,12
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v01,"Entre 7 e 8 anos, entender muito e falar pouco faz sentido porque a cabeça vai na frente da boca.",published,ouro,1
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v02,"Por volta dos 7 a 8, repetir perguntas pode ser busca de segurança, como se ele confirmasse que entendeu direito.",published,ouro,2
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v03,"Na fase dos 7 aos 8, trocar sons acontece porque a fala ainda está se ajustando ao que ele já pensa.",published,ouro,3
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v04,"Com 7 a 8 anos, travar para explicar pode ser excesso de pensamento, como se a ideia entalasse antes de sair.",published,ouro,4
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v05,"Em 7-8, falar atropelado pode aparecer quando a emoção corre mais rápido que as palavras.",published,ouro,5
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v06,"Na fase 7-8, silêncio em alguns dias pode ser sinal de foco em outras aquisições ao mesmo tempo.",published,ouro,6
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v07,"Com 7-8, contar histórias confunde quando ele não consegue organizar começo, meio e fim na cabeça.",published,ouro,7
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v08,"Em 7-8, responder curto pode ser defesa quando falar expõe sentimento que ele não sabe nomear.",published,ouro,8
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v09,"Na faixa 7-8, escrever com erros pode gerar vergonha porque o “certo” fica mais visível para ele.",published,base,9
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v10,"Aos 7-8 anos, gaguejar pode surgir quando a ideia é maior do que a fala consegue acompanhar.",published,base,10
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v11,"Em 7-8, as palavras somem na hora da leitura quando a ansiedade aperta por dentro.",published,base,11
+meu-filho,bloco-4,7-8,Linguagem,bloco-4|7-8|Linguagem|v12,"Na idade 7-8, discutir palavras e sentidos cresce porque ele percebe nuance e quer precisão.",published,base,12

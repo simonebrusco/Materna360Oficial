@@ -21,3 +21,11 @@ tsconfig.tsbuildinfo
 
 # Local env
 .env.local
+.vercel
+.env*.local
+
+# local backups
+*.bak.*
+
+# local vercel env
+.env.vercel

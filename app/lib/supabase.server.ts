@@ -1,4 +1,4 @@
-// app/lib/supabase.ts
+// app/lib/supabase.server.ts
 import 'server-only'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
@@ -13,7 +13,7 @@ function requireEnv(name: string, value: string | undefined) {
 /**
  * Server client (server-side)
  * - Usa SERVICE_ROLE quando disponível (ADM / operações confiáveis)
- * - Fallback para anon (somente se SERVICE_ROLE não existir)
+ * - Fallback para anon (apenas se você quiser permitir leitura não privilegiada)
  */
 export function supabaseServer(): Client {
   const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL)
@@ -35,16 +35,4 @@ export function supabaseServer(): Client {
       detectSessionInUrl: false,
     },
   })
-}
-
-/**
- * Legacy helper esperado por módulos antigos (ex.: app/lib/baby.ts)
- * - Nunca lança erro: retorna null se não conseguir criar
- */
-export function tryCreateServerSupabase(): Client | null {
-  try {
-    return supabaseServer()
-  } catch {
-    return null
-  }
 }

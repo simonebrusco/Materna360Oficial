@@ -29,6 +29,15 @@ const MIN_MONTHS_ALLOW_RECIPES = 12 // >= 12: libera receitas do app
 
 const LS_PREFIX = 'm360:'
 
+function isDebug() {
+  try {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('debug') === '1'
+  } catch {
+    return false
+  }
+}
+
 /**
  * Preferências “silenciosas” do hub Meu Dia Leve (P26)
  */
@@ -54,6 +63,11 @@ const GEN_KEYS = {
   tresOpcoes: (dateKey: string) => `maternar/meu-dia-leve/gen/tres-opcoes/${dateKey}`,
   recipeAI: (dateKey: string) => `maternar/meu-dia-leve/gen/ai-receita/${dateKey}`,
   lastSelected: (dateKey: string) => `maternar/meu-dia-leve/gen/last-selected/${dateKey}`,
+} as const
+
+const DAILY_KEYS = {
+  inspiracao: (dateKey: string) => `maternar/meu-dia-leve/daily/inspiracao/${dateKey}`,
+  paraHoje: (dateKey: string) => `maternar/meu-dia-leve/daily/para-hoje/${dateKey}`,
 } as const
 
 function safeGetLS(key: string): string | null {
@@ -176,8 +190,8 @@ function inferContext(): { slot: Slot; mood: Mood; focus: Focus } {
   return { slot, mood, focus }
 }
 
-type QuickIdea = { tag: string; title: string; how: string; slot: Slot; focus: Focus }
-type QuickRecipe = { tag: string; title: string; how: string; slot: Slot }
+type QuickIdea = { tag?: string; title: string; how: string; slot: Slot; focus: Focus }
+type QuickRecipe = { tag?: string; title: string; how: string; slot: Slot }
 type DayLine = { title: string; why: string; focus: Focus; slot: Slot }
 
 const INSPIRATIONS: Record<Mood, { title: string; line1: string; line2: string; action: string }> = {
@@ -255,7 +269,7 @@ function CardChoice({
 }: {
   title: string
   subtitle: string
-  tag: string
+  tag?: string
   active?: boolean
   onClick?: () => void
 }) {
@@ -269,7 +283,8 @@ function CardChoice({
       ].join(' ')}
     >
       <div className="inline-flex w-max items-center rounded-full bg-[#ffe1f1] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#b8236b] uppercase">
-        {tag}
+
+        {tag ? tag : null}
       </div>
       <div className="mt-2 text-[13px] font-semibold text-[#2f3a56] leading-snug">{title}</div>
       <div className="mt-2 text-[12px] text-[#6a6a6a] leading-relaxed">{subtitle}</div>
@@ -305,7 +320,7 @@ function toMyDayTitleFromInspiration(input: { mood: Mood; slot: Slot; focus: Foc
   return 'Simplificar a refeição'
 }
 
-type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string }
+type AIRecipeResponse = { ok: boolean; text?: string; error?: string; hint?: string; items?: Array<{ id: string; title: string; how: string }>; meta?: any }
 
 async function requestAIRecipe(input: {
   slot: Slot
@@ -315,16 +330,16 @@ async function requestAIRecipe(input: {
   childAgeYears?: number
   childAgeLabel?: string
 }): Promise<AIRecipeResponse> {
-  const res = await fetch('/api/ai/meu-dia-leve/receita', {
+  const res = await fetch('/api/ai/meu-dia-leve/receitas-rapidas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       slot: input.slot,
-      mood: input.mood,
-      pantry: input.pantry,
-      childAgeMonths: input.childAgeMonths,
-      childAgeYears: input.childAgeYears,
-      childAgeLabel: input.childAgeLabel,
+      // focus é opcional; se vazio, o endpoint retorna do pool geral do slot
+      focus: '',
+      ingredients: input.pantry,
+      count: 1,
+      avoidIds: [],
     }),
   })
 
@@ -332,7 +347,13 @@ async function requestAIRecipe(input: {
     return { ok: false, error: `http_${res.status}`, hint: 'Não deu certo agora. Se quiser, use uma opção pronta abaixo.' }
   }
 
-  return (await res.json()) as AIRecipeResponse
+  const data = (await res.json()) as AIRecipeResponse
+  if (data?.ok && Array.isArray((data as any).items) && (data as any).items.length) {
+    const it = (data as any).items[0]
+    return { ok: true, text: `${it.title}\n\n${it.how}` }
+  }
+  if (data?.ok) return { ok: true, hint: 'Não encontrei uma receita agora. Tente mudar os ingredientes.' }
+  return data
 }
 
 function plural(n: number, one: string, many: string) {
@@ -378,7 +399,7 @@ function countActiveFromMeuDiaLeveToday(tasks: MyDayTaskItem[]) {
 ========================= */
 
 type PlanKind = 'idea' | 'passo' | 'recipe' | 'inspiration'
-type PlanItem = { kind: PlanKind; tag: string; title: string; how: string; slot: Slot; focus: Focus }
+type PlanItem = { kind: PlanKind; tag?: string; title: string; how: string; slot: Slot; focus: Focus }
 
 function buildPlanPool(input: { slot: Slot; focus: Focus }): PlanItem[] {
   const { slot, focus } = input
@@ -440,6 +461,59 @@ function buildPlanPool(input: { slot: Slot; focus: Focus }): PlanItem[] {
   return out
 }
 
+
+type AdmPlanResp =
+  | { ok: true; items: Array<{ id: string; title: string; how: string; slot: Slot; focus: Focus }> }
+  | { ok: false; error: string }
+
+async function fetchPlanPoolFromAdm(input: { slot: Slot; focus: Focus }): Promise<PlanItem[]> {
+  try {
+    const res = await fetch('/api/ai/meu-dia-leve/plano-pronto', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slot: input.slot, focus: input.focus }),
+    })
+
+    const data = (await res.json().catch(() => null)) as AdmPlanResp | null
+    if (!data || data.ok !== true || !Array.isArray(data.items)) return []
+
+    return data.items.map((it) => ({
+      kind: 'idea' as const,
+      tag: `${input.slot} min`,
+      title: it.title,
+      how: it.how,
+      slot: input.slot,
+      focus: input.focus,
+    }))
+  } catch {
+    return []
+  }
+}
+
+
+async function fetchPlanoProntoADM(input: { slot: Slot; focus: Focus }): Promise<PlanItem[]> {
+  const res = await fetch('/api/ai/meu-dia-leve/plano-pronto', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ slot: input.slot, focus: input.focus }),
+  })
+
+  const data = await res.json().catch(() => null)
+
+  if (!data?.ok || !Array.isArray(data.items)) return []
+
+  return data.items
+    .map((it: any) => ({
+      kind: 'idea' as const,
+      tag: `${input.slot} min`,
+      title: String(it.title ?? '').trim(),
+      how: String(it.how ?? '').trim(),
+      slot: input.slot,
+      focus: input.focus,
+    }))
+    .filter((x: any) => x.title && x.how)
+}
+
 function pickWithRotation<T>(arr: T[], offset: number): T[] {
   if (!arr.length) return []
   const start = Math.abs(offset) % arr.length
@@ -461,69 +535,322 @@ export default function MeuDiaLeveClient() {
   const [children, setChildren] = useState<Array<{ id: string; label: string; ageMonths: number | null }>>([])
   const [activeChildId, setActiveChildId] = useState<string>('')
 
+    // ------------------------------------------------------------
+    // Sync children from profile snapshot (ADM-safe)
+    // Fonte primária: snapshot (API / Supabase)
+    // ------------------------------------------------------------
+    useEffect(() => {
+      try {
+        const snap = getProfileSnapshot()
+        if (!snap?.children || !Array.isArray(snap.children)) return
+
+        const normalized = snap.children
+          .map((c: any) => ({
+            id: String(c?.id ?? '').trim(),
+            label: String(c?.label ?? c?.name ?? 'Filho').trim(),
+            ageMonths:
+              typeof c?.ageMonths === 'number' && Number.isFinite(c.ageMonths)
+                ? Math.max(0, Math.floor(c.ageMonths))
+                : null,
+          }))
+          .filter((c: any) => c.id)
+
+        if (normalized.length) {
+          setChildren(normalized)
+        }
+      } catch {
+        // silencioso por contrato
+      }
+    }, [])
+
   const [pantry, setPantry] = useState<string>('')
   const [aiRecipeText, setAiRecipeText] = useState<string>('')
   const [aiRecipeLoading, setAiRecipeLoading] = useState<boolean>(false)
   const [aiRecipeError, setAiRecipeError] = useState<string>('')
   const [aiRecipeHint, setAiRecipeHint] = useState<string>('')
 
+  const [fraseSimples, setFraseSimples] = useState<string>('')
+  const [fraseSimplesLoading, setFraseSimplesLoading] = useState<boolean>(false)
+  const [fraseSimplesError, setFraseSimplesError] = useState<string>('')
+  const [fraseAvoidIds, setFraseAvoidIds] = useState<string[]>([])
+  const [ideiasItems, setIdeiasItems] = useState<Array<{ id: string; title: string; how: string; tag?: string }>>([])
+  const [ideiasLoading, setIdeiasLoading] = useState<boolean>(false)
+  const [ideiasError, setIdeiasError] = useState<string>('')
+  const [ideiasAvoidIds, setIdeiasAvoidIds] = useState<string[]>([])
+
+
+  const [paraHojeText, setParaHojeText] = useState<string>('')
+  const [paraHojeLoading, setParaHojeLoading] = useState<boolean>(false)
+  const [paraHojeError, setParaHojeError] = useState<string>('')
+
   const [planParaAgora, setPlanParaAgora] = useState<PlanItem | null>(null)
   const [planOptions, setPlanOptions] = useState<PlanItem[]>([])
   const [planPicked, setPlanPicked] = useState<number>(0)
   const [planNote, setPlanNote] = useState<string>('')
+  const [planSource, setPlanSource] = useState<'adm' | 'fallback' | 'error'>('fallback')
 
-  const todayKey = useMemo(() => getBrazilDateKey(new Date()), [])
+  const todayKey = getBrazilDateKey(new Date())
 
-  useEffect(() => {
+  async function fetchParaHoje() {
+      try {
+        setParaHojeLoading(true)
+        setParaHojeError('')
+
+        // daily-lock (Brasil): 1 mensagem por dia
+        const dailyKey = DAILY_KEYS.paraHoje(todayKey)
+        try {
+          const cachedRaw = safeGetLS(dailyKey)
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw)
+            const cachedText = String(cached?.text ?? '').trim()
+            if (cachedText) {
+              setParaHojeText(cachedText)
+              return
+            }
+          }
+        } catch {}
+
+        const res = await fetch('/api/ai/meu-dia-leve/para-hoje', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+        })
+
+        // IMPORTANTE: não tentar json() em erro HTTP (pode vir HTML / vazio)
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '')
+          setParaHojeText('')
+          setParaHojeError(`http_${res.status}:${String(txt || res.statusText || 'http_error')}`)
+          return
+        }
+
+        let data: any = null
+        try {
+          data = await res.json()
+        } catch (e: any) {
+          setParaHojeText('')
+          setParaHojeError(`bad_json:${String(e?.message ?? e ?? 'parse_error')}`)
+          return
+        }
+
+        if (!data?.ok || !data?.item) {
+          setParaHojeText('')
+          setParaHojeError(String(data?.error ?? 'bad_response'))
+          return
+        }
+
+        const txt = String(data?.item?.body ?? '').trim()
+        if (!txt) {
+          setParaHojeText('')
+          setParaHojeError(String(data?.error ?? 'bad_item'))
+          return
+        }
+
+        setParaHojeText(txt)
+
+        // daily cache: salva texto + id do item do dia (meta.pickedId é a fonte)
+        try {
+          const pickedId = data?.meta?.pickedId ? String(data.meta.pickedId) : null
+          safeSetLS(dailyKey, JSON.stringify({ id: pickedId, text: txt }))
+        } catch {}
+      } catch (e: any) {
+        setParaHojeText('')
+        setParaHojeError(String(e?.message ?? 'fetch_error'))
+      } finally {
+        setParaHojeLoading(false)
+      }
+    }
+
+
+  async function fetchFraseSimples(input: { slot: string; focus: string; avoidIds: string[] }) {
     try {
-      track('nav.view', { tab: 'maternar', page: 'meu-dia-leve', timestamp: new Date().toISOString() })
-    } catch {}
-  }, [])
+      // daily-lock (Brasil): 1 inspiração por dia (não varia por reload)
+      const dailyKey = DAILY_KEYS.inspiracao(todayKey)
+      try {
+        const cachedRaw = safeGetLS(dailyKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          const cachedText = String(cached?.text ?? '').trim()
+          const cachedId = cached?.id ? String(cached.id) : ''
+          if (cachedText) {
+            setFraseSimples(cachedText)
+            if (cachedId) setFraseAvoidIds([cachedId])
+            return
+          }
+        }
+      } catch {}
 
-  useEffect(() => {
-    const inferred = inferContext()
-    setSlot(inferred.slot)
-    setMood(inferred.mood)
-    setFocus(inferred.focus)
-    setStep('inspiracao')
+      setFraseSimplesLoading(true)
+      setFraseSimplesError('')
 
-    const snap = getProfileSnapshot()
-    setChildren(snap.children)
+      const res = await fetch('/api/ai/meu-dia-leve/frase-simples', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slot: input.slot, focus: input.focus, avoidIds: input.avoidIds, count: 1 }),
 
-    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
-    const active = getActiveChildOrNull(prefChildId)
-    setActiveChildId(active?.id ?? '')
-
-    try {
-      track('meu_dia_leve.open', {
-        slot: inferred.slot,
-        mood: inferred.mood,
-        focus: inferred.focus,
-        profileSource: snap.source,
-        kidsCount: snap.children.length,
-        kidsWithAge: snap.children.filter((k) => typeof k.ageMonths === 'number').length,
       })
-    } catch {}
-  }, [])
 
-  useEffect(() => {
-    if (!children.length) return
-    if (activeChildId) return
+      const data = await res.json().catch(() => null)
+      if (!data?.ok || !Array.isArray(data.items)) {
+        setFraseSimples('')
+        setFraseSimplesError(String(data?.error ?? 'bad_response'))
+        return
+      }
 
-    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
-    const best = getActiveChildOrNull(prefChildId)
-    if (best?.id) setActiveChildId(best.id)
-  }, [children.length, activeChildId])
+      const exhausted = Boolean(data?.meta?.exhausted)
+      const item = data.items?.[0]
 
+      // se esgotou o pool com avoidIds, reseta e tenta 1x novamente
+      if (exhausted) {
+        setFraseAvoidIds([])
+        // refetch sem avoid
+        try {
+          const res2 = await fetch('/api/ai/meu-dia-leve/frase-simples', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ slot: input.slot, focus: input.focus, avoidIds: [], count: 1 }),
+          })
+          const data2 = await res2.json().catch(() => null)
+          const item2 = data2?.ok && Array.isArray(data2.items) ? data2.items?.[0] : null
+          const txt2 = String(item2?.title ?? item2?.how ?? '').trim()
+          setFraseSimples(txt2)
+          try {
+            const dailyKey = DAILY_KEYS.inspiracao(todayKey)
+            safeSetLS(dailyKey, JSON.stringify({ id: item2?.id ? String(item2.id) : null, text: txt2 }))
+          } catch {}
+          if (item2?.id) {
+            setFraseAvoidIds([String(item2.id)])
+          }
+        } catch {}
+        return
+      }
+
+      const txt = String(item?.title ?? item?.how ?? '').trim()
+      setFraseSimples(txt)
+
+      try {
+        const dailyKey = DAILY_KEYS.inspiracao(todayKey)
+        safeSetLS(dailyKey, JSON.stringify({ id: item?.id ? String(item.id) : null, text: txt }))
+      } catch {}
+
+      if (item?.id) {
+        const id = String(item.id)
+        setFraseAvoidIds((prev) => {
+          if (prev.includes(id)) return prev
+          const next = [id, ...prev]
+          return next.slice(0, 40)
+        })
+      }
+    } catch (e: any) {
+      setFraseSimples('')
+      setFraseSimplesError(String(e?.message ?? 'fetch_error'))
+    } finally {
+      setFraseSimplesLoading(false)
+    }
+  }
+
+  async function fetchIdeiasRapidas(input: { slot: string; focus: string; avoidIds: string[]; count?: number }) {
+    try {
+      setIdeiasLoading(true)
+      setIdeiasError('')
+
+      const slot = String(input?.slot ?? '').trim()
+      const focus = String(input?.focus ?? '').trim()
+      const avoidIds = Array.isArray(input?.avoidIds) ? input.avoidIds.map((x) => String(x)) : []
+
+      const countRaw = Number(input?.count ?? 3)
+      const count = Number.isFinite(countRaw) ? Math.max(1, Math.min(10, Math.floor(countRaw))) : 3
+
+      const cacheKey = `mdl_ir_${todayKey}_${slot}_${focus}`
+
+      // cache: evita re-fetch em reload
+      try {
+        const cachedRaw = safeGetLS(cacheKey)
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw)
+          const items = Array.isArray(cached?.items) ? cached.items : []
+          if (items.length) {
+            setIdeiasItems(items)
+            const ids = items.map((x: any) => String(x?.id ?? '')).filter(Boolean)
+            setIdeiasAvoidIds(ids)
+            return
+          }
+        }
+      } catch {}
+
+      const res = await fetch('/api/ai/meu-dia-leve/ideias-rapidas', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slot, focus, avoidIds, count }),
+      })
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        setIdeiasItems([])
+        setIdeiasError(`http_${res.status}:${String(txt || res.statusText || 'http_error')}`)
+        return
+      }
+
+      let data: any = null
+      try {
+        data = await res.json()
+      } catch (e: any) {
+        setIdeiasItems([])
+        setIdeiasError(`bad_json:${String(e?.message ?? e ?? 'parse_error')}`)
+        return
+      }
+
+      // gate tolerante
+      const metaSource = data?.meta?.source ?? data?.source ?? null
+      if (metaSource && metaSource !== 'adm') {
+        setIdeiasItems([])
+        setIdeiasError(`bad_source:${String(metaSource)}`)
+        return
+      }
+
+      const rawItems = Array.isArray(data?.items) ? data.items : []
+      const items = rawItems
+        .map((x: any) => ({
+          id: String(x?.id ?? '').trim(),
+          title: String(x?.title ?? '').trim(),
+          how: String(x?.how ?? '').trim(),
+            tag: 'ADM',
+        }))
+        .filter((x: any) => x.id && x.title && x.how)
+        .slice(0, count)
+
+      setIdeiasItems(items)
+
+      const ids = items.map((x: any) => String(x.id)).filter(Boolean)
+      setIdeiasAvoidIds(ids)
+
+      try {
+        safeSetLS(cacheKey, JSON.stringify({ items }))
+      } catch {}
+    } catch (e: any) {
+      setIdeiasItems([])
+      setIdeiasError(String(e?.message ?? 'fetch_error'))
+    } finally {
+      setIdeiasLoading(false)
+    }
+  }
+// AUTO: IDEIAS_RAPIDAS (ADM-first, com cache)
+    useEffect(() => {
+      // evita refetch desnecessário: só busca se ainda não tem itens p/ esse filtro
+      void fetchIdeiasRapidas({ slot, focus, avoidIds: [], count: 3 })
+    }, [slot, focus]) // eslint-disable-line react-hooks/exhaustive-deps
   const inspiration = useMemo(() => INSPIRATIONS[mood], [mood])
 
   const ideasForNow = useMemo(() => {
-    const strict = IDEIAS.filter((i) => i.slot === slot && i.focus === focus)
-    if (strict.length >= 2) return strict.slice(0, 3)
-    const bySlot = IDEIAS.filter((i) => i.slot === slot)
-    if (bySlot.length >= 3) return bySlot.slice(0, 4)
-    return IDEIAS.slice(0, 4)
-  }, [slot, focus])
+      // ADM-first
+      if (Array.isArray(ideiasItems) && ideiasItems.length) return ideiasItems
+
+      // fallback local (mantém o comportamento original)
+      const strict = IDEIAS.filter((i) => i.slot === slot && i.focus === focus)
+      if (strict.length >= 2) return strict.slice(0, 3)
+      const bySlot = IDEIAS.filter((i) => i.slot === slot)
+      if (bySlot.length >= 3) return bySlot.slice(0, 4)
+      return IDEIAS.slice(0, 4)
+    }, [slot, focus, ideiasItems])
 
   const recipesForNow = useMemo(() => {
     const bySlot = RECEITAS.filter((r) => r.slot === slot)
@@ -650,11 +977,129 @@ export default function MeuDiaLeveClient() {
     } catch {}
   }
 
-  const activeChild = useMemo(() => {
-    if (!children.length) return null
-    const found = children.find((c) => c.id === activeChildId)
-    return found ?? children[0]
-  }, [children, activeChildId])
+  
+    // ------------------------------------------------------------
+    // Eu360 local fallback (refresh)
+    // Motivo: o usuário pode preencher idade no Eu360 depois que esta tela já montou.
+    // Se lermos o LS só 1 vez (useMemo []), o gate fica travado até reload.
+    // ------------------------------------------------------------
+
+      function readEu360LocalChildren(): Array<{ id: string; label: string; ageMonths: number | null }> {
+        try {
+          const raw = safeGetLS('eu360_profile_v1')
+          if (!raw) return []
+          const parsed = JSON.parse(raw || '{}') as any
+          const filhos = Array.isArray(parsed?.filhos) ? parsed.filhos : []
+
+          const coerceMonths = (v: any): number | null => {
+            const n = Number(v)
+            if (!Number.isFinite(n)) return null
+            return Math.max(0, Math.floor(n))
+          }
+
+          return filhos
+            .map((f: any) => {
+              const id = String(
+                f?.id ?? f?.key ?? f?.uuid ?? f?.childId ?? f?.child_id ?? ''
+              ).trim()
+
+              const label = String(f?.nome ?? f?.name ?? '').trim() || 'Filho'
+
+              const ageMonths =
+                coerceMonths(
+                  f?.idadeMeses ??
+                    f?.idade_meses ??
+                    f?.ageMonths ??
+                    f?.age_months ??
+                    f?.months
+                ) ??
+                coerceMonths(f?.idade ?? f?.age) ??
+                null
+
+              return { id, label, ageMonths }
+            })
+            .filter((c: any) => !!c.id)
+        } catch {
+          return []
+        }
+      }
+
+
+    const [eu360LocalChildren, setEu360LocalChildren] = useState<
+      Array<{ id: string; label: string; ageMonths: number | null }>
+    >(() => readEu360LocalChildren())
+
+    useEffect(() => {
+      const refresh = () => {
+        try {
+          setEu360LocalChildren(readEu360LocalChildren())
+        } catch {}
+      }
+
+      // 1) refresh imediato (caso LS já tenha sido preenchido antes do mount)
+      refresh()
+
+      // 2) quando volta pro app / troca de aba
+      window.addEventListener('focus', refresh)
+      document.addEventListener('visibilitychange', refresh)
+
+      // 3) quando localStorage muda (melhor esforço)
+      window.addEventListener('storage', refresh)
+
+      return () => {
+        window.removeEventListener('focus', refresh)
+        document.removeEventListener('visibilitychange', refresh)
+        window.removeEventListener('storage', refresh)
+      }
+    }, [])
+
+    const childrenForGate = useMemo(() => {
+      // se vier do snapshot/API com idade preenchida, usa normal
+      const hasAnyAge = Array.isArray(children) && children.some((c: any) => c && c.ageMonths !== null && c.ageMonths !== undefined)
+      if (children.length && hasAnyAge) return children
+
+      // senão, tenta localStorage (Eu360)
+      if (eu360LocalChildren.length) return eu360LocalChildren as any
+
+      // fallback final: mantém children
+      return children
+    }, [children, eu360LocalChildren])
+
+
+    // ------------------------------------------------------------
+    // Auto-select do filho ativo baseado em childrenForGate (snapshot/LS)
+    // Motivo: não travar o hub quando idade chega depois via Eu360.
+    // ------------------------------------------------------------
+    useEffect(() => {
+      try {
+        if (!childrenForGate.length) return
+
+        // se já tem um ativo válido, mantém
+        if (activeChildId && childrenForGate.some((c: any) => c.id === activeChildId)) return
+
+        const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+        const preferred = prefChildId ? childrenForGate.find((c: any) => c.id === prefChildId) : null
+
+        // regra: preferido > com idade (mais velho) > primeiro
+        const withAge = childrenForGate.filter((c: any) => typeof c?.ageMonths === 'number' && Number.isFinite(c.ageMonths))
+        let best = preferred
+
+        if (!best && withAge.length) {
+          best = [...withAge].sort((a: any, b: any) => (b.ageMonths ?? -1) - (a.ageMonths ?? -1))[0]
+        }
+
+        if (!best) best = childrenForGate[0] ?? null
+
+        if (best?.id) setActiveChildId(best.id)
+      } catch {
+        // silencioso por contrato
+      }
+    }, [childrenForGate, activeChildId])
+const activeChild = useMemo(() => {
+    if (!childrenForGate.length) return null
+    const found = childrenForGate.find((c: any) => c.id === activeChildId)
+    return found ?? childrenForGate[0]
+  }, [childrenForGate, activeChildId])
 
   const activeMonths = activeChild?.ageMonths ?? null
   const activeYears = useMemo(() => {
@@ -675,7 +1120,7 @@ export default function MeuDiaLeveClient() {
   }, [activeMonths])
 
   const gate = useMemo(() => {
-    if (!children.length) {
+    if (!childrenForGate.length) {
       return { blocked: true, reason: 'no_children' as const, title: 'Observação', message: 'Para sugerir com segurança, complete o cadastro do(s) filho(s) no Eu360.' }
     }
 
@@ -707,7 +1152,31 @@ export default function MeuDiaLeveClient() {
     }
 
     return { blocked: false, reason: 'ok' as const, title: '', message: '' }
-  }, [children.length, activeChild, activeMonths])
+  }, [childrenForGate.length, activeChild, activeMonths])
+
+  const debugPanel = useMemo(() => {
+    if (!isDebug()) return null
+    const prefChildId = safeGetLS(HUB_PREF.preferredChildId)
+    const snap = getProfileSnapshot()
+    return (
+      <pre className="mt-3 whitespace-pre-wrap rounded-2xl border border-white/25 bg-black/30 p-3 text-[11px] text-white/90">
+        {JSON.stringify(
+          {
+            snapSource: snap.source,
+            childrenCount: snap.children?.length ?? 0,
+            children: snap.children,
+            preferredChildId: prefChildId,
+            activeChildId,
+            activeChild,
+            activeMonths,
+            gate,
+          },
+          null,
+          2
+        )}
+      </pre>
+    )
+  }, [activeChildId, activeChild, activeMonths, gate])
 
   async function onGenerateAIRecipe() {
     setAiRecipeError('')
@@ -797,7 +1266,7 @@ export default function MeuDiaLeveClient() {
 
   const slotHint = useMemo(() => slotHintLines(slot), [slot])
 
-  function onGeneratePlanParaAgora() {
+  async function onGeneratePlanParaAgora() {
     setPlanNote('')
 
     const counterKey = GEN_KEYS.paraAgora(todayKey)
@@ -811,28 +1280,129 @@ export default function MeuDiaLeveClient() {
     }
 
     const count = bumpDailyCounter(counterKey)
-    const pool = buildPlanPool({ slot, focus })
 
-    if (!pool.length) {
+    try {
+      const pool = await fetchPlanoProntoADM({ slot, focus })
+
+      if (!pool.length) {
+        const title = toMyDayTitleFromInspiration({ mood, slot, focus })
+        const item: PlanItem = { kind: 'inspiration', tag: slotLabel(slot), title, how: moodTitle(mood), slot, focus }
+        setPlanParaAgora(item)
+        try {
+          track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback', slot, mood, focus, count })
+        } catch {}
+        return
+      }
+
+      const rotated = pickWithRotation(pool, count)
+      setPlanParaAgora(rotated[0])
+      try {
+        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'adm', slot, mood, focus, count })
+      } catch {}
+    } catch {
       const title = toMyDayTitleFromInspiration({ mood, slot, focus })
       const item: PlanItem = { kind: 'inspiration', tag: slotLabel(slot), title, how: moodTitle(mood), slot, focus }
       setPlanParaAgora(item)
       try {
-        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback', slot, mood, focus, count })
+        track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'fallback_error', slot, mood, focus, count })
       } catch {}
-      return
     }
-
-    const rotated = pickWithRotation(pool, count)
-    setPlanParaAgora(rotated[0])
-    try {
-      track('meu_dia_leve.plan.generate', { kind: 'para_agora', source: 'local', slot, mood, focus, count })
-    } catch {}
   }
 
-  function onGeneratePlanTresOpcoes() {
-    setPlanNote('')
+  
+  // Fallback local (mínimo) — usado APENAS para completar 3 opções quando ADM retornar < 3.
+  // Mantém ADM-first: ADM é fonte primária; fallback é “rede de segurança”.
+  function getFallbackPlanPool(input: { slot: Slot; focus: Focus; mood: Mood }): PlanItem[] {
+    const { slot, focus } = input
 
+    const mk = (title: string, how: string): PlanItem => ({
+      kind: 'inspiration',
+      tag: slotLabel(slot),
+      title,
+      how,
+      slot,
+      focus,
+    })
+
+    // pool local pequeno, por foco + slot
+    const base: Record<Focus, Record<Slot, PlanItem[]>> = {
+      filho: {
+        '3': [
+          mk('Nomear o próximo passo', 'Chegue perto e diga apenas o próximo passo em uma frase. Espere começar.'),
+          mk('Pausa de 3 ciclos', 'Respire 3 vezes com seu filho, sem discutir o motivo agora.'),
+        ],
+        '5': [
+          mk('Sentar perto em silêncio', 'Sente ao lado por cinco minutos. Só presença, sem orientar.'),
+          mk('Um combinado pequeno', 'Faça 1 combinado simples e imediato (“primeiro isso, depois aquilo”).'),
+        ],
+        '10': [
+          mk('Presença guiada', 'Fique 10 minutos perto e descreva o que ele faz (“você está…”), sem corrigir.'),
+          mk('Transição suave', 'Avise em 2 minutos, depois em 1 minuto, e conduza para o próximo passo.'),
+        ],
+      },
+      casa: {
+        '3': [
+          mk('Uma micro-tarefa só', 'Escolha 1 coisa visível (ex.: pia) e faça só isso por 3 minutos.'),
+          mk('Ponto de ordem', 'Junte itens em 1 cesto por 3 minutos. Sem guardar tudo agora.'),
+        ],
+        '5': [
+          mk('5 minutos de reset', 'Lixo + louça visível por 5 minutos. Parou, acabou.'),
+          mk('Cesto-relâmpago', 'Recolha itens fora do lugar em um cesto por 5 minutos.'),
+        ],
+        '10': [
+          mk('10 minutos por zona', 'Escolha 1 zona (mesa/pia) e organize só ali por 10 minutos.'),
+          mk('Rotina mínima', 'Lixo + pia + roupas em um lugar por 10 minutos.'),
+        ],
+      },
+      comida: {
+        '3': [
+          mk('Lanche simples', 'Escolha 1 fruta + 1 carbo simples. Sem montar prato perfeito.'),
+          mk('Água primeiro', 'Beba água e ofereça água. Depois pense no que dá pra comer.'),
+        ],
+        '5': [
+          mk('Montagem rápida', 'Monte algo com 2 itens do que já tem. Sem receita.'),
+          mk('Plano do mínimo', 'Defina só “o que resolve agora” (ex.: ovo + pão).'),
+        ],
+        '10': [
+          mk('Pré-preparo curto', 'Separe 2 coisas para facilitar a próxima refeição. Só isso.'),
+          mk('Refeição base', 'Faça uma base simples (arroz/ovo) e complemente com o que houver.'),
+        ],
+      },
+      voce: {
+        '3': [
+          mk('Respirar e soltar', 'Três respirações longas. Solte ombros e mandíbula.'),
+          mk('Copinho de água', 'Beba um copo de água devagar, sem celular.'),
+        ],
+        '5': [
+          mk('Pausa sem culpa', 'Sente por 5 minutos. Só para baixar a pressão do corpo.'),
+          mk('Voltar pro corpo', 'Mãos no peito e barriga, respire por 5 minutos.'),
+        ],
+        '10': [
+          mk('Reset de 10', 'Banho rápido OU alongamento leve por 10 minutos.'),
+          mk('Silêncio guiado', '10 minutos sem estímulo: sem tela, só respiração e presença.'),
+        ],
+      },
+    }
+
+    return base[focus]?.[slot] ?? []
+  }
+
+  function pickNonDuplicateFallback(pool: PlanItem[], existing: PlanItem[], needed: number): PlanItem[] {
+    if (needed <= 0) return []
+    const exists = new Set(existing.map((x) => `${x.title}__${x.how}`))
+    const out: PlanItem[] = []
+    for (const it of pool) {
+      if (out.length >= needed) break
+      const k = `${it.title}__${it.how}`
+      if (exists.has(k)) continue
+      exists.add(k)
+      out.push(it)
+    }
+    return out
+  }
+
+  async function onGeneratePlanTresOpcoes() {
+    setPlanNote('')
     const counterKey = GEN_KEYS.tresOpcoes(todayKey)
     const allowed = canGenerate(counterKey, GEN_LIMITS.tresOpcoes)
     if (!allowed.ok) {
@@ -844,26 +1414,50 @@ export default function MeuDiaLeveClient() {
     }
 
     const count = bumpDailyCounter(counterKey)
-    const pool = buildPlanPool({ slot, focus })
-
-    if (!pool.length) {
-      setPlanOptions([])
-      setPlanPicked(0)
-      setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
-      try {
-        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'empty_pool', slot, mood, focus, count })
-      } catch {}
-      return
-    }
-
-    const rotated = pickWithRotation(pool, count)
-    const options = rotated.slice(0, 3)
-    setPlanOptions(options)
-    setPlanPicked(0)
 
     try {
-      track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'local', slot, mood, focus, count })
-    } catch {}
+      const pool = await fetchPlanoProntoADM({ slot, focus })
+
+      if (!pool.length) {
+        setPlanOptions([])
+        setPlanPicked(0)
+          setPlanSource('fallback')
+          setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
+        try {
+          track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'empty_pool', slot, mood, focus, count })
+        } catch {}
+        return
+      }
+
+      const rotated = pickWithRotation(pool, count)
+      let options = rotated.slice(0, 3)
+
+      if (options.length < 3) {
+        const fallbackPool = getFallbackPlanPool({ slot, focus, mood })
+        const needed = 3 - options.length
+        const extra = pickNonDuplicateFallback(fallbackPool, options, needed)
+        options = [...options, ...extra]
+        setPlanSource('fallback')
+      } else {
+        setPlanSource('adm')
+      }
+      setPlanOptions(options)
+      setPlanPicked(0)
+
+        setPlanSource('adm')
+
+      try {
+        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'adm', slot, mood, focus, count })
+      } catch {}
+    } catch {
+      setPlanOptions([])
+      setPlanPicked(0)
+        setPlanSource('error')
+      setPlanNote('Não consegui montar opções agora. Tente trocar o foco ou o tempo.')
+      try {
+        track('meu_dia_leve.plan.generate', { kind: 'tres_opcoes', source: 'error', slot, mood, focus, count })
+      } catch {}
+    }
   }
 
   const selectedPlan = useMemo(() => {
@@ -895,10 +1489,16 @@ export default function MeuDiaLeveClient() {
             </h1>
 
             <p className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
-              <span className="block md:inline">{headerCopyLines.l1}{' '}</span>
-              <span className="block md:inline">{headerCopyLines.l2}{' '}</span>
-              {headerCopyLines.l3 ? <span className="block md:inline">{headerCopyLines.l3}</span> : null}
-            </p>
+                {fraseSimples ? (
+                  <span className="block md:inline">{fraseSimples}</span>
+                ) : (
+                  <>
+                    <span className="block md:inline">{headerCopyLines.l1}{' '}</span>
+                    <span className="block md:inline">{headerCopyLines.l2}{' '}</span>
+                    {headerCopyLines.l3 ? <span className="block md:inline">{headerCopyLines.l3}</span> : null}
+                  </>
+                )}
+              </p>
           </div>
         </header>
 
@@ -1148,7 +1748,6 @@ export default function MeuDiaLeveClient() {
                                 {saveFeedback ? <span className="text-[12px] text-[#6a6a6a]">{saveFeedback}</span> : null}
                               </div>
 
-                              <div className="mt-3 text-[11px] text-[#6a6a6a]">Fonte: opções locais (fallback).</div>
                             </div>
                           ) : null}
                         </div>
@@ -1245,7 +1844,6 @@ export default function MeuDiaLeveClient() {
                             key={`${i.title}-${idx}`}
                             title={i.title}
                             subtitle={i.how}
-                            tag={i.tag}
                             active={pickedIdea === idx}
                             onClick={() => setPickedIdea(idx)}
                           />

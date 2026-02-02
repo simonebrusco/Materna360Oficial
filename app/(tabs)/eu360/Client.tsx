@@ -273,8 +273,36 @@ export default function Eu360Client() {
   useEffect(() => {
     track('nav.click', { tab: 'eu360', dest: '/eu360' })
   }, [])
+  const profile = useProfile()
+  const { name } = profile
+  // P34.ADM.1 — Espelho canônico do perfil no LocalStorage (LS_PRIMARY)
+  // Objetivo: hubs (ex: Meu Dia Leve) liberarem gate lendo eu360_profile_v1 via app/lib/profile.client.ts
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return
 
-  const { name } = useProfile()
+      const raw: any = profile as any
+      // o hook pode vir como {...perfil} ou { data: ... }
+      const candidate = (raw?.data ?? raw?.profile ?? raw) as any
+
+      const children =
+        candidate?.children ??
+        candidate?.filhos ??
+        candidate?.kids ??
+        candidate?.data?.children ??
+        candidate?.data?.filhos
+
+      if (!Array.isArray(children) || children.length === 0) return
+
+      window.localStorage.setItem('eu360_profile_v1', JSON.stringify(candidate))
+      try {
+        window.dispatchEvent(new Event('eu360:profile-snapshot-updated'))
+      } catch {}
+    } catch {
+      // nunca quebra o Eu360
+    }
+  }, [profile])
+
   const firstName = (name || '').split(' ')[0] || 'Você'
 
   // Placeholder (alinha depois com Minha Jornada / Minhas Conquistas)
