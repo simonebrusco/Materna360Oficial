@@ -203,6 +203,8 @@ export async function listEditorialTextsAdmin(params?: {
   status?: 'draft' | 'published'
   limit?: number
 }) {
+  await assertAdmin()
+  await assertAdmin()
   const hub = params?.hub?.trim()
   const status = params?.status
   const limit = Math.min(Math.max(params?.limit ?? 200, 1), 500)
@@ -224,4 +226,63 @@ export async function listEditorialTextsAdmin(params?: {
   }
 
   return { ok: true as const, items: data ?? [] }
+}
+
+export async function listIdeasAdminReadOnly(params?: {
+  hub?: string
+  status?: 'draft' | 'published'
+  environment?: string
+  durationMinutes?: number
+  q?: string
+  page?: number
+  limit?: number
+}) {
+  await assertAdmin()
+  const p = params ?? {}
+  const page = Number.isFinite(p.page as any) ? Math.max(1, Math.floor(p.page as any)) : 1
+  const limit = Number.isFinite(p.limit as any) ? Math.max(10, Math.min(200, Math.floor(p.limit as any))) : 50
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  const sb = supabaseAdmin()
+
+  let q = sb
+    .from('adm_ideas')
+    .select('id,hub,status,title,short_description,environment,duration_minutes,tags,updated_at', { count: 'exact' })
+    .order('updated_at', { ascending: false })
+    .range(from, to)
+
+  if (p.hub) q = q.eq('hub', p.hub)
+  if (p.status) q = q.eq('status', p.status)
+  if (p.environment) q = q.eq('environment', p.environment)
+  if (Number.isFinite(p.durationMinutes as any)) q = q.eq('duration_minutes', Number(p.durationMinutes))
+
+  const search = (p.q ?? '').trim()
+  if (search) {
+    // busca simples em title/short_description via OR ilike
+    const s = search.replace(/%/g, '\\%')
+    q = q.or(`title.ilike.%${s}%,short_description.ilike.%${s}%,id.ilike.%${s}%`)
+  }
+
+  const { data, error, count } = await q
+
+  if (error) return { ok: false as const, error: error.message, items: [], total: 0, page, limit }
+
+  return {
+    ok: true as const,
+    items: (Array.isArray(data) ? data : []).map((r: any) => ({
+      id: String(r.id ?? ''),
+      hub: String(r.hub ?? ''),
+      status: String(r.status ?? ''),
+      title: String(r.title ?? ''),
+      short_description: String(r.short_description ?? ''),
+      environment: String(r.environment ?? ''),
+      duration_minutes: Number(r.duration_minutes ?? 0),
+      tags: String(r.tags ?? ''),
+      updated_at: r.updated_at ?? null,
+    })),
+    total: Number(count ?? 0),
+    page,
+    limit,
+  }
 }
