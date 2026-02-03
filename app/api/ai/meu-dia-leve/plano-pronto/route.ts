@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-type Slot = '3' | '5' | '10'
+type Slot = '3' | '5' | '10' | '15'
 type Focus = 'filho' | 'casa' | 'comida' | 'voce'
 
 type Body = {
@@ -24,7 +24,7 @@ type ApiResponse =
   | { ok: false; error: string }
 
 function isSlot(v: any): v is Slot {
-  return v === '3' || v === '5' || v === '10'
+  return v === '3' || v === '5' || v === '10' || v === '15'
 }
 
 function isFocus(v: any): v is Focus {
