@@ -34,6 +34,16 @@ export default function AdminHomePage() {
           desc="Painel interno de visões e métricas (já implementado no projeto)."
           href="/admin/insights"
         />
+        <Card
+          title="Textos"
+          desc="Estrutura para textos editoriais (adm_editorial_texts / source)."
+          href="/admin/texts"
+        />
+        <Card
+          title="Debug"
+          desc="Checagens rápidas de ambiente/guard (server)."
+          href="/api/debug/admin-guard"
+        />
       </div>
 
       <div className="text-xs text-neutral-500">
