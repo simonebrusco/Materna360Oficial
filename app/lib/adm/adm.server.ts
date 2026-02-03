@@ -192,3 +192,36 @@ export async function getAdmEditorialTextPublished(args: {
     updated_at: data.updated_at ?? null,
   }
 }
+
+/**
+ * ADMIN — Lista textos editoriais (read-only).
+ * Fonte: adm_editorial_texts
+ * Uso: /admin/texts
+ */
+export async function listEditorialTextsAdmin(params?: {
+  hub?: string
+  status?: 'draft' | 'published'
+  limit?: number
+}) {
+  const hub = params?.hub?.trim()
+  const status = params?.status
+  const limit = Math.min(Math.max(params?.limit ?? 200, 1), 500)
+
+  const sb = supabaseAdmin()
+
+  let q = sb
+    .from('adm_editorial_texts')
+    .select('id, hub, key, status, title, updated_at')
+    .order('updated_at', { ascending: false })
+    .limit(limit)
+
+  if (hub) q = q.eq('hub', hub)
+  if (status) q = q.eq('status', status)
+
+  const { data, error } = await q
+  if (error) {
+    return { ok: false as const, error: error.message, items: [] as any[] }
+  }
+
+  return { ok: true as const, items: data ?? [] }
+}
