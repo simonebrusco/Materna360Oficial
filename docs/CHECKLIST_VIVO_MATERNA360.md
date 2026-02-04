@@ -278,6 +278,14 @@ Ou seguimos para os próximos arquivos com conflito?
   - commit: beee5257 "chore: remove pnpm lockfile + enforce npm packageManager"
 - ✅ Portalizar AppointmentModal para corrigir stacking/z-index (modal no fundo)
   - commit: e0e1de47 "P33.10: portalize AppointmentModal to fix z-index stacking"
+  - ✅ Planner: busy-guard + estado ocupado (anti clique duplo) + fix missing useRef import
+    - commit: dd645925 "P33.10: add busy guard + fix missing useRef import in WeeklyPlannerCore"
+  - ✅ Planner: remover símbolos/emoji do WeeklyPlannerCore (lint warning)
+    - commit: 1ff736f6 "P33.10: remove emoji symbols from WeeklyPlannerCore"
+  - ✅ Planner: corrigir parsing de dateKey no calendário (evitar shift por timezone)
+    - commit: f8269b69 "P33.10: fix planner calendar dateKey parsing (avoid timezone shift)"
+  - ✅ Microcopy: "sem cobrança" → "sem autocobrança" (evitar ambiguidade com pagamento)
+    - commit: d1902933 "P33.10: microcopy sem cobrança -> sem autocobrança (avoid payment ambiguity)"
 
 ## ✅ Diagnóstico recebido (feedback externo dev) — itens a corrigir
 1) Ações sem feedback visual (risco de clique duplo / usuário não sabe se disparou)
