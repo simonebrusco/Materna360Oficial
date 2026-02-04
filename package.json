@@ -2,7 +2,7 @@
   "name": "materna360",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.19.0",
+  "packageManager": "npm@11.6.2",
   "engines": {
     "node": ">=20 <21",
     "pnpm": ">=8"
