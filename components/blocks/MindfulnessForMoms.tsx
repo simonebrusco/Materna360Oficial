@@ -137,7 +137,7 @@ export default function MindfulnessForMoms() {
                 </Button>
               ) : (
                 <a
-                  href="#mindfulness"
+                  href="#mindfulness-moms-heading"
                   aria-label={`Ouvir ${collection.titulo}`}
                   className={`${SECONDARY_TRIGGER_CLASS} inline-flex items-center justify-center gap-2 rounded-full text-base`}
                 >
