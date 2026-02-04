@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { AdminGuardRails } from '@/app/admin/_components/AdminGuardRails'
-import { listIdeasAdminReadOnly } from '@/app/lib/adm/adm.server'
+import { listEditorialTextsAdmin } from '@/app/lib/adm/adm.server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -19,58 +19,62 @@ function clampInt(v: string, def: number, min: number, max: number) {
   return Math.max(min, Math.min(max, Math.floor(n)))
 }
 
-export default async function AdminIdeasPage({ searchParams }: { searchParams: SP }) {
+export default async function AdminTextsPage({ searchParams }: { searchParams: SP }) {
   const hub = spGet(searchParams, 'hub').trim()
   const status = spGet(searchParams, 'status').trim() as 'draft' | 'published' | ''
-  const env = spGet(searchParams, 'environment').trim()
-  const dur = spGet(searchParams, 'duration').trim()
   const q = spGet(searchParams, 'q').trim()
-
   const page = clampInt(spGet(searchParams, 'page'), 1, 1, 9999)
   const limit = clampInt(spGet(searchParams, 'limit'), 50, 10, 200)
-  const durationMinutes = dur ? Number(dur) : undefined
 
-  const res = await listIdeasAdminReadOnly({
+  const res = await listEditorialTextsAdmin({
     hub: hub || undefined,
     status: (status === 'draft' || status === 'published') ? status : undefined,
-    environment: env || undefined,
-    durationMinutes: Number.isFinite(durationMinutes as any) ? Number(durationMinutes) : undefined,
-    q: q || undefined,
-    page,
     limit,
+    // NOTE: esta função (no checklist) já ordena updated_at desc
   })
 
-  const items = res.ok ? res.items : []
-  const total = res.ok ? res.total : 0
+  const items = (res?.items ?? []).filter((it: any) => {
+    if (!q) return true
+    const hay = `${it.id ?? ''} ${it.hub ?? ''} ${it.key ?? ''} ${it.title ?? ''}`.toLowerCase()
+    return hay.includes(q.toLowerCase())
+  })
+
+  // paginação simples em memória (ok para read-only / MVP)
+  const start = (page - 1) * limit
+  const pageItems = items.slice(start, start + limit)
+  const total = items.length
   const totalPages = Math.max(1, Math.ceil(total / limit))
 
   const mkHref = (p: number) => {
     const params = new URLSearchParams()
     if (hub) params.set('hub', hub)
     if (status) params.set('status', status)
-    if (env) params.set('environment', env)
-    if (dur) params.set('duration', dur)
     if (q) params.set('q', q)
     params.set('limit', String(limit))
     params.set('page', String(p))
-    return `/admin/ideas?${params.toString()}`
+    return `/admin/texts?${params.toString()}`
   }
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <div className="text-2xl font-semibold">Ideias do App (read-only)</div>
+        <div className="text-2xl font-semibold">Textos editoriais (read-only)</div>
         <div className="text-sm text-muted-foreground">
-          Lista de <b>adm_ideas</b>. Objetivo: <b>auditar pools</b> por hub/foco/slot. Edição/CRUD fica fora da P34.ADM.2.
+          Lista de <b>adm_editorial_texts</b>. Aqui você apenas <b>inspeciona</b>. Edição controlada fica fora da P34.ADM.2.
         </div>
       </div>
 
       <AdminGuardRails />
 
-      <form className="grid gap-3 rounded-lg border p-4 md:grid-cols-5" method="GET">
+      <form className="grid gap-3 rounded-lg border p-4 md:grid-cols-4" method="GET">
         <div className="space-y-1">
           <div className="text-xs font-medium text-muted-foreground">Hub</div>
-          <input name="hub" defaultValue={hub} placeholder="ex: meu-dia-leve" className="w-full rounded-md border px-3 py-2 text-sm" />
+          <input
+            name="hub"
+            defaultValue={hub}
+            placeholder="ex: meu-dia-leve"
+            className="w-full rounded-md border px-3 py-2 text-sm"
+          />
         </div>
 
         <div className="space-y-1">
@@ -82,29 +86,25 @@ export default async function AdminIdeasPage({ searchParams }: { searchParams: S
           </select>
         </div>
 
-        <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">Environment (foco)</div>
-          <input name="environment" defaultValue={env} placeholder="ex: voce" className="w-full rounded-md border px-3 py-2 text-sm" />
-        </div>
-
-        <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">Duração (min)</div>
-          <input name="duration" defaultValue={dur} placeholder="ex: 5" className="w-full rounded-md border px-3 py-2 text-sm" />
-        </div>
-
-        <div className="space-y-1">
-          <div className="text-xs font-medium text-muted-foreground">Busca (id/title/desc)</div>
-          <input name="q" defaultValue={q} placeholder="ex: mdl-pp-" className="w-full rounded-md border px-3 py-2 text-sm" />
+        <div className="space-y-1 md:col-span-2">
+          <div className="text-xs font-medium text-muted-foreground">Busca (id / key / title)</div>
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="ex: para_hoje"
+            className="w-full rounded-md border px-3 py-2 text-sm"
+          />
         </div>
 
         <input type="hidden" name="limit" value={String(limit)} />
         <input type="hidden" name="page" value="1" />
 
-        <div className="md:col-span-5 flex flex-wrap items-center gap-2">
+        <div className="md:col-span-4 flex flex-wrap items-center gap-2">
           <button className="rounded-md bg-black px-4 py-2 text-sm text-white">Filtrar</button>
-          <Link className="rounded-md border px-4 py-2 text-sm" href="/admin/ideas">Limpar</Link>
+          <Link className="rounded-md border px-4 py-2 text-sm" href="/admin/texts">Limpar</Link>
+
           <div className="ml-auto text-sm text-muted-foreground">
-            {res.ok ? <>Total: <b>{total}</b></> : <>Erro: <b>{(res as any).error}</b></>}
+            Total: <b>{total}</b>
           </div>
         </div>
       </form>
@@ -115,28 +115,26 @@ export default async function AdminIdeasPage({ searchParams }: { searchParams: S
             <tr>
               <th className="px-3 py-2 text-left">id</th>
               <th className="px-3 py-2 text-left">hub</th>
+              <th className="px-3 py-2 text-left">key</th>
               <th className="px-3 py-2 text-left">status</th>
-              <th className="px-3 py-2 text-left">environment</th>
-              <th className="px-3 py-2 text-left">duration</th>
               <th className="px-3 py-2 text-left">title</th>
               <th className="px-3 py-2 text-left">updated_at</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((it: any) => (
+            {pageItems.map((it: any) => (
               <tr key={it.id} className="border-t">
                 <td className="px-3 py-2 font-mono text-xs">{it.id}</td>
                 <td className="px-3 py-2">{it.hub}</td>
+                <td className="px-3 py-2 font-mono text-xs">{it.key}</td>
                 <td className="px-3 py-2">{it.status}</td>
-                <td className="px-3 py-2">{it.environment}</td>
-                <td className="px-3 py-2">{it.duration_minutes}</td>
                 <td className="px-3 py-2">{it.title}</td>
                 <td className="px-3 py-2 font-mono text-xs">{String(it.updated_at ?? '')}</td>
               </tr>
             ))}
-            {!items.length && (
+            {!pageItems.length && (
               <tr className="border-t">
-                <td className="px-3 py-8 text-center text-muted-foreground" colSpan={7}>
+                <td className="px-3 py-8 text-center text-muted-foreground" colSpan={6}>
                   Nenhum item encontrado.
                 </td>
               </tr>

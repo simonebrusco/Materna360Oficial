@@ -51,15 +51,17 @@ export async function POST(req: Request) {
       return res
     }
 
-    const body = (await req.json()) as RotinaLeveRequest
+    const raw = (await req.json().catch(() => null)) as any
 
-    if (!body || typeof body !== 'object' || !body.context) {
-      // erro de validação → não consome quota
-      if (gate) await releaseDailyAI(gate.actorId, gate.dateKey)
-
-      return NextResponse.json({ suggestions: [] }, { status: 400 })
-    }
-
+    // ✅ UX premium: nunca 400 por payload incompleto
+    // Se vier sem body/context, assume context vazio e segue.
+    const body = (raw && typeof raw === 'object')
+      ? ({
+          ...raw,
+          context:
+            raw.context && typeof raw.context === 'object' ? raw.context : {},
+        } as RotinaLeveRequest)
+      : ({ context: {} } as RotinaLeveRequest)
     const aiEnabled = isRotinaLeveAIEnabled()
     const hasApiKey = !!process.env.OPENAI_API_KEY
     const shouldUseMock = !(aiEnabled && hasApiKey)
