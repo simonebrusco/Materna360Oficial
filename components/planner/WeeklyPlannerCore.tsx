@@ -376,7 +376,7 @@ function CoachBottomSheet({
               className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
               aria-label="Fechar"
             >
-              ✕
+              X
             </button>
           </div>
 
@@ -432,7 +432,7 @@ export default function WeeklyPlannerCore() {
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
   /**
-   * ✅ FIX CANÔNICO:
+   * FIX CANONICO:
    * plannerLimit é o limitador único usado no Planner para:
    * - lembretes
    * - compromissos
@@ -1148,7 +1148,7 @@ export default function WeeklyPlannerCore() {
                                   }`}
                                   aria-label={task.done ? 'Marcar como não feito' : 'Marcar como feito'}
                                 >
-                                  {task.done ? '✓' : ''}
+                                  {task.done ? 'v' : ''}
                                 </button>
 
                                 <div className="flex-1 min-w-0">
@@ -1516,7 +1516,7 @@ export default function WeeklyPlannerCore() {
                       className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
                       aria-label="Fechar"
                     >
-                      ✕
+                      X
                     </button>
                   </div>
 
@@ -1585,7 +1585,7 @@ export default function WeeklyPlannerCore() {
                       className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
                       aria-label="Fechar"
                     >
-                      ✕
+                      X
                     </button>
                   </div>
 
