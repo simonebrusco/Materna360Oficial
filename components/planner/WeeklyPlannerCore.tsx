@@ -6,6 +6,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
+import { useRef } from 'react'
 
 // usar o shape evolutivo do Meu Dia (compatível com Planner)
 import type { MyDayTaskItem, TaskOrigin, TaskStatus } from '@/app/lib/myDayTasks.client'
@@ -653,6 +654,25 @@ export default function WeeklyPlannerCore() {
   // ======================================================
   // ACTIONS
   // ======================================================
+
+
+    const busyRef = useRef(false)
+    const [busyAction, setBusyAction] = useState<string | null>(null)
+
+    const withBusy = (action: string, fn: () => void) => {
+      if (busyRef.current) return
+      busyRef.current = true
+      setBusyAction(action)
+      try {
+        fn()
+      } finally {
+        window.setTimeout(() => {
+          busyRef.current = false
+          setBusyAction(null)
+        }, 250)
+      }
+    }
+
   const handleDateSelect = useCallback((date: Date) => {
     const key = getBrazilDateKey(date)
     setSelectedDateKey(key)
@@ -874,15 +894,17 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const submitReminder = useCallback(() => {
-    const text = normalizeText(reminderDraft)
-    if (!text) return
-    addTask(text, reminderOrigin)
-    setReminderDraft('')
-    setReminderModalOpen(false)
+      withBusy('reminder:submit', () => {
+        const text = normalizeText(reminderDraft)
+        if (!text) return
+        addTask(text, reminderOrigin)
+        setReminderDraft('')
+        setReminderModalOpen(false)
 
-    try {
-      track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
-    } catch {}
+        try {
+          track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
+        } catch {}
+      })
   }, [addTask, reminderDraft, reminderOrigin])
 
   type CheckinSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
