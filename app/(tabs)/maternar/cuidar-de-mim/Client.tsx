@@ -760,7 +760,7 @@ export default function Client() {
                       </div>
 
                       <RenderEditorialText
-                        text={`Pequeno e prático. Sem cobrança.\n\nSe não servir, troque ou feche por aqui.`}
+                        text={`Pequeno e prático. sem autocobrança.\n\nSe não servir, troque ou feche por aqui.`}
                         className="mt-1 text-[12px] md:text-[13px] text-white/85 max-w-[56ch] leading-relaxed"
                       />
                     </div>
@@ -899,7 +899,7 @@ export default function Client() {
 
                       <div className="min-w-0 flex-1">
                         <div className="hub-eyebrow text-[#b8236b]">PARA AGORA</div>
-                        <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem cobrança.</div>
+                        <div className="hub-subtitle text-[#6a6a6a]">Pequeno, prático e sem autocobrança.</div>
 
                         <div className="mt-5">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 items-stretch">
@@ -1099,7 +1099,7 @@ export default function Client() {
                         <div className="hub-title text-[#2f3a56]">Do jeito que está</div>
 
                         <RenderEditorialText
-                          text="Uma visão consolidada, sem agenda e sem cobrança."
+                          text="Uma visão consolidada, sem agenda e sem autocobrança."
                           className="hub-subtitle text-[#6a6a6a] leading-relaxed"
                         />
 

@@ -788,7 +788,7 @@ export default function AutocuidadoInteligentePage() {
                           Para Você Hoje
                         </h3>
                         <p className="text-xs md:text-sm text-[#545454] leading-relaxed">
-                          Sugestões carinhosas só para você — sem cobrança, só
+                          Sugestões carinhosas só para você — sem autocobrança, só
                           acolhimento.
                         </p>
                       </div>

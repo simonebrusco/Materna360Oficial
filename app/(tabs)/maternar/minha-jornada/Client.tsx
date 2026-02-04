@@ -186,7 +186,7 @@ function ViewPill({
 }
 
 /**
- * Microtexto “IA” (local, leve, sem recomendação, sem cobrança).
+ * Microtexto “IA” (local, leve, sem recomendação, sem autocobrança).
  * Regra: espelhar + contextualizar presença. Nunca avaliar, nunca sugerir constância.
  */
 function buildMinhaJornadaMicrotext(args: {
@@ -324,7 +324,7 @@ export default function MinhaJornadaClient() {
               </h1>
 
               <RenderEditorialText
-                text="Um registro silencioso do que aconteceu — sem cobrança, sem “tudo ou nada”."
+                text="Um registro silencioso do que aconteceu — sem autocobrança, sem “tudo ou nada”."
                 className="text-sm md:text-base text-white/90 leading-relaxed max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]"
               />
             </div>

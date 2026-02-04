@@ -101,7 +101,7 @@ export default function MinhasConquistasPage() {
     <PageTemplate
       label="MEU DIA"
       title="Minhas Conquistas"
-      subtitle="Um espaço leve para reconhecer o que você já fez — sem cobrança."
+      subtitle="Um espaço leve para reconhecer o que você já fez — sem autocobrança."
     >
       <ClientOnly>
         <div className="mx-auto max-w-5xl lg:max-w-6xl xl:max-w-7xl px-4 md:px-6 space-y-6 md:space-y-8">

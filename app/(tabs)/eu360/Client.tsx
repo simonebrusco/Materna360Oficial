@@ -97,7 +97,7 @@ function computeStateFromAnswers(answers: QuestionnaireAnswers) {
     return {
       stateId: 'sobrevivencia' as const,
       stateLabel: 'Sobrevivência',
-      microCopy: 'Aqui o foco é sustentar o dia com menos peso e sem cobrança.',
+      microCopy: 'Aqui o foco é sustentar o dia com menos peso e sem autocobrança.',
       focusHint: 'alívio e proteção de energia',
     }
   }
@@ -774,7 +774,7 @@ export default function Eu360Client() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#6a6a6a]">Painel da sua jornada</p>
-                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">Um olhar rápido, sem cobrança</h2>
+                    <h2 className="mt-1 text-lg md:text-xl font-semibold text-[#2f3a56] leading-snug">Um olhar rápido, sem autocobrança</h2>
                     <p className="mt-1 text-[13px] text-[#6a6a6a] leading-relaxed">
                       Aqui é só para enxergar recortes do que apareceu — não é placar e não é cobrança.
                     </p>

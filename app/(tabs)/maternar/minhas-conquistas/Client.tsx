@@ -424,7 +424,7 @@ export default function MinhasConquistasClient() {
                         </span>
                         <h2 className="text-lg font-semibold text-[#2f3a56]">O que sua presença já mostra</h2>
                         <RenderEditorialText
-                          text="Informação com contexto — sem cobrança."
+                          text="Informação com contexto — sem autocobrança."
                           className="text-[13px] text-[#6a6a6a] leading-relaxed"
                         />
                       </div>

@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-**Materna360** é um aplicativo emocional para mães. Não é um app de produtividade, nem um app terapêutico tradicional. Ele foi concebido para oferecer **acolhimento antes de orientação**, **clareza sem cobrança** e **valor real sem exigir continuidade**.
+**Materna360** é um aplicativo emocional para mães. Não é um app de produtividade, nem um app terapêutico tradicional. Ele foi concebido para oferecer **acolhimento antes de orientação**, **clareza sem autocobrança** e **valor real sem exigir continuidade**.
 
 O projeto parte de um princípio central:
 
