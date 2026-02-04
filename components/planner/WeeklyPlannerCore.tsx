@@ -136,6 +136,13 @@ function dateLabel(dateKey: string) {
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
 }
 
+  function dateFromKey(dateKey: string) {
+    const [y, m, d] = dateKey.split('-').map(Number)
+    if (!y || !m || !d) return new Date()
+    // IMPORTANT: evita timezone bugs de string ISO (ex.: 'YYYY-MM-DDT00:00:00')
+    return new Date(y, m - 1, d)
+  }
+
 function toFirstOfMonth(d: Date) {
   const x = new Date(d)
   x.setDate(1)
@@ -553,7 +560,7 @@ export default function WeeklyPlannerCore() {
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
-    setMonthCursor(toFirstOfMonth(new Date()))
+    setMonthCursor(toFirstOfMonth(dateFromKey(dateKey)))
     setIsHydrated(true)
 
     try {
@@ -816,7 +823,7 @@ export default function WeeklyPlannerCore() {
     setAppointmentModalMode('edit')
     setEditingAppointment(appt)
     setSelectedDateKey(appt.dateKey)
-    setMonthCursor(toFirstOfMonth(new Date(appt.dateKey + 'T00:00:00')))
+    setMonthCursor(toFirstOfMonth(dateFromKey(appt.dateKey)))
 
     setAppointmentModalOpen(true)
 
@@ -828,7 +835,7 @@ export default function WeeklyPlannerCore() {
   const openMonthSheet = useCallback(() => {
     const base =
       selectedDateKey && /^\d{4}-\d{2}-\d{2}$/.test(selectedDateKey)
-        ? new Date(selectedDateKey + 'T00:00:00')
+        ? dateFromKey(selectedDateKey)
         : new Date()
 
     setMonthCursor(toFirstOfMonth(base))
@@ -1784,7 +1791,7 @@ export default function WeeklyPlannerCore() {
           }
 
           setSelectedDateKey(data.dateKey)
-          setMonthCursor(toFirstOfMonth(new Date(data.dateKey + 'T00:00:00')))
+          setMonthCursor(toFirstOfMonth(dateFromKey(data.dateKey)))
 
           try {
             track('planner.appointment_modal_saved', { tab: 'meu-dia', mode: appointmentModalMode })
