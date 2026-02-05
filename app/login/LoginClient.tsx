@@ -2,17 +2,18 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-
+import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/app/lib/supabase.client'
+
+type Props = {
+  redirectTo?: string
+}
 
 type UiError = {
   title: string
   message: string
   kind: 'generic' | 'not_confirmed' | 'network' | 'rate_limit'
 }
-
-const SEEN_KEY = 'm360_seen_welcome_v1'
 
 function safeInternalRedirect(target: string | null | undefined, fallback = '/meu-dia') {
   if (!target) return fallback
@@ -24,14 +25,6 @@ function safeInternalRedirect(target: string | null | undefined, fallback = '/me
   return t
 }
 
-function hasSeenWelcomeCookie(): boolean {
-  try {
-    if (typeof document === 'undefined') return false
-    return document.cookie.split(';').some((c) => c.trim().startsWith(`${SEEN_KEY}=1`))
-  } catch {
-    return false
-  }
-}
 
 function mapAuthErrorToUi(errorMessage: string): UiError {
   const msg = (errorMessage || '').toLowerCase()
@@ -76,14 +69,10 @@ function mapAuthErrorToUi(errorMessage: string): UiError {
   }
 }
 
-export default function LoginClient() {
+export default function LoginClient({ redirectTo: redirectToProp }: Props) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const supabase = useMemo(() => supabaseBrowser(), [])
-
-  const redirectToRaw = searchParams.get('redirectTo')
-  const redirectTo = safeInternalRedirect(redirectToRaw, '/meu-dia')
+    const supabase = useMemo(() => supabaseBrowser(), [])
+  const redirectTo = safeInternalRedirect(redirectToProp, '/meu-dia')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -102,9 +91,7 @@ export default function LoginClient() {
         if (!alive) return
         if (!data.session) return
 
-        const seen = hasSeenWelcomeCookie()
-        if (!seen) router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
-        else router.replace(redirectTo)
+        router.replace(redirectTo)
       })
       .catch(() => {})
 
@@ -130,12 +117,6 @@ export default function LoginClient() {
 
     if (error) {
       setUiError(mapAuthErrorToUi(error.message))
-      return
-    }
-
-    const seen = hasSeenWelcomeCookie()
-    if (!seen) {
-      router.replace(`/bem-vinda?next=${encodeURIComponent(redirectTo)}`)
       return
     }
 

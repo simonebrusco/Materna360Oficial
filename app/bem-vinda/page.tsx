@@ -1,12 +1,5 @@
-import { Suspense } from 'react'
-import BemVindaClient from './BemVindaClient'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default function BemVindaPage() {
-  return (
-    <Suspense fallback={null}>
-      <BemVindaClient />
-    </Suspense>
-  )
+export default function BemVindaRedirect() {
+  redirect('/login')
 }
