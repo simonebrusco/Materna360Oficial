@@ -207,7 +207,7 @@ export default function MaternarClient() {
                       </span>
 
                       <RenderEditorialText
-                        text="Siga no seu ritmo. Tudo aqui foi pensado para caber no cotidiano, sem cobrança."
+                        text="Siga no seu ritmo. Tudo aqui foi pensado para caber no cotidiano, sem autocobrança."
                         className="mt-2 text-[13px] text-white/85 leading-relaxed"
                       />
                     </div>

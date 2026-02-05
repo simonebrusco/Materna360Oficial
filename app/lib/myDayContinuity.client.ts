@@ -8,7 +8,7 @@ import { load, save } from '@/app/lib/persist'
  *
  * Objetivo:
  * - Quando o Meu Dia Leve salva uma ação, o Meu Dia deve “abrir” no grupo certo (hoje/família/autocuidado/casa/outros)
- * - Sem UI extra, sem toast, sem cobrança
+ * - Sem UI extra, sem toast, sem autocobrança
  * - Só 1 vez por save (dedupe por ts)
  * - Janela de recência: default 30 min (configurável)
  *

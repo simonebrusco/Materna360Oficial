@@ -91,7 +91,7 @@ export function buildWeeklyInsight(ctx: WeeklyInsightContext): WeeklyInsight {
   if (bucket === 'sobrevivencia') {
     suggestions.push('Escolha 1 prioridade mínima por dia (a menor que ainda traz alívio).')
     suggestions.push('Se algo não for para hoje, adie sem culpa: “não é pra hoje” também é autocuidado.')
-    suggestions.push('Proteja 10 minutos de pausa real (sem tarefa e sem cobrança).')
+    suggestions.push('Proteja 10 minutos de pausa real (sem tarefa e sem autocobrança).')
   } else if (bucket === 'organizacao') {
     suggestions.push('Transforme “tudo” em 3 blocos: agora / depois / não é pra hoje.')
     suggestions.push('Feche o dia com 1 pequena vitória visível (mesmo simples).')

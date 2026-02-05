@@ -78,7 +78,7 @@ const PLANS = [
     subtitle: 'A experiência completa de cuidado, presença e personalização.',
     features: [
       { label: 'Tudo do Materna+' },
-      { label: 'Orientações ilimitadas (sempre no seu tom, sem cobrança)' },
+      { label: 'Orientações ilimitadas (sempre no seu tom, sem autocobrança)' },
       { label: 'Resumos por semana e por mês (para você se situar)' },
       { label: 'Trilhas educativas personalizadas para sua família' },
       { label: 'Rotina 360, com ajustes ao longo da semana' },
@@ -159,7 +159,7 @@ export default function PlanosPage() {
 
           <p className="mt-2 text-sm sm:text-base text-white/90 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.45)]">
             Cada mãe tem seu tempo, sua energia e sua rotina. Escolha o plano
-            que faz sentido para o seu momento — sem pressão, sem cobrança.
+            que faz sentido para o seu momento — sem pressão, sem autocobrança.
             Aqui, você é quem guia o caminho.
           </p>
 

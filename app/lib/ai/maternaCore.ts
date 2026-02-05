@@ -276,7 +276,7 @@ REGRAS NÃO NEGOCIÁVEIS
 - Proibido soar como catálogo (“várias opções”, “diversas opções”, “lista”, “pinterest”).
 - Ajustar a ideia ao contexto quando disponível: tempoDisponivel, ageBand, contexto, local, habilidades.
 - Materiais: preferir itens comuns de casa.
-- Tom humano e prático, sem culpa, sem cobrança.
+- Tom humano e prático, sem culpa, sem autocobrança.
 
 LIMITES
 - title <= 48 caracteres
@@ -339,7 +339,7 @@ Se você não tiver contexto suficiente, ainda assim gere atividades específica
  * Meu Filho — Bloco 3 (Rotinas / Conexão)
  * - 1 sugestão
  * - até 240 chars
- * - sem lista, sem cobrança, sem frequência
+ * - sem lista, sem autocobrança, sem frequência
  */
 function buildMeuFilhoBloco3Prompt(): string {
   return `

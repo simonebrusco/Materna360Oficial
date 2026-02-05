@@ -185,7 +185,7 @@ function sanitizeMeuFilhoBloco1(
    Bloco 3 — Rotinas / Conexão
    - até 3 frases
    - até 240 chars
-   - sem lista / sem cobrança / sem frequência
+   - sem lista / sem autocobrança / sem frequência
 ========================= */
 
 function sanitizeMeuFilhoBloco3(raw: any): RotinaQuickSuggestion[] {

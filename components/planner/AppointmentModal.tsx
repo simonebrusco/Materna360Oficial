@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import AppIcon from '@/components/ui/AppIcon'
 import { SoftCard } from '@/components/ui/card'
 
@@ -104,9 +105,8 @@ export default function AppointmentModal({
   const canSave = titleTrim.length >= 2
 
   if (!open) return null
-
-  return (
-    <div className="fixed inset-0 z-[999]">
+  const modal = (
+    <div className="fixed inset-0 z-[9999]" role="dialog" aria-modal="true" aria-label="Compromisso">
       {/* Overlay */}
       <button
         type="button"
@@ -331,4 +331,7 @@ export default function AppointmentModal({
       </div>
     </div>
   )
+
+  return createPortal(modal, document.body)
+
 }

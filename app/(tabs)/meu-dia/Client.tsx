@@ -289,7 +289,7 @@ export default function MeuDiaClient() {
           </h1>
 
           <p className="mt-1 text-sm md:text-base text-white/90 max-w-2xl lg:max-w-3xl">
-            Um espaço para organizar o que importa hoje — com leveza, sem cobrança.
+            Um espaço para organizar o que importa hoje — com leveza, sem autocobrança.
           </p>
 
           <p className="mt-2 text-[12px] md:text-[13px] text-white/85 max-w-2xl lg:max-w-3xl leading-relaxed">

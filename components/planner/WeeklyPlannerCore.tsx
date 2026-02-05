@@ -6,6 +6,7 @@ import { getBrazilDateKey } from '@/app/lib/dateKey'
 import { save, load } from '@/app/lib/persist'
 import { track } from '@/app/lib/telemetry'
 import { updateXP } from '@/app/lib/xp'
+import { useRef } from 'react'
 
 // usar o shape evolutivo do Meu Dia (compatível com Planner)
 import type { MyDayTaskItem, TaskOrigin, TaskStatus } from '@/app/lib/myDayTasks.client'
@@ -134,6 +135,13 @@ function dateLabel(dateKey: string) {
   if (!y || !m || !d) return dateKey
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR')
 }
+
+  function dateFromKey(dateKey: string) {
+    const [y, m, d] = dateKey.split('-').map(Number)
+    if (!y || !m || !d) return new Date()
+    // IMPORTANT: evita timezone bugs de string ISO (ex.: 'YYYY-MM-DDT00:00:00')
+    return new Date(y, m - 1, d)
+  }
 
 function toFirstOfMonth(d: Date) {
   const x = new Date(d)
@@ -375,7 +383,7 @@ function CoachBottomSheet({
               className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
               aria-label="Fechar"
             >
-              ✕
+              X
             </button>
           </div>
 
@@ -431,7 +439,7 @@ export default function WeeklyPlannerCore() {
   const [euSignal, setEuSignal] = useState<Eu360Signal>(() => getEu360Signal())
 
   /**
-   * ✅ FIX CANÔNICO:
+   * FIX CANONICO:
    * plannerLimit é o limitador único usado no Planner para:
    * - lembretes
    * - compromissos
@@ -552,7 +560,7 @@ export default function WeeklyPlannerCore() {
   useEffect(() => {
     const dateKey = getBrazilDateKey(new Date())
     setSelectedDateKey(dateKey)
-    setMonthCursor(toFirstOfMonth(new Date()))
+    setMonthCursor(toFirstOfMonth(dateFromKey(dateKey)))
     setIsHydrated(true)
 
     try {
@@ -653,6 +661,25 @@ export default function WeeklyPlannerCore() {
   // ======================================================
   // ACTIONS
   // ======================================================
+
+
+    const busyRef = useRef(false)
+    const [busyAction, setBusyAction] = useState<string | null>(null)
+
+    const withBusy = (action: string, fn: () => void) => {
+      if (busyRef.current) return
+      busyRef.current = true
+      setBusyAction(action)
+      try {
+        fn()
+      } finally {
+        window.setTimeout(() => {
+          busyRef.current = false
+          setBusyAction(null)
+        }, 250)
+      }
+    }
+
   const handleDateSelect = useCallback((date: Date) => {
     const key = getBrazilDateKey(date)
     setSelectedDateKey(key)
@@ -796,7 +823,7 @@ export default function WeeklyPlannerCore() {
     setAppointmentModalMode('edit')
     setEditingAppointment(appt)
     setSelectedDateKey(appt.dateKey)
-    setMonthCursor(toFirstOfMonth(new Date(appt.dateKey + 'T00:00:00')))
+    setMonthCursor(toFirstOfMonth(dateFromKey(appt.dateKey)))
 
     setAppointmentModalOpen(true)
 
@@ -808,7 +835,7 @@ export default function WeeklyPlannerCore() {
   const openMonthSheet = useCallback(() => {
     const base =
       selectedDateKey && /^\d{4}-\d{2}-\d{2}$/.test(selectedDateKey)
-        ? new Date(selectedDateKey + 'T00:00:00')
+        ? dateFromKey(selectedDateKey)
         : new Date()
 
     setMonthCursor(toFirstOfMonth(base))
@@ -874,15 +901,17 @@ export default function WeeklyPlannerCore() {
   }, [])
 
   const submitReminder = useCallback(() => {
-    const text = normalizeText(reminderDraft)
-    if (!text) return
-    addTask(text, reminderOrigin)
-    setReminderDraft('')
-    setReminderModalOpen(false)
+      withBusy('reminder:submit', () => {
+        const text = normalizeText(reminderDraft)
+        if (!text) return
+        addTask(text, reminderOrigin)
+        setReminderDraft('')
+        setReminderModalOpen(false)
 
-    try {
-      track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
-    } catch {}
+        try {
+          track('planner.reminder_created', { tab: 'meu-dia', origin: reminderOrigin })
+        } catch {}
+      })
   }, [addTask, reminderDraft, reminderOrigin])
 
   type CheckinSignal = 'heavy' | 'tired' | 'overwhelmed' | 'neutral'
@@ -1126,7 +1155,7 @@ export default function WeeklyPlannerCore() {
                                   }`}
                                   aria-label={task.done ? 'Marcar como não feito' : 'Marcar como feito'}
                                 >
-                                  {task.done ? '✓' : ''}
+                                  {task.done ? 'v' : ''}
                                 </button>
 
                                 <div className="flex-1 min-w-0">
@@ -1494,7 +1523,7 @@ export default function WeeklyPlannerCore() {
                       className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
                       aria-label="Fechar"
                     >
-                      ✕
+                      X
                     </button>
                   </div>
 
@@ -1563,7 +1592,7 @@ export default function WeeklyPlannerCore() {
                       className="h-9 w-9 rounded-full border border-[var(--color-soft-strong)] hover:bg-[var(--color-soft-bg)]"
                       aria-label="Fechar"
                     >
-                      ✕
+                      X
                     </button>
                   </div>
 
@@ -1762,7 +1791,7 @@ export default function WeeklyPlannerCore() {
           }
 
           setSelectedDateKey(data.dateKey)
-          setMonthCursor(toFirstOfMonth(new Date(data.dateKey + 'T00:00:00')))
+          setMonthCursor(toFirstOfMonth(dateFromKey(data.dateKey)))
 
           try {
             track('planner.appointment_modal_saved', { tab: 'meu-dia', mode: appointmentModalMode })

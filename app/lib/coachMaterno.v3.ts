@@ -128,7 +128,7 @@ function buildPatternNoData(): CoachMessage {
     title: 'Ainda não temos muitos registros, e está tudo bem.',
     body: 'Quase não temos dados desta semana, e isso não é um problema. A vida real é cheia de imprevistos, e nem sempre dá para parar e anotar tudo.\n\nQuando você se sentir pronta, comece com um único registro: como foi seu dia hoje? A partir daí, o Materna360 vai conseguir te ajudar com insights mais personalizados, sempre com acolhimento e sem julgamentos.',
     tone: 'encouraging',
-    tags: ['comece de onde está', 'sem cobranças', 'vida real'],
+    tags: ['comece de onde está', 'sem autocobrança', 'vida real'],
     patternKey: 'no_data',
   }
 }

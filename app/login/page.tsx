@@ -1,18 +1,7 @@
-import { Suspense } from 'react'
-import LoginClient from './LoginClient'
-import AuthShell from '@/components/common/AuthShell'
-
 export const dynamic = 'force-dynamic'
 
+import { Suspense } from 'react'
+import LandingClient from './LandingClient'
 export default function LoginPage() {
-  return (
-    <AuthShell
-      title="Entrar"
-      subtitle="Acesse sua conta para continuar com leveza."
-    >
-      <Suspense fallback={null}>
-        <LoginClient />
-      </Suspense>
-    </AuthShell>
-  )
+  return <LandingClient />
 }

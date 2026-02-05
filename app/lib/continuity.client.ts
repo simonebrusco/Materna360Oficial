@@ -104,7 +104,7 @@ function toDate(dk: string) {
 }
 
 function phrasesByTone(tone: Tone): ContinuityPhrase[] {
-  // P13 — neutras, humanas, sem avaliação, sem cobrança, sem “progresso”
+  // P13 — neutras, humanas, sem avaliação, sem autocobrança, sem “progresso”
   // Ajuste P33.4 (Meu Dia): evitar suporte emocional profundo / relacional.
   if (tone === 'direto') {
     return [

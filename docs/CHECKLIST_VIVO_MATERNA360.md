@@ -267,3 +267,50 @@ Se quiser, posso agora:
 ✅ preparar a versão para colar na PR
 ✅ gerar uma mensagem para enviar ao time
 Ou seguimos para os próximos arquivos com conflito?
+---
+
+# P33.10 — Polimento-PreMonetizacao (ATUALIZAÇÃO FACTUAL — via terminal)
+
+## ✅ Executado nesta P33.10 (commits)
+- ✅ Fix anchor do Mindfulness For Moms (href) + refresh lockfile + nvmrc
+  - commit: "P33.10: fix Mindfulness anchor + refresh lockfile + nvmrc"
+- ✅ Remover pnpm-lock.yaml e impor npm como packageManager (evitar lockfile duplo)
+  - commit: beee5257 "chore: remove pnpm lockfile + enforce npm packageManager"
+- ✅ Portalizar AppointmentModal para corrigir stacking/z-index (modal no fundo)
+  - commit: e0e1de47 "P33.10: portalize AppointmentModal to fix z-index stacking"
+  - ✅ Planner: busy-guard + estado ocupado (anti clique duplo) + fix missing useRef import
+    - commit: dd645925 "P33.10: add busy guard + fix missing useRef import in WeeklyPlannerCore"
+  - ✅ Planner: remover símbolos/emoji do WeeklyPlannerCore (lint warning)
+    - commit: 1ff736f6 "P33.10: remove emoji symbols from WeeklyPlannerCore"
+  - ✅ Planner: corrigir parsing de dateKey no calendário (evitar shift por timezone)
+    - commit: f8269b69 "P33.10: fix planner calendar dateKey parsing (avoid timezone shift)"
+  - ✅ Microcopy: "sem cobrança" → "sem autocobrança" (evitar ambiguidade com pagamento)
+    - commit: d1902933 "P33.10: microcopy sem cobrança -> sem autocobrança (avoid payment ambiguity)"
+
+## ✅ Diagnóstico recebido (feedback externo dev) — itens a corrigir
+1) Ações sem feedback visual (risco de clique duplo / usuário não sabe se disparou)
+2) Microcopy ambígua: "sem cobrança" pode ser interpretada como "sem pagamento"
+3) Modal/janela de agendamento aparecia no fundo (corrigido via portal/z-index)
+4) Componente de calendário não funciona corretamente (planner)
+5) E-mails automáticos do Supabase caindo em spam (infra/DNS/SMTP)
+6) App cai direto no login sem contextualização (necessidade de landing/welcome)
+
+## 🔜 Plano de execução dentro da P33.10 (ordem segura)
+A) Feedback visual/loading/disabled nos fluxos críticos (Planner + ações async)
+   - aplicar guards contra clique duplo + estado "salvando..."
+   - aplicar toast/snackbar quando fizer sentido
+   - checkpoints: npm run -s lint ; npm run -s build
+B) Calendário do Planner (WeeklyPlannerCore) — diagnosticar e corrigir comportamento
+   - checkpoints: npm run -s lint ; npm run -s build
+C) Microcopy "sem cobrança" → trocar para "sem autocobrança" ou "sem pressão" (onde aplicável)
+   - checkpoints: npm run -s lint
+D) Landing/welcome mínima antes do login (rota pública /)
+   - checkpoints: npm run -s lint ; npm run -s build
+E) Supabase e-mails no spam — registrar procedimento e requisitos (SPF/DKIM/DMARC/SMTP)
+   - item de infra: depende de DNS/provedor (fora do repo), mas checklist e passos ficam documentados aqui
+
+## 🧪 Checkpoints obrigatórios (após cada patch)
+- npm run -s lint
+- npm run -s build
+- git status -sb
+

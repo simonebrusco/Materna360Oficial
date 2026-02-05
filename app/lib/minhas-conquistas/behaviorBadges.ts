@@ -27,7 +27,7 @@ function descFor(id: BadgeId): string {
     case 'conexao_sem_culpa':
       return 'Reconhecido por escolhas que aproximam, sem peso.'
     default:
-      return 'Reconhecido com leveza, sem cobrança.'
+      return 'Reconhecido com leveza, sem autocobrança.'
   }
 }
 
