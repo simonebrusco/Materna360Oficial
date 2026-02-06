@@ -1,26 +1,24 @@
 'use client'
 
 import { Suspense } from 'react'
-
-import BemVindaClient from '@/app/bem-vinda/BemVindaClient'
 import LoginClient from '@/app/login/LoginClient'
 
 export default function LandingClient() {
   return (
-    <main className="relative min-h-screen bg-white overflow-hidden">
+    <main className="relative min-h-screen overflow-hidden bg-white">
       {/* Soft background glow (Lovable-style) */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#ffe1f1]/70 blur-3xl" />
-        <div className="absolute top-32 -left-32 h-[420px] w-[420px] rounded-full bg-[#fd2597]/10 blur-3xl" />
-        <div className="absolute bottom-0 -right-40 h-[520px] w-[520px] rounded-full bg-[#fdbed7]/40 blur-3xl" />
+        <div className="absolute -top-28 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#ffd8e6]/55 blur-3xl" />
+        <div className="absolute top-28 -left-40 h-[460px] w-[460px] rounded-full bg-[#ff005e]/8 blur-3xl" />
+        <div className="absolute bottom-0 -right-56 h-[560px] w-[560px] rounded-full bg-[#fd2597]/10 blur-3xl" />
       </div>
 
       {/* NAV */}
-      <nav className="relative z-10 border-b border-black/5 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-4">
-          <span className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#fd2597]">
+      <nav className="relative z-10 border-b border-black/5 bg-white/70 backdrop-blur-md">
+        <div className="page-shell flex items-center justify-between py-4">
+          <div className="text-[12px] font-semibold tracking-[0.18em] uppercase text-[#fd2597]">
             Materna360
-          </span>
+          </div>
 
           <a
             href="#acesso"
@@ -31,105 +29,89 @@ export default function LandingClient() {
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="relative z-10 mx-auto w-full max-w-[1100px] px-6 pt-14 pb-12">
-        {/* Pills */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <span className="m360-pill">Acolhimento emocional</span>
-          <span className="m360-pill">Sem julgamento</span>
-          <span className="m360-pill">Para mães reais</span>
-        </div>
+      <div className="relative z-10">
+        {/* HERO */}
+        <section className="page-shell pb-10 pt-10 md:pb-12 md:pt-14">
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-[#545454]">
+              Acolhimento emocional
+            </span>
+            <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-[#545454]">
+              Sem julgamento
+            </span>
+            <span className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-[#545454]">
+              Para mães reais
+            </span>
+          </div>
 
-        <h1 className="max-w-[720px] text-[34px] font-semibold leading-[1.15] text-[#2f3a56] md:text-[48px]">
-          Um espaço de acolhimento emocional para mães.
-          <br />
-          Clareza e prática no dia real.
-        </h1>
+          <h1 className="mt-6 max-w-[760px] text-[40px] font-semibold leading-[1.12] text-[#2f3a56] md:text-[44px]">
+            Um espaço de acolhimento emocional para mães. Clareza e prática no dia real.
+          </h1>
 
-        <p className="mt-5 max-w-[520px] text-base leading-relaxed text-[#545454]">
-          Cuidar de você não é egoísmo. É o primeiro passo para cuidar bem de quem você ama.
-        </p>
+          <p className="mt-4 max-w-[560px] text-base leading-relaxed text-[#6a6a6a]">
+            Cuidar de você não é egoísmo. É o primeiro passo para cuidar bem de quem você ama.
+          </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="#acesso"
-            className="btn-primary"
-          >
-            Começar agora
-          </a>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#acesso" className="btn-primary">
+              Começar agora <span className="ml-2">→</span>
+            </a>
 
-          <a
-            href="#acesso"
-            className="btn-secondary"
-          >
-            Já tenho conta
-          </a>
-        </div>
-      </section>
+            <a href="#acesso" className="btn-secondary">
+              Já tenho conta
+            </a>
+          </div>
 
-      {/* DIVIDER */}
-      <div className="mx-auto w-full max-w-[1100px] px-6">
-        <div className="h-px w-full bg-black/5" />
+          <div className="mt-10 border-t border-black/5" />
+        </section>
+
+        {/* SECTION: Acolhimento + Login (Lovable) */}
+        <section id="acesso" className="page-shell pb-14 md:pb-16">
+          <div className="grid items-start gap-10 lg:grid-cols-2">
+            {/* Left copy */}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#fd2597]">
+                Acolhimento
+              </p>
+
+              <h2 className="mt-3 text-[34px] font-semibold leading-[1.12] text-[#2f3a56] md:text-[38px]">
+                Você não está sozinha.
+                <br />
+                Você está cansada.
+              </h2>
+
+              <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-[#6a6a6a]">
+                <p>
+                  E tudo bem sentir isso. A maternidade real não é perfeita — é intensa, bonita e,
+                  muitas vezes, solitária.
+                </p>
+                <p>
+                  O Materna360 foi criado para estar com você nos dias difíceis e nos dias bons. Sem
+                  julgamento, sem fórmulas mágicas.
+                </p>
+                <p>Apenas acolhimento, clareza e ferramentas práticas para o seu dia real como mãe.</p>
+              </div>
+            </div>
+
+            {/* Right login card */}
+            <div className="rounded-3xl border border-black/10 bg-white p-7 shadow-[0_18px_60px_rgba(0,0,0,0.08)] md:p-9">
+              <Suspense
+                fallback={
+                  <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+                    Carregando…
+                  </div>
+                }
+              >
+                <LoginClient />
+              </Suspense>
+            </div>
+          </div>
+
+          <footer className="mt-14 text-center text-xs text-[#6a6a6a]">
+            © {new Date().getFullYear()} Materna360. Todos os direitos reservados.
+          </footer>
+        </section>
       </div>
-
-      {/* CONTEÚDO + LOGIN */}
-      <section
-        id="acesso"
-        className="relative z-10 mx-auto w-full max-w-[1100px] px-6 py-14"
-      >
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
-          {/* TEXTO */}
-          <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#fd2597]">
-              Acolhimento
-            </p>
-
-            <h2 className="text-[28px] font-semibold leading-tight text-[#2f3a56] md:text-[34px]">
-              Você não está sozinha.
-              <br />
-              Você está cansada.
-            </h2>
-
-            <p className="mt-4 text-base leading-relaxed text-[#545454]">
-              E tudo bem sentir isso. A maternidade real não é perfeita — é intensa,
-              bonita e, muitas vezes, solitária.
-            </p>
-
-            <p className="mt-4 text-base leading-relaxed text-[#545454]">
-              O Materna360 foi criado para estar com você nos dias difíceis e nos dias bons.
-              Sem julgamento, sem fórmulas mágicas.
-            </p>
-
-            <p className="mt-4 text-base leading-relaxed text-[#545454]">
-              Apenas acolhimento, clareza e ferramentas práticas para o seu dia real como mãe.
-            </p>
-          </div>
-
-          {/* LOGIN CARD */}
-          <div className="m360-card p-8 md:p-10">
-            <Suspense
-              fallback={
-                <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-                  Carregando…
-                </div>
-              }
-            >
-              <LoginClient />
-            </Suspense>
-          </div>
-        </div>
-      </section>
-
-      {/* CONTEÚDO EXISTENTE */}
-      <section className="relative z-10 mx-auto w-full max-w-[1100px] px-6 pb-16">
-        <div className="m360-card p-8 md:p-10">
-          <BemVindaClient />
-        </div>
-
-        <footer className="mt-10 text-center text-xs text-[#545454]">
-          © {new Date().getFullYear()} Materna360. Todos os direitos reservados.
-        </footer>
-      </section>
     </main>
   )
 }
