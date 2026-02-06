@@ -11,53 +11,107 @@ import LoginClient from '@/app/login/LoginClient'
  */
 export default function LandingClient() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#ff005e] via-[#ff4d8c] to-[#ffd8e6]">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center">
-          {/* COLUNA: VENDA/APRESENTAÇÃO */}
-          <section className="order-2 lg:order-1">
-                      <div className="mb-6 rounded-3xl bg-white/85 backdrop-blur border border-white/60 p-5 shadow-[0_18px_70px_rgba(0,0,0,0.15)]">
-            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-[#ff005e]">
+    <main className="min-h-screen bg-white">
+      {/* NAV */}
+      <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#ff005e]">
               Materna360
-            </p>
-            <h1 className="mt-2 text-2xl md:text-3xl font-semibold text-[#2f3a56] leading-tight">
-              Um app emocional para mães — acolhimento, clareza e prática no dia real.
-            </h1>
-            <p className="mt-2 text-sm text-[#545454]">
-              Entre para acessar o conteúdo e começar com leveza — sem autocobrança.
-            </p>
-
-            <div className="mt-4 flex flex-col sm:flex-row gap-2">
-              <a
-                href="#acesso"
-                className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold bg-[#ff005e] text-white shadow-[0_12px_30px_rgba(255,0,94,0.35)] hover:opacity-95"
-              >
-                Começar agora
-              </a>
-              <a
-                href="#acesso"
-                className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold border border-white/70 bg-white/60 text-[#2f3a56] hover:bg-white/80"
-              >
-                Já tenho conta
-              </a>
             </div>
           </div>
 
+          <a
+            href="#acesso"
+            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#2f3a56] shadow-sm hover:bg-black/[0.02]"
+          >
+            Entrar
+          </a>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section className="mx-auto w-full max-w-[1100px] px-6 pb-10 pt-10 md:pb-16 md:pt-16">
+        {/* Tags */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-medium text-[#545454]">
+            Acolhimento emocional
+          </span>
+          <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-medium text-[#545454]">
+            Sem julgamento
+          </span>
+          <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-medium text-[#545454]">
+            Para mães reais
+          </span>
+        </div>
+
+        <h1 className="mb-5 max-w-[680px] text-[32px] font-semibold leading-[1.15] text-[#545454] md:text-[44px]">
+          Um espaço de acolhimento emocional para mães. Clareza e prática no dia real.
+        </h1>
+
+        <p className="mb-10 max-w-[520px] text-base leading-relaxed text-[#545454]">
+          Cuidar de você não é egoísmo. É o primeiro passo para cuidar bem de quem você ama.
+        </p>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <a
+            href="#acesso"
+            className="inline-flex items-center justify-center rounded-full bg-[#ff005e] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,0,94,0.28)] hover:opacity-95"
+          >
+            Começar agora
+          </a>
+
+          <a
+            href="#acesso"
+            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[#2f3a56] shadow-sm hover:bg-black/[0.02]"
+          >
+            Já tenho conta
+          </a>
+        </div>
+      </section>
+
+      {/* DIVIDER */}
+      <div className="mx-auto w-full max-w-[1100px] px-6">
+        <div className="border-t border-black/5" />
+      </div>
+
+      {/* LOGIN / CONTENT */}
+      <section className="mx-auto w-full max-w-[1100px] px-6 py-12 md:py-16">
+        <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
+          {/* Left: conteúdo já existente (sem mexer) */}
+          <section className="order-2 lg:order-1">
             <BemVindaClient />
           </section>
 
-          {/* COLUNA: AUTH */}
+          {/* Right: auth real (sem mexer) */}
           <section className="order-1 lg:order-2" id="acesso">
-            <Suspense fallback={<div className="rounded-3xl bg-white/90 border border-[var(--color-soft-strong)] p-6">Carregando…</div>}>
+            <Suspense
+              fallback={
+                <div className="w-full rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+                  Carregando…
+                </div>
+              }
+            >
               <LoginClient />
             </Suspense>
           </section>
         </div>
+      </section>
 
-        <footer className="mt-10 text-center text-xs text-white/70">
-          © {new Date().getFullYear()} Materna360. Todos os direitos reservados.
-        </footer>
-      </div>
+      {/* QUOTE */}
+      <section className="mx-auto w-full max-w-[1100px] px-6 pb-10">
+        <div className="rounded-2xl border border-black/10 bg-[#ffd8e6]/55 px-8 py-8 md:px-12">
+          <p className="text-base leading-relaxed text-[#545454]">
+            Aqui, menos é suficiente.{' '}
+            <span className="font-semibold text-[#2f3a56]">E suficiente é muito.</span>
+          </p>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="mx-auto w-full max-w-[1100px] px-6 pb-10 text-center text-xs text-[#545454]">
+        © {new Date().getFullYear()} Materna360 · Feito com carinho para mães reais.
+      </footer>
     </main>
   )
 }
