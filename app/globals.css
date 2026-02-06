@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -60,7 +62,7 @@
 }
 
 /* ============================================================
-   FUNDO GLOBAL
+   FUNDO GLOBAL (mantido)
    ============================================================ */
 html,
 body {
@@ -72,9 +74,18 @@ body {
   min-height: 100%;
 }
 
-main[data-layout="page-template-v1"],
-main[data-layout="page-template-v2"] {
+main[data-layout='page-template-v1'],
+main[data-layout='page-template-v2'] {
   background: transparent !important;
+}
+
+/* ============================================================
+   ✅ OVERRIDE LOCAL — LOGIN (estilo Lovable)
+   Use aplicando className="lovable-login lovable-scope" no <main> da landing
+   ============================================================ */
+.lovable-login {
+  background-color: #ffffff !important;
+  background-image: none !important;
 }
 
 @layer base {
@@ -82,6 +93,57 @@ main[data-layout="page-template-v2"] {
     @apply min-h-screen antialiased font-sans;
     color: rgb(var(--support-1));
     font-family: 'Poppins', sans-serif;
+  }
+}
+
+/* ============================================================
+   ✅ TOKENS LOVABLE (escopo seguro / NÃO quebra o app inteiro)
+   Use aplicando className="lovable-scope" em um container (ex: <main/> no /login)
+   ============================================================ */
+@layer base {
+  .lovable-scope {
+    /* shadcn/tailwind token-style (HSL) */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 18%;
+
+    /* Primary: #fd2597 */
+    --primary: 328 98% 57%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: very light pink for badges/tags */
+    --secondary: 340 30% 96%;
+    --secondary-foreground: 0 0% 33%;
+
+    /* Muted: light gray for body text */
+    --muted: 340 15% 96%;
+    --muted-foreground: 0 0% 42%;
+
+    /* Accent: #ffe1f1 pink tint */
+    --accent: 328 100% 94%;
+    --accent-foreground: 0 0% 25%;
+
+    /* Borders: #F5D7E5 soft pink */
+    --border: 332 56% 92%;
+    --input: 332 40% 90%;
+    --ring: 328 98% 57%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 18%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --radius: 1rem;
+
+    /* Extra shadows (Lovable feel) */
+    --shadow-card: 0 1px 3px 0 hsla(0, 0%, 0%, 0.04),
+      0 0 0 1px hsla(332, 56%, 90%, 0.6);
+    --shadow-card-hover: 0 4px 16px -4px hsla(328, 40%, 60%, 0.12),
+      0 0 0 1px hsla(332, 56%, 88%, 0.8);
+    --shadow-button: 0 2px 8px -2px hsla(328, 98%, 57%, 0.25);
   }
 }
 
