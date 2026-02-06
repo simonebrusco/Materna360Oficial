@@ -51,7 +51,7 @@
 
   --glow-pink: 0 8px 24px rgba(253, 37, 151, 0.12);
 
-  /* Mantido, mas NÃO aplicado globalmente (Lovable não usa gradiente pesado no body) */
+  /* Mantido, mas NÃO aplicado globalmente */
   --m360-app-bg: linear-gradient(
     to bottom,
     #b8236b 0%,
@@ -66,10 +66,6 @@
    BASE (clean como Lovable)
    ============================================================ */
 @layer base {
-  * {
-    @apply border-border;
-  }
-
   html,
   body {
     min-height: 100%;
@@ -113,7 +109,7 @@
     background-color: #ffffff;
     color: #2f3a56;
     border: 1px solid rgba(0, 0, 0, 0.10);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .btn-secondary:hover {
@@ -126,10 +122,10 @@
     color: var(--color-text-main);
   }
 
-  /* ✅ Card branco do Lovable (borda suave + raio grande) */
+  /* ✅ Card branco do Lovable */
   .m360-card {
     @apply rounded-3xl border border-black/10 bg-white/80 backdrop-blur-md;
-    box-shadow: 0 18px 60px rgba(0,0,0,0.08);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.08);
   }
 }
 
