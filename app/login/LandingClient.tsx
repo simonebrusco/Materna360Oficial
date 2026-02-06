@@ -5,113 +5,113 @@ import { Suspense } from 'react'
 import BemVindaClient from '@/app/bem-vinda/BemVindaClient'
 import LoginClient from '@/app/login/LoginClient'
 
-/**
- * Landing única: apresentação do produto + área de login/cadastro (auth).
- * Reaproveita os clients existentes para evitar regressão.
- */
 export default function LandingClient() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="relative min-h-screen overflow-hidden bg-white">
+      {/* Soft background glow (Lovable-style, sem degradê pesado) */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#ffd8e6]/60 blur-3xl" />
+        <div className="absolute top-24 -left-28 h-[420px] w-[420px] rounded-full bg-[#ff005e]/10 blur-3xl" />
+        <div className="absolute bottom-0 -right-40 h-[520px] w-[520px] rounded-full bg-[#ff4d8c]/15 blur-3xl" />
+      </div>
+
       {/* NAV */}
-      <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/80 backdrop-blur-sm">
+      <nav className="relative z-10 border-b border-black/5 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="text-[11px] font-semibold tracking-[0.18em] uppercase text-[#ff005e]">
-              Materna360
-            </div>
+          <div className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#ff005e]">
+            Materna360
           </div>
 
-          <a
-            href="#acesso"
-            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#2f3a56] shadow-sm hover:bg-black/[0.02]"
-          >
-            Entrar
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="#acesso"
+              className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#2f3a56] shadow-sm hover:bg-black/[0.02]"
+            >
+              Entrar
+            </a>
+          </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="mx-auto w-full max-w-[1100px] px-6 pb-10 pt-10 md:pb-16 md:pt-16">
-        {/* Tags */}
-        <div className="mb-8 flex flex-wrap gap-2">
-          <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-medium text-[#545454]">
-            Acolhimento emocional
-          </span>
-          <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-medium text-[#545454]">
-            Sem julgamento
-          </span>
-          <span className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-medium text-[#545454]">
-            Para mães reais
-          </span>
-        </div>
+      {/* DOBRA PRINCIPAL (Lovable: 2 cards grandes lado a lado) */}
+      <section className="relative z-10 mx-auto w-full max-w-[1100px] px-6 pb-10 pt-10 md:pb-14 md:pt-14">
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-10">
+          {/* CARD: Mensagem / Hero */}
+          <div className="rounded-3xl border border-black/10 bg-white/80 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.08)] backdrop-blur-md md:p-10">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2">
+              <span className="h-2 w-2 rounded-full bg-[#ff005e]" />
+              <span className="text-xs font-medium text-[#545454]">Acolhimento</span>
+            </div>
 
-        <h1 className="mb-5 max-w-[680px] text-[32px] font-semibold leading-[1.15] text-[#545454] md:text-[44px]">
-          Um espaço de acolhimento emocional para mães. Clareza e prática no dia real.
-        </h1>
+            <h1 className="text-[32px] font-semibold leading-[1.12] text-[#2f3a56] md:text-[44px]">
+              Você não está sozinha.
+              <br />
+              Você está cansada.
+            </h1>
 
-        <p className="mb-10 max-w-[520px] text-base leading-relaxed text-[#545454]">
-          Cuidar de você não é egoísmo. É o primeiro passo para cuidar bem de quem você ama.
-        </p>
+            <p className="mt-5 max-w-[520px] text-base leading-relaxed text-[#545454]">
+              A maternidade real não é perfeita — é intensa, bonita e, muitas vezes, solitária.
+              O Materna360 existe para te acompanhar com leveza, clareza e ferramentas práticas.
+            </p>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <a
-            href="#acesso"
-            className="inline-flex items-center justify-center rounded-full bg-[#ff005e] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,0,94,0.28)] hover:opacity-95"
-          >
-            Começar agora
-          </a>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="#acesso"
+                className="inline-flex items-center justify-center rounded-full bg-[#ff005e] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(255,0,94,0.28)] hover:opacity-95"
+              >
+                Começar agora
+              </a>
 
-          <a
-            href="#acesso"
-            className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[#2f3a56] shadow-sm hover:bg-black/[0.02]"
-          >
-            Já tenho conta
-          </a>
-        </div>
-      </section>
+              <a
+                href="#conteudo"
+                className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[#2f3a56] shadow-sm hover:bg-black/[0.02]"
+              >
+                Ver como funciona
+              </a>
+            </div>
 
-      {/* DIVIDER */}
-      <div className="mx-auto w-full max-w-[1100px] px-6">
-        <div className="border-t border-black/5" />
-      </div>
+            {/* Mini “proof” (Lovable sempre tem micro reforço) */}
+            <div className="mt-9 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-black/10 bg-white p-4">
+                <p className="text-xs font-semibold text-[#2f3a56]">Sem julgamento</p>
+                <p className="mt-1 text-xs text-[#545454]">apoio real</p>
+              </div>
+              <div className="rounded-2xl border border-black/10 bg-white p-4">
+                <p className="text-xs font-semibold text-[#2f3a56]">Pequenos passos</p>
+                <p className="mt-1 text-xs text-[#545454]">dia possível</p>
+              </div>
+              <div className="rounded-2xl border border-black/10 bg-white p-4">
+                <p className="text-xs font-semibold text-[#2f3a56]">Clareza emocional</p>
+                <p className="mt-1 text-xs text-[#545454]">menos culpa</p>
+              </div>
+            </div>
+          </div>
 
-      {/* LOGIN / CONTENT */}
-      <section className="mx-auto w-full max-w-[1100px] px-6 py-12 md:py-16">
-        <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
-          {/* Left: conteúdo já existente (sem mexer) */}
-          <section className="order-2 lg:order-1">
-            <BemVindaClient />
-          </section>
-
-          {/* Right: auth real (sem mexer) */}
-          <section className="order-1 lg:order-2" id="acesso">
+          {/* CARD: Login */}
+          <div id="acesso" className="rounded-3xl border border-black/10 bg-white/80 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.08)] backdrop-blur-md md:p-10">
             <Suspense
               fallback={
-                <div className="w-full rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+                <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
                   Carregando…
                 </div>
               }
             >
               <LoginClient />
             </Suspense>
-          </section>
+          </div>
         </div>
       </section>
 
-      {/* QUOTE */}
-      <section className="mx-auto w-full max-w-[1100px] px-6 pb-10">
-        <div className="rounded-2xl border border-black/10 bg-[#ffd8e6]/55 px-8 py-8 md:px-12">
-          <p className="text-base leading-relaxed text-[#545454]">
-            Aqui, menos é suficiente.{' '}
-            <span className="font-semibold text-[#2f3a56]">E suficiente é muito.</span>
-          </p>
+      {/* SEÇÃO 2: conteúdo existente */}
+      <section id="conteudo" className="relative z-10 mx-auto w-full max-w-[1100px] px-6 pb-12">
+        <div className="rounded-3xl border border-black/10 bg-white/85 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.06)] backdrop-blur-md md:p-10">
+          <BemVindaClient />
         </div>
-      </section>
 
-      {/* FOOTER */}
-      <footer className="mx-auto w-full max-w-[1100px] px-6 pb-10 text-center text-xs text-[#545454]">
-        © {new Date().getFullYear()} Materna360 · Feito com carinho para mães reais.
-      </footer>
+        <footer className="mt-10 text-center text-xs text-[#545454]">
+          © {new Date().getFullYear()} Materna360. Todos os direitos reservados.
+        </footer>
+      </section>
     </main>
   )
 }
