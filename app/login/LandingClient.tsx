@@ -7,7 +7,7 @@ import LoginClient from '@/app/login/LoginClient'
 
 export default function LandingClient() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white">
+    <main className="lovable-login lovable-scope relative min-h-screen overflow-hidden bg-white">
       {/* Soft background glow (Lovable-style, sem degradê pesado) */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-24 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-[#ffd8e6]/60 blur-3xl" />
@@ -88,7 +88,10 @@ export default function LandingClient() {
           </div>
 
           {/* CARD: Login */}
-          <div id="acesso" className="rounded-3xl border border-black/10 bg-white/80 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.08)] backdrop-blur-md md:p-10">
+          <div
+            id="acesso"
+            className="rounded-3xl border border-black/10 bg-white/80 p-7 shadow-[0_18px_60px_rgba(0,0,0,0.08)] backdrop-blur-md md:p-10"
+          >
             <Suspense
               fallback={
                 <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
