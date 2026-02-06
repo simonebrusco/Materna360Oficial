@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
+import Image from 'next/image'
 import LoginClient from '@/app/login/LoginClient'
 
 export default function LandingClient() {
@@ -16,9 +17,15 @@ export default function LandingClient() {
       {/* NAV */}
       <nav className="relative z-10 border-b border-black/5 bg-white/70 backdrop-blur-md">
         <div className="page-shell flex items-center justify-between py-4">
-          <div className="text-[12px] font-semibold tracking-[0.18em] uppercase text-[#fd2597]">
-            Materna360
-          </div>
+          {/* LOGO */}
+          <Image
+            src="/images/logo-principal.png"
+            alt="Materna360"
+            width={160}
+            height={32}
+            priority
+            className="h-6 w-auto"
+          />
 
           <a
             href="#acesso"
@@ -65,7 +72,7 @@ export default function LandingClient() {
           <div className="mt-10 border-t border-black/5" />
         </section>
 
-        {/* SECTION: Acolhimento + Login (Lovable) */}
+        {/* SECTION: Acolhimento + Login */}
         <section id="acesso" className="page-shell pb-14 md:pb-16">
           <div className="grid items-start gap-10 lg:grid-cols-2">
             {/* Left copy */}
@@ -89,7 +96,9 @@ export default function LandingClient() {
                   O Materna360 foi criado para estar com você nos dias difíceis e nos dias bons. Sem
                   julgamento, sem fórmulas mágicas.
                 </p>
-                <p>Apenas acolhimento, clareza e ferramentas práticas para o seu dia real como mãe.</p>
+                <p>
+                  Apenas acolhimento, clareza e ferramentas práticas para o seu dia real como mãe.
+                </p>
               </div>
             </div>
 
